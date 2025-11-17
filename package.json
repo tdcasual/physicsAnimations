@@ -1,0 +1,20 @@
+{
+  "name": "index",
+  "version": "1.0.0",
+  "description": "这里都是高中物理动画的相关演示",
+  "main": "generate_list.js",
+  "scripts": {
+    "update-list": "node generate_list.js",
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@tea.lvlove.wang:222/tdcasual/physicsAnimations.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
