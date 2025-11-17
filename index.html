@@ -9,10 +9,10 @@
             --bg-color: #f4f7f6;
             --card-bg: #ffffff;
             --text-color: #333;
-            --shadow-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --shadow-hover-color: rgba(0, 0, 0, 0.15);
             --primary-color: #007bff;
             --tab-color: #6c757d;
-            --tab-active-bg: #007bff;
         }
 
         body {
@@ -39,7 +39,7 @@
             font-weight: 600;
         }
 
-        /* --- 1. 分类标签页样式 --- */
+        /* --- 1. 分类标签页 (不变) --- */
         .category-tabs {
             text-align: center;
             margin-bottom: 40px;
@@ -59,15 +59,10 @@
             transition: all 0.3s ease;
         }
 
-        .tab-button:hover {
-            background-color: var(--bg-color);
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
+        .tab-button:hover,
         .tab-button.active {
-            background-color: var(--tab-active-bg);
-            border-color: var(--tab-active-bg);
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
             color: #fff;
         }
 
@@ -78,44 +73,43 @@
             gap: 24px;
         }
 
-        /* --- 3. 卡片样式 (稍作修改) --- */
+        /* --- 3. "纯文本"卡片样式 (核心修改) --- */
         .card {
             background: var(--card-bg);
             border-radius: 12px;
             box-shadow: 0 4px 12px var(--shadow-color);
             text-decoration: none;
             color: var(--text-color);
-            overflow: hidden;
-            display: flex; /* 改为 flex，以便 JS 控制显隐 */
+            /* 移除 overflow: hidden */
+            display: flex;
             flex-direction: column;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            /* 移除固定高度，让内容撑开 */
         }
         
-        /* 隐藏卡片的样式 */
         .card.hidden {
             display: none;
         }
 
         .card:hover {
             transform: translateY(-8px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 8px 20px var(--shadow-hover-color);
         }
 
-        .card-thumbnail {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            background-color: #eee;
-        }
+        /* 移除了 .card-thumbnail 样式 */
 
         .card-content {
-            padding: 20px;
+            padding: 24px; /* 增加内边距，使其更饱满 */
             flex-grow: 1;
+            display: flex;
+            flex-direction: column; /* 确保内容垂直排列 */
+            justify-content: space-between; /* 让标题和描述分开 */
+            min-height: 80px; /* 给卡片一个最小高度 */
         }
 
         .card-content h3 {
             margin-top: 0;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-size: 1.25rem;
             color: var(--primary-color);
         }
@@ -124,13 +118,14 @@
             font-size: 0.95rem;
             line-height: 1.5;
             margin-bottom: 0;
+            color: #555;
         }
 
         #loading-message {
             text-align: center;
             font-size: 1.2rem;
             color: #888;
-            grid-column: 1 / -1; /* 让提示信息横跨整个网格 */
+            grid-column: 1 / -1;
         }
     </style>
 </head>
@@ -141,16 +136,13 @@
             <h1>我的物理动画集</h1>
         </header>
 
-        <div class="category-tabs" id="category-tabs-container">
-            </div>
-
+        <div class="category-tabs" id="category-tabs-container"></div>
         <div class="bookmark-grid" id="bookmark-container">
             <p id="loading-message">正在加载作品...</p>
         </div>
     </div>
 
     <script>
-        // 全局存储所有卡片，便于过滤
         let allCards = [];
         
         document.addEventListener("DOMContentLoaded", () => {
@@ -163,49 +155,38 @@
             const loadingMessage = document.getElementById('loading-message');
 
             try {
-                // 1. 异步获取 JSON 文件
                 const response = await fetch('animations.json');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
-                // data 现在的结构是: { mechanics: { title: "力学", items: [...] }, ... }
                 const data = await response.json();
-                const categories = Object.keys(data); // e.g., ["mechanics", "electromagnetism"]
+                const categories = Object.keys(data); 
 
-                // 2. 清除 "加载中" 提示
                 loadingMessage.style.display = 'none';
 
                 // --- 3. 生成分类标签页 ---
-                
-                // "全部" 按钮
                 const allButton = createTabButton('all', '全部', true);
                 tabsContainer.appendChild(allButton);
-                
-                // 遍历分类
                 categories.forEach(categoryId => {
                     const categoryTitle = data[categoryId].title;
                     const tabButton = createTabButton(categoryId, categoryTitle, false);
                     tabsContainer.appendChild(tabButton);
                 });
 
-
-                // --- 4. 遍历 JSON 数据，创建所有卡片 ---
-                allCards = []; // 清空
+                // --- 4. 创建所有卡片 (核心修改) ---
+                allCards = []; 
                 categories.forEach(categoryId => {
                     data[categoryId].items.forEach(item => {
                         const title = item.title || item.file.replace('.html', '');
                         const description = item.description || '暂无描述。';
-                        const thumbnailUrl = item.thumbnail || 'placeholder.png'; // 默认图
-
+                        
                         const cardLink = document.createElement('a');
-                        cardLink.href = `animations/${item.file}`; // 路径已包含分类: e.g., animations/mechanics/file.html
+                        cardLink.href = `animations/${item.file}`; 
                         cardLink.className = 'card';
                         cardLink.target = '_blank';
-                        
-                        // ** 关键：为卡片添加 data-category 属性，用于过滤 **
                         cardLink.dataset.category = categoryId;
 
+                        // ** 移除了所有 <img> 相关的 HTML **
                         cardLink.innerHTML = `
-                            <img src="${thumbnailUrl}" alt="${title} 预览图" class="card-thumbnail" onerror="this.src='placeholder.png'; this.style.objectFit='contain';">
                             <div class="card-content">
                                 <h3>${title}</h3>
                                 <p>${description}</p>
@@ -213,7 +194,7 @@
                         `;
                         
                         gridContainer.appendChild(cardLink);
-                        allCards.push(cardLink); // 存入全局数组
+                        allCards.push(cardLink); 
                     });
                 });
 
@@ -230,31 +211,26 @@
             }
         }
 
-        // --- 5. 创建标签按钮的辅助函数 ---
+        // --- 5. 创建标签按钮的辅助函数 (不变) ---
         function createTabButton(categoryId, title, isActive) {
             const button = document.createElement('button');
             button.className = 'tab-button';
             button.textContent = title;
-            button.dataset.filter = categoryId; // 存储过滤器ID
+            button.dataset.filter = categoryId; 
             if (isActive) {
                 button.classList.add('active');
             }
-            // 添加点击事件
             button.addEventListener('click', () => filterCards(categoryId));
             return button;
         }
 
-        // --- 6. 核心过滤函数 ---
+        // --- 6. 核心过滤函数 (不变) ---
         function filterCards(categoryId) {
-            // (a) 更新按钮的 active 状态
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.filter === categoryId);
             });
-
-            // (b) 过滤卡片
             allCards.forEach(card => {
                 const isMatch = (categoryId === 'all' || card.dataset.category === categoryId);
-                // 使用 classList.toggle 比直接修改 .style.display 性能更好，更易于扩展
                 card.classList.toggle('hidden', !isMatch);
             });
         }
