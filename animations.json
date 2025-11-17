@@ -1,7 +1,14 @@
 {
   "electromagnetism": {
     "title": "电磁学",
-    "items": []
+    "items": [
+      {
+        "file": "electromagnetism/3D 生成电势图.html",
+        "title": "3D 生成电势图",
+        "description": "点击查看详情...",
+        "thumbnail": ""
+      }
+    ]
   },
   "mechanics": {
     "title": "力学",
