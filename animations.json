@@ -1,0 +1,30 @@
+{
+  "mechanics": {
+    "title": "力学",
+    "items": [
+      {
+        "file": "mechanics/projectile-motion.html",
+        "title": "Projectile-motion",
+        "description": "点击查看详情...",
+        "thumbnail": "animations/thumbnails/mechanics/projectile-motion.png"
+      },
+      {
+        "file": "mechanics/newtons-law.html",
+        "title": "Newtons-law",
+        "description": "点击查看详情...",
+        "thumbnail": "animations/thumbnails/mechanics/newtons-law.png"
+      }
+    ]
+  },
+  "electromagnetism": {
+    "title": "电磁学",
+    "items": [
+      {
+        "file": "electromagnetism/ohms-law.html",
+        "title": "Ohms-law",
+        "description": "点击查看详情...",
+        "thumbnail": "animations/thumbnails/electromagnetism/ohms-law.png"
+      }
+    ]
+  }
+}
