@@ -18,7 +18,14 @@
   },
   "mechanics": {
     "title": "力学",
-    "items": []
+    "items": [
+      {
+        "file": "mechanics/追击相遇问题.html",
+        "title": "追击相遇问题",
+        "description": "点击查看详情...",
+        "thumbnail": ""
+      }
+    ]
   },
   "modern": {
     "title": "近代物理",
