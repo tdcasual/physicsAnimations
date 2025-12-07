@@ -25,12 +25,24 @@
         "title": "电动势类比动画",
         "description": "点击查看详情...",
         "thumbnail": ""
+      },
+      {
+        "file": "electromagnetism/起电方式演示.html",
+        "title": "起电方式演示",
+        "description": "点击查看详情...",
+        "thumbnail": ""
       }
     ]
   },
   "mechanics": {
     "title": "力学",
     "items": [
+      {
+        "file": "mechanics/v-t面积与微元法.html",
+        "title": "V-t面积与微元法",
+        "description": "点击查看详情...",
+        "thumbnail": ""
+      },
       {
         "file": "mechanics/追击相遇问题.html",
         "title": "追击相遇问题",
