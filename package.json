@@ -4,7 +4,12 @@
   "description": "这里都是高中物理动画的相关演示",
   "main": "generate_list.js",
   "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
     "update-list": "node generate_list.js",
+    "install-playwright-deps": "node scripts/install_playwright_deps.js",
+    "generate-thumbnails": "node scripts/generate_thumbnails.js",
+    "build-catalog": "node scripts/build_catalog.js",
     "prepare": "husky"
   },
   "repository": {
@@ -14,6 +19,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "playwright-chromium": "^1.57.0"
+  },
   "devDependencies": {
     "husky": "^9.1.7"
   }

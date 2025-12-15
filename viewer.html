@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>作品预览</title>
+    <link rel="stylesheet" href="assets/styles.css" />
+    <script type="module" src="assets/viewer.js"></script>
+  </head>
+  <body class="viewer-page">
+    <header class="viewer-bar">
+      <div class="container viewer-bar-inner">
+        <a class="viewer-back" href="index.html">← 返回</a>
+        <div class="viewer-title" id="viewer-title">作品预览</div>
+        <a class="btn btn-ghost" id="viewer-open" href="#" target="_blank" rel="noreferrer">打开原页面</a>
+      </div>
+    </header>
+
+    <main class="viewer-main">
+      <div class="viewer-stage">
+        <img class="viewer-shot hidden" id="viewer-shot" alt="" />
+        <iframe
+          class="viewer-frame"
+          id="viewer-frame"
+          title="作品"
+          loading="eager"
+          sandbox="allow-scripts allow-forms allow-pointer-lock allow-downloads"
+        ></iframe>
+      </div>
+    </main>
+  </body>
+</html>
+

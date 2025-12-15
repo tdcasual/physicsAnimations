@@ -6,31 +6,31 @@
         "file": "electromagnetism/3D 生成电势图.html",
         "title": "3D 生成电势图",
         "description": "点击查看详情...",
-        "thumbnail": ""
+        "thumbnail": "animations/thumbnails/electromagnetism/3D 生成电势图.png"
       },
       {
         "file": "electromagnetism/3D电荷等势面.html",
         "title": "3D电荷等势面",
         "description": "点击查看详情...",
-        "thumbnail": ""
+        "thumbnail": "animations/thumbnails/electromagnetism/3D电荷等势面.png"
       },
       {
         "file": "electromagnetism/模拟电场线.html",
         "title": "模拟电场线",
         "description": "点击查看详情...",
-        "thumbnail": ""
+        "thumbnail": "animations/thumbnails/electromagnetism/模拟电场线.png"
       },
       {
         "file": "electromagnetism/电动势类比动画.html",
         "title": "电动势类比动画",
         "description": "点击查看详情...",
-        "thumbnail": ""
+        "thumbnail": "animations/thumbnails/electromagnetism/电动势类比动画.png"
       },
       {
         "file": "electromagnetism/起电方式演示.html",
         "title": "起电方式演示",
         "description": "点击查看详情...",
-        "thumbnail": ""
+        "thumbnail": "animations/thumbnails/electromagnetism/起电方式演示.png"
       }
     ]
   },
@@ -41,13 +41,13 @@
         "file": "mechanics/v-t面积与微元法.html",
         "title": "V-t面积与微元法",
         "description": "点击查看详情...",
-        "thumbnail": ""
+        "thumbnail": "animations/thumbnails/mechanics/v-t面积与微元法.png"
       },
       {
         "file": "mechanics/追击相遇问题.html",
         "title": "追击相遇问题",
         "description": "点击查看详情...",
-        "thumbnail": ""
+        "thumbnail": "animations/thumbnails/mechanics/追击相遇问题.png"
       }
     ]
   },
