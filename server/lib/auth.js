@@ -68,6 +68,33 @@ function requireAuth({ authConfig }) {
   };
 }
 
+function optionalAuth({ authConfig }) {
+  return (req, res, next) => {
+    const hasAuthHeader = Boolean(req.headers.authorization);
+    if (!hasAuthHeader) {
+      next();
+      return;
+    }
+
+    const token = parseBearerToken(req);
+    if (!token) {
+      res.status(401).json({ error: "invalid_token" });
+      return;
+    }
+
+    try {
+      const payload = jwt.verify(token, authConfig.jwtSecret, {
+        issuer: authConfig.jwtIssuer,
+        audience: authConfig.jwtAudience,
+      });
+      req.user = { username: payload.sub, role: payload.role };
+      next();
+    } catch {
+      res.status(401).json({ error: "invalid_token" });
+    }
+  };
+}
+
 async function verifyLogin({ username, password, authConfig }) {
   if (username !== authConfig.adminUsername) return false;
   return bcrypt.compare(password, authConfig.adminPasswordHash);
@@ -77,5 +104,6 @@ module.exports = {
   getAuthConfig,
   issueToken,
   requireAuth,
+  optionalAuth,
   verifyLogin,
 };

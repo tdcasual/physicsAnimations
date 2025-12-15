@@ -80,3 +80,45 @@ export async function uploadHtml({ file, categoryId, title, description }) {
 export async function deleteItem(id) {
   return apiFetch(`/api/items/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
+
+export async function listItems({ page = 1, pageSize = 24, q = "", categoryId = "", type = "" } = {}) {
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (categoryId) params.set("categoryId", categoryId);
+  if (type) params.set("type", type);
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
+  return apiFetch(`/api/items?${params.toString()}`, { method: "GET" });
+}
+
+export async function updateItem(id, patch) {
+  return apiFetch(`/api/items/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch || {}),
+  });
+}
+
+export async function listCategories() {
+  return apiFetch("/api/categories", { method: "GET" });
+}
+
+export async function createCategory({ id, title, order = 0, hidden = false }) {
+  return apiFetch("/api/categories", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, title, order, hidden }),
+  });
+}
+
+export async function updateCategory(id, patch) {
+  return apiFetch(`/api/categories/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch || {}),
+  });
+}
+
+export async function deleteCategory(id) {
+  return apiFetch(`/api/categories/${encodeURIComponent(id)}`, { method: "DELETE" });
+}

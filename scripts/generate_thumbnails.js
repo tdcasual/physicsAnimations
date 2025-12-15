@@ -4,6 +4,7 @@ const { pathToFileURL } = require("url");
 
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
+const { shouldAllowRequestUrl } = require("../server/lib/ssrf");
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -63,6 +64,7 @@ async function main() {
       viewport: { width: 1280, height: 720 },
       deviceScaleFactor: 1,
     });
+    const hostnameCache = new Map();
 
     for (const task of tasks) {
       ensureDir(path.dirname(task.thumbnailPath));
@@ -74,6 +76,16 @@ async function main() {
 
       const page = await context.newPage();
       try {
+        await page.route("**/*", async (route) => {
+          const requestUrl = route.request().url();
+          const ok = await shouldAllowRequestUrl(requestUrl, hostnameCache);
+          if (!ok) {
+            await route.abort();
+            return;
+          }
+          await route.continue();
+        });
+
         await page.goto(pathToFileURL(task.sourcePath).toString(), {
           waitUntil: "networkidle",
           timeout: 30000,

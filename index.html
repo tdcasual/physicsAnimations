@@ -87,68 +87,139 @@
           </button>
         </div>
         <div class="modal-body admin-body">
-          <section class="admin-section">
-            <div class="admin-section-title">上传 HTML</div>
-            <form class="admin-form" id="upload-form">
-              <div class="admin-form-grid">
+          <div class="admin-tabs" role="tablist" aria-label="管理面板标签页" id="admin-tabs">
+            <button class="tab active" type="button" role="tab" aria-selected="true" data-admin-tab="items">
+              内容
+            </button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-admin-tab="categories">
+              分类
+            </button>
+          </div>
+
+          <div class="admin-panel" id="admin-panel-items" role="tabpanel">
+            <section class="admin-section">
+              <div class="admin-section-title">上传 HTML</div>
+              <form class="admin-form" id="upload-form">
+                <div class="admin-form-grid">
+                  <label class="field">
+                    <span class="field-label">分类</span>
+                    <select class="field-input" id="upload-category" name="categoryId"></select>
+                  </label>
+                  <label class="field">
+                    <span class="field-label">文件（HTML / ZIP）</span>
+                    <input
+                      class="field-input"
+                      id="upload-file"
+                      name="file"
+                      type="file"
+                      accept=".html,.htm,.zip,text/html,application/zip"
+                    />
+                  </label>
+                </div>
                 <label class="field">
-                  <span class="field-label">分类</span>
-                  <select class="field-input" id="upload-category" name="categoryId"></select>
+                  <span class="field-label">标题（可选）</span>
+                  <input class="field-input" id="upload-title" name="title" type="text" />
                 </label>
                 <label class="field">
-                  <span class="field-label">文件</span>
-                  <input class="field-input" id="upload-file" name="file" type="file" accept=".html,.htm,text/html" />
+                  <span class="field-label">描述（可选）</span>
+                  <textarea class="field-input field-textarea" id="upload-description" name="description"></textarea>
                 </label>
-              </div>
-              <label class="field">
-                <span class="field-label">标题（可选）</span>
-                <input class="field-input" id="upload-title" name="title" type="text" />
-              </label>
-              <label class="field">
-                <span class="field-label">描述（可选）</span>
-                <textarea class="field-input field-textarea" id="upload-description" name="description"></textarea>
-              </label>
-              <div class="admin-actions">
-                <button class="btn btn-primary" id="upload-submit" type="submit">上传</button>
-              </div>
-            </form>
-          </section>
+                <div class="admin-actions">
+                  <button class="btn btn-primary" id="upload-submit" type="submit">上传</button>
+                </div>
+              </form>
+            </section>
 
-          <div class="admin-divider" role="presentation"></div>
+            <div class="admin-divider" role="presentation"></div>
 
-          <section class="admin-section">
-            <div class="admin-section-title">添加网页链接</div>
-            <form class="admin-form" id="link-form">
-              <div class="admin-form-grid">
+            <section class="admin-section">
+              <div class="admin-section-title">添加网页链接</div>
+              <form class="admin-form" id="link-form">
+                <div class="admin-form-grid">
+                  <label class="field">
+                    <span class="field-label">分类</span>
+                    <select class="field-input" id="link-category" name="categoryId"></select>
+                  </label>
+                  <label class="field">
+                    <span class="field-label">链接</span>
+                    <input class="field-input" id="link-url" name="url" type="url" placeholder="https://example.com" />
+                  </label>
+                </div>
                 <label class="field">
-                  <span class="field-label">分类</span>
-                  <select class="field-input" id="link-category" name="categoryId"></select>
+                  <span class="field-label">标题（可选）</span>
+                  <input class="field-input" id="link-title" name="title" type="text" />
                 </label>
                 <label class="field">
-                  <span class="field-label">链接</span>
-                  <input class="field-input" id="link-url" name="url" type="url" placeholder="https://example.com" />
+                  <span class="field-label">描述（可选）</span>
+                  <textarea class="field-input field-textarea" id="link-description" name="description"></textarea>
+                </label>
+                <div class="admin-actions">
+                  <button class="btn btn-primary" id="link-submit" type="submit">添加</button>
+                </div>
+              </form>
+            </section>
+
+            <div class="admin-divider" role="presentation"></div>
+
+            <section class="admin-section">
+              <div class="admin-section-header">
+                <div class="admin-section-title">已添加内容</div>
+                <label class="field admin-inline-field">
+                  <span class="sr-only">搜索</span>
+                  <input
+                    class="field-input"
+                    id="admin-items-search"
+                    type="search"
+                    placeholder="搜索已添加内容..."
+                    autocomplete="off"
+                  />
                 </label>
               </div>
-              <label class="field">
-                <span class="field-label">标题（可选）</span>
-                <input class="field-input" id="link-title" name="title" type="text" />
-              </label>
-              <label class="field">
-                <span class="field-label">描述（可选）</span>
-                <textarea class="field-input field-textarea" id="link-description" name="description"></textarea>
-              </label>
-              <div class="admin-actions">
-                <button class="btn btn-primary" id="link-submit" type="submit">添加</button>
+              <div class="admin-items" id="admin-items"></div>
+              <div class="admin-actions admin-actions-between">
+                <div class="admin-help" id="admin-items-meta"></div>
+                <button class="btn btn-ghost" id="admin-load-more" type="button">加载更多</button>
               </div>
-            </form>
-          </section>
+            </section>
+          </div>
 
-          <div class="admin-divider" role="presentation"></div>
+          <div class="admin-panel hidden" id="admin-panel-categories" role="tabpanel">
+            <section class="admin-section">
+              <div class="admin-section-title">新增分类</div>
+              <form class="admin-form" id="category-create-form">
+                <div class="admin-form-grid">
+                  <label class="field">
+                    <span class="field-label">ID（英文/数字）</span>
+                    <input class="field-input" id="category-create-id" name="id" type="text" placeholder="custom" />
+                  </label>
+                  <label class="field">
+                    <span class="field-label">标题</span>
+                    <input class="field-input" id="category-create-title" name="title" type="text" placeholder="自定义分类" />
+                  </label>
+                </div>
+                <div class="admin-form-grid">
+                  <label class="field">
+                    <span class="field-label">排序（越大越靠前）</span>
+                    <input class="field-input" id="category-create-order" name="order" type="number" value="0" />
+                  </label>
+                  <label class="admin-check">
+                    <input id="category-create-hidden" name="hidden" type="checkbox" />
+                    隐藏
+                  </label>
+                </div>
+                <div class="admin-actions">
+                  <button class="btn btn-primary" id="category-create-submit" type="submit">创建</button>
+                </div>
+              </form>
+            </section>
 
-          <section class="admin-section">
-            <div class="admin-section-title">已添加内容</div>
-            <div class="admin-items" id="admin-items"></div>
-          </section>
+            <div class="admin-divider" role="presentation"></div>
+
+            <section class="admin-section">
+              <div class="admin-section-title">分类列表</div>
+              <div class="admin-categories" id="admin-categories"></div>
+            </section>
+          </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-ghost" id="logout-button" type="button">退出登录</button>

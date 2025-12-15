@@ -10,6 +10,7 @@
     "install-playwright-deps": "node scripts/install_playwright_deps.js",
     "generate-thumbnails": "node scripts/generate_thumbnails.js",
     "build-catalog": "node scripts/build_catalog.js",
+    "backup:webdav": "node scripts/backup_to_webdav.js",
     "prepare": "husky"
   },
   "repository": {
@@ -22,9 +23,13 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.21.2",
+    "ipaddr.js": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
-    "playwright-chromium": "^1.57.0"
+    "playwright-chromium": "^1.57.0",
+    "serverless-http": "^3.2.0",
+    "unzipper": "^0.12.3",
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "husky": "^9.1.7"

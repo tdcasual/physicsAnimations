@@ -1,11 +1,17 @@
 import {
   clearToken,
+  createCategory,
   createLink,
+  deleteCategory,
   deleteItem,
   getToken,
+  listCategories,
+  listItems,
   login,
   me,
   tryGetCatalog,
+  updateCategory,
+  updateItem,
   uploadHtml,
 } from "./api.js";
 
@@ -139,7 +145,11 @@ function render({ catalog, selectedCategoryId, query }) {
   grid.querySelectorAll(".card").forEach((n) => n.remove());
 
   const categories = Object.values(catalog.categories || {});
-  categories.sort((a, b) => a.title.localeCompare(b.title, "zh-CN"));
+  categories.sort((a, b) => {
+    const orderDiff = (b.order || 0) - (a.order || 0);
+    if (orderDiff) return orderDiff;
+    return a.title.localeCompare(b.title, "zh-CN");
+  });
 
   const allItems = categories.flatMap((c) => c.items || []);
   const hasAny = allItems.length > 0;
@@ -247,16 +257,31 @@ function initLogin() {
       closeLoginModal();
       showToast("登录成功", { kind: "success" });
     } catch (err) {
-      $("#login-error").textContent = "登录失败，请检查用户名或密码。";
+      const status = err?.status;
+      const retryAfterSeconds = err?.data?.retryAfterSeconds;
+
+      let message = "登录失败，请稍后再试。";
+      if (window.location.protocol === "file:") {
+        message = "请先运行 `npm start`，并通过 http://localhost:4173 打开页面。";
+      } else if (status === 401) {
+        message = "用户名或密码错误。";
+      } else if (status === 429) {
+        message = retryAfterSeconds
+          ? `尝试过于频繁，请 ${retryAfterSeconds} 秒后再试。`
+          : "尝试过于频繁，请稍后再试。";
+      } else if (status === 404) {
+        message = "未找到登录接口，请确认你是通过 `npm start` 启动的地址访问。";
+      } else if (!status) {
+        message = "无法连接服务端，请确认已运行 `npm start`。";
+      }
+
+      $("#login-error").textContent = message;
       $("#login-error").classList.remove("hidden");
     } finally {
       $("#login-submit").disabled = false;
     }
   });
 
-  $("#admin-button").addEventListener("click", () => {
-    showToast("管理面板：下一步将支持上传/外链。", { kind: "info" });
-  });
 }
 
 async function initCatalog() {
@@ -274,7 +299,6 @@ async function initCatalog() {
 async function refreshCatalog(state) {
   state.catalog = await initCatalog();
   render({ catalog: state.catalog, selectedCategoryId: state.selectedCategoryId, query: state.query });
-  refreshAdminUi(state);
 }
 
 function initFiltering({ state }) {
@@ -315,24 +339,28 @@ function closeAdminModal() {
   modal.close();
 }
 
-function categoriesForSelect(catalog) {
-  const list = Object.values(catalog.categories || {});
-  list.sort((a, b) => a.title.localeCompare(b.title, "zh-CN"));
-  return list;
+function sortCategoryList(list) {
+  const categories = [...(list || [])];
+  categories.sort((a, b) => {
+    const orderDiff = (b.order || 0) - (a.order || 0);
+    if (orderDiff) return orderDiff;
+    return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
+  });
+  return categories;
 }
 
-function fillCategorySelect(selectEl, catalog) {
-  const categories = categoriesForSelect(catalog);
+function fillCategorySelect(selectEl, categories) {
+  const list = sortCategoryList(categories);
   selectEl.innerHTML = "";
 
-  for (const category of categories) {
+  for (const category of list) {
     const option = document.createElement("option");
     option.value = category.id;
-    option.textContent = category.title;
+    option.textContent = category.hidden ? `${category.title}（隐藏）` : category.title;
     selectEl.appendChild(option);
   }
 
-  if (!categories.length) {
+  if (!list.length) {
     const option = document.createElement("option");
     option.value = "other";
     option.textContent = "其他";
@@ -340,73 +368,347 @@ function fillCategorySelect(selectEl, catalog) {
   }
 }
 
-function listDynamicItems(catalog) {
-  const items = [];
-  for (const category of Object.values(catalog.categories || {})) {
-    for (const item of category.items || []) {
-      if (item.type === "builtin") continue;
-      items.push({ ...item, categoryTitle: category.title });
-    }
-  }
-  items.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-  return items;
+function isAdminOpen() {
+  const modal = $("#admin-modal");
+  return modal.open && !modal.classList.contains("hidden");
 }
 
-function refreshAdminUi(state) {
-  const modal = $("#admin-modal");
-  const isOpen = modal.open && !modal.classList.contains("hidden");
-  if (!isOpen) return;
+function setAdminTab(state, tabId) {
+  state.admin.tab = tabId;
 
-  fillCategorySelect($("#upload-category"), state.catalog);
-  fillCategorySelect($("#link-category"), state.catalog);
+  const panelItems = $("#admin-panel-items");
+  const panelCategories = $("#admin-panel-categories");
+  panelItems.classList.toggle("hidden", tabId !== "items");
+  panelCategories.classList.toggle("hidden", tabId !== "categories");
 
+  $("#admin-tabs")
+    .querySelectorAll("button[data-admin-tab]")
+    .forEach((btn) => {
+      const active = btn.dataset.adminTab === tabId;
+      btn.classList.toggle("active", active);
+      btn.setAttribute("aria-selected", active ? "true" : "false");
+    });
+}
+
+async function loadAdminCategories(state) {
+  const data = await listCategories();
+  state.admin.categories = Array.isArray(data?.categories) ? data.categories : [];
+
+  fillCategorySelect($("#upload-category"), state.admin.categories);
+  fillCategorySelect($("#link-category"), state.admin.categories);
+
+  renderAdminCategories(state);
+}
+
+function itemTypeLabel(type) {
+  if (type === "link") return "链接";
+  if (type === "upload") return "上传";
+  return "未知";
+}
+
+function itemStatusText(item) {
+  const parts = [];
+  if (item.published === false) parts.push("草稿");
+  if (item.hidden === true) parts.push("隐藏");
+  return parts.join(" · ");
+}
+
+function renderAdminItems(state) {
   const container = $("#admin-items");
   container.innerHTML = "";
 
-  const items = listDynamicItems(state.catalog);
+  const categoriesById = new Map(state.admin.categories.map((c) => [c.id, c.title]));
+
+  const items = state.admin.items || [];
   if (!items.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = "暂无已添加内容。";
+    empty.textContent = state.admin.itemsQuery ? "未找到匹配的内容。" : "暂无已添加内容。";
+    container.appendChild(empty);
+  } else {
+    for (const item of items) {
+      const row = document.createElement("div");
+      row.className = "admin-item";
+      row.dataset.id = item.id;
+
+      const view = document.createElement("div");
+      view.className = "admin-item-view";
+
+      const main = document.createElement("div");
+      main.className = "admin-item-main";
+
+      const title = document.createElement("div");
+      title.className = "admin-item-title";
+      title.textContent = item.title || item.id;
+
+      const meta = document.createElement("div");
+      meta.className = "admin-item-meta";
+      const categoryTitle = categoriesById.get(item.categoryId) || item.categoryId;
+      const status = itemStatusText(item);
+      meta.textContent = `${itemTypeLabel(item.type)} · ${categoryTitle}${status ? ` · ${status}` : ""}`;
+
+      main.append(title, meta);
+
+      const actions = document.createElement("div");
+      actions.className = "admin-item-actions";
+
+      const open = document.createElement("a");
+      open.className = "btn btn-ghost";
+      open.href = `viewer.html?id=${encodeURIComponent(item.id)}`;
+      open.target = "_blank";
+      open.rel = "noreferrer";
+      open.textContent = "预览";
+
+      const editBtn = document.createElement("button");
+      editBtn.type = "button";
+      editBtn.className = "btn btn-ghost";
+      editBtn.textContent = "编辑";
+      editBtn.dataset.action = "edit";
+
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "btn btn-ghost danger";
+      del.textContent = "删除";
+      del.dataset.action = "delete";
+
+      actions.append(open, editBtn, del);
+      view.append(main, actions);
+
+      const edit = document.createElement("div");
+      edit.className = "admin-item-edit hidden";
+
+      const grid = document.createElement("div");
+      grid.className = "admin-item-edit-grid";
+
+      const titleField = document.createElement("label");
+      titleField.className = "field";
+      titleField.innerHTML = `<span class="field-label">标题</span>`;
+      const titleInput = document.createElement("input");
+      titleInput.className = "field-input";
+      titleInput.name = "title";
+      titleInput.type = "text";
+      titleInput.value = item.title || "";
+      titleField.appendChild(titleInput);
+
+      const categoryField = document.createElement("label");
+      categoryField.className = "field";
+      categoryField.innerHTML = `<span class="field-label">分类</span>`;
+      const categorySelect = document.createElement("select");
+      categorySelect.className = "field-input";
+      categorySelect.name = "categoryId";
+      fillCategorySelect(categorySelect, state.admin.categories);
+      categorySelect.value = item.categoryId || "other";
+      categoryField.appendChild(categorySelect);
+
+      const orderField = document.createElement("label");
+      orderField.className = "field";
+      orderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
+      const orderInput = document.createElement("input");
+      orderInput.className = "field-input";
+      orderInput.name = "order";
+      orderInput.type = "number";
+      orderInput.value = String(item.order || 0);
+      orderField.appendChild(orderInput);
+
+      const flags = document.createElement("div");
+      flags.className = "admin-item-flags";
+
+      const publishedLabel = document.createElement("label");
+      publishedLabel.className = "admin-check";
+      const publishedInput = document.createElement("input");
+      publishedInput.type = "checkbox";
+      publishedInput.name = "published";
+      publishedInput.checked = item.published !== false;
+      publishedLabel.append(publishedInput, document.createTextNode("已发布"));
+
+      const hiddenLabel = document.createElement("label");
+      hiddenLabel.className = "admin-check";
+      const hiddenInput = document.createElement("input");
+      hiddenInput.type = "checkbox";
+      hiddenInput.name = "hidden";
+      hiddenInput.checked = item.hidden === true;
+      hiddenLabel.append(hiddenInput, document.createTextNode("隐藏"));
+
+      flags.append(publishedLabel, hiddenLabel);
+
+      const descField = document.createElement("label");
+      descField.className = "field admin-item-edit-desc";
+      descField.innerHTML = `<span class="field-label">描述</span>`;
+      const descInput = document.createElement("textarea");
+      descInput.className = "field-input field-textarea";
+      descInput.name = "description";
+      descInput.value = item.description || "";
+      descField.appendChild(descInput);
+
+      grid.append(titleField, categoryField, orderField, flags, descField);
+
+      const editActions = document.createElement("div");
+      editActions.className = "admin-actions";
+
+      const saveBtn = document.createElement("button");
+      saveBtn.type = "button";
+      saveBtn.className = "btn btn-primary";
+      saveBtn.textContent = "保存";
+      saveBtn.dataset.action = "save";
+
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "btn btn-ghost";
+      cancelBtn.textContent = "取消";
+      cancelBtn.dataset.action = "cancel";
+
+      editActions.append(cancelBtn, saveBtn);
+      edit.append(grid, editActions);
+
+      row.append(view, edit);
+      container.appendChild(row);
+    }
+  }
+
+  const meta = $("#admin-items-meta");
+  const total = state.admin.itemsTotal || 0;
+  meta.textContent = total ? `已加载 ${items.length} / ${total}` : "";
+
+  const loadMore = $("#admin-load-more");
+  const hasMore = items.length < total;
+  loadMore.classList.toggle("hidden", !hasMore);
+  loadMore.disabled = state.admin.itemsLoading === true;
+}
+
+function renderAdminCategories(state) {
+  const container = $("#admin-categories");
+  container.innerHTML = "";
+
+  const categories = sortCategoryList(state.admin.categories || []);
+  if (!categories.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "暂无分类。";
     container.appendChild(empty);
     return;
   }
 
-  for (const item of items) {
+  for (const category of categories) {
     const row = document.createElement("div");
-    row.className = "admin-item";
-    row.dataset.id = item.id;
+    row.className = "admin-category";
+    row.dataset.id = category.id;
 
-    const main = document.createElement("div");
-    main.className = "admin-item-main";
-
-    const title = document.createElement("div");
-    title.className = "admin-item-title";
-    title.textContent = item.title;
+    const header = document.createElement("div");
+    header.className = "admin-category-header";
+    header.textContent = `${category.title} (${category.id})`;
 
     const meta = document.createElement("div");
-    meta.className = "admin-item-meta";
-    meta.textContent = `${item.type === "link" ? "链接" : "上传"} · ${item.categoryTitle}`;
+    meta.className = "admin-category-meta";
+    meta.textContent = `共 ${category.count} · 内置 ${category.builtinCount} · 新增 ${category.dynamicCount}`;
 
-    main.append(title, meta);
+    const grid = document.createElement("div");
+    grid.className = "admin-category-grid";
 
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "btn btn-ghost danger";
-    del.textContent = "删除";
-    del.dataset.action = "delete";
+    const titleField = document.createElement("label");
+    titleField.className = "field";
+    titleField.innerHTML = `<span class="field-label">标题</span>`;
+    const titleInput = document.createElement("input");
+    titleInput.className = "field-input";
+    titleInput.name = "title";
+    titleInput.type = "text";
+    titleInput.value = category.title || "";
+    titleField.appendChild(titleInput);
 
-    row.append(main, del);
+    const orderField = document.createElement("label");
+    orderField.className = "field";
+    orderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
+    const orderInput = document.createElement("input");
+    orderInput.className = "field-input";
+    orderInput.name = "order";
+    orderInput.type = "number";
+    orderInput.value = String(category.order || 0);
+    orderField.appendChild(orderInput);
+
+    const hiddenField = document.createElement("label");
+    hiddenField.className = "admin-check";
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "checkbox";
+    hiddenInput.name = "hidden";
+    hiddenInput.checked = category.hidden === true;
+    hiddenField.append(hiddenInput, document.createTextNode("隐藏该分类（首页不显示）"));
+
+    grid.append(titleField, orderField, hiddenField);
+
+    const actions = document.createElement("div");
+    actions.className = "admin-actions";
+
+    const resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = "btn btn-ghost";
+    resetBtn.textContent = "重置";
+    resetBtn.dataset.action = "category-reset";
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.className = "btn btn-primary";
+    saveBtn.textContent = "保存";
+    saveBtn.dataset.action = "category-save";
+
+    actions.append(resetBtn, saveBtn);
+
+    row.append(header, meta, grid, actions);
     container.appendChild(row);
   }
 }
 
+async function reloadAdminItems(state, { reset = false } = {}) {
+  if (state.admin.itemsLoading) return;
+  state.admin.itemsLoading = true;
+
+  const reqId = (state.admin.itemsReqId || 0) + 1;
+  state.admin.itemsReqId = reqId;
+
+  try {
+    const nextPage = reset ? 1 : (state.admin.itemsPage || 1) + 1;
+    const page = reset ? 1 : nextPage;
+    const pageSize = state.admin.itemsPageSize || 24;
+    const q = state.admin.itemsQuery || "";
+
+    const data = await listItems({ page, pageSize, q });
+    if (state.admin.itemsReqId !== reqId) return;
+
+    const received = Array.isArray(data?.items) ? data.items : [];
+    state.admin.itemsPage = data?.page || page;
+    state.admin.itemsPageSize = data?.pageSize || pageSize;
+    state.admin.itemsTotal = data?.total || 0;
+    state.admin.items = reset ? received : [...(state.admin.items || []), ...received];
+  } finally {
+    if (state.admin.itemsReqId === reqId) state.admin.itemsLoading = false;
+  }
+
+  renderAdminItems(state);
+}
+
 function initAdmin({ state }) {
-  $("#admin-button").addEventListener("click", () => {
+  $("#admin-tabs").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-admin-tab]");
+    if (!btn) return;
+    setAdminTab(state, btn.dataset.adminTab);
+  });
+
+  $("#admin-button").addEventListener("click", async () => {
     openAdminModal();
-    fillCategorySelect($("#upload-category"), state.catalog);
-    fillCategorySelect($("#link-category"), state.catalog);
-    refreshAdminUi(state);
+    setAdminTab(state, state.admin.tab || "items");
+    $("#admin-items-search").value = state.admin.itemsQuery || "";
+
+    try {
+      await loadAdminCategories(state);
+      await reloadAdminItems(state, { reset: true });
+    } catch (err) {
+      if (err?.status === 401) {
+        clearToken();
+        setLoginUi({ loggedIn: false });
+        closeAdminModal();
+        showToast("登录已失效，请重新登录。", { kind: "info" });
+        return;
+      }
+      showToast("加载管理数据失败", { kind: "info" });
+    }
   });
 
   $("#admin-modal-backdrop").addEventListener("click", () => closeAdminModal());
@@ -420,11 +722,44 @@ function initAdmin({ state }) {
     showToast("已退出登录", { kind: "info" });
   });
 
+  let searchTimer = 0;
+  $("#admin-items-search").addEventListener("input", (e) => {
+    state.admin.itemsQuery = e.target.value || "";
+    window.clearTimeout(searchTimer);
+    searchTimer = window.setTimeout(async () => {
+      try {
+        await reloadAdminItems(state, { reset: true });
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast("搜索失败", { kind: "info" });
+      }
+    }, 250);
+  });
+
+  $("#admin-load-more").addEventListener("click", async () => {
+    try {
+      await reloadAdminItems(state);
+    } catch (err) {
+      if (err?.status === 401) {
+        clearToken();
+        setLoginUi({ loggedIn: false });
+        closeAdminModal();
+        return;
+      }
+      showToast("加载失败", { kind: "info" });
+    }
+  });
+
   $("#upload-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const file = $("#upload-file").files?.[0];
     if (!file) {
-      showToast("请选择一个 HTML 文件", { kind: "info" });
+      showToast("请选择一个 HTML 或 ZIP 文件", { kind: "info" });
       return;
     }
 
@@ -441,6 +776,10 @@ function initAdmin({ state }) {
       $("#upload-description").value = "";
       showToast("上传成功", { kind: "success" });
       await refreshCatalog(state);
+      if (isAdminOpen()) {
+        await loadAdminCategories(state);
+        await reloadAdminItems(state, { reset: true });
+      }
     } catch (err) {
       if (err?.status === 401) {
         clearToken();
@@ -474,6 +813,10 @@ function initAdmin({ state }) {
       $("#link-description").value = "";
       showToast("添加成功", { kind: "success" });
       await refreshCatalog(state);
+      if (isAdminOpen()) {
+        await loadAdminCategories(state);
+        await reloadAdminItems(state, { reset: true });
+      }
     } catch (err) {
       if (err?.status === 401) {
         clearToken();
@@ -487,28 +830,185 @@ function initAdmin({ state }) {
   });
 
   $("#admin-items").addEventListener("click", async (e) => {
-    const btn = e.target.closest("button");
+    const btn = e.target.closest("button[data-action]");
     if (!btn) return;
-    if (btn.dataset.action !== "delete") return;
 
     const row = btn.closest(".admin-item");
     const id = row?.dataset?.id;
     if (!id) return;
 
-    btn.disabled = true;
+    const edit = row.querySelector(".admin-item-edit");
+    const action = btn.dataset.action;
+
+    if (action === "edit") {
+      edit?.classList.toggle("hidden");
+      return;
+    }
+
+    if (action === "cancel") {
+      edit?.classList.add("hidden");
+      return;
+    }
+
+    if (action === "save") {
+      const title = row.querySelector('input[name="title"]')?.value ?? "";
+      const description = row.querySelector('textarea[name="description"]')?.value ?? "";
+      const categoryId = row.querySelector('select[name="categoryId"]')?.value ?? "other";
+      const orderRaw = row.querySelector('input[name="order"]')?.value ?? "0";
+      const order = Number.parseInt(orderRaw, 10);
+      const published = row.querySelector('input[name="published"]')?.checked ?? true;
+      const hidden = row.querySelector('input[name="hidden"]')?.checked ?? false;
+
+      btn.disabled = true;
+      try {
+        const data = await updateItem(id, {
+          title: title.trim(),
+          description: description.trim(),
+          categoryId,
+          order: Number.isFinite(order) ? order : 0,
+          published,
+          hidden,
+        });
+        const updated = data?.item;
+        if (updated?.id) {
+          state.admin.items = (state.admin.items || []).map((it) => (it.id === id ? updated : it));
+        }
+        showToast("已保存", { kind: "success" });
+        edit?.classList.add("hidden");
+        renderAdminItems(state);
+        await refreshCatalog(state);
+        await loadAdminCategories(state);
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast("保存失败", { kind: "info" });
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    if (action === "delete") {
+      if (!window.confirm("确定删除这条内容吗？")) return;
+
+      btn.disabled = true;
+      try {
+        await deleteItem(id);
+        showToast("已删除", { kind: "success" });
+        await refreshCatalog(state);
+        await loadAdminCategories(state);
+        await reloadAdminItems(state, { reset: true });
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast("删除失败", { kind: "info" });
+      } finally {
+        btn.disabled = false;
+      }
+    }
+  });
+
+  $("#category-create-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("#category-create-submit").disabled = true;
     try {
-      await deleteItem(id);
-      showToast("已删除", { kind: "success" });
+      const id = $("#category-create-id").value.trim();
+      const title = $("#category-create-title").value.trim();
+      const orderRaw = $("#category-create-order").value;
+      const hidden = $("#category-create-hidden").checked;
+      const order = Number.parseInt(orderRaw || "0", 10);
+
+      await createCategory({ id, title, order: Number.isFinite(order) ? order : 0, hidden });
+      $("#category-create-id").value = "";
+      $("#category-create-title").value = "";
+      $("#category-create-order").value = "0";
+      $("#category-create-hidden").checked = false;
+      showToast("分类已创建", { kind: "success" });
+      await loadAdminCategories(state);
       await refreshCatalog(state);
     } catch (err) {
+      if (err?.status === 409) {
+        showToast("该分类 ID 已存在", { kind: "info" });
+        return;
+      }
       if (err?.status === 401) {
         clearToken();
         setLoginUi({ loggedIn: false });
         closeAdminModal();
+        return;
       }
-      showToast("删除失败", { kind: "info" });
+      showToast("创建分类失败", { kind: "info" });
     } finally {
-      btn.disabled = false;
+      $("#category-create-submit").disabled = false;
+    }
+  });
+
+  $("#admin-categories").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const row = btn.closest(".admin-category");
+    const id = row?.dataset?.id;
+    if (!id) return;
+
+    const action = btn.dataset.action;
+
+    if (action === "category-reset") {
+      btn.disabled = true;
+      try {
+        await deleteCategory(id);
+        showToast("已重置", { kind: "success" });
+        await loadAdminCategories(state);
+        await refreshCatalog(state);
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast("重置失败", { kind: "info" });
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    if (action === "category-save") {
+      const title = row.querySelector('input[name="title"]')?.value ?? "";
+      const orderRaw = row.querySelector('input[name="order"]')?.value ?? "0";
+      const hidden = row.querySelector('input[name="hidden"]')?.checked ?? false;
+      const order = Number.parseInt(orderRaw || "0", 10);
+
+      btn.disabled = true;
+      try {
+        await updateCategory(id, {
+          title: title.trim(),
+          order: Number.isFinite(order) ? order : 0,
+          hidden,
+        });
+        showToast("分类已保存", { kind: "success" });
+        await loadAdminCategories(state);
+        await refreshCatalog(state);
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast("保存失败", { kind: "info" });
+      } finally {
+        btn.disabled = false;
+      }
     }
   });
 }
@@ -518,7 +1018,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   initLogin();
   await bootstrapAuth();
 
-  const state = { catalog: { categories: {} }, selectedCategoryId: "all", query: "" };
+  const state = {
+    catalog: { categories: {} },
+    selectedCategoryId: "all",
+    query: "",
+    admin: {
+      tab: "items",
+      categories: [],
+      items: [],
+      itemsQuery: "",
+      itemsPage: 1,
+      itemsPageSize: 24,
+      itemsTotal: 0,
+      itemsLoading: false,
+      itemsReqId: 0,
+    },
+  };
   await refreshCatalog(state);
   initFiltering({ state });
   initAdmin({ state });

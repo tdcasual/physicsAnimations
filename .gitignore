@@ -80,8 +80,12 @@ web_modules/
 .env.production.local
 .env.local
 
+# Vercel
+.vercel
+
 # Runtime content
 content/items.json
+content/categories.json
 content/uploads/
 content/thumbnails/
 
