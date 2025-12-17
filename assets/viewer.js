@@ -53,17 +53,34 @@ async function findBuiltinMeta(builtinPath) {
   return null;
 }
 
-async function findDynamicMeta(id) {
+async function tryFetchItemMeta(id) {
   const token = getToken();
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
-  const response = await fetch(`/api/items/${encodeURIComponent(id)}`, { cache: "no-store", headers });
-  if (!response.ok) return null;
-  const data = await response.json();
-  return data?.item || null;
+  try {
+    const response = await fetch(`/api/items/${encodeURIComponent(id)}`, {
+      cache: "no-store",
+      headers,
+    });
+    if (!response.ok) return { item: null, ok: false, status: response.status, networkError: false };
+    const data = await response.json().catch(() => null);
+    return { item: data?.item || null, ok: true, status: response.status, networkError: false };
+  } catch {
+    return { item: null, ok: false, status: 0, networkError: true };
+  }
+}
+
+async function hasBackend() {
+  try {
+    const response = await fetch("/api/health", { cache: "no-store" });
+    return response.ok;
+  } catch {
+    return false;
+  }
 }
 
 async function init() {
-  const { builtin, src, id } = parseQuery();
+  const { builtin, src, id: rawId } = parseQuery();
+  const id = rawId || builtin;
 
   const frame = $("#viewer-frame");
   const open = $("#viewer-open");
@@ -74,8 +91,31 @@ async function init() {
   let screenshotMode = false;
   let screenshotUrl = "";
 
-  const dynamic = id ? await findDynamicMeta(id) : null;
-  if (id && !dynamic) {
+  let item = null;
+  let canFallbackToBuiltin = false;
+  if (id) {
+    const fetched = await tryFetchItemMeta(id);
+    item = fetched.item;
+    if (!item) {
+      if (fetched.networkError === true) {
+        canFallbackToBuiltin = true;
+      } else if (fetched.status === 404) {
+        canFallbackToBuiltin = !(await hasBackend());
+      }
+    }
+  }
+
+  let target = item?.src ? item.src : "";
+  if (!target && id && canFallbackToBuiltin) {
+    const meta = await findBuiltinMeta(id);
+    if (meta) {
+      target = toBuiltinUrl(id);
+      if (meta?.title) setTitle(meta.title);
+      if (meta?.thumbnail) screenshotUrl = meta.thumbnail;
+    }
+  }
+
+  if (!target && id) {
     setTitle("未找到作品");
     $("#viewer-title").textContent = "作品不存在或无权限访问。";
     open.classList.add("hidden");
@@ -84,7 +124,8 @@ async function init() {
     return;
   }
 
-  const target = dynamic?.src ? dynamic.src : builtin ? toBuiltinUrl(builtin) : src;
+  if (!target) target = src;
+
   if (!target) {
     setTitle("缺少参数");
     $("#viewer-title").textContent = "缺少参数：builtin / src";
@@ -97,18 +138,14 @@ async function init() {
   open.href = target;
   frame.src = target;
 
-  if (dynamic) {
-    if (dynamic?.title) setTitle(dynamic.title);
-    if (dynamic?.thumbnail) screenshotUrl = dynamic.thumbnail;
-  } else if (builtin) {
-    const meta = await findBuiltinMeta(builtin);
-    if (meta?.title) setTitle(meta.title);
-    if (meta?.thumbnail) screenshotUrl = meta.thumbnail;
+  if (item) {
+    if (item?.title) setTitle(item.title);
+    if (item?.thumbnail) screenshotUrl = item.thumbnail;
   }
 
   if (screenshotUrl) showScreenshot(screenshotUrl);
 
-  const isExternalLink = dynamic ? dynamic.type === "link" : isHttpUrl(target);
+  const isExternalLink = item ? item.type === "link" : isHttpUrl(target);
   if (isExternalLink) {
     hintText.textContent =
       "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：默认仅截图展示；如需交互可点“进入交互”，若仍失败请点“打开原页面”。";

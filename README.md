@@ -7,6 +7,7 @@
 - 分类标签页 + 搜索
 - 卡片缩略图（自动截图生成）
 - 统一的预览页 `viewer.html`：先展示截图（带动效）再加载页面
+- 上传内容编码自动处理（统一保存为 UTF-8，兼容常见中文编码）
 - 管理员登录后：
   - 上传 HTML（单文件）
   - 上传 ZIP（解压到独立目录，需包含 `index.html`）
@@ -121,7 +122,7 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 
 当你配置了 WebDAV（设置 `STORAGE_MODE=webdav` 或提供 `WEBDAV_URL`），服务端会把以下运行时数据放到 WebDAV：
 
-- `content/items.json`、`content/categories.json`
+- `content/items.json`、`content/categories.json`、`content/builtin_items.json`
 - `content/uploads/`（上传 HTML/ZIP 解压后的目录）
 - `content/thumbnails/`（动态内容缩略图）
 
@@ -132,6 +133,33 @@ npm run backup:webdav
 ```
 
 ## 部署
+
+### Docker（自托管）
+
+构建镜像：
+
+```bash
+docker build -t physics-animations:latest .
+```
+
+启动容器（本地存储模式，建议挂载 `content/` 以持久化上传/配置）：
+
+```bash
+docker run -d --name physics-animations \
+  -p 4173:4173 \
+  -v "$(pwd)/content:/app/content" \
+  -e PORT=4173 \
+  -e ADMIN_USERNAME=tdcasual \
+  -e ADMIN_PASSWORD_HASH='(your_bcrypt_hash)' \
+  -e JWT_SECRET='(your_secret)' \
+  physics-animations:latest
+```
+
+说明：
+
+- 默认端口为 `4173`，可用 `-e PORT=xxxx` 覆盖
+- 不挂载 `content/` 时，容器重建会丢失上传内容与配置
+- 镜像内已安装 Playwright Chromium 与系统依赖，用于上传后自动截图；如不需要截图可自行修改 `Dockerfile` 去掉该步骤
 
 ### Vercel（Serverless）
 
@@ -151,7 +179,7 @@ npm run backup:webdav
 - `viewer.html`：预览页（截图动效 + iframe）
 - `animations/`：内置动画页面（按分类目录组织）
 - `animations/thumbnails/`：内置动画缩略图（自动生成）
-- `content/`：登录后上传/外链的运行时数据（默认已加入 `.gitignore`）
+- `content/`：登录后上传/外链与内置条目配置的运行时数据（默认已加入 `.gitignore`）
 - `server/`：后端（登录、上传、外链、截图、目录合并）
 - `scripts/`：工具脚本（生成缩略图/清单、安装 Playwright 本地依赖）
 

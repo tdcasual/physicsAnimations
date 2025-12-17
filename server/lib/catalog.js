@@ -2,41 +2,94 @@ const fs = require("fs");
 const path = require("path");
 
 const { CATEGORY_TITLES } = require("./categories");
-const { loadItemsState, loadCategoriesState } = require("./state");
+const { loadItemsState, loadCategoriesState, loadBuiltinItemsState } = require("./state");
 
 function safeText(text) {
   if (typeof text !== "string") return "";
   return text;
 }
 
-function loadBuiltinCatalog({ rootDir }) {
+function applyBuiltinOverride(item, override) {
+  const out = { ...item };
+  if (!override || typeof override !== "object") return out;
+  if (override.deleted === true) return null;
+
+  if (typeof override.title === "string") {
+    const title = override.title.trim();
+    if (title) out.title = safeText(title);
+  }
+  if (typeof override.description === "string") {
+    out.description = safeText(override.description);
+  }
+  if (typeof override.categoryId === "string") {
+    const categoryId = override.categoryId.trim();
+    if (categoryId) out.categoryId = safeText(categoryId);
+  }
+  if (Number.isFinite(override.order)) out.order = Math.trunc(override.order);
+  if (typeof override.published === "boolean") out.published = override.published;
+  if (typeof override.hidden === "boolean") out.hidden = override.hidden;
+  if (typeof override.updatedAt === "string") out.updatedAt = override.updatedAt;
+
+  return out;
+}
+
+function loadBuiltinCatalog({ rootDir, builtinState, includeHiddenItems = false, includeUnpublishedItems = false } = {}) {
   const filePath = path.join(rootDir, "animations.json");
   if (!fs.existsSync(filePath)) return { categories: {} };
 
   const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const overrides = builtinState?.items && typeof builtinState.items === "object" ? builtinState.items : {};
   const categories = {};
 
   for (const [categoryId, category] of Object.entries(data)) {
     const title = safeText(category?.title || CATEGORY_TITLES[categoryId] || categoryId);
-    const items = (category?.items || []).map((item) => {
+    categories[categoryId] = { id: categoryId, title, order: 0, hidden: false, items: [] };
+  }
+
+  for (const [categoryId, category] of Object.entries(data)) {
+    for (const item of category?.items || []) {
       const file = safeText(item?.file || "");
+      if (!file) continue;
       const thumbnail = safeText(item?.thumbnail || "");
       const itemTitle = safeText(item?.title || file.replace(/\.html$/i, ""));
       const description = safeText(item?.description || "");
 
-      return {
+      const baseItem = {
         id: file,
         type: "builtin",
         categoryId,
         title: itemTitle,
         description,
         order: 0,
-        href: `viewer.html?builtin=${encodeURIComponent(file)}`,
+        href: `viewer.html?id=${encodeURIComponent(file)}`,
         thumbnail,
+        published: true,
+        hidden: false,
+        createdAt: "",
+        updatedAt: "",
       };
-    });
 
-    categories[categoryId] = { id: categoryId, title, order: 0, hidden: false, items };
+      const merged = applyBuiltinOverride(baseItem, overrides[file]);
+      if (!merged) continue;
+      const finalCategoryId = merged.categoryId || categoryId;
+      merged.categoryId = finalCategoryId;
+
+      const published = merged.published !== false;
+      const hidden = merged.hidden === true;
+      if (!includeUnpublishedItems && !published) continue;
+      if (!includeHiddenItems && hidden) continue;
+
+      if (!categories[finalCategoryId]) {
+        categories[finalCategoryId] = {
+          id: finalCategoryId,
+          title: safeText(CATEGORY_TITLES[finalCategoryId] || finalCategoryId),
+          order: 0,
+          hidden: false,
+          items: [],
+        };
+      }
+      categories[finalCategoryId].items.push(merged);
+    }
   }
 
   return { categories };
@@ -57,7 +110,8 @@ async function loadCatalog({
   includeUnpublishedItems = false,
   includeConfigCategories = false,
 } = {}) {
-  const builtin = loadBuiltinCatalog({ rootDir });
+  const builtinState = await loadBuiltinItemsState({ store });
+  const builtin = loadBuiltinCatalog({ rootDir, builtinState, includeHiddenItems, includeUnpublishedItems });
   const dynamic = await loadItemsState({ store });
   const categoryState = await loadCategoriesState({ store });
 

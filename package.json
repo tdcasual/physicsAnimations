@@ -11,7 +11,7 @@
     "generate-thumbnails": "node scripts/generate_thumbnails.js",
     "build-catalog": "node scripts/build_catalog.js",
     "backup:webdav": "node scripts/backup_to_webdav.js",
-    "prepare": "husky"
+    "prepare": "node scripts/prepare.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "express": "^4.21.2",
+    "iconv-lite": "^0.6.3",
     "ipaddr.js": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",

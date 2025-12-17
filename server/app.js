@@ -75,6 +75,7 @@ function createApp({ rootDir }) {
         setHeaders(res, filePath) {
           const lower = filePath.toLowerCase();
           if (!lower.endsWith(".html") && !lower.endsWith(".htm")) return;
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
           res.setHeader("Content-Security-Policy", `${UPLOAD_CSP}; frame-ancestors 'self'`);
           res.setHeader("Referrer-Policy", "no-referrer");
           res.setHeader("X-Content-Type-Options", "nosniff");

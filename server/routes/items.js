@@ -10,11 +10,22 @@ const { z } = require("zod");
 const { requireAuth, optionalAuth } = require("../lib/auth");
 const { captureScreenshot, filePathToUrl } = require("../lib/screenshot");
 const { assertPublicHttpUrl } = require("../lib/ssrf");
-const { loadItemsState, saveItemsState } = require("../lib/state");
+const {
+  loadItemsState,
+  saveItemsState,
+  loadBuiltinItemsState,
+  saveBuiltinItemsState,
+} = require("../lib/state");
 const { sanitizeUploadedHtml } = require("../lib/uploadSecurity");
+const { decodeHtmlBuffer, decodeTextBuffer } = require("../lib/textEncoding");
 const { parseWithSchema, idSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
+
+function safeText(text) {
+  if (typeof text !== "string") return "";
+  return text;
+}
 
 function normalizeCategoryId(categoryId) {
   if (typeof categoryId !== "string") return "other";
@@ -31,6 +42,7 @@ function guessContentType(filePath) {
     ".js": "text/javascript; charset=utf-8",
     ".mjs": "text/javascript; charset=utf-8",
     ".json": "application/json; charset=utf-8",
+    ".map": "application/json; charset=utf-8",
     ".png": "image/png",
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
@@ -69,6 +81,23 @@ function normalizeZipPath(zipPath) {
 }
 
 function toApiItem(item) {
+  if (item.type === "builtin") {
+    return {
+      id: item.id,
+      type: "builtin",
+      categoryId: item.categoryId,
+      title: item.title,
+      description: item.description,
+      thumbnail: item.thumbnail,
+      order: item.order || 0,
+      published: item.published !== false,
+      hidden: item.hidden === true,
+      src: `animations/${item.id}`,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    };
+  }
+
   const src = item.type === "link" ? item.url : item.path;
   return {
     id: item.id,
@@ -102,6 +131,97 @@ function createItemsRouter({ rootDir, authConfig, store }) {
   const authRequired = requireAuth({ authConfig });
   const authOptional = optionalAuth({ authConfig });
   const warnScreenshotDeps = createWarnScreenshotDeps();
+
+  function loadBuiltinIndex() {
+    const filePath = path.join(rootDir, "animations.json");
+    if (!fs.existsSync(filePath)) return [];
+
+    let data = null;
+    try {
+      data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    } catch {
+      data = null;
+    }
+    if (!data || typeof data !== "object") return [];
+
+    const items = [];
+    for (const [categoryId, category] of Object.entries(data)) {
+      for (const raw of category?.items || []) {
+        const file = safeText(raw?.file || "");
+        if (!file) continue;
+        const thumbnail = safeText(raw?.thumbnail || "");
+        const title = safeText(raw?.title || file.replace(/\.html$/i, ""));
+        const description = safeText(raw?.description || "");
+
+        items.push({
+          id: file,
+          type: "builtin",
+          categoryId,
+          title,
+          description,
+          thumbnail,
+          order: 0,
+          published: true,
+          hidden: false,
+          createdAt: "",
+          updatedAt: "",
+        });
+      }
+    }
+    return items;
+  }
+
+  async function loadBuiltinItems() {
+    const base = loadBuiltinIndex();
+    if (!base.length) return [];
+
+    const state = await loadBuiltinItemsState({ store });
+    const overrides =
+      state?.items && typeof state.items === "object" ? state.items : {};
+
+    const merged = [];
+    for (const item of base) {
+      const override = overrides[item.id];
+      if (override?.deleted === true) continue;
+
+      const out = { ...item };
+      if (typeof override?.title === "string" && override.title.trim()) out.title = override.title.trim();
+      if (typeof override?.description === "string") out.description = override.description;
+      if (typeof override?.categoryId === "string" && override.categoryId.trim()) {
+        out.categoryId = normalizeCategoryId(override.categoryId);
+      }
+      if (Number.isFinite(override?.order)) out.order = Math.trunc(override.order);
+      if (typeof override?.published === "boolean") out.published = override.published;
+      if (typeof override?.hidden === "boolean") out.hidden = override.hidden;
+      if (typeof override?.updatedAt === "string") out.updatedAt = override.updatedAt;
+
+      merged.push(out);
+    }
+
+    return merged;
+  }
+
+  async function findBuiltinItemById(id) {
+    const base = loadBuiltinIndex().find((it) => it.id === id);
+    if (!base) return null;
+
+    const state = await loadBuiltinItemsState({ store });
+    const override = state?.items?.[id];
+    if (override?.deleted === true) return null;
+
+    const out = { ...base };
+    if (typeof override?.title === "string" && override.title.trim()) out.title = override.title.trim();
+    if (typeof override?.description === "string") out.description = override.description;
+    if (typeof override?.categoryId === "string" && override.categoryId.trim()) {
+      out.categoryId = normalizeCategoryId(override.categoryId);
+    }
+    if (Number.isFinite(override?.order)) out.order = Math.trunc(override.order);
+    if (typeof override?.published === "boolean") out.published = override.published;
+    if (typeof override?.hidden === "boolean") out.hidden = override.hidden;
+    if (typeof override?.updatedAt === "string") out.updatedAt = override.updatedAt;
+
+    return out;
+  }
 
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -236,6 +356,15 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         let total = 0;
         const extracted = [];
         const htmlCandidates = [];
+        const textExts = new Set([
+          ".css",
+          ".js",
+          ".mjs",
+          ".json",
+          ".map",
+          ".txt",
+          ".svg",
+        ]);
 
         for (const file of files) {
           const rel = normalizeZipPath(file.path);
@@ -268,12 +397,18 @@ function createItemsRouter({ rootDir, authConfig, store }) {
 
           let outBuf = buf;
           let contentType = guessContentType(rel);
-          if (/\.(html?|htm)$/i.test(rel)) {
-            const html = buf.toString("utf8");
+          const extLower = path.extname(rel).toLowerCase();
+          if (extLower === ".html" || extLower === ".htm") {
+            const html = decodeHtmlBuffer(buf);
             const sanitized = sanitizeUploadedHtml(html, { allowLocalScripts: true });
             outBuf = Buffer.from(sanitized, "utf8");
             contentType = "text/html; charset=utf-8";
             htmlCandidates.push(rel);
+          } else if (textExts.has(extLower)) {
+            const kind = extLower === ".css" ? "css" : "text";
+            const text = decodeTextBuffer(buf, { kind });
+            outBuf = Buffer.from(text, "utf8");
+            contentType = guessContentType(rel);
           }
 
           fs.writeFileSync(localPath, outBuf);
@@ -305,7 +440,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
           { contentType: "application/json; charset=utf-8" },
         );
       } else {
-        const html = fileBuffer.toString("utf8");
+        const html = decodeHtmlBuffer(fileBuffer);
         const sanitizedHtml = sanitizeUploadedHtml(html);
         const uploadKey = `uploads/${id}/index.html`;
         await store.writeBuffer(uploadKey, Buffer.from(sanitizedHtml, "utf8"), {
@@ -374,14 +509,15 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       const type = (query.type || "").trim();
 
       const state = await loadItemsState({ store });
-      let items = [...state.items];
+      const builtinItems = await loadBuiltinItems();
+      let items = [...state.items, ...builtinItems];
 
       if (!isAdmin) items = items.filter((it) => it.published !== false && it.hidden !== true);
       if (categoryId) items = items.filter((it) => it.categoryId === categoryId);
       if (type) items = items.filter((it) => it.type === type);
       if (q) {
         items = items.filter((it) => {
-          const hay = `${it.title || ""}\n${it.description || ""}\n${it.url || ""}`.toLowerCase();
+          const hay = `${it.title || ""}\n${it.description || ""}\n${it.url || ""}\n${it.path || ""}\n${it.id || ""}`.toLowerCase();
           return hay.includes(q);
         });
       }
@@ -442,7 +578,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     "/items/:id",
     authRequired,
     rateLimit({ key: "items_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    (req, res) => {
+    asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
       const body = parseWithSchema(updateItemSchema, req.body);
 
@@ -458,31 +594,73 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         return;
       }
 
-      loadItemsState({ store })
-        .then((state) => {
-          const item = state.items.find((it) => it.id === id);
-          if (!item) {
-            res.status(404).json({ error: "not_found" });
-            return;
-          }
+      const state = await loadItemsState({ store });
+      const dynamicItem = state.items.find((it) => it.id === id);
+      if (dynamicItem) {
+        if (body.title !== undefined) dynamicItem.title = body.title;
+        if (body.description !== undefined) dynamicItem.description = body.description;
+        if (body.categoryId !== undefined) dynamicItem.categoryId = normalizeCategoryId(body.categoryId);
+        if (body.order !== undefined) dynamicItem.order = body.order;
+        if (body.published !== undefined) dynamicItem.published = body.published;
+        if (body.hidden !== undefined) dynamicItem.hidden = body.hidden;
 
-          if (body.title !== undefined) item.title = body.title;
-          if (body.description !== undefined) item.description = body.description;
-          if (body.categoryId !== undefined) item.categoryId = normalizeCategoryId(body.categoryId);
-          if (body.order !== undefined) item.order = body.order;
-          if (body.published !== undefined) item.published = body.published;
-          if (body.hidden !== undefined) item.hidden = body.hidden;
+        dynamicItem.updatedAt = new Date().toISOString();
+        await saveItemsState({ store, state });
+        res.json({ ok: true, item: toApiItem(dynamicItem) });
+        return;
+      }
 
-          item.updatedAt = new Date().toISOString();
-          return saveItemsState({ store, state }).then(() => {
-            res.json({ ok: true, item: toApiItem(item) });
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({ error: "server_error" });
-          console.error(err);
-        });
-    },
+      const builtinBase = loadBuiltinIndex().find((it) => it.id === id);
+      if (!builtinBase) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+
+      const builtinState = await loadBuiltinItemsState({ store });
+      if (!builtinState.items) builtinState.items = {};
+
+      const current = builtinState.items[id] && typeof builtinState.items[id] === "object" ? { ...builtinState.items[id] } : {};
+      if (current.deleted === true) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+
+      if (body.title !== undefined) {
+        const title = String(body.title || "").trim();
+        if (!title) delete current.title;
+        else current.title = title;
+      }
+      if (body.description !== undefined) {
+        const desc = String(body.description || "");
+        if (!desc.trim()) delete current.description;
+        else current.description = desc;
+      }
+      if (body.categoryId !== undefined) {
+        const raw = String(body.categoryId || "").trim();
+        if (!raw) delete current.categoryId;
+        else current.categoryId = normalizeCategoryId(raw);
+      }
+      if (body.order !== undefined) current.order = body.order;
+      if (body.published !== undefined) current.published = body.published;
+      if (body.hidden !== undefined) current.hidden = body.hidden;
+
+      const now = new Date().toISOString();
+      current.updatedAt = now;
+
+      const hasAnyOverride = Object.entries(current).some(([k, v]) => k !== "updatedAt" && v !== undefined);
+      if (hasAnyOverride) builtinState.items[id] = current;
+      else delete builtinState.items[id];
+
+      await saveBuiltinItemsState({ store, state: builtinState });
+
+      const updated = await findBuiltinItemById(id);
+      if (!updated) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+
+      res.json({ ok: true, item: toApiItem(updated) });
+    }),
   );
 
   router.post(
@@ -530,24 +708,38 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     }),
   );
 
-  router.get("/items/:id", authOptional, asyncHandler(async (req, res) => {
-    const isAdmin = req.user?.role === "admin";
-    const id = parseWithSchema(idSchema, req.params.id);
+  router.get(
+    "/items/:id",
+    authOptional,
+    asyncHandler(async (req, res) => {
+      const isAdmin = req.user?.role === "admin";
+      const id = parseWithSchema(idSchema, req.params.id);
 
-    const state = await loadItemsState({ store });
-    const item = state.items.find((it) => it.id === id);
-    if (!item) {
-      res.status(404).json({ error: "not_found" });
-      return;
-    }
+      const state = await loadItemsState({ store });
+      const item = state.items.find((it) => it.id === id);
+      if (item) {
+        if (!isAdmin && (item.published === false || item.hidden === true)) {
+          res.status(404).json({ error: "not_found" });
+          return;
+        }
+        res.json({ item: toApiItem(item) });
+        return;
+      }
 
-    if (!isAdmin && (item.published === false || item.hidden === true)) {
-      res.status(404).json({ error: "not_found" });
-      return;
-    }
+      const builtin = await findBuiltinItemById(id);
+      if (!builtin) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
 
-    res.json({ item: toApiItem(item) });
-  }));
+      if (!isAdmin && (builtin.published === false || builtin.hidden === true)) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+
+      res.json({ item: toApiItem(builtin) });
+    }),
+  );
 
   router.post(
     "/items/:id/screenshot",
@@ -642,19 +834,37 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       const item = state.items.find((it) => it.id === id);
       state.items = state.items.filter((it) => it.id !== id);
 
-      if (!item || state.items.length === before) {
+      if (item && state.items.length !== before) {
+        if (item.type === "upload") {
+          await store.deletePath(`uploads/${id}`, { recursive: true });
+        }
+        if (item.thumbnail) {
+          await store.deletePath(`thumbnails/${id}.png`);
+        }
+
+        await saveItemsState({ store, state });
+        res.json({ ok: true });
+        return;
+      }
+
+      const builtinBase = loadBuiltinIndex().find((it) => it.id === id);
+      if (!builtinBase) {
         res.status(404).json({ error: "not_found" });
         return;
       }
 
-      if (item.type === "upload") {
-        await store.deletePath(`uploads/${id}`, { recursive: true });
-      }
-      if (item.thumbnail) {
-        await store.deletePath(`thumbnails/${id}.png`);
-      }
+      const builtinState = await loadBuiltinItemsState({ store });
+      if (!builtinState.items) builtinState.items = {};
+      const current =
+        builtinState.items[id] && typeof builtinState.items[id] === "object"
+          ? { ...builtinState.items[id] }
+          : {};
 
-      await saveItemsState({ store, state });
+      current.deleted = true;
+      current.updatedAt = new Date().toISOString();
+      builtinState.items[id] = current;
+      await saveBuiltinItemsState({ store, state: builtinState });
+
       res.json({ ok: true });
     }),
   );

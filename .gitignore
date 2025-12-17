@@ -86,6 +86,7 @@ web_modules/
 # Runtime content
 content/items.json
 content/categories.json
+content/builtin_items.json
 content/uploads/
 content/thumbnails/
 

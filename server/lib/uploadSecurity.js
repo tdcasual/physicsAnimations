@@ -45,6 +45,28 @@ function injectCspMeta(html, csp) {
   return `<!doctype html>\n<head>\n    ${meta}\n</head>\n${html}`;
 }
 
+function ensureUtf8Meta(html) {
+  let out = typeof html === "string" ? html : "";
+
+  out = out.replace(/<meta\b[^>]*\bcharset\s*=\s*(['"]?)[^'">\s]+\1[^>]*>/gi, "");
+  out = out.replace(
+    /<meta\b[^>]*http-equiv\s*=\s*(['"])content-type\1[^>]*>/gi,
+    "",
+  );
+
+  const meta = `<meta charset="UTF-8">`;
+
+  if (/<head\b[^>]*>/i.test(out)) {
+    return out.replace(/<head\b[^>]*>/i, (match) => `${match}\n    ${meta}`);
+  }
+
+  if (/<html\b[^>]*>/i.test(out)) {
+    return out.replace(/<html\b[^>]*>/i, (match) => `${match}\n<head>\n    ${meta}\n</head>`);
+  }
+
+  return `<!doctype html>\n<head>\n    ${meta}\n</head>\n${out}`;
+}
+
 const UPLOAD_CSP = [
   "sandbox allow-scripts",
   "default-src 'none'",
@@ -75,6 +97,7 @@ function sanitizeUploadedHtml(html, { allowLocalScripts = false } = {}) {
   out = stripTagByName(out, "embed");
 
   out = injectCspMeta(out, UPLOAD_CSP);
+  out = ensureUtf8Meta(out);
   return out;
 }
 

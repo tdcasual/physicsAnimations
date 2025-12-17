@@ -35,7 +35,7 @@ function buildBuiltinItem({ categoryId, item }) {
     categoryId,
     title: safeText(item.title || file.replace(/\.html$/i, "")),
     description: safeText(item.description || ""),
-    href: `viewer.html?builtin=${encodeURIComponent(file)}`,
+    href: `viewer.html?id=${encodeURIComponent(file)}`,
     thumbnail,
   };
 }
@@ -118,10 +118,10 @@ function buildCard(item) {
 
   const badges = document.createElement("div");
   badges.className = "badges";
-  if (item.type !== "builtin") {
+  if (item.type === "link") {
     const badge = document.createElement("span");
     badge.className = "badge";
-    badge.textContent = item.type === "link" ? "链接" : "上传";
+    badge.textContent = "链接";
     badges.appendChild(badge);
   }
 
@@ -403,6 +403,7 @@ async function loadAdminCategories(state) {
 function itemTypeLabel(type) {
   if (type === "link") return "链接";
   if (type === "upload") return "上传";
+  if (type === "builtin") return "内置";
   return "未知";
 }
 
@@ -423,7 +424,7 @@ function renderAdminItems(state) {
   if (!items.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = state.admin.itemsQuery ? "未找到匹配的内容。" : "暂无已添加内容。";
+    empty.textContent = state.admin.itemsQuery ? "未找到匹配的内容。" : "暂无内容。";
     container.appendChild(empty);
   } else {
     for (const item of items) {
@@ -445,7 +446,8 @@ function renderAdminItems(state) {
       meta.className = "admin-item-meta";
       const categoryTitle = categoriesById.get(item.categoryId) || item.categoryId;
       const status = itemStatusText(item);
-      meta.textContent = `${itemTypeLabel(item.type)} · ${categoryTitle}${status ? ` · ${status}` : ""}`;
+      const typeText = item.type === "link" ? "链接" : "";
+      meta.textContent = `${categoryTitle}${typeText ? ` · ${typeText}` : ""}${status ? ` · ${status}` : ""}`;
 
       main.append(title, meta);
 

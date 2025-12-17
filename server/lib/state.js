@@ -2,6 +2,7 @@ const { createError } = require("./errors");
 
 const ITEMS_STATE_KEY = "items.json";
 const CATEGORIES_STATE_KEY = "categories.json";
+const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
 
 function toInt(value, fallback = 0) {
   const n = Number(value);
@@ -109,6 +110,53 @@ async function saveCategoriesState({ store, state }) {
   await store.writeBuffer(CATEGORIES_STATE_KEY, json, { contentType: "application/json; charset=utf-8" });
 }
 
+async function loadBuiltinItemsState({ store }) {
+  const raw = await store.readBuffer(BUILTIN_ITEMS_STATE_KEY);
+  if (!raw) return { version: 1, items: {} };
+
+  let parsed = null;
+  try {
+    parsed = JSON.parse(raw.toString("utf8"));
+  } catch {
+    return { version: 1, items: {} };
+  }
+
+  if (!parsed || typeof parsed !== "object" || !parsed.items || typeof parsed.items !== "object") {
+    return { version: 1, items: {} };
+  }
+
+  const items = {};
+  for (const [id, value] of Object.entries(parsed.items)) {
+    if (typeof id !== "string" || !id) continue;
+    if (!value || typeof value !== "object") continue;
+
+    const entry = {};
+    if (typeof value.title === "string") entry.title = value.title;
+    if (typeof value.description === "string") entry.description = value.description;
+    if (typeof value.categoryId === "string") entry.categoryId = value.categoryId;
+    if (Number.isFinite(value.order)) entry.order = toInt(value.order, 0);
+    if (typeof value.published === "boolean") entry.published = value.published;
+    if (typeof value.hidden === "boolean") entry.hidden = value.hidden;
+    if (typeof value.deleted === "boolean") entry.deleted = value.deleted;
+    if (typeof value.updatedAt === "string") entry.updatedAt = value.updatedAt;
+
+    items[id] = entry;
+  }
+
+  return { version: 1, items };
+}
+
+async function saveBuiltinItemsState({ store, state }) {
+  const payload = {
+    version: 1,
+    items: state?.items && typeof state.items === "object" ? state.items : {},
+  };
+  const json = Buffer.from(`${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  await store.writeBuffer(BUILTIN_ITEMS_STATE_KEY, json, {
+    contentType: "application/json; charset=utf-8",
+  });
+}
+
 function assertAdmin(req) {
   if (req.user?.role !== "admin") throw createError("missing_token", 401);
 }
@@ -118,6 +166,7 @@ module.exports = {
   saveItemsState,
   loadCategoriesState,
   saveCategoriesState,
+  loadBuiltinItemsState,
+  saveBuiltinItemsState,
   assertAdmin,
 };
-
