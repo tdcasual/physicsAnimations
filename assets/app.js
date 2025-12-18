@@ -409,6 +409,7 @@ function itemTypeLabel(type) {
 
 function itemStatusText(item) {
   const parts = [];
+  if (item.deleted === true) parts.push("已删除");
   if (item.published === false) parts.push("草稿");
   if (item.hidden === true) parts.push("隐藏");
   return parts.join(" · ");
@@ -473,7 +474,16 @@ function renderAdminItems(state) {
       del.textContent = "删除";
       del.dataset.action = "delete";
 
-      actions.append(open, editBtn, del);
+      if (item.deleted === true) {
+        const restoreBtn = document.createElement("button");
+        restoreBtn.type = "button";
+        restoreBtn.className = "btn btn-ghost";
+        restoreBtn.textContent = "恢复";
+        restoreBtn.dataset.action = "restore";
+        actions.append(open, restoreBtn, editBtn);
+      } else {
+        actions.append(open, editBtn, del);
+      }
       view.append(main, actions);
 
       const edit = document.createElement("div");
@@ -888,6 +898,28 @@ function initAdmin({ state }) {
           return;
         }
         showToast("保存失败", { kind: "info" });
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    if (action === "restore") {
+      btn.disabled = true;
+      try {
+        await updateItem(id, { deleted: false });
+        showToast("已恢复", { kind: "success" });
+        await refreshCatalog(state);
+        await loadAdminCategories(state);
+        await reloadAdminItems(state, { reset: true });
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast("恢复失败", { kind: "info" });
       } finally {
         btn.disabled = false;
       }

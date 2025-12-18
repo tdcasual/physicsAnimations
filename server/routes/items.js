@@ -2,19 +2,23 @@ const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { Readable } = require("stream");
 const express = require("express");
 const multer = require("multer");
 const unzipper = require("unzipper");
 const { z } = require("zod");
 
 const { requireAuth, optionalAuth } = require("../lib/auth");
+const { listBuiltinItems, findBuiltinItem } = require("../lib/animationsIndex");
+const { extractHtmlTitleAndDescription } = require("../lib/htmlMeta");
 const { captureScreenshot, filePathToUrl } = require("../lib/screenshot");
 const { assertPublicHttpUrl } = require("../lib/ssrf");
 const {
   loadItemsState,
-  saveItemsState,
+  mutateItemsState,
   loadBuiltinItemsState,
-  saveBuiltinItemsState,
+  mutateBuiltinItemsState,
+  noSave,
 } = require("../lib/state");
 const { sanitizeUploadedHtml } = require("../lib/uploadSecurity");
 const { decodeHtmlBuffer, decodeTextBuffer } = require("../lib/textEncoding");
@@ -80,6 +84,167 @@ function normalizeZipPath(zipPath) {
   return parts.join("/");
 }
 
+function normalizeExternalHttpLikeUrl(rawUrl) {
+  const raw = String(rawUrl || "").trim();
+  if (!raw) return null;
+  if (/^\/\//.test(raw)) return `https:${raw}`;
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return null;
+}
+
+function listExternalScriptSrcs(html) {
+  const out = [];
+  const seen = new Set();
+  const re =
+    /<script\b[^>]*\bsrc\s*=\s*(['"]?)([^'">\s]+)\1[^>]*>\s*<\/script\s*>/gi;
+  let match = null;
+  while ((match = re.exec(html))) {
+    const normalized = normalizeExternalHttpLikeUrl(match[2]);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(normalized);
+  }
+  return out;
+}
+
+function parseLinkRel(tag) {
+  const match = tag.match(/\brel\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i);
+  const rel = String(match?.[1] || match?.[2] || match?.[3] || "").trim().toLowerCase();
+  return rel
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function listExternalStylesheetHrefs(html) {
+  const out = [];
+  const seen = new Set();
+  const re = /<link\b[^>]*\bhref\s*=\s*(['"]?)([^'">\s]+)\1[^>]*>/gi;
+  let match = null;
+  while ((match = re.exec(html))) {
+    const tag = match[0];
+    const relParts = parseLinkRel(tag);
+    if (!relParts.includes("stylesheet")) continue;
+
+    const normalized = normalizeExternalHttpLikeUrl(match[2]);
+    if (!normalized || seen.has(normalized)) continue;
+    seen.add(normalized);
+    out.push(normalized);
+  }
+  return out;
+}
+
+function rewriteExternalDepsInHtml(html, mapping) {
+  let out = typeof html === "string" ? html : "";
+
+  function stripAttrs(tag, attrs) {
+    let cleaned = tag;
+    for (const attr of attrs) {
+      const re = new RegExp(
+        `\\s${attr}\\s*=\\s*(?:"[^"]*"|'[^']*'|[^\\s>]+)`,
+        "gi",
+      );
+      cleaned = cleaned.replace(re, "");
+    }
+    return cleaned;
+  }
+
+  const scriptTagRe =
+    /<script\b[^>]*\bsrc\s*=\s*(['"]?)([^'">\s]+)\1[^>]*>\s*<\/script\s*>/gi;
+  out = out.replace(scriptTagRe, (tag, _q, src) => {
+    const normalized = normalizeExternalHttpLikeUrl(src);
+    if (!normalized) return tag;
+    const local = mapping.get(normalized);
+    if (!local) return tag;
+    const rewritten = tag.replace(/\bsrc\s*=\s*(['"]?)[^'">\s]+\1/i, `src="${local}"`);
+    return stripAttrs(rewritten, ["integrity", "crossorigin"]);
+  });
+
+  const linkTagRe = /<link\b[^>]*\bhref\s*=\s*(['"]?)([^'">\s]+)\1[^>]*>/gi;
+  out = out.replace(linkTagRe, (tag, _q, href) => {
+    const relParts = parseLinkRel(tag);
+    if (!relParts.includes("stylesheet")) return tag;
+
+    const normalized = normalizeExternalHttpLikeUrl(href);
+    if (!normalized) return tag;
+    const local = mapping.get(normalized);
+    if (!local) return tag;
+    const rewritten = tag.replace(/\bhref\s*=\s*(['"]?)[^'">\s]+\1/i, `href="${local}"`);
+    return stripAttrs(rewritten, ["integrity", "crossorigin"]);
+  });
+
+  return out;
+}
+
+async function fetchPublicUrl(rawUrl, { timeoutMs = 15_000, maxRedirects = 5 } = {}) {
+  let url = await assertPublicHttpUrl(rawUrl);
+
+  for (let i = 0; i <= maxRedirects; i += 1) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        redirect: "manual",
+        signal: controller.signal,
+        headers: { "User-Agent": "physicsAnimations-uploader/1.0" },
+      });
+
+      if ([301, 302, 303, 307, 308].includes(res.status)) {
+        const location = res.headers.get("location");
+        if (!location) {
+          const err = new Error("external_dep_redirect_invalid");
+          err.status = 400;
+          throw err;
+        }
+
+        const nextUrl = new URL(location, url).toString();
+        url = await assertPublicHttpUrl(nextUrl);
+        continue;
+      }
+
+      return { res, finalUrl: url };
+    } catch (err) {
+      if (err?.name === "AbortError") {
+        const timeoutErr = new Error("external_dep_timeout");
+        timeoutErr.status = 408;
+        throw timeoutErr;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  const err = new Error("external_dep_too_many_redirects");
+  err.status = 400;
+  throw err;
+}
+
+async function readResponseBufferWithLimit(res, maxBytes) {
+  const contentLength = Number.parseInt(res.headers.get("content-length") || "0", 10);
+  if (Number.isFinite(contentLength) && contentLength > maxBytes) {
+    const err = new Error("external_dep_too_large");
+    err.status = 413;
+    throw err;
+  }
+
+  if (!res.body) return Buffer.alloc(0);
+
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of Readable.fromWeb(res.body)) {
+    total += chunk.length;
+    if (total > maxBytes) {
+      const err = new Error("external_dep_too_large");
+      err.status = 413;
+      throw err;
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks, total);
+}
+
 function toApiItem(item) {
   if (item.type === "builtin") {
     return {
@@ -92,6 +257,7 @@ function toApiItem(item) {
       order: item.order || 0,
       published: item.published !== false,
       hidden: item.hidden === true,
+      deleted: item.deleted === true,
       src: `animations/${item.id}`,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
@@ -109,6 +275,7 @@ function toApiItem(item) {
     order: item.order || 0,
     published: item.published !== false,
     hidden: item.hidden === true,
+    deleted: false,
     src,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
@@ -133,45 +300,22 @@ function createItemsRouter({ rootDir, authConfig, store }) {
   const warnScreenshotDeps = createWarnScreenshotDeps();
 
   function loadBuiltinIndex() {
-    const filePath = path.join(rootDir, "animations.json");
-    if (!fs.existsSync(filePath)) return [];
-
-    let data = null;
-    try {
-      data = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    } catch {
-      data = null;
-    }
-    if (!data || typeof data !== "object") return [];
-
-    const items = [];
-    for (const [categoryId, category] of Object.entries(data)) {
-      for (const raw of category?.items || []) {
-        const file = safeText(raw?.file || "");
-        if (!file) continue;
-        const thumbnail = safeText(raw?.thumbnail || "");
-        const title = safeText(raw?.title || file.replace(/\.html$/i, ""));
-        const description = safeText(raw?.description || "");
-
-        items.push({
-          id: file,
-          type: "builtin",
-          categoryId,
-          title,
-          description,
-          thumbnail,
-          order: 0,
-          published: true,
-          hidden: false,
-          createdAt: "",
-          updatedAt: "",
-        });
-      }
-    }
-    return items;
+    return listBuiltinItems({ rootDir }).map((item) => ({
+      id: item.id,
+      type: "builtin",
+      categoryId: item.categoryId,
+      title: item.title,
+      description: item.description,
+      thumbnail: item.thumbnail,
+      order: 0,
+      published: true,
+      hidden: false,
+      createdAt: "",
+      updatedAt: "",
+    }));
   }
 
-  async function loadBuiltinItems() {
+  async function loadBuiltinItems({ includeDeleted = false } = {}) {
     const base = loadBuiltinIndex();
     if (!base.length) return [];
 
@@ -182,7 +326,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     const merged = [];
     for (const item of base) {
       const override = overrides[item.id];
-      if (override?.deleted === true) continue;
+      if (override?.deleted === true && !includeDeleted) continue;
 
       const out = { ...item };
       if (typeof override?.title === "string" && override.title.trim()) out.title = override.title.trim();
@@ -194,6 +338,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       if (typeof override?.published === "boolean") out.published = override.published;
       if (typeof override?.hidden === "boolean") out.hidden = override.hidden;
       if (typeof override?.updatedAt === "string") out.updatedAt = override.updatedAt;
+      if (override?.deleted === true) out.deleted = true;
 
       merged.push(out);
     }
@@ -201,15 +346,27 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     return merged;
   }
 
-  async function findBuiltinItemById(id) {
-    const base = loadBuiltinIndex().find((it) => it.id === id);
+  async function findBuiltinItemById(id, { includeDeleted = false } = {}) {
+    const base = findBuiltinItem({ rootDir, id });
     if (!base) return null;
 
     const state = await loadBuiltinItemsState({ store });
     const override = state?.items?.[id];
-    if (override?.deleted === true) return null;
+    if (override?.deleted === true && !includeDeleted) return null;
 
-    const out = { ...base };
+    const out = {
+      id: base.id,
+      type: "builtin",
+      categoryId: base.categoryId,
+      title: base.title,
+      description: base.description,
+      thumbnail: base.thumbnail,
+      order: 0,
+      published: true,
+      hidden: false,
+      createdAt: "",
+      updatedAt: "",
+    };
     if (typeof override?.title === "string" && override.title.trim()) out.title = override.title.trim();
     if (typeof override?.description === "string") out.description = override.description;
     if (typeof override?.categoryId === "string" && override.categoryId.trim()) {
@@ -219,6 +376,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     if (typeof override?.published === "boolean") out.published = override.published;
     if (typeof override?.hidden === "boolean") out.hidden = override.hidden;
     if (typeof override?.updatedAt === "string") out.updatedAt = override.updatedAt;
+    if (override?.deleted === true) out.deleted = true;
 
     return out;
   }
@@ -251,6 +409,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     order: z.coerce.number().int().min(-100000).max(100000).optional(),
     published: z.boolean().optional(),
     hidden: z.boolean().optional(),
+    deleted: z.boolean().optional(),
   });
 
   async function createLinkItem({ url, title, description, categoryId }) {
@@ -278,23 +437,23 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 
-    const state = await loadItemsState({ store });
-    state.items.push({
-      id,
-      type: "link",
-      categoryId: normalizeCategoryId(categoryId),
-      url: parsedUrl.toString(),
-      title: title || parsedUrl.hostname,
-      description,
-      thumbnail,
-      order: 0,
-      published: true,
-      hidden: false,
-      uploadKind: "html",
-      createdAt: now,
-      updatedAt: now,
+    await mutateItemsState({ store }, (state) => {
+      state.items.push({
+        id,
+        type: "link",
+        categoryId: normalizeCategoryId(categoryId),
+        url: parsedUrl.toString(),
+        title: title || parsedUrl.hostname,
+        description,
+        thumbnail,
+        order: 0,
+        published: true,
+        hidden: false,
+        uploadKind: "html",
+        createdAt: now,
+        updatedAt: now,
+      });
     });
-    await saveItemsState({ store, state });
 
     return { ok: true, id, thumbnail };
   }
@@ -314,6 +473,9 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-upload-"));
     let entryRelPath = "index.html";
     let uploadKind = "html";
+    const defaultTitle = String(originalName || "").replace(/\.(zip|html?|htm)$/i, "");
+    let inferredTitle = "";
+    let inferredDescription = "";
 
     try {
       if (isZip) {
@@ -356,6 +518,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         let total = 0;
         const extracted = [];
         const htmlCandidates = [];
+        const htmlMetaByPath = new Map();
         const textExts = new Set([
           ".css",
           ".js",
@@ -400,6 +563,8 @@ function createItemsRouter({ rootDir, authConfig, store }) {
           const extLower = path.extname(rel).toLowerCase();
           if (extLower === ".html" || extLower === ".htm") {
             const html = decodeHtmlBuffer(buf);
+            const meta = extractHtmlTitleAndDescription(html);
+            htmlMetaByPath.set(rel, meta);
             const sanitized = sanitizeUploadedHtml(html, { allowLocalScripts: true });
             outBuf = Buffer.from(sanitized, "utf8");
             contentType = "text/html; charset=utf-8";
@@ -427,6 +592,10 @@ function createItemsRouter({ rootDir, authConfig, store }) {
           throw err;
         }
 
+        const entryMeta = htmlMetaByPath.get(entryRelPath);
+        inferredTitle = entryMeta?.title || "";
+        inferredDescription = entryMeta?.description || "";
+
         const manifest = {
           version: 1,
           id,
@@ -441,16 +610,72 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         );
       } else {
         const html = decodeHtmlBuffer(fileBuffer);
-        const sanitizedHtml = sanitizeUploadedHtml(html);
+        const meta = extractHtmlTitleAndDescription(html);
+        inferredTitle = meta.title || "";
+        inferredDescription = meta.description || "";
+
+        const scripts = listExternalScriptSrcs(html);
+        const styles = listExternalStylesheetHrefs(html);
+        const externalDeps = [
+          ...scripts.map((url) => ({ url, kind: "js" })),
+          ...styles.map((url) => ({ url, kind: "css" })),
+        ];
+
+        const maxDeps = 20;
+        if (externalDeps.length > maxDeps) {
+          const err = new Error("external_dep_too_many");
+          err.status = 400;
+          throw err;
+        }
+
+        const depMapping = new Map();
+        const downloaded = [];
+        let totalDepBytes = 0;
+        const maxDepBytes = 10 * 1024 * 1024;
+        const maxTotalDepBytes = 30 * 1024 * 1024;
+
+        for (const dep of externalDeps) {
+          if (depMapping.has(dep.url)) continue;
+
+          const hash = crypto.createHash("sha256").update(dep.url).digest("hex").slice(0, 16);
+          const rel = `deps/${hash}.${dep.kind}`;
+
+          const { res } = await fetchPublicUrl(dep.url);
+          if (!res.ok) {
+            const err = new Error("external_dep_download_failed");
+            err.status = 400;
+            throw err;
+          }
+
+          const buf = await readResponseBufferWithLimit(res, maxDepBytes);
+          totalDepBytes += buf.length;
+          if (totalDepBytes > maxTotalDepBytes) {
+            const err = new Error("external_dep_total_too_large");
+            err.status = 413;
+            throw err;
+          }
+
+          depMapping.set(dep.url, rel);
+          downloaded.push(rel);
+
+          const localPath = path.join(tmpDir, rel);
+          fs.mkdirSync(path.dirname(localPath), { recursive: true });
+          fs.writeFileSync(localPath, buf);
+          await store.writeBuffer(`uploads/${id}/${rel}`, buf, { contentType: guessContentType(rel) });
+        }
+
+        const rewrittenHtml = depMapping.size ? rewriteExternalDepsInHtml(html, depMapping) : html;
+        const sanitizedHtml = sanitizeUploadedHtml(rewrittenHtml, { allowLocalScripts: true });
         const uploadKey = `uploads/${id}/index.html`;
         await store.writeBuffer(uploadKey, Buffer.from(sanitizedHtml, "utf8"), {
           contentType: "text/html; charset=utf-8",
         });
         fs.writeFileSync(path.join(tmpDir, "index.html"), sanitizedHtml, "utf8");
+        const manifestFiles = ["index.html", ...downloaded];
         await store.writeBuffer(
           `uploads/${id}/manifest.json`,
           Buffer.from(
-            `${JSON.stringify({ version: 1, id, entry: "index.html", files: ["index.html"], createdAt: now }, null, 2)}\n`,
+            `${JSON.stringify({ version: 1, id, entry: "index.html", files: manifestFiles, createdAt: now }, null, 2)}\n`,
             "utf8",
           ),
           { contentType: "application/json; charset=utf-8" },
@@ -474,23 +699,23 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         warnScreenshotDeps(err);
       }
 
-      const state = await loadItemsState({ store });
-      state.items.push({
-        id,
-        type: "upload",
-        categoryId: normalizeCategoryId(categoryId),
-        path: `content/uploads/${id}/${entryRelPath}`,
-        title: title || originalName.replace(/\.(zip|html?|htm)$/i, ""),
-        description,
-        thumbnail,
-        order: 0,
-        published: true,
-        hidden: false,
-        uploadKind,
-        createdAt: now,
-        updatedAt: now,
+      await mutateItemsState({ store }, (state) => {
+        state.items.push({
+          id,
+          type: "upload",
+          categoryId: normalizeCategoryId(categoryId),
+          path: `content/uploads/${id}/${entryRelPath}`,
+          title: title || inferredTitle || defaultTitle,
+          description: description || inferredDescription,
+          thumbnail,
+          order: 0,
+          published: true,
+          hidden: false,
+          uploadKind,
+          createdAt: now,
+          updatedAt: now,
+        });
       });
-      await saveItemsState({ store, state });
 
       return { ok: true, id, thumbnail };
     } finally {
@@ -509,7 +734,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       const type = (query.type || "").trim();
 
       const state = await loadItemsState({ store });
-      const builtinItems = await loadBuiltinItems();
+      const builtinItems = await loadBuiltinItems({ includeDeleted: isAdmin });
       let items = [...state.items, ...builtinItems];
 
       if (!isAdmin) items = items.filter((it) => it.published !== false && it.hidden !== true);
@@ -522,7 +747,13 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         });
       }
 
-      items.sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+      items.sort((a, b) => {
+        const timeDiff = (b.createdAt || "").localeCompare(a.createdAt || "");
+        if (timeDiff) return timeDiff;
+        const deletedDiff = Number(a.deleted === true) - Number(b.deleted === true);
+        if (deletedDiff) return deletedDiff;
+        return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
+      });
 
       const total = items.length;
       const start = (query.page - 1) * query.pageSize;
@@ -588,15 +819,18 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         body.categoryId === undefined &&
         body.order === undefined &&
         body.published === undefined &&
-        body.hidden === undefined
+        body.hidden === undefined &&
+        body.deleted === undefined
       ) {
         res.status(400).json({ error: "no_changes" });
         return;
       }
 
-      const state = await loadItemsState({ store });
-      const dynamicItem = state.items.find((it) => it.id === id);
-      if (dynamicItem) {
+      const dynamicResult = await mutateItemsState({ store }, (state) => {
+        const dynamicItem = state.items.find((it) => it.id === id);
+        if (!dynamicItem) return noSave(null);
+        if (body.deleted !== undefined) return noSave({ __kind: "unsupported_change" });
+
         if (body.title !== undefined) dynamicItem.title = body.title;
         if (body.description !== undefined) dynamicItem.description = body.description;
         if (body.categoryId !== undefined) dynamicItem.categoryId = normalizeCategoryId(body.categoryId);
@@ -605,8 +839,15 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         if (body.hidden !== undefined) dynamicItem.hidden = body.hidden;
 
         dynamicItem.updatedAt = new Date().toISOString();
-        await saveItemsState({ store, state });
-        res.json({ ok: true, item: toApiItem(dynamicItem) });
+        return dynamicItem;
+      });
+
+      if (dynamicResult?.__kind === "unsupported_change") {
+        res.status(400).json({ error: "unsupported_change" });
+        return;
+      }
+      if (dynamicResult) {
+        res.json({ ok: true, item: toApiItem(dynamicResult) });
         return;
       }
 
@@ -616,44 +857,44 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         return;
       }
 
-      const builtinState = await loadBuiltinItemsState({ store });
-      if (!builtinState.items) builtinState.items = {};
+      await mutateBuiltinItemsState({ store }, (builtinState) => {
+        if (!builtinState.items) builtinState.items = {};
+        const current =
+          builtinState.items[id] && typeof builtinState.items[id] === "object"
+            ? { ...builtinState.items[id] }
+            : {};
 
-      const current = builtinState.items[id] && typeof builtinState.items[id] === "object" ? { ...builtinState.items[id] } : {};
-      if (current.deleted === true) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
+        if (body.title !== undefined) {
+          const title = String(body.title || "").trim();
+          if (!title) delete current.title;
+          else current.title = title;
+        }
+        if (body.description !== undefined) {
+          const desc = String(body.description || "");
+          if (!desc.trim()) delete current.description;
+          else current.description = desc;
+        }
+        if (body.categoryId !== undefined) {
+          const raw = String(body.categoryId || "").trim();
+          if (!raw) delete current.categoryId;
+          else current.categoryId = normalizeCategoryId(raw);
+        }
+        if (body.order !== undefined) current.order = body.order;
+        if (body.published !== undefined) current.published = body.published;
+        if (body.hidden !== undefined) current.hidden = body.hidden;
+        if (body.deleted === true) current.deleted = true;
+        if (body.deleted === false) delete current.deleted;
 
-      if (body.title !== undefined) {
-        const title = String(body.title || "").trim();
-        if (!title) delete current.title;
-        else current.title = title;
-      }
-      if (body.description !== undefined) {
-        const desc = String(body.description || "");
-        if (!desc.trim()) delete current.description;
-        else current.description = desc;
-      }
-      if (body.categoryId !== undefined) {
-        const raw = String(body.categoryId || "").trim();
-        if (!raw) delete current.categoryId;
-        else current.categoryId = normalizeCategoryId(raw);
-      }
-      if (body.order !== undefined) current.order = body.order;
-      if (body.published !== undefined) current.published = body.published;
-      if (body.hidden !== undefined) current.hidden = body.hidden;
+        current.updatedAt = new Date().toISOString();
 
-      const now = new Date().toISOString();
-      current.updatedAt = now;
+        const hasAnyOverride = Object.entries(current).some(
+          ([k, v]) => k !== "updatedAt" && v !== undefined,
+        );
+        if (hasAnyOverride) builtinState.items[id] = current;
+        else delete builtinState.items[id];
+      });
 
-      const hasAnyOverride = Object.entries(current).some(([k, v]) => k !== "updatedAt" && v !== undefined);
-      if (hasAnyOverride) builtinState.items[id] = current;
-      else delete builtinState.items[id];
-
-      await saveBuiltinItemsState({ store, state: builtinState });
-
-      const updated = await findBuiltinItemById(id);
+      const updated = await findBuiltinItemById(id, { includeDeleted: true });
       if (!updated) {
         res.status(404).json({ error: "not_found" });
         return;
@@ -726,7 +967,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         return;
       }
 
-      const builtin = await findBuiltinItemById(id);
+      const builtin = await findBuiltinItemById(id, { includeDeleted: isAdmin });
       if (!builtin) {
         res.status(404).json({ error: "not_found" });
         return;
@@ -748,8 +989,16 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
 
-      const state = await loadItemsState({ store });
-      const item = state.items.find((it) => it.id === id);
+      const item = await mutateItemsState({ store }, (state) => {
+        const found = state.items.find((it) => it.id === id);
+        if (!found) return noSave(null);
+        return noSave({
+          id: found.id,
+          type: found.type,
+          url: found.url,
+          path: found.path,
+        });
+      });
       if (!item) {
         res.status(404).json({ error: "not_found" });
         return;
@@ -811,11 +1060,20 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         const png = fs.readFileSync(outputPath);
         await store.writeBuffer(`thumbnails/${id}.png`, png, { contentType: "image/png" });
 
-        item.thumbnail = `content/thumbnails/${id}.png`;
-        item.updatedAt = now;
-        await saveItemsState({ store, state });
+        const thumbnail = await mutateItemsState({ store }, (state) => {
+          const found = state.items.find((it) => it.id === id);
+          if (!found) return noSave(null);
+          found.thumbnail = `content/thumbnails/${id}.png`;
+          found.updatedAt = now;
+          return found.thumbnail;
+        });
+        if (!thumbnail) {
+          await store.deletePath(`thumbnails/${id}.png`).catch(() => {});
+          res.status(404).json({ error: "not_found" });
+          return;
+        }
 
-        res.json({ ok: true, thumbnail: item.thumbnail });
+        res.json({ ok: true, thumbnail });
       } finally {
         fs.rmSync(tmpDir, { recursive: true, force: true });
       }
@@ -829,12 +1087,12 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
 
-      const state = await loadItemsState({ store });
-      const before = state.items.length;
-      const item = state.items.find((it) => it.id === id);
-      state.items = state.items.filter((it) => it.id !== id);
+      const deleted = await mutateItemsState({ store }, async (state) => {
+        const before = state.items.length;
+        const item = state.items.find((it) => it.id === id);
+        state.items = state.items.filter((it) => it.id !== id);
+        if (!item || state.items.length === before) return noSave(null);
 
-      if (item && state.items.length !== before) {
         if (item.type === "upload") {
           await store.deletePath(`uploads/${id}`, { recursive: true });
         }
@@ -842,7 +1100,9 @@ function createItemsRouter({ rootDir, authConfig, store }) {
           await store.deletePath(`thumbnails/${id}.png`);
         }
 
-        await saveItemsState({ store, state });
+        return item;
+      });
+      if (deleted) {
         res.json({ ok: true });
         return;
       }
@@ -853,17 +1113,17 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         return;
       }
 
-      const builtinState = await loadBuiltinItemsState({ store });
-      if (!builtinState.items) builtinState.items = {};
-      const current =
-        builtinState.items[id] && typeof builtinState.items[id] === "object"
-          ? { ...builtinState.items[id] }
-          : {};
+      await mutateBuiltinItemsState({ store }, (builtinState) => {
+        if (!builtinState.items) builtinState.items = {};
+        const current =
+          builtinState.items[id] && typeof builtinState.items[id] === "object"
+            ? { ...builtinState.items[id] }
+            : {};
 
-      current.deleted = true;
-      current.updatedAt = new Date().toISOString();
-      builtinState.items[id] = current;
-      await saveBuiltinItemsState({ store, state: builtinState });
+        current.deleted = true;
+        current.updatedAt = new Date().toISOString();
+        builtinState.items[id] = current;
+      });
 
       res.json({ ok: true });
     }),

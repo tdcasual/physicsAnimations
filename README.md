@@ -8,6 +8,7 @@
 - 卡片缩略图（自动截图生成）
 - 统一的预览页 `viewer.html`：先展示截图（带动效）再加载页面
 - 上传内容编码自动处理（统一保存为 UTF-8，兼容常见中文编码）
+- 单 HTML 上传支持自动下载外部 JS/CSS 依赖（例如 Three.js CDN），保存为本地文件后再预览
 - 管理员登录后：
   - 上传 HTML（单文件）
   - 上传 ZIP（解压到独立目录，需包含 `index.html`）
@@ -59,6 +60,8 @@ npm run build-catalog
 访问首页后点击右上角「登录」进入管理模式：
 
 - 上传：在「上传 HTML」中选择一个 `.html/.htm` 文件
+- 如果 HTML 依赖外部 CDN（`<script src="https://...">` / `<link rel="stylesheet" href="https://...">`），服务端会尝试下载并改写为本地文件；失败时建议改用 ZIP（把依赖一并打包）
+- 如你在旧版本中上传过依赖 CDN 的单 HTML，因当时会移除外部脚本，页面可能无法运行；更新后请用原始文件重新上传一次
 - 上传 ZIP：选择一个 `.zip` 文件（建议把 `index.html` 放在压缩包根目录；如在子目录也可自动识别；仅支持常见静态资源类型）
 - 外链：在「添加网页链接」中填写 `http(s)://...`
 - 内容管理：支持分页/搜索、编辑 `published/hidden/order` 与标题/描述/分类
@@ -194,6 +197,6 @@ docker run -d --name physics-animations \
 ## 安全说明（当前实现）
 
 - 预览页 iframe 使用最小化 `sandbox`（仅 `allow-scripts`），并设置 `referrerpolicy="no-referrer"`。
-- 上传 HTML 会做基础清洗（移除外部 `script src`、外链样式、`form/base/iframe` 等标签），并注入 CSP（禁外部脚本/连接/表单提交）。
+- 上传 HTML 会做基础清洗（移除外链样式、`form/base/iframe` 等标签），并对外部 JS/CSS 依赖做服务端下载与本地改写（仅允许公共 `http(s)` 地址、限制数量/大小），然后注入 CSP（禁外部脚本/连接/表单提交）。
 - 服务端截图（Playwright）对网络请求做 SSRF 防护：阻止访问 localhost/私有网段/`.local` 等。
 - 写入类接口带简单的内存限流（登录、写入、截图）。

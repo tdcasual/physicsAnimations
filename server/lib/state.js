@@ -4,6 +4,30 @@ const ITEMS_STATE_KEY = "items.json";
 const CATEGORIES_STATE_KEY = "categories.json";
 const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
 
+const stateLocks = new Map();
+const NO_SAVE = Symbol("state_no_save");
+
+function noSave(value) {
+  return { [NO_SAVE]: true, value };
+}
+
+async function withStateLock(key, fn) {
+  const previous = stateLocks.get(key) || Promise.resolve();
+  let release = () => {};
+  const current = new Promise((resolve) => {
+    release = resolve;
+  });
+  stateLocks.set(key, current);
+
+  await previous;
+  try {
+    return await fn();
+  } finally {
+    release();
+    if (stateLocks.get(key) === current) stateLocks.delete(key);
+  }
+}
+
 function toInt(value, fallback = 0) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
@@ -72,6 +96,16 @@ async function saveItemsState({ store, state }) {
   await store.writeBuffer(ITEMS_STATE_KEY, json, { contentType: "application/json; charset=utf-8" });
 }
 
+async function mutateItemsState({ store }, mutator) {
+  return withStateLock(ITEMS_STATE_KEY, async () => {
+    const state = await loadItemsState({ store });
+    const result = await mutator(state);
+    if (result && result[NO_SAVE]) return result.value;
+    await saveItemsState({ store, state });
+    return result;
+  });
+}
+
 async function loadCategoriesState({ store }) {
   const raw = await store.readBuffer(CATEGORIES_STATE_KEY);
   if (!raw) return { version: 1, categories: {} };
@@ -108,6 +142,16 @@ async function saveCategoriesState({ store, state }) {
   };
   const json = Buffer.from(`${JSON.stringify(payload, null, 2)}\n`, "utf8");
   await store.writeBuffer(CATEGORIES_STATE_KEY, json, { contentType: "application/json; charset=utf-8" });
+}
+
+async function mutateCategoriesState({ store }, mutator) {
+  return withStateLock(CATEGORIES_STATE_KEY, async () => {
+    const state = await loadCategoriesState({ store });
+    const result = await mutator(state);
+    if (result && result[NO_SAVE]) return result.value;
+    await saveCategoriesState({ store, state });
+    return result;
+  });
 }
 
 async function loadBuiltinItemsState({ store }) {
@@ -157,6 +201,16 @@ async function saveBuiltinItemsState({ store, state }) {
   });
 }
 
+async function mutateBuiltinItemsState({ store }, mutator) {
+  return withStateLock(BUILTIN_ITEMS_STATE_KEY, async () => {
+    const state = await loadBuiltinItemsState({ store });
+    const result = await mutator(state);
+    if (result && result[NO_SAVE]) return result.value;
+    await saveBuiltinItemsState({ store, state });
+    return result;
+  });
+}
+
 function assertAdmin(req) {
   if (req.user?.role !== "admin") throw createError("missing_token", 401);
 }
@@ -164,9 +218,13 @@ function assertAdmin(req) {
 module.exports = {
   loadItemsState,
   saveItemsState,
+  mutateItemsState,
   loadCategoriesState,
   saveCategoriesState,
+  mutateCategoriesState,
   loadBuiltinItemsState,
   saveBuiltinItemsState,
+  mutateBuiltinItemsState,
+  noSave,
   assertAdmin,
 };

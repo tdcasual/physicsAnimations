@@ -3,7 +3,7 @@ const { z } = require("zod");
 
 const { requireAuth, optionalAuth } = require("../lib/auth");
 const { loadCatalog } = require("../lib/catalog");
-const { loadCategoriesState, saveCategoriesState } = require("../lib/state");
+const { mutateCategoriesState, noSave } = require("../lib/state");
 const { parseWithSchema } = require("../lib/validation");
 const { rateLimit } = require("../middleware/rateLimit");
 
@@ -72,31 +72,32 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
     "/categories",
     authRequired,
     rateLimit({ key: "categories_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    (req, res) => {
+    async (req, res) => {
       const body = parseWithSchema(createCategorySchema, req.body);
       const id = body.id.toLowerCase();
 
-      loadCategoriesState({ store })
-        .then((state) => {
-          if (state.categories[id]) {
-            res.status(409).json({ error: "already_exists" });
-            return;
-          }
-
+      try {
+        const created = await mutateCategoriesState({ store }, (state) => {
+          if (state.categories[id]) return noSave({ __kind: "already_exists" });
           state.categories[id] = {
             id,
             title: body.title.trim(),
             order: body.order,
             hidden: body.hidden,
           };
-          return saveCategoriesState({ store, state }).then(() => {
-            res.json({ ok: true, category: state.categories[id] });
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({ error: "server_error" });
-          console.error(err);
+          return state.categories[id];
         });
+
+        if (created?.__kind === "already_exists") {
+          res.status(409).json({ error: "already_exists" });
+          return;
+        }
+
+        res.json({ ok: true, category: created });
+      } catch (err) {
+        res.status(500).json({ error: "server_error" });
+        console.error(err);
+      }
     },
   );
 
@@ -104,7 +105,7 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
     "/categories/:id",
     authRequired,
     rateLimit({ key: "categories_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    (req, res) => {
+    async (req, res) => {
       const id = parseWithSchema(categoryIdSchema, req.params.id).toLowerCase();
       const body = parseWithSchema(updateCategorySchema, req.body);
 
@@ -113,22 +114,22 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
         return;
       }
 
-      loadCategoriesState({ store })
-        .then((state) => {
+      try {
+        const updated = await mutateCategoriesState({ store }, (state) => {
           if (!state.categories[id]) state.categories[id] = { id, title: "", order: 0, hidden: false };
 
           if (body.title !== undefined) state.categories[id].title = body.title.trim();
           if (body.order !== undefined) state.categories[id].order = body.order;
           if (body.hidden !== undefined) state.categories[id].hidden = body.hidden;
 
-          return saveCategoriesState({ store, state }).then(() => {
-            res.json({ ok: true, category: state.categories[id] });
-          });
-        })
-        .catch((err) => {
-          res.status(500).json({ error: "server_error" });
-          console.error(err);
+          return state.categories[id];
         });
+
+        res.json({ ok: true, category: updated });
+      } catch (err) {
+        res.status(500).json({ error: "server_error" });
+        console.error(err);
+      }
     },
   );
 
@@ -136,20 +137,19 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
     "/categories/:id",
     authRequired,
     rateLimit({ key: "categories_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    (req, res) => {
+    async (req, res) => {
       const id = parseWithSchema(categoryIdSchema, req.params.id).toLowerCase();
-      loadCategoriesState({ store })
-        .then((state) => {
-          if (state.categories[id]) {
-            delete state.categories[id];
-            return saveCategoriesState({ store, state }).then(() => res.json({ ok: true }));
-          }
-          res.json({ ok: true });
-        })
-        .catch((err) => {
-          res.status(500).json({ error: "server_error" });
-          console.error(err);
+      try {
+        await mutateCategoriesState({ store }, (state) => {
+          if (!state.categories[id]) return noSave(null);
+          delete state.categories[id];
+          return true;
         });
+        res.json({ ok: true });
+      } catch (err) {
+        res.status(500).json({ error: "server_error" });
+        console.error(err);
+      }
     },
   );
 

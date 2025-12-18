@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { CATEGORY_TITLES } = require("./categories");
+const { readAnimationsJson } = require("./animationsIndex");
 const { loadItemsState, loadCategoriesState, loadBuiltinItemsState } = require("./state");
 
 function safeText(text) {
@@ -34,10 +35,8 @@ function applyBuiltinOverride(item, override) {
 }
 
 function loadBuiltinCatalog({ rootDir, builtinState, includeHiddenItems = false, includeUnpublishedItems = false } = {}) {
-  const filePath = path.join(rootDir, "animations.json");
-  if (!fs.existsSync(filePath)) return { categories: {} };
-
-  const data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  const data = readAnimationsJson({ rootDir });
+  if (!data) return { categories: {} };
   const overrides = builtinState?.items && typeof builtinState.items === "object" ? builtinState.items : {};
   const categories = {};
 
