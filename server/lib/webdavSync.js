@@ -1,7 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 
-const { createContentStore } = require("../server/lib/contentStore");
+const { createWebdavStore } = require("./contentStore");
+
+const SKIP_FILES = new Set([".jwt_secret", "system.json"]);
 
 function walkFiles(dir) {
   const out = [];
@@ -46,39 +48,42 @@ function guessContentType(filePath) {
     ".mp4": "video/mp4",
     ".mp3": "audio/mpeg",
     ".wasm": "application/wasm",
+    ".txt": "text/plain; charset=utf-8",
   };
   return map[ext] || "application/octet-stream";
 }
 
-async function main() {
-  const rootDir = path.join(__dirname, "..");
-  const store = createContentStore({ rootDir });
-
-  if (store.mode !== "webdav" && store.mode !== "hybrid") {
-    console.error("[backup_to_webdav] WebDAV is not configured.");
-    console.error("[backup_to_webdav] Set WEBDAV_URL (+ optional WEBDAV_BASE_PATH/WEBDAV_USERNAME/WEBDAV_PASSWORD).");
-    process.exit(1);
-  }
-
-  const contentDir = path.join(rootDir, "content");
-  const files = walkFiles(contentDir);
-  if (!files.length) {
-    console.log("[backup_to_webdav] Nothing to backup (content/ is empty).");
-    return;
-  }
-
-  for (const filePath of files) {
-    const key = path.relative(contentDir, filePath).split(path.sep).join("/");
-    const buf = fs.readFileSync(filePath);
-    const contentType = guessContentType(filePath);
-    await store.writeBuffer(key, buf, { contentType });
-    console.log(`[backup_to_webdav] Uploaded ${key}`);
-  }
-
-  console.log("[backup_to_webdav] Done.");
+function shouldSkip(relPath) {
+  const normalized = relPath.split(path.sep).join("/");
+  const baseName = path.basename(normalized);
+  if (SKIP_FILES.has(baseName)) return true;
+  if (baseName.startsWith(".") && baseName !== ".well-known") return true;
+  return false;
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+async function syncLocalToWebdav({ rootDir, webdavConfig }) {
+  const contentDir = path.join(rootDir, "content");
+  const store = createWebdavStore(webdavConfig);
+
+  const files = walkFiles(contentDir);
+  let uploaded = 0;
+  let skipped = 0;
+
+  for (const filePath of files) {
+    const rel = path.relative(contentDir, filePath).split(path.sep).join("/");
+    if (!rel || shouldSkip(rel)) {
+      skipped += 1;
+      continue;
+    }
+    const buf = fs.readFileSync(filePath);
+    const contentType = guessContentType(filePath);
+    await store.writeBuffer(rel, buf, { contentType });
+    uploaded += 1;
+  }
+
+  return { uploaded, skipped };
+}
+
+module.exports = {
+  syncLocalToWebdav,
+};

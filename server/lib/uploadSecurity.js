@@ -67,56 +67,10 @@ function ensureUtf8Meta(html) {
   return `<!doctype html>\n<head>\n    ${meta}\n</head>\n${out}`;
 }
 
-const UPLOAD_CSP = [
-  "sandbox allow-scripts",
-  "default-src 'none'",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  "media-src 'self' data: blob:",
-  "connect-src 'none'",
-  "frame-src 'none'",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'none'",
-  "worker-src 'self' blob:",
-].join("; ");
-
-const UPLOAD_CSP_META = [
-  "default-src 'none'",
-  "script-src 'self' 'unsafe-inline'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "font-src 'self' data:",
-  "media-src 'self' data: blob:",
-  "connect-src 'none'",
-  "frame-src 'none'",
-  "object-src 'none'",
-  "base-uri 'none'",
-  "form-action 'none'",
-  "worker-src 'self' blob:",
-].join("; ");
-
 function sanitizeUploadedHtml(html, { allowLocalScripts = false } = {}) {
-  let out = typeof html === "string" ? html : "";
-
-  out = stripMetaHttpEquiv(out, "Content-Security-Policy");
-  out = stripMetaHttpEquiv(out, "refresh");
-  out = allowLocalScripts ? stripScriptTagsWithExternalSrc(out) : stripScriptTagsWithSrc(out);
-  out = stripExternalLinkTags(out);
-  out = stripTagByName(out, "base");
-  out = stripTagByName(out, "form");
-  out = stripTagByName(out, "iframe");
-  out = stripTagByName(out, "object");
-  out = stripTagByName(out, "embed");
-
-  out = injectCspMeta(out, UPLOAD_CSP_META);
-  out = ensureUtf8Meta(out);
-  return out;
+  return typeof html === "string" ? html : "";
 }
 
 module.exports = {
-  UPLOAD_CSP,
   sanitizeUploadedHtml,
 };

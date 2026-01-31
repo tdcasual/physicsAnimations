@@ -70,17 +70,20 @@ function createLocalStore({ rootDir }) {
   };
 }
 
-function createWebdavStore() {
-  const rawUrl = process.env.WEBDAV_URL || "";
+function createWebdavStore(options = {}) {
+  const rawUrl = options.url || process.env.WEBDAV_URL || "";
   if (!rawUrl) {
     throw new Error("WEBDAV_URL is required when STORAGE_MODE=webdav");
   }
 
-  const timeoutMs = Number.parseInt(process.env.WEBDAV_TIMEOUT_MS || "15000", 10);
-  const basePath = process.env.WEBDAV_BASE_PATH || "physicsAnimations";
+  const timeoutMs = Number.parseInt(
+    options.timeoutMs || process.env.WEBDAV_TIMEOUT_MS || "15000",
+    10,
+  );
+  const basePath = options.basePath || process.env.WEBDAV_BASE_PATH || "physicsAnimations";
 
-  const username = process.env.WEBDAV_USERNAME || "";
-  const password = process.env.WEBDAV_PASSWORD || "";
+  const username = options.username || process.env.WEBDAV_USERNAME || "";
+  const password = options.password || process.env.WEBDAV_PASSWORD || "";
   const authHeader =
     username && password ? createBasicAuthHeader(username, password) : "";
 
@@ -175,13 +178,147 @@ function createWebdavStore() {
   };
 }
 
-function createContentStore({ rootDir }) {
-  const mode = String(process.env.STORAGE_MODE || "").toLowerCase();
-  const useWebdav = mode === "webdav" || Boolean(process.env.WEBDAV_URL);
-  if (useWebdav) return createWebdavStore();
+function createHybridStore({ rootDir, webdavConfig }) {
+  const local = createLocalStore({ rootDir });
+  const webdav = createWebdavStore(webdavConfig);
+
+  async function mirror(op, label) {
+    try {
+      await op();
+    } catch (err) {
+      console.warn(`[webdav] ${label} failed`, err?.message || err);
+    }
+  }
+
+  return {
+    mode: "hybrid",
+    baseDir: local.baseDir,
+    baseUrl: webdav.baseUrl,
+    basePath: webdav.basePath,
+    webdav,
+    local,
+
+    async readBuffer(key) {
+      const localBuf = await local.readBuffer(key);
+      if (localBuf) return localBuf;
+      const remoteBuf = await webdav.readBuffer(key);
+      if (remoteBuf) {
+        await mirror(() => local.writeBuffer(key, remoteBuf), `cache ${key}`);
+      }
+      return remoteBuf;
+    },
+
+    async writeBuffer(key, buffer, options) {
+      await local.writeBuffer(key, buffer, options);
+      await mirror(() => webdav.writeBuffer(key, buffer, options), `write ${key}`);
+    },
+
+    async deletePath(key, options) {
+      await local.deletePath(key, options);
+      await mirror(() => webdav.deletePath(key, options), `delete ${key}`);
+    },
+
+    async createReadStream(key) {
+      const localStream = await local.createReadStream(key);
+      if (localStream) return localStream;
+      return webdav.createReadStream(key);
+    },
+  };
+}
+
+function normalizeMode(raw) {
+  const mode = String(raw || "").trim().toLowerCase();
+  if (mode === "webdav") return "webdav";
+  if (mode === "hybrid") return "hybrid";
+  if (mode === "local+webdav") return "hybrid";
+  if (mode === "mirror") return "hybrid";
+  if (mode === "local") return "local";
+  return "";
+}
+
+function resolveWebdavConfig(config) {
+  return {
+    url: config?.storage?.webdav?.url || process.env.WEBDAV_URL || "",
+    basePath:
+      config?.storage?.webdav?.basePath || process.env.WEBDAV_BASE_PATH || "physicsAnimations",
+    username: config?.storage?.webdav?.username || process.env.WEBDAV_USERNAME || "",
+    password: config?.storage?.webdav?.password || process.env.WEBDAV_PASSWORD || "",
+    timeoutMs: config?.storage?.webdav?.timeoutMs || process.env.WEBDAV_TIMEOUT_MS || "15000",
+  };
+}
+
+function createContentStore({ rootDir, config } = {}) {
+  const rawMode = config?.storage?.mode || process.env.STORAGE_MODE || "";
+  const mode = normalizeMode(rawMode);
+  const webdavConfig = resolveWebdavConfig(config);
+  const hasWebdav = Boolean(webdavConfig.url);
+  const effectiveMode = mode || (hasWebdav ? "hybrid" : "local");
+
+  if (effectiveMode === "webdav" && hasWebdav) {
+    return createWebdavStore(webdavConfig);
+  }
+  if (effectiveMode === "hybrid" && hasWebdav) {
+    return createHybridStore({ rootDir, webdavConfig });
+  }
   return createLocalStore({ rootDir });
+}
+
+function createStoreManager({ rootDir, config } = {}) {
+  let currentConfig = config || {};
+  let currentStore = createContentStore({ rootDir, config: currentConfig });
+
+  function getStore() {
+    return currentStore;
+  }
+
+  const proxy = {
+    get mode() {
+      return getStore().mode;
+    },
+    get baseDir() {
+      return getStore().baseDir;
+    },
+    get baseUrl() {
+      return getStore().baseUrl;
+    },
+    get basePath() {
+      return getStore().basePath;
+    },
+    get local() {
+      return getStore().local;
+    },
+    get webdav() {
+      return getStore().webdav;
+    },
+    async readBuffer(key) {
+      return getStore().readBuffer(key);
+    },
+    async writeBuffer(key, buffer, options) {
+      return getStore().writeBuffer(key, buffer, options);
+    },
+    async deletePath(key, options) {
+      return getStore().deletePath(key, options);
+    },
+    async createReadStream(key) {
+      return getStore().createReadStream(key);
+    },
+  };
+
+  function setConfig(nextConfig) {
+    currentConfig = nextConfig || {};
+    currentStore = createContentStore({ rootDir, config: currentConfig });
+    return currentStore;
+  }
+
+  function getConfig() {
+    return currentConfig;
+  }
+
+  return { store: proxy, setConfig, getConfig };
 }
 
 module.exports = {
   createContentStore,
+  createWebdavStore,
+  createStoreManager,
 };

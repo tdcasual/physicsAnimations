@@ -3,14 +3,15 @@ const express = require("express");
 
 const { getAuthConfig } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
-const { createContentStore } = require("./lib/contentStore");
+const { createStoreManager } = require("./lib/contentStore");
 const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
-const { UPLOAD_CSP } = require("./lib/uploadSecurity");
+const { loadSystemState } = require("./lib/systemState");
 
 const { errorHandler } = require("./middleware/errorHandler");
 const { createAuthRouter } = require("./routes/auth");
 const { createCategoriesRouter } = require("./routes/categories");
 const { createItemsRouter } = require("./routes/items");
+const { createSystemRouter } = require("./routes/system");
 
 function guessContentType(filePath) {
   const ext = path.extname(String(filePath || "")).toLowerCase();
@@ -55,7 +56,11 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   app.disable("x-powered-by");
 
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
-  const store = overrideStore || createContentStore({ rootDir });
+  const systemState = loadSystemState({ rootDir });
+  const storeManager = overrideStore
+    ? { store: overrideStore, setConfig: () => {} }
+    : createStoreManager({ rootDir, config: systemState });
+  const store = storeManager.store;
 
   app.use(express.json({ limit: "2mb" }));
 
@@ -85,77 +90,59 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   });
 
   app.use("/api", createAuthRouter({ authConfig, store }));
+  app.use("/api", createSystemRouter({ authConfig, store, rootDir, updateStoreConfig: storeManager.setConfig }));
   app.use("/api", createCategoriesRouter({ rootDir, authConfig, store }));
   app.use("/api", createItemsRouter({ rootDir, authConfig, store }));
 
   app.use("/assets", express.static(path.join(rootDir, "assets")));
   app.use("/animations", express.static(path.join(rootDir, "animations")));
-  if (store.mode === "local") {
-    app.use(
-      "/content/uploads",
-      express.static(path.join(rootDir, "content", "uploads"), {
-        setHeaders(res, filePath) {
-          const lower = filePath.toLowerCase();
-          if (!lower.endsWith(".html") && !lower.endsWith(".htm")) return;
-          res.setHeader("Content-Type", "text/html; charset=utf-8");
-          res.setHeader("Content-Security-Policy", `${UPLOAD_CSP}; frame-ancestors 'self'`);
-          res.setHeader("Referrer-Policy", "no-referrer");
-          res.setHeader("X-Content-Type-Options", "nosniff");
-          res.setHeader("Cache-Control", "no-store");
-        },
-      }),
-    );
-    app.use("/content/thumbnails", express.static(path.join(rootDir, "content", "thumbnails")));
-  } else {
-    app.get("/content/uploads/*", async (req, res, next) => {
-      try {
-        const key = safeContentKey(req.path, "uploads");
-        if (!key) {
-          res.status(400).json({ error: "invalid_path" });
-          return;
-        }
-        const stream = await store.createReadStream(key);
-        if (!stream) {
-          res.status(404).send("Not Found");
-          return;
-        }
-
-        res.setHeader("Content-Type", guessContentType(key));
-
-        if (key.toLowerCase().endsWith(".html") || key.toLowerCase().endsWith(".htm")) {
-          res.setHeader("Content-Security-Policy", `${UPLOAD_CSP}; frame-ancestors 'self'`);
-          res.setHeader("Referrer-Policy", "no-referrer");
-          res.setHeader("X-Content-Type-Options", "nosniff");
-          res.setHeader("Cache-Control", "no-store");
-        }
-
-        stream.on("error", next);
-        stream.pipe(res);
-      } catch (err) {
-        next(err);
+  app.get("/content/uploads/*", async (req, res, next) => {
+    try {
+      const key = safeContentKey(req.path, "uploads");
+      if (!key) {
+        res.status(400).json({ error: "invalid_path" });
+        return;
       }
-    });
-
-    app.get("/content/thumbnails/*", async (req, res, next) => {
-      try {
-        const key = safeContentKey(req.path, "thumbnails");
-        if (!key) {
-          res.status(400).json({ error: "invalid_path" });
-          return;
-        }
-        const stream = await store.createReadStream(key);
-        if (!stream) {
-          res.status(404).send("Not Found");
-          return;
-        }
-        res.setHeader("Content-Type", guessContentType(key));
-        stream.on("error", next);
-        stream.pipe(res);
-      } catch (err) {
-        next(err);
+      const stream = await store.createReadStream(key);
+      if (!stream) {
+        res.status(404).send("Not Found");
+        return;
       }
-    });
-  }
+
+      res.setHeader("Content-Type", guessContentType(key));
+
+      if (key.toLowerCase().endsWith(".html") || key.toLowerCase().endsWith(".htm")) {
+        res.setHeader("Referrer-Policy", "no-referrer");
+        res.setHeader("X-Content-Type-Options", "nosniff");
+        res.setHeader("Cache-Control", "no-store");
+      }
+
+      stream.on("error", next);
+      stream.pipe(res);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get("/content/thumbnails/*", async (req, res, next) => {
+    try {
+      const key = safeContentKey(req.path, "thumbnails");
+      if (!key) {
+        res.status(400).json({ error: "invalid_path" });
+        return;
+      }
+      const stream = await store.createReadStream(key);
+      if (!stream) {
+        res.status(404).send("Not Found");
+        return;
+      }
+      res.setHeader("Content-Type", guessContentType(key));
+      stream.on("error", next);
+      stream.pipe(res);
+    } catch (err) {
+      next(err);
+    }
+  });
 
   app.get("/animations.json", (_req, res) => {
     res.sendFile(path.join(rootDir, "animations.json"));

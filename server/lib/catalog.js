@@ -61,6 +61,7 @@ function loadBuiltinCatalog({ rootDir, builtinState, includeHiddenItems = false,
         description,
         order: 0,
         href: `viewer.html?id=${encodeURIComponent(file)}`,
+        src: `animations/${file}`,
         thumbnail,
         published: true,
         hidden: false,
@@ -138,6 +139,8 @@ async function loadCatalog({
     const category = getOrCreateCategory({ categories, categoryId: item.categoryId });
 
     const href = `viewer.html?id=${encodeURIComponent(item.id)}`;
+    const src =
+      item.type === "link" ? safeText(item.url || "") : safeText(item.path || "");
 
     category.items.push({
       id: item.id,
@@ -146,6 +149,7 @@ async function loadCatalog({
       title: safeText(item.title),
       description: safeText(item.description),
       href,
+      src,
       thumbnail: safeText(item.thumbnail),
       order: Number.isFinite(item.order) ? Math.trunc(item.order) : 0,
       createdAt: item.createdAt,

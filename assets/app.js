@@ -14,6 +14,8 @@ import {
   updateCategory,
   updateItem,
   updateAccount,
+  getSystemInfo,
+  updateSystemStorage,
   uploadHtml,
 } from "./api.js";
 
@@ -37,7 +39,8 @@ function buildBuiltinItem({ categoryId, item }) {
     categoryId,
     title: safeText(item.title || file.replace(/\.html$/i, "")),
     description: safeText(item.description || ""),
-    href: `viewer.html?id=${encodeURIComponent(file)}`,
+    src: `animations/${file}`,
+    href: `animations/${file}`,
     thumbnail,
   };
 }
@@ -86,9 +89,10 @@ function buildTabButton({ id, title, active }) {
 }
 
 function buildCard(item) {
+  const href = item.src || item.href || "#";
   const link = document.createElement("a");
   link.className = "card";
-  link.href = item.href;
+  link.href = href;
   link.dataset.category = item.categoryId;
   link.dataset.title = item.title.toLowerCase();
   link.dataset.description = item.description.toLowerCase();
@@ -378,11 +382,23 @@ function isAdminOpen() {
 function setAdminTab(state, tabId) {
   state.admin.tab = tabId;
 
+  const titles = {
+    dashboard: "概览",
+    content: "内容管理",
+    uploads: "上传管理",
+    categories: "分类管理",
+    account: "账号设置",
+    system: "系统设置",
+  };
+  $("#admin-section-title").textContent = titles[tabId] || "管理面板";
+
   const panels = {
+    dashboard: "#admin-panel-dashboard",
     content: "#admin-panel-content",
     uploads: "#admin-panel-uploads",
     categories: "#admin-panel-categories",
     account: "#admin-panel-account",
+    system: "#admin-panel-system",
   };
   Object.entries(panels).forEach(([key, selector]) => {
     $(selector).classList.toggle("hidden", tabId !== key);
@@ -418,8 +434,95 @@ async function loadAccountInfo(state) {
   $("#account-new-username").value = username || "";
 }
 
+function formatTimestamp(value) {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+async function loadSystemInfo(state) {
+  const data = await getSystemInfo();
+  const storage = data?.storage || {};
+  const webdav = storage.webdav || {};
+
+  $("#system-configured-mode").textContent = storage.mode || "-";
+  $("#system-effective-mode").textContent = storage.effectiveMode || storage.mode || "-";
+  $("#system-local-path").textContent = storage.localPath || "-";
+  $("#system-webdav-url").textContent = webdav.url || "-";
+  $("#system-webdav-base").textContent = webdav.basePath || "-";
+  $("#system-webdav-user").textContent = webdav.username || "-";
+  $("#system-webdav-pass").textContent = webdav.hasPassword ? "已配置" : "未配置";
+  $("#system-last-sync").textContent = formatTimestamp(storage.lastSyncedAt);
+
+  const uiMode = storage.mode === "webdav" ? "hybrid" : storage.mode || "local";
+  $("#system-mode-input").value = uiMode;
+  $("#system-webdav-url-input").value = webdav.url || "";
+  $("#system-webdav-base-input").value = webdav.basePath || "physicsAnimations";
+  $("#system-webdav-username-input").value = webdav.username || "";
+  $("#system-webdav-timeout-input").value =
+    typeof webdav.timeoutMs === "number" ? String(webdav.timeoutMs) : "15000";
+  $("#system-webdav-password-input").value = "";
+  $("#system-sync-on-save").checked = false;
+  $("#system-sync-now").disabled = !webdav.url;
+
+  state.admin.system.mode = uiMode;
+  state.admin.system.loaded = true;
+}
+
+function normalizeWebdavBasePath(value) {
+  const trimmed = String(value || "").trim();
+  return trimmed || "physicsAnimations";
+}
+
+function readSystemForm() {
+  const mode = $("#system-mode-input").value || "local";
+  const url = $("#system-webdav-url-input").value.trim();
+  const basePath = normalizeWebdavBasePath($("#system-webdav-base-input").value);
+  const username = $("#system-webdav-username-input").value.trim();
+  const password = $("#system-webdav-password-input").value;
+  const timeoutRaw = $("#system-webdav-timeout-input").value.trim();
+  const timeoutMs = timeoutRaw ? Number.parseInt(timeoutRaw, 10) : NaN;
+
+  const webdav = {
+    url,
+    basePath,
+    username,
+  };
+  if (password) webdav.password = password;
+  if (Number.isFinite(timeoutMs)) webdav.timeoutMs = timeoutMs;
+
+  const sync = $("#system-sync-on-save").checked;
+  return { mode, webdav, sync };
+}
+
+async function loadAdminStats(state) {
+  const [all, uploads, links, categories] = await Promise.all([
+    listItems({ page: 1, pageSize: 1 }),
+    listItems({ page: 1, pageSize: 1, type: "upload" }),
+    listItems({ page: 1, pageSize: 1, type: "link" }),
+    listCategories(),
+  ]);
+
+  const categoriesList = Array.isArray(categories?.categories) ? categories.categories : [];
+  const builtinTotal = categoriesList.reduce((sum, c) => sum + (c.builtinCount || 0), 0);
+  const categoryCount = categoriesList.length;
+
+  const dynamicTotal = Number(all?.total || 0);
+  const uploadTotal = Number(uploads?.total || 0);
+  const linkTotal = Number(links?.total || 0);
+
+  $("#admin-stat-total").textContent = String(dynamicTotal + builtinTotal);
+  $("#admin-stat-uploads").textContent = String(uploadTotal);
+  $("#admin-stat-links").textContent = String(linkTotal);
+  $("#admin-stat-builtins").textContent = String(builtinTotal);
+  $("#admin-stat-categories").textContent = String(categoryCount);
+}
+
 async function ensureAdminTabData(state, tabId) {
-  if (tabId === "content") {
+  if (tabId === "dashboard") {
+    await loadAdminStats(state);
+  } else if (tabId === "content") {
     await reloadAdminList(state, "content", { reset: true });
   } else if (tabId === "uploads") {
     if (!state.admin.lists.uploads.loaded) {
@@ -427,6 +530,10 @@ async function ensureAdminTabData(state, tabId) {
     }
   } else if (tabId === "account") {
     await loadAccountInfo(state);
+  } else if (tabId === "system") {
+    if (!state.admin.system.loaded) {
+      await loadSystemInfo(state);
+    }
   }
 }
 
@@ -770,13 +877,13 @@ function initAdmin({ state }) {
 
   $("#admin-button").addEventListener("click", async () => {
     openAdminModal();
-    setAdminTab(state, state.admin.tab || "content");
+    setAdminTab(state, state.admin.tab || "dashboard");
     $("#admin-items-search").value = state.admin.lists.content.query || "";
     $("#admin-uploads-search").value = state.admin.lists.uploads.query || "";
 
     try {
       await loadAdminCategories(state);
-      await ensureAdminTabData(state, state.admin.tab || "content");
+      await ensureAdminTabData(state, state.admin.tab || "dashboard");
     } catch (err) {
       if (err?.status === 401) {
         clearToken();
@@ -1151,6 +1258,65 @@ function initAdmin({ state }) {
     }
   });
 
+  $("#system-mode-input").addEventListener("change", (e) => {
+    const nextMode = e.target.value || "local";
+    if (nextMode === "hybrid" && state.admin.system.mode !== "hybrid") {
+      $("#system-sync-on-save").checked = true;
+    }
+  });
+
+  $("#system-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const { mode, webdav, sync } = readSystemForm();
+
+    if ((mode === "hybrid" || mode === "webdav") && !webdav.url) {
+      showToast("请填写 WebDAV 地址", { kind: "info" });
+      return;
+    }
+
+    $("#system-save").disabled = true;
+    try {
+      await updateSystemStorage({ mode, webdav, sync });
+      $("#system-webdav-password-input").value = "";
+      $("#system-sync-on-save").checked = false;
+      await loadSystemInfo(state);
+      showToast("已保存", { kind: "success" });
+    } catch (err) {
+      if (err?.status === 401) {
+        clearToken();
+        setLoginUi({ loggedIn: false });
+        closeAdminModal();
+        return;
+      }
+      if (err?.status === 400 && err?.data?.error === "webdav_missing_url") {
+        showToast("请填写 WebDAV 地址", { kind: "info" });
+        return;
+      }
+      showToast("保存失败", { kind: "info" });
+    } finally {
+      $("#system-save").disabled = false;
+    }
+  });
+
+  $("#system-sync-now").addEventListener("click", async () => {
+    $("#system-sync-now").disabled = true;
+    try {
+      await updateSystemStorage({ sync: true });
+      await loadSystemInfo(state);
+      showToast("同步完成", { kind: "success" });
+    } catch (err) {
+      if (err?.status === 401) {
+        clearToken();
+        setLoginUi({ loggedIn: false });
+        closeAdminModal();
+        return;
+      }
+      showToast("同步失败", { kind: "info" });
+    } finally {
+      $("#system-sync-now").disabled = false;
+    }
+  });
+
   $("#account-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const currentPassword = $("#account-current-password").value;
@@ -1220,7 +1386,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     selectedCategoryId: "all",
     query: "",
     admin: {
-      tab: "content",
+      tab: "dashboard",
       categories: [],
       lists: {
         content: {
@@ -1248,6 +1414,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       },
       account: {
         username: "",
+      },
+      system: {
+        loaded: false,
+        mode: "local",
       },
     },
   };

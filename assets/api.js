@@ -130,3 +130,15 @@ export async function updateAccount({ currentPassword, newUsername, newPassword 
     body: JSON.stringify({ currentPassword, newUsername, newPassword }),
   });
 }
+
+export async function getSystemInfo() {
+  return apiFetch("/api/system", { method: "GET" });
+}
+
+export async function updateSystemStorage({ mode, webdav, sync } = {}) {
+  return apiFetch("/api/system/storage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode, webdav, sync }),
+  });
+}
