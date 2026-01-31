@@ -15,7 +15,9 @@ function errorHandler(err, _req, res, _next) {
         : "bad_request";
 
   const payload = { error: code };
-  if (code === "invalid_input" && err?.details) payload.details = err.details;
+  if ((code === "invalid_input" || code === "storage_readonly") && err?.details) {
+    payload.details = err.details;
+  }
 
   if (status >= 500) {
     console.error(err);
@@ -27,4 +29,3 @@ function errorHandler(err, _req, res, _next) {
 module.exports = {
   errorHandler,
 };
-

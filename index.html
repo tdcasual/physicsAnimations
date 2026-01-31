@@ -34,6 +34,7 @@
         </div>
       </div>
 
+      <nav class="tabs" aria-label="大类" id="group-tabs"></nav>
       <nav class="tabs" aria-label="分类" id="category-tabs"></nav>
 
       <section class="grid" id="card-grid" aria-live="polite">
@@ -135,7 +136,7 @@
                       <div class="admin-stat-value" id="admin-stat-builtins">-</div>
                     </div>
                     <div class="admin-stat">
-                      <div class="admin-stat-label">分类数量</div>
+                      <div class="admin-stat-label">二级分类</div>
                       <div class="admin-stat-value" id="admin-stat-categories">-</div>
                     </div>
                   </div>
@@ -146,17 +147,22 @@
               <div class="admin-panel hidden" id="admin-panel-content" role="tabpanel">
             <section class="admin-section">
               <div class="admin-section-title">添加网页链接</div>
-              <form class="admin-form" id="link-form">
-                <div class="admin-form-grid">
-                  <label class="field">
-                    <span class="field-label">分类</span>
-                    <select class="field-input" id="link-category" name="categoryId"></select>
-                  </label>
-                  <label class="field">
-                    <span class="field-label">链接</span>
-                    <input class="field-input" id="link-url" name="url" type="url" placeholder="https://example.com" />
-                  </label>
-                </div>
+	              <form class="admin-form" id="link-form">
+	                <div class="admin-form-grid">
+	                  <label class="field">
+	                    <span class="field-label">大类</span>
+	                    <select class="field-input" id="link-group" name="groupId"></select>
+	                  </label>
+	                  <label class="field">
+	                    <span class="field-label">二级分类</span>
+	                    <select class="field-input" id="link-category" name="categoryId"></select>
+	                  </label>
+	                </div>
+	                <div class="admin-help" id="link-path"></div>
+	                <label class="field">
+	                  <span class="field-label">链接</span>
+	                  <input class="field-input" id="link-url" name="url" type="url" placeholder="https://example.com" />
+	                </label>
                 <label class="field">
                   <span class="field-label">标题（可选）</span>
                   <input class="field-input" id="link-title" name="title" type="text" />
@@ -198,23 +204,28 @@
               <div class="admin-panel hidden" id="admin-panel-uploads" role="tabpanel">
             <section class="admin-section">
               <div class="admin-section-title">上传 HTML / ZIP</div>
-              <form class="admin-form" id="upload-form">
-                <div class="admin-form-grid">
-                  <label class="field">
-                    <span class="field-label">分类</span>
-                    <select class="field-input" id="upload-category" name="categoryId"></select>
-                  </label>
-                  <label class="field">
-                    <span class="field-label">文件（HTML / ZIP）</span>
-                    <input
-                      class="field-input"
-                      id="upload-file"
-                      name="file"
-                      type="file"
-                      accept=".html,.htm,.zip,text/html,application/zip"
-                    />
-                  </label>
-                </div>
+	              <form class="admin-form" id="upload-form">
+	                <div class="admin-form-grid">
+	                  <label class="field">
+	                    <span class="field-label">大类</span>
+	                    <select class="field-input" id="upload-group" name="groupId"></select>
+	                  </label>
+	                  <label class="field">
+	                    <span class="field-label">二级分类</span>
+	                    <select class="field-input" id="upload-category" name="categoryId"></select>
+	                  </label>
+	                </div>
+	                <div class="admin-help" id="upload-path"></div>
+	                <label class="field">
+	                  <span class="field-label">文件（HTML / ZIP）</span>
+	                  <input
+	                    class="field-input"
+                    id="upload-file"
+                    name="file"
+                    type="file"
+                    accept=".html,.htm,.zip,text/html,application/zip"
+                  />
+                </label>
                 <label class="field">
                   <span class="field-label">标题（可选）</span>
                   <input class="field-input" id="upload-title" name="title" type="text" />
@@ -254,40 +265,71 @@
           </div>
 
               <div class="admin-panel hidden" id="admin-panel-categories" role="tabpanel">
-            <section class="admin-section">
-              <div class="admin-section-title">新增分类</div>
-              <form class="admin-form" id="category-create-form">
-                <div class="admin-form-grid">
-                  <label class="field">
-                    <span class="field-label">ID（英文/数字）</span>
-                    <input class="field-input" id="category-create-id" name="id" type="text" placeholder="custom" />
-                  </label>
-                  <label class="field">
-                    <span class="field-label">标题</span>
-                    <input class="field-input" id="category-create-title" name="title" type="text" placeholder="自定义分类" />
-                  </label>
-                </div>
-                <div class="admin-form-grid">
-                  <label class="field">
-                    <span class="field-label">排序（越大越靠前）</span>
-                    <input class="field-input" id="category-create-order" name="order" type="number" value="0" />
-                  </label>
-                  <label class="admin-check">
-                    <input id="category-create-hidden" name="hidden" type="checkbox" />
-                    隐藏
-                  </label>
-                </div>
-                <div class="admin-actions">
-                  <button class="btn btn-primary" id="category-create-submit" type="submit">创建</button>
-                </div>
-              </form>
-            </section>
+	            <section class="admin-section">
+	              <div class="admin-sticky-controls">
+	                <div class="admin-section-header">
+	                  <div class="admin-section-title">分类结构</div>
+	                  <label class="field admin-inline-field">
+	                    <span class="sr-only">搜索</span>
+	                    <input
+	                      class="field-input"
+	                      id="taxonomy-search"
+	                      type="search"
+	                      placeholder="搜索大类 / 二级分类..."
+	                      autocomplete="off"
+	                    />
+	                  </label>
+	                </div>
 
-            <div class="admin-divider" role="presentation"></div>
+	                <div class="admin-actions admin-actions-between">
+	                  <div class="admin-actions-left">
+	                    <button class="btn btn-ghost" id="taxonomy-collapse-all" type="button">折叠全部</button>
+	                    <button class="btn btn-ghost" id="taxonomy-expand-all" type="button">展开全部</button>
+	                    <label class="admin-check">
+	                      <input id="taxonomy-show-hidden" type="checkbox" />
+	                      显示隐藏项
+	                    </label>
+	                  </div>
+	                  <div class="admin-help" id="taxonomy-meta"></div>
+	                </div>
+	              </div>
 
-            <section class="admin-section">
-              <div class="admin-section-title">分类列表</div>
-              <div class="admin-categories" id="admin-categories"></div>
+	              <details class="admin-accordion" id="taxonomy-add-group">
+	                <summary class="admin-accordion-summary">
+	                  <div class="admin-accordion-summary-inner">
+                    <div class="admin-accordion-summary-title">新增大类</div>
+                    <div class="admin-accordion-summary-meta">创建新的超级分类（如：数学/化学）</div>
+                  </div>
+                </summary>
+
+                <form class="admin-form admin-accordion-body" id="group-create-form">
+                  <div class="admin-form-grid">
+                    <label class="field">
+                      <span class="field-label">ID（英文/数字）</span>
+                      <input class="field-input" id="group-create-id" name="id" type="text" placeholder="math" />
+                    </label>
+                    <label class="field">
+                      <span class="field-label">标题</span>
+                      <input class="field-input" id="group-create-title" name="title" type="text" placeholder="数学" />
+                    </label>
+                  </div>
+                  <div class="admin-form-grid">
+                    <label class="field">
+                      <span class="field-label">排序（越大越靠前）</span>
+                      <input class="field-input" id="group-create-order" name="order" type="number" value="0" />
+                    </label>
+                    <label class="admin-check">
+                      <input id="group-create-hidden" name="hidden" type="checkbox" />
+                      隐藏
+                    </label>
+                  </div>
+                  <div class="admin-actions">
+                    <button class="btn btn-primary" id="group-create-submit" type="submit">创建</button>
+                  </div>
+                </form>
+              </details>
+
+              <div class="admin-taxonomy" id="admin-taxonomy"></div>
             </section>
           </div>
 

@@ -67,16 +67,17 @@ npm run build-catalog
 - 上传 ZIP：选择一个 `.zip` 文件（建议把 `index.html` 放在压缩包根目录；如在子目录也可自动识别；仅支持常见静态资源类型）
 - 外链：在「添加网页链接」中填写 `http(s)://...`
 - 内容管理：支持分页/搜索、编辑 `published/hidden/order` 与标题/描述/分类
-- 分类管理：支持新增分类、排序、隐藏分类
+- 分类管理：支持管理「大类 / 二级分类」的新增、排序、隐藏，并可调整二级分类所属大类
 
 添加成功后会自动截图，并在首页卡片与 `viewer.html` 中展示。
 
 ## API（MVP）
 
 - `GET /api/catalog`：返回内置动画 + 登录后新增内容的合并目录（前端主要使用）
-  - 会自动应用分类配置（排序/隐藏）
+  - 返回结构为 `groups -> categories -> items`
+  - 会自动应用大类/二级分类配置（排序/隐藏）
   - 仅返回 `published=true && hidden=false` 的新增内容
-- `GET /api/categories`：返回分类列表（含数量）
+- `GET /api/categories`：返回大类/二级分类列表（含数量）
   - 未登录：仅返回未隐藏分类
   - 已登录：额外包含隐藏分类与“仅配置但暂无内容”的分类
 - `GET /api/items`：返回登录后新增内容（支持 `q/categoryId/type/page/pageSize`）
@@ -95,9 +96,13 @@ npm run build-catalog
 
 分类管理（需要登录）：
 
-- `POST /api/categories`：创建分类配置（用于新增分类/覆盖内置分类）
-- `PUT /api/categories/:id`：更新分类配置（`title/order/hidden`）
-- `DELETE /api/categories/:id`：删除分类配置（恢复默认显示）
+- `POST /api/groups`：创建大类
+- `PUT /api/groups/:id`：更新大类配置（`title/order/hidden`）
+- `DELETE /api/groups/:id`：删除/重置大类配置（非默认大类需保证其下无二级分类）
+
+- `POST /api/categories`：创建二级分类（需要 `groupId`）
+- `PUT /api/categories/:id`：更新二级分类配置（`groupId/title/order/hidden`）
+- `DELETE /api/categories/:id`：删除二级分类配置（恢复默认显示）
 
 兼容旧接口：
 - `POST /api/items/link`
@@ -193,11 +198,27 @@ docker compose up -d
 
 ### Vercel（Serverless）
 
-仓库已提供 `vercel.json` + `api/index.js`。注意：Vercel 文件系统不可持久写入，建议启用 WebDAV 存储：
+仓库已提供 `vercel.json` + `api/index.js`。
 
-- 在 Vercel 项目环境变量中设置：`STORAGE_MODE=webdav`、`WEBDAV_URL`、`WEBDAV_USERNAME/WEBDAV_PASSWORD`（如需要）
-- 部署后访问站点即可
+注意：Vercel Serverless 文件系统不可持久写入（且可能是只读），因此**不要依赖本地 `content/`**，强烈建议使用 WebDAV 作为运行时存储。
+
+建议在 Vercel 项目环境变量中配置（至少）：
+
+- 存储（必配）
+  - `STORAGE_MODE=webdav`
+  - `WEBDAV_URL`（必配）
+  - `WEBDAV_USERNAME` / `WEBDAV_PASSWORD`（如 WebDAV 需要鉴权）
+  - 可选：`WEBDAV_BASE_PATH`（默认 `physicsAnimations`）、`WEBDAV_TIMEOUT_MS`
+- 鉴权（强烈建议）
+  - `JWT_SECRET`（必配）：Serverless 无法写入 `content/.jwt_secret` 时会使用临时密钥，导致重启/冷启动后旧 token 全部失效
+  - `ADMIN_USERNAME`（可选，默认 `admin`）
+  - `ADMIN_PASSWORD_HASH`（推荐）或 `ADMIN_PASSWORD`（明文；不推荐，默认 `admin`）
+
+说明：
+
+- 若运行在只读文件系统下，Web UI 的「系统设置」可能无法持久保存（请以环境变量为准）
 - 部分 Serverless 环境可能无法运行 Playwright（缩略图生成会失败但不影响上传/访问，可后续在可运行 Playwright 的环境补截图）
+
 
 ### 通用云函数（AWS Lambda / Netlify Functions 等）
 

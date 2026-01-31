@@ -1,3 +1,9 @@
+const DEFAULT_GROUP_ID = "physics";
+
+const GROUP_TITLES = {
+  physics: "物理",
+};
+
 const CATEGORY_TITLES = {
   mechanics: "力学",
   thermodynamics: "热学",
@@ -9,6 +15,7 @@ const CATEGORY_TITLES = {
 };
 
 module.exports = {
+  DEFAULT_GROUP_ID,
+  GROUP_TITLES,
   CATEGORY_TITLES,
 };
-

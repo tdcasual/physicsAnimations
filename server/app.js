@@ -9,9 +9,21 @@ const { loadSystemState } = require("./lib/systemState");
 
 const { errorHandler } = require("./middleware/errorHandler");
 const { createAuthRouter } = require("./routes/auth");
+const { createGroupsRouter } = require("./routes/groups");
 const { createCategoriesRouter } = require("./routes/categories");
 const { createItemsRouter } = require("./routes/items");
 const { createSystemRouter } = require("./routes/system");
+
+function parseTrustProxy(value) {
+  if (value === undefined) return undefined;
+  const raw = String(value).trim();
+  if (!raw) return undefined;
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  const n = Number.parseInt(raw, 10);
+  if (Number.isFinite(n) && String(n) === raw) return n;
+  return raw;
+}
 
 function guessContentType(filePath) {
   const ext = path.extname(String(filePath || "")).toLowerCase();
@@ -55,6 +67,15 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   const app = express();
   app.disable("x-powered-by");
 
+  const trustProxy = parseTrustProxy(process.env.TRUST_PROXY);
+  if (trustProxy !== undefined) {
+    app.set("trust proxy", trustProxy);
+  } else if (process.env.VERCEL) {
+    // Vercel runs behind an edge proxy; without this, all requests may share the same IP
+    // and rate limiting would become global. Prefer explicit TRUST_PROXY in self-hosted setups.
+    app.set("trust proxy", 1);
+  }
+
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
   const systemState = loadSystemState({ rootDir });
   const storeManager = overrideStore
@@ -91,6 +112,7 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
 
   app.use("/api", createAuthRouter({ authConfig, store }));
   app.use("/api", createSystemRouter({ authConfig, store, rootDir, updateStoreConfig: storeManager.setConfig }));
+  app.use("/api", createGroupsRouter({ rootDir, authConfig, store }));
   app.use("/api", createCategoriesRouter({ rootDir, authConfig, store }));
   app.use("/api", createItemsRouter({ rootDir, authConfig, store }));
 

@@ -87,6 +87,9 @@ web_modules/
 content/items.json
 content/categories.json
 content/builtin_items.json
+content/admin.json
+content/system.json
+content/.jwt_secret
 content/uploads/
 content/thumbnails/
 

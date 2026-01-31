@@ -3,6 +3,8 @@ const { createError } = require("./errors");
 const ITEMS_STATE_KEY = "items.json";
 const CATEGORIES_STATE_KEY = "categories.json";
 const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
+const TAXONOMY_VERSION = 2;
+const DEFAULT_GROUP_ID = "physics";
 
 const stateLocks = new Map();
 const NO_SAVE = Symbol("state_no_save");
@@ -108,36 +110,73 @@ async function mutateItemsState({ store }, mutator) {
 
 async function loadCategoriesState({ store }) {
   const raw = await store.readBuffer(CATEGORIES_STATE_KEY);
-  if (!raw) return { version: 1, categories: {} };
+  if (!raw) return { version: TAXONOMY_VERSION, groups: {}, categories: {} };
 
   let parsed = null;
   try {
     parsed = JSON.parse(raw.toString("utf8"));
   } catch {
-    return { version: 1, categories: {} };
+    return { version: TAXONOMY_VERSION, groups: {}, categories: {} };
   }
 
-  if (!parsed || typeof parsed !== "object" || !parsed.categories || typeof parsed.categories !== "object") {
-    return { version: 1, categories: {} };
+  if (!parsed || typeof parsed !== "object") {
+    return { version: TAXONOMY_VERSION, groups: {}, categories: {} };
   }
 
+  const version = Number(parsed.version || 0);
+  const rawGroups = parsed.groups && typeof parsed.groups === "object" ? parsed.groups : {};
+  const rawCategories =
+    parsed.categories && typeof parsed.categories === "object" ? parsed.categories : {};
+
+  const groups = {};
   const categories = {};
-  for (const [id, category] of Object.entries(parsed.categories)) {
+
+  if (version >= TAXONOMY_VERSION) {
+    for (const [id, group] of Object.entries(rawGroups)) {
+      if (typeof id !== "string" || !id) continue;
+      if (!group || typeof group !== "object") continue;
+
+      const title = typeof group.title === "string" ? group.title : "";
+      const order = toInt(group.order, 0);
+      const hidden = typeof group.hidden === "boolean" ? group.hidden : false;
+      groups[id] = { id, title, order, hidden };
+    }
+
+    for (const [id, category] of Object.entries(rawCategories)) {
+      if (typeof id !== "string" || !id) continue;
+      if (!category || typeof category !== "object") continue;
+
+      const title = typeof category.title === "string" ? category.title : "";
+      const order = toInt(category.order, 0);
+      const hidden = typeof category.hidden === "boolean" ? category.hidden : false;
+      const groupId =
+        typeof category.groupId === "string" && category.groupId
+          ? category.groupId
+          : DEFAULT_GROUP_ID;
+      categories[id] = { id, groupId, title, order, hidden };
+    }
+
+    return { version: TAXONOMY_VERSION, groups, categories };
+  }
+
+  // Migrate legacy v1 state: categories only, all belong to the default group.
+  for (const [id, category] of Object.entries(rawCategories)) {
     if (typeof id !== "string" || !id) continue;
     if (!category || typeof category !== "object") continue;
 
     const title = typeof category.title === "string" ? category.title : "";
     const order = toInt(category.order, 0);
     const hidden = typeof category.hidden === "boolean" ? category.hidden : false;
-    categories[id] = { id, title, order, hidden };
+    categories[id] = { id, groupId: DEFAULT_GROUP_ID, title, order, hidden };
   }
 
-  return { version: 1, categories };
+  return { version: TAXONOMY_VERSION, groups, categories };
 }
 
 async function saveCategoriesState({ store, state }) {
   const payload = {
-    version: 1,
+    version: TAXONOMY_VERSION,
+    groups: state?.groups && typeof state.groups === "object" ? state.groups : {},
     categories: state?.categories && typeof state.categories === "object" ? state.categories : {},
   };
   const json = Buffer.from(`${JSON.stringify(payload, null, 2)}\n`, "utf8");

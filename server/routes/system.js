@@ -14,9 +14,16 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
     const webdav = state.storage.webdav || {};
 
     res.json({
+      auth: {
+        jwtSecretSource: authConfig?.jwtSecretSource || "unknown",
+        jwtSecretFromEnv: Boolean(process.env.JWT_SECRET),
+        adminUsernameFromEnv: Boolean(process.env.ADMIN_USERNAME),
+        adminPasswordConfigured: Boolean(process.env.ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD),
+      },
       storage: {
         mode: state.storage.mode,
         effectiveMode,
+        readOnly: Boolean(store?.readOnly),
         localPath: `${rootDir}/content`,
         lastSyncedAt: state.storage.lastSyncedAt || "",
         webdav: {

@@ -8,6 +8,7 @@ const { loadAdminState } = require("./adminState");
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "admin";
 const JWT_SECRET_FILE = ".jwt_secret";
+let didWarnEphemeralJwtSecret = false;
 
 function loadJwtSecretFromFile(filePath) {
   try {
@@ -22,22 +23,24 @@ function persistJwtSecret(filePath, secret) {
   try {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, `${secret}\n`, { mode: 0o600 });
+    return true;
   } catch {
     // Ignore persistence errors; we'll fall back to in-memory secret.
+    return false;
   }
 }
 
-function resolveJwtSecret({ rootDir } = {}) {
-  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
-  if (!rootDir) return crypto.randomBytes(32).toString("hex");
+function resolveJwtSecretWithSource({ rootDir } = {}) {
+  if (process.env.JWT_SECRET) return { secret: process.env.JWT_SECRET, source: "env" };
+  if (!rootDir) return { secret: crypto.randomBytes(32).toString("hex"), source: "memory" };
 
   const secretPath = path.join(rootDir, "content", JWT_SECRET_FILE);
   const existing = loadJwtSecretFromFile(secretPath);
-  if (existing) return existing;
+  if (existing) return { secret: existing, source: "file" };
 
   const generated = crypto.randomBytes(32).toString("hex");
-  persistJwtSecret(secretPath, generated);
-  return generated;
+  const persisted = persistJwtSecret(secretPath, generated);
+  return { secret: generated, source: persisted ? "file" : "memory" };
 }
 
 function getAuthConfig({ rootDir } = {}) {
@@ -46,7 +49,13 @@ function getAuthConfig({ rootDir } = {}) {
     process.env.ADMIN_PASSWORD_HASH ||
     bcrypt.hashSync(process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD, 10);
 
-  const jwtSecret = resolveJwtSecret({ rootDir });
+  const { secret: jwtSecret, source: jwtSecretSource } = resolveJwtSecretWithSource({ rootDir });
+  if (jwtSecretSource === "memory" && !process.env.JWT_SECRET && !didWarnEphemeralJwtSecret) {
+    didWarnEphemeralJwtSecret = true;
+    console.warn(
+      "[auth] JWT secret is ephemeral (not persisted). Tokens will be invalid after restart/cold start. Set JWT_SECRET in env.",
+    );
+  }
 
   const jwtIssuer = process.env.JWT_ISSUER || "physicsAnimations";
   const jwtAudience = process.env.JWT_AUDIENCE || "physicsAnimations-web";
@@ -56,6 +65,7 @@ function getAuthConfig({ rootDir } = {}) {
     adminUsername,
     adminPasswordHash,
     jwtSecret,
+    jwtSecretSource,
     jwtIssuer,
     jwtAudience,
     tokenTtlSeconds,

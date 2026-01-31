@@ -2,6 +2,8 @@ const fs = require("fs");
 const path = require("path");
 const { Readable } = require("stream");
 
+const { createError } = require("./errors");
+
 function ensureTrailingSlash(url) {
   return url.endsWith("/") ? url : `${url}/`;
 }
@@ -29,6 +31,72 @@ async function fetchWithTimeout(url, options, timeoutMs) {
   }
 }
 
+function canWriteDir(dirPath) {
+  try {
+    fs.mkdirSync(dirPath, { recursive: true });
+  } catch {
+    return false;
+  }
+
+  const fileName = `.pa-write-test-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const filePath = path.join(dirPath, fileName);
+  try {
+    fs.writeFileSync(filePath, "1", "utf8");
+    fs.unlinkSync(filePath);
+    return true;
+  } catch {
+    try {
+      fs.unlinkSync(filePath);
+    } catch {
+      // ignore
+    }
+    return false;
+  }
+}
+
+function createReadOnlyLocalStore({ rootDir, reason = "" } = {}) {
+  const baseDir = path.join(rootDir || process.cwd(), "content");
+
+  function resolveKey(key) {
+    const cleaned = String(key || "").replace(/^\/+/, "");
+    return path.join(baseDir, cleaned);
+  }
+
+  function throwReadOnly() {
+    throw createError("storage_readonly", 503, {
+      reason: reason || "content_dir_not_writable",
+      baseDir,
+      hint: "Set STORAGE_MODE=webdav and configure WEBDAV_URL (+ optional WEBDAV_USERNAME/WEBDAV_PASSWORD).",
+    });
+  }
+
+  return {
+    mode: "local_readonly",
+    readOnly: true,
+    baseDir,
+
+    async readBuffer(key) {
+      const filePath = resolveKey(key);
+      if (!fs.existsSync(filePath)) return null;
+      return fs.promises.readFile(filePath);
+    },
+
+    async writeBuffer() {
+      throwReadOnly();
+    },
+
+    async deletePath() {
+      throwReadOnly();
+    },
+
+    async createReadStream(key) {
+      const filePath = resolveKey(key);
+      if (!fs.existsSync(filePath)) return null;
+      return fs.createReadStream(filePath);
+    },
+  };
+}
+
 function createLocalStore({ rootDir }) {
   const baseDir = path.join(rootDir, "content");
   fs.mkdirSync(baseDir, { recursive: true });
@@ -40,6 +108,7 @@ function createLocalStore({ rootDir }) {
 
   return {
     mode: "local",
+    readOnly: false,
     baseDir,
 
     async readBuffer(key) {
@@ -137,6 +206,7 @@ function createWebdavStore(options = {}) {
 
   return {
     mode: "webdav",
+    readOnly: false,
     baseUrl,
     basePath,
 
@@ -192,6 +262,7 @@ function createHybridStore({ rootDir, webdavConfig }) {
 
   return {
     mode: "hybrid",
+    readOnly: false,
     baseDir: local.baseDir,
     baseUrl: webdav.baseUrl,
     basePath: webdav.basePath,
@@ -257,10 +328,27 @@ function createContentStore({ rootDir, config } = {}) {
   if (effectiveMode === "webdav" && hasWebdav) {
     return createWebdavStore(webdavConfig);
   }
-  if (effectiveMode === "hybrid" && hasWebdav) {
-    return createHybridStore({ rootDir, webdavConfig });
+  const baseDir = path.join(rootDir || process.cwd(), "content");
+  const localWritable = canWriteDir(baseDir);
+
+  if (effectiveMode === "hybrid") {
+    if (!hasWebdav) {
+      console.warn("[storage] STORAGE_MODE=hybrid but WEBDAV_URL is missing; falling back to local storage.");
+      if (localWritable) return createLocalStore({ rootDir });
+      console.warn("[storage] Local storage is not writable; running in read-only mode.");
+      return createReadOnlyLocalStore({ rootDir, reason: "content_dir_not_writable" });
+    }
+
+    if (localWritable) return createHybridStore({ rootDir, webdavConfig });
+
+    console.warn("[storage] Local storage is not writable; falling back to WebDAV-only mode.");
+    return createWebdavStore(webdavConfig);
   }
-  return createLocalStore({ rootDir });
+
+  if (localWritable) return createLocalStore({ rootDir });
+
+  console.warn("[storage] Local storage is not writable; running in read-only mode.");
+  return createReadOnlyLocalStore({ rootDir, reason: "content_dir_not_writable" });
 }
 
 function createStoreManager({ rootDir, config } = {}) {
@@ -274,6 +362,9 @@ function createStoreManager({ rootDir, config } = {}) {
   const proxy = {
     get mode() {
       return getStore().mode;
+    },
+    get readOnly() {
+      return Boolean(getStore().readOnly);
     },
     get baseDir() {
       return getStore().baseDir;

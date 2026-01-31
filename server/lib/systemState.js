@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const { createError } = require("./errors");
+
 const SYSTEM_STATE_FILE = "system.json";
 const stateLocks = new Map();
 const NO_SAVE = Symbol("system_state_no_save");
@@ -105,9 +107,21 @@ function loadSystemState({ rootDir }) {
 
 function saveSystemState({ rootDir, state }) {
   const filePath = systemStatePath(rootDir);
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  const payload = normalizeState(state, buildEnvDefaults());
-  fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    const payload = normalizeState(state, buildEnvDefaults());
+    fs.writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  } catch (err) {
+    const code = err?.code;
+    if (code === "EACCES" || code === "EPERM" || code === "EROFS") {
+      throw createError("storage_readonly", 503, {
+        reason: "system_state_not_writable",
+        filePath,
+        hint: "In serverless environments, persist config via environment variables instead of the web UI.",
+      });
+    }
+    throw err;
+  }
 }
 
 async function mutateSystemState({ rootDir }, mutator) {

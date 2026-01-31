@@ -103,11 +103,35 @@ export async function listCategories() {
   return apiFetch("/api/categories", { method: "GET" });
 }
 
-export async function createCategory({ id, title, order = 0, hidden = false }) {
-  return apiFetch("/api/categories", {
+export async function listGroups() {
+  return apiFetch("/api/groups", { method: "GET" });
+}
+
+export async function createGroup({ id, title, order = 0, hidden = false }) {
+  return apiFetch("/api/groups", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ id, title, order, hidden }),
+  });
+}
+
+export async function updateGroup(id, patch) {
+  return apiFetch(`/api/groups/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(patch || {}),
+  });
+}
+
+export async function deleteGroup(id) {
+  return apiFetch(`/api/groups/${encodeURIComponent(id)}`, { method: "DELETE" });
+}
+
+export async function createCategory({ id, groupId, title, order = 0, hidden = false }) {
+  return apiFetch("/api/categories", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id, groupId, title, order, hidden }),
   });
 }
 
