@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const { loadAdminState } = require("./adminState");
 
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "admin";
@@ -128,13 +129,25 @@ function optionalAuth({ authConfig }) {
   };
 }
 
-async function verifyLogin({ username, password, authConfig }) {
-  if (username !== authConfig.adminUsername) return false;
-  return bcrypt.compare(password, authConfig.adminPasswordHash);
+async function resolveAdminCredentials({ authConfig, store }) {
+  if (store) {
+    const state = await loadAdminState({ store });
+    if (state?.username && state?.passwordHash) {
+      return { username: state.username, passwordHash: state.passwordHash };
+    }
+  }
+  return { username: authConfig.adminUsername, passwordHash: authConfig.adminPasswordHash };
+}
+
+async function verifyLogin({ username, password, authConfig, store }) {
+  const current = await resolveAdminCredentials({ authConfig, store });
+  if (username !== current.username) return false;
+  return bcrypt.compare(password, current.passwordHash);
 }
 
 module.exports = {
   getAuthConfig,
+  resolveAdminCredentials,
   issueToken,
   requireAuth,
   optionalAuth,

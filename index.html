@@ -88,17 +88,75 @@
         </div>
         <div class="modal-body admin-body">
           <div class="admin-tabs" role="tablist" aria-label="管理面板标签页" id="admin-tabs">
-            <button class="tab active" type="button" role="tab" aria-selected="true" data-admin-tab="items">
+            <button class="tab active" type="button" role="tab" aria-selected="true" data-admin-tab="content">
               内容
+            </button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-admin-tab="uploads">
+              上传
             </button>
             <button class="tab" type="button" role="tab" aria-selected="false" data-admin-tab="categories">
               分类
             </button>
+            <button class="tab" type="button" role="tab" aria-selected="false" data-admin-tab="account">
+              账号
+            </button>
           </div>
 
-          <div class="admin-panel" id="admin-panel-items" role="tabpanel">
+          <div class="admin-panel" id="admin-panel-content" role="tabpanel">
             <section class="admin-section">
-              <div class="admin-section-title">上传 HTML</div>
+              <div class="admin-section-title">添加网页链接</div>
+              <form class="admin-form" id="link-form">
+                <div class="admin-form-grid">
+                  <label class="field">
+                    <span class="field-label">分类</span>
+                    <select class="field-input" id="link-category" name="categoryId"></select>
+                  </label>
+                  <label class="field">
+                    <span class="field-label">链接</span>
+                    <input class="field-input" id="link-url" name="url" type="url" placeholder="https://example.com" />
+                  </label>
+                </div>
+                <label class="field">
+                  <span class="field-label">标题（可选）</span>
+                  <input class="field-input" id="link-title" name="title" type="text" />
+                </label>
+                <label class="field">
+                  <span class="field-label">描述（可选）</span>
+                  <textarea class="field-input field-textarea" id="link-description" name="description"></textarea>
+                </label>
+                <div class="admin-actions">
+                  <button class="btn btn-primary" id="link-submit" type="submit">添加</button>
+                </div>
+              </form>
+            </section>
+
+            <div class="admin-divider" role="presentation"></div>
+
+            <section class="admin-section">
+              <div class="admin-section-header">
+                <div class="admin-section-title">内容列表</div>
+                <label class="field admin-inline-field">
+                  <span class="sr-only">搜索</span>
+                  <input
+                    class="field-input"
+                    id="admin-items-search"
+                    type="search"
+                    placeholder="搜索内容..."
+                    autocomplete="off"
+                  />
+                </label>
+              </div>
+              <div class="admin-items" id="admin-items"></div>
+              <div class="admin-actions admin-actions-between">
+                <div class="admin-help" id="admin-items-meta"></div>
+                <button class="btn btn-ghost" id="admin-load-more" type="button">加载更多</button>
+              </div>
+            </section>
+          </div>
+
+          <div class="admin-panel hidden" id="admin-panel-uploads" role="tabpanel">
+            <section class="admin-section">
+              <div class="admin-section-title">上传 HTML / ZIP</div>
               <form class="admin-form" id="upload-form">
                 <div class="admin-form-grid">
                   <label class="field">
@@ -133,52 +191,23 @@
             <div class="admin-divider" role="presentation"></div>
 
             <section class="admin-section">
-              <div class="admin-section-title">添加网页链接</div>
-              <form class="admin-form" id="link-form">
-                <div class="admin-form-grid">
-                  <label class="field">
-                    <span class="field-label">分类</span>
-                    <select class="field-input" id="link-category" name="categoryId"></select>
-                  </label>
-                  <label class="field">
-                    <span class="field-label">链接</span>
-                    <input class="field-input" id="link-url" name="url" type="url" placeholder="https://example.com" />
-                  </label>
-                </div>
-                <label class="field">
-                  <span class="field-label">标题（可选）</span>
-                  <input class="field-input" id="link-title" name="title" type="text" />
-                </label>
-                <label class="field">
-                  <span class="field-label">描述（可选）</span>
-                  <textarea class="field-input field-textarea" id="link-description" name="description"></textarea>
-                </label>
-                <div class="admin-actions">
-                  <button class="btn btn-primary" id="link-submit" type="submit">添加</button>
-                </div>
-              </form>
-            </section>
-
-            <div class="admin-divider" role="presentation"></div>
-
-            <section class="admin-section">
               <div class="admin-section-header">
-                <div class="admin-section-title">全部内容</div>
+                <div class="admin-section-title">上传列表</div>
                 <label class="field admin-inline-field">
                   <span class="sr-only">搜索</span>
                   <input
                     class="field-input"
-                    id="admin-items-search"
+                    id="admin-uploads-search"
                     type="search"
-                    placeholder="搜索内容..."
+                    placeholder="搜索上传内容..."
                     autocomplete="off"
                   />
                 </label>
               </div>
-              <div class="admin-items" id="admin-items"></div>
+              <div class="admin-items" id="admin-uploads"></div>
               <div class="admin-actions admin-actions-between">
-                <div class="admin-help" id="admin-items-meta"></div>
-                <button class="btn btn-ghost" id="admin-load-more" type="button">加载更多</button>
+                <div class="admin-help" id="admin-uploads-meta"></div>
+                <button class="btn btn-ghost" id="admin-uploads-load-more" type="button">加载更多</button>
               </div>
             </section>
           </div>
@@ -218,6 +247,60 @@
             <section class="admin-section">
               <div class="admin-section-title">分类列表</div>
               <div class="admin-categories" id="admin-categories"></div>
+            </section>
+          </div>
+
+          <div class="admin-panel hidden" id="admin-panel-account" role="tabpanel">
+            <section class="admin-section">
+              <div class="admin-section-title">个人信息</div>
+              <div class="admin-account-card">
+                <div class="admin-account-label">当前用户名</div>
+                <div class="admin-account-value" id="account-username-text">admin</div>
+              </div>
+            </section>
+
+            <div class="admin-divider" role="presentation"></div>
+
+            <section class="admin-section">
+              <div class="admin-section-title">修改账号密码</div>
+              <form class="admin-form" id="account-form">
+                <div class="admin-form-grid">
+                  <label class="field">
+                    <span class="field-label">当前密码</span>
+                    <input
+                      class="field-input"
+                      id="account-current-password"
+                      type="password"
+                      autocomplete="current-password"
+                    />
+                  </label>
+                  <label class="field">
+                    <span class="field-label">新用户名（可选）</span>
+                    <input class="field-input" id="account-new-username" type="text" autocomplete="username" />
+                  </label>
+                </div>
+                <div class="admin-form-grid">
+                  <label class="field">
+                    <span class="field-label">新密码（可选）</span>
+                    <input class="field-input" id="account-new-password" type="password" autocomplete="new-password" />
+                  </label>
+                  <label class="field">
+                    <span class="field-label">确认新密码</span>
+                    <input
+                      class="field-input"
+                      id="account-new-password-confirm"
+                      type="password"
+                      autocomplete="new-password"
+                    />
+                  </label>
+                </div>
+                <div class="admin-actions">
+                  <button class="btn btn-primary" id="account-submit" type="submit">保存</button>
+                </div>
+                <div class="admin-help">
+                  修改成功后会自动更新登录状态；建议使用强密码。
+                </div>
+              </form>
             </section>
           </div>
         </div>

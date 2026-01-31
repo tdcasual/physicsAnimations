@@ -84,7 +84,7 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
     }
   });
 
-  app.use("/api", createAuthRouter({ authConfig }));
+  app.use("/api", createAuthRouter({ authConfig, store }));
   app.use("/api", createCategoriesRouter({ rootDir, authConfig, store }));
   app.use("/api", createItemsRouter({ rootDir, authConfig, store }));
 

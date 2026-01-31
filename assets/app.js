@@ -5,6 +5,7 @@ import {
   deleteCategory,
   deleteItem,
   getToken,
+  setToken,
   listCategories,
   listItems,
   login,
@@ -12,6 +13,7 @@ import {
   tryGetCatalog,
   updateCategory,
   updateItem,
+  updateAccount,
   uploadHtml,
 } from "./api.js";
 
@@ -376,10 +378,15 @@ function isAdminOpen() {
 function setAdminTab(state, tabId) {
   state.admin.tab = tabId;
 
-  const panelItems = $("#admin-panel-items");
-  const panelCategories = $("#admin-panel-categories");
-  panelItems.classList.toggle("hidden", tabId !== "items");
-  panelCategories.classList.toggle("hidden", tabId !== "categories");
+  const panels = {
+    content: "#admin-panel-content",
+    uploads: "#admin-panel-uploads",
+    categories: "#admin-panel-categories",
+    account: "#admin-panel-account",
+  };
+  Object.entries(panels).forEach(([key, selector]) => {
+    $(selector).classList.toggle("hidden", tabId !== key);
+  });
 
   $("#admin-tabs")
     .querySelectorAll("button[data-admin-tab]")
@@ -398,6 +405,29 @@ async function loadAdminCategories(state) {
   fillCategorySelect($("#link-category"), state.admin.categories);
 
   renderAdminCategories(state);
+  Object.keys(state.admin.lists).forEach((key) => {
+    if (state.admin.lists[key]?.loaded) renderAdminList(state, key);
+  });
+}
+
+async function loadAccountInfo(state) {
+  const data = await me();
+  const username = data?.username || "";
+  state.admin.account.username = username;
+  $("#account-username-text").textContent = username || "-";
+  $("#account-new-username").value = username || "";
+}
+
+async function ensureAdminTabData(state, tabId) {
+  if (tabId === "content") {
+    await reloadAdminList(state, "content", { reset: true });
+  } else if (tabId === "uploads") {
+    if (!state.admin.lists.uploads.loaded) {
+      await reloadAdminList(state, "uploads", { reset: true });
+    }
+  } else if (tabId === "account") {
+    await loadAccountInfo(state);
+  }
 }
 
 function itemTypeLabel(type) {
@@ -415,17 +445,36 @@ function itemStatusText(item) {
   return parts.join(" · ");
 }
 
-function renderAdminItems(state) {
-  const container = $("#admin-items");
+const ADMIN_LIST_CONFIG = {
+  content: {
+    container: "#admin-items",
+    meta: "#admin-items-meta",
+    loadMore: "#admin-load-more",
+    emptyText: (query) => (query ? "未找到匹配的内容。" : "暂无内容。"),
+  },
+  uploads: {
+    container: "#admin-uploads",
+    meta: "#admin-uploads-meta",
+    loadMore: "#admin-uploads-load-more",
+    emptyText: (query) => (query ? "未找到匹配的上传内容。" : "暂无上传内容。"),
+  },
+};
+
+function renderAdminList(state, key) {
+  const config = ADMIN_LIST_CONFIG[key];
+  if (!config) return;
+
+  const container = $(config.container);
   container.innerHTML = "";
 
+  const listState = state.admin.lists[key];
   const categoriesById = new Map(state.admin.categories.map((c) => [c.id, c.title]));
 
-  const items = state.admin.items || [];
+  const items = listState.items || [];
   if (!items.length) {
     const empty = document.createElement("div");
     empty.className = "empty";
-    empty.textContent = state.admin.itemsQuery ? "未找到匹配的内容。" : "暂无内容。";
+    empty.textContent = config.emptyText(listState.query);
     container.appendChild(empty);
   } else {
     for (const item of items) {
@@ -447,7 +496,7 @@ function renderAdminItems(state) {
       meta.className = "admin-item-meta";
       const categoryTitle = categoriesById.get(item.categoryId) || item.categoryId;
       const status = itemStatusText(item);
-      const typeText = item.type === "link" ? "链接" : "";
+      const typeText = itemTypeLabel(item.type);
       meta.textContent = `${categoryTitle}${typeText ? ` · ${typeText}` : ""}${status ? ` · ${status}` : ""}`;
 
       main.append(title, meta);
@@ -577,14 +626,14 @@ function renderAdminItems(state) {
     }
   }
 
-  const meta = $("#admin-items-meta");
-  const total = state.admin.itemsTotal || 0;
+  const meta = $(config.meta);
+  const total = listState.total || 0;
   meta.textContent = total ? `已加载 ${items.length} / ${total}` : "";
 
-  const loadMore = $("#admin-load-more");
+  const loadMore = $(config.loadMore);
   const hasMore = items.length < total;
   loadMore.classList.toggle("hidden", !hasMore);
-  loadMore.disabled = state.admin.itemsLoading === true;
+  loadMore.disabled = listState.loading === true;
 }
 
 function renderAdminCategories(state) {
@@ -668,32 +717,39 @@ function renderAdminCategories(state) {
   }
 }
 
-async function reloadAdminItems(state, { reset = false } = {}) {
-  if (state.admin.itemsLoading) return;
-  state.admin.itemsLoading = true;
+function getListState(state, key) {
+  return state.admin.lists[key];
+}
 
-  const reqId = (state.admin.itemsReqId || 0) + 1;
-  state.admin.itemsReqId = reqId;
+async function reloadAdminList(state, key, { reset = false } = {}) {
+  const listState = getListState(state, key);
+  if (!listState || listState.loading) return;
+  listState.loading = true;
+
+  const reqId = (listState.reqId || 0) + 1;
+  listState.reqId = reqId;
 
   try {
-    const nextPage = reset ? 1 : (state.admin.itemsPage || 1) + 1;
+    const nextPage = reset ? 1 : (listState.page || 1) + 1;
     const page = reset ? 1 : nextPage;
-    const pageSize = state.admin.itemsPageSize || 24;
-    const q = state.admin.itemsQuery || "";
+    const pageSize = listState.pageSize || 24;
+    const q = listState.query || "";
+    const type = listState.type || "";
 
-    const data = await listItems({ page, pageSize, q });
-    if (state.admin.itemsReqId !== reqId) return;
+    const data = await listItems({ page, pageSize, q, type });
+    if (listState.reqId !== reqId) return;
 
     const received = Array.isArray(data?.items) ? data.items : [];
-    state.admin.itemsPage = data?.page || page;
-    state.admin.itemsPageSize = data?.pageSize || pageSize;
-    state.admin.itemsTotal = data?.total || 0;
-    state.admin.items = reset ? received : [...(state.admin.items || []), ...received];
+    listState.page = data?.page || page;
+    listState.pageSize = data?.pageSize || pageSize;
+    listState.total = data?.total || 0;
+    listState.items = reset ? received : [...(listState.items || []), ...received];
+    listState.loaded = true;
   } finally {
-    if (state.admin.itemsReqId === reqId) state.admin.itemsLoading = false;
+    if (listState.reqId === reqId) listState.loading = false;
   }
 
-  renderAdminItems(state);
+  renderAdminList(state, key);
 }
 
 function initAdmin({ state }) {
@@ -701,16 +757,26 @@ function initAdmin({ state }) {
     const btn = e.target.closest("button[data-admin-tab]");
     if (!btn) return;
     setAdminTab(state, btn.dataset.adminTab);
+    ensureAdminTabData(state, btn.dataset.adminTab).catch((err) => {
+      if (err?.status === 401) {
+        clearToken();
+        setLoginUi({ loggedIn: false });
+        closeAdminModal();
+        return;
+      }
+      showToast("加载失败", { kind: "info" });
+    });
   });
 
   $("#admin-button").addEventListener("click", async () => {
     openAdminModal();
-    setAdminTab(state, state.admin.tab || "items");
-    $("#admin-items-search").value = state.admin.itemsQuery || "";
+    setAdminTab(state, state.admin.tab || "content");
+    $("#admin-items-search").value = state.admin.lists.content.query || "";
+    $("#admin-uploads-search").value = state.admin.lists.uploads.query || "";
 
     try {
       await loadAdminCategories(state);
-      await reloadAdminItems(state, { reset: true });
+      await ensureAdminTabData(state, state.admin.tab || "content");
     } catch (err) {
       if (err?.status === 401) {
         clearToken();
@@ -736,11 +802,11 @@ function initAdmin({ state }) {
 
   let searchTimer = 0;
   $("#admin-items-search").addEventListener("input", (e) => {
-    state.admin.itemsQuery = e.target.value || "";
+    state.admin.lists.content.query = e.target.value || "";
     window.clearTimeout(searchTimer);
     searchTimer = window.setTimeout(async () => {
       try {
-        await reloadAdminItems(state, { reset: true });
+        await reloadAdminList(state, "content", { reset: true });
       } catch (err) {
         if (err?.status === 401) {
           clearToken();
@@ -755,7 +821,40 @@ function initAdmin({ state }) {
 
   $("#admin-load-more").addEventListener("click", async () => {
     try {
-      await reloadAdminItems(state);
+      await reloadAdminList(state, "content");
+    } catch (err) {
+      if (err?.status === 401) {
+        clearToken();
+        setLoginUi({ loggedIn: false });
+        closeAdminModal();
+        return;
+      }
+      showToast("加载失败", { kind: "info" });
+    }
+  });
+
+  let uploadSearchTimer = 0;
+  $("#admin-uploads-search").addEventListener("input", (e) => {
+    state.admin.lists.uploads.query = e.target.value || "";
+    window.clearTimeout(uploadSearchTimer);
+    uploadSearchTimer = window.setTimeout(async () => {
+      try {
+        await reloadAdminList(state, "uploads", { reset: true });
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast("搜索失败", { kind: "info" });
+      }
+    }, 250);
+  });
+
+  $("#admin-uploads-load-more").addEventListener("click", async () => {
+    try {
+      await reloadAdminList(state, "uploads");
     } catch (err) {
       if (err?.status === 401) {
         clearToken();
@@ -790,7 +889,8 @@ function initAdmin({ state }) {
       await refreshCatalog(state);
       if (isAdminOpen()) {
         await loadAdminCategories(state);
-        await reloadAdminItems(state, { reset: true });
+        await reloadAdminList(state, "content", { reset: true });
+        await reloadAdminList(state, "uploads", { reset: true });
       }
     } catch (err) {
       if (err?.status === 401) {
@@ -827,7 +927,8 @@ function initAdmin({ state }) {
       await refreshCatalog(state);
       if (isAdminOpen()) {
         await loadAdminCategories(state);
-        await reloadAdminItems(state, { reset: true });
+        await reloadAdminList(state, "content", { reset: true });
+        await reloadAdminList(state, "uploads", { reset: true });
       }
     } catch (err) {
       if (err?.status === 401) {
@@ -841,114 +942,118 @@ function initAdmin({ state }) {
     }
   });
 
-  $("#admin-items").addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
+  function bindAdminItemActions(containerSelector) {
+    $(containerSelector).addEventListener("click", async (e) => {
+      const btn = e.target.closest("button[data-action]");
+      if (!btn) return;
 
-    const row = btn.closest(".admin-item");
-    const id = row?.dataset?.id;
-    if (!id) return;
+      const row = btn.closest(".admin-item");
+      const id = row?.dataset?.id;
+      if (!id) return;
 
-    const edit = row.querySelector(".admin-item-edit");
-    const action = btn.dataset.action;
+      const edit = row.querySelector(".admin-item-edit");
+      const action = btn.dataset.action;
 
-    if (action === "edit") {
-      edit?.classList.toggle("hidden");
-      return;
-    }
+      if (action === "edit") {
+        edit?.classList.toggle("hidden");
+        return;
+      }
 
-    if (action === "cancel") {
-      edit?.classList.add("hidden");
-      return;
-    }
-
-    if (action === "save") {
-      const title = row.querySelector('input[name="title"]')?.value ?? "";
-      const description = row.querySelector('textarea[name="description"]')?.value ?? "";
-      const categoryId = row.querySelector('select[name="categoryId"]')?.value ?? "other";
-      const orderRaw = row.querySelector('input[name="order"]')?.value ?? "0";
-      const order = Number.parseInt(orderRaw, 10);
-      const published = row.querySelector('input[name="published"]')?.checked ?? true;
-      const hidden = row.querySelector('input[name="hidden"]')?.checked ?? false;
-
-      btn.disabled = true;
-      try {
-        const data = await updateItem(id, {
-          title: title.trim(),
-          description: description.trim(),
-          categoryId,
-          order: Number.isFinite(order) ? order : 0,
-          published,
-          hidden,
-        });
-        const updated = data?.item;
-        if (updated?.id) {
-          state.admin.items = (state.admin.items || []).map((it) => (it.id === id ? updated : it));
-        }
-        showToast("已保存", { kind: "success" });
+      if (action === "cancel") {
         edit?.classList.add("hidden");
-        renderAdminItems(state);
-        await refreshCatalog(state);
-        await loadAdminCategories(state);
-      } catch (err) {
-        if (err?.status === 401) {
-          clearToken();
-          setLoginUi({ loggedIn: false });
-          closeAdminModal();
-          return;
-        }
-        showToast("保存失败", { kind: "info" });
-      } finally {
-        btn.disabled = false;
+        return;
       }
-      return;
-    }
 
-    if (action === "restore") {
-      btn.disabled = true;
-      try {
-        await updateItem(id, { deleted: false });
-        showToast("已恢复", { kind: "success" });
-        await refreshCatalog(state);
-        await loadAdminCategories(state);
-        await reloadAdminItems(state, { reset: true });
-      } catch (err) {
-        if (err?.status === 401) {
-          clearToken();
-          setLoginUi({ loggedIn: false });
-          closeAdminModal();
-          return;
+      if (action === "save") {
+        const title = row.querySelector('input[name="title"]')?.value ?? "";
+        const description = row.querySelector('textarea[name="description"]')?.value ?? "";
+        const categoryId = row.querySelector('select[name="categoryId"]')?.value ?? "other";
+        const orderRaw = row.querySelector('input[name="order"]')?.value ?? "0";
+        const order = Number.parseInt(orderRaw, 10);
+        const published = row.querySelector('input[name="published"]')?.checked ?? true;
+        const hidden = row.querySelector('input[name="hidden"]')?.checked ?? false;
+
+        btn.disabled = true;
+        try {
+          await updateItem(id, {
+            title: title.trim(),
+            description: description.trim(),
+            categoryId,
+            order: Number.isFinite(order) ? order : 0,
+            published,
+            hidden,
+          });
+          showToast("已保存", { kind: "success" });
+          edit?.classList.add("hidden");
+          await refreshCatalog(state);
+          await loadAdminCategories(state);
+          await reloadAdminList(state, "content", { reset: true });
+          await reloadAdminList(state, "uploads", { reset: true });
+        } catch (err) {
+          if (err?.status === 401) {
+            clearToken();
+            setLoginUi({ loggedIn: false });
+            closeAdminModal();
+            return;
+          }
+          showToast("保存失败", { kind: "info" });
+        } finally {
+          btn.disabled = false;
         }
-        showToast("恢复失败", { kind: "info" });
-      } finally {
-        btn.disabled = false;
+        return;
       }
-      return;
-    }
 
-    if (action === "delete") {
-      if (!window.confirm("确定删除这条内容吗？")) return;
-
-      btn.disabled = true;
-      try {
-        await deleteItem(id);
-        showToast("已删除", { kind: "success" });
-        await refreshCatalog(state);
-        await loadAdminCategories(state);
-        await reloadAdminItems(state, { reset: true });
-      } catch (err) {
-        if (err?.status === 401) {
-          clearToken();
-          setLoginUi({ loggedIn: false });
-          closeAdminModal();
-          return;
+      if (action === "restore") {
+        btn.disabled = true;
+        try {
+          await updateItem(id, { deleted: false });
+          showToast("已恢复", { kind: "success" });
+          await refreshCatalog(state);
+          await loadAdminCategories(state);
+          await reloadAdminList(state, "content", { reset: true });
+          await reloadAdminList(state, "uploads", { reset: true });
+        } catch (err) {
+          if (err?.status === 401) {
+            clearToken();
+            setLoginUi({ loggedIn: false });
+            closeAdminModal();
+            return;
+          }
+          showToast("恢复失败", { kind: "info" });
+        } finally {
+          btn.disabled = false;
         }
-        showToast("删除失败", { kind: "info" });
-      } finally {
-        btn.disabled = false;
+        return;
       }
-    }
-  });
+
+      if (action === "delete") {
+        if (!window.confirm("确定删除这条内容吗？")) return;
+
+        btn.disabled = true;
+        try {
+          await deleteItem(id);
+          showToast("已删除", { kind: "success" });
+          await refreshCatalog(state);
+          await loadAdminCategories(state);
+          await reloadAdminList(state, "content", { reset: true });
+          await reloadAdminList(state, "uploads", { reset: true });
+        } catch (err) {
+          if (err?.status === 401) {
+            clearToken();
+            setLoginUi({ loggedIn: false });
+            closeAdminModal();
+            return;
+          }
+          showToast("删除失败", { kind: "info" });
+        } finally {
+          btn.disabled = false;
+        }
+      }
+    });
+  }
+
+  bindAdminItemActions("#admin-items");
+  bindAdminItemActions("#admin-uploads");
 
   $("#category-create-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -1045,6 +1150,64 @@ function initAdmin({ state }) {
       }
     }
   });
+
+  $("#account-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const currentPassword = $("#account-current-password").value;
+    const newUsernameRaw = $("#account-new-username").value;
+    const newPassword = $("#account-new-password").value;
+    const confirmPassword = $("#account-new-password-confirm").value;
+
+    if (!currentPassword) {
+      showToast("请输入当前密码", { kind: "info" });
+      return;
+    }
+    if (!newUsernameRaw.trim() && !newPassword) {
+      showToast("请填写新用户名或新密码", { kind: "info" });
+      return;
+    }
+    if (newPassword && newPassword !== confirmPassword) {
+      showToast("两次密码不一致", { kind: "info" });
+      return;
+    }
+
+    $("#account-submit").disabled = true;
+    try {
+      const data = await updateAccount({
+        currentPassword,
+        newUsername: newUsernameRaw.trim() || undefined,
+        newPassword: newPassword || undefined,
+      });
+      if (data?.token) setToken(data.token);
+      if (data?.username) {
+        state.admin.account.username = data.username;
+        $("#account-username-text").textContent = data.username;
+        $("#account-new-username").value = data.username;
+      }
+      $("#account-current-password").value = "";
+      $("#account-new-password").value = "";
+      $("#account-new-password-confirm").value = "";
+      showToast("账号信息已更新", { kind: "success" });
+    } catch (err) {
+      if (err?.status === 401 && err?.data?.error === "invalid_credentials") {
+        showToast("当前密码错误", { kind: "info" });
+        return;
+      }
+      if (err?.status === 400 && err?.data?.error === "no_changes") {
+        showToast("请填写新用户名或新密码", { kind: "info" });
+        return;
+      }
+      if (err?.status === 401) {
+        clearToken();
+        setLoginUi({ loggedIn: false });
+        closeAdminModal();
+        return;
+      }
+      showToast("更新失败", { kind: "info" });
+    } finally {
+      $("#account-submit").disabled = false;
+    }
+  });
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1057,15 +1220,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     selectedCategoryId: "all",
     query: "",
     admin: {
-      tab: "items",
+      tab: "content",
       categories: [],
-      items: [],
-      itemsQuery: "",
-      itemsPage: 1,
-      itemsPageSize: 24,
-      itemsTotal: 0,
-      itemsLoading: false,
-      itemsReqId: 0,
+      lists: {
+        content: {
+          items: [],
+          query: "",
+          page: 1,
+          pageSize: 24,
+          total: 0,
+          loading: false,
+          reqId: 0,
+          type: "",
+          loaded: false,
+        },
+        uploads: {
+          items: [],
+          query: "",
+          page: 1,
+          pageSize: 24,
+          total: 0,
+          loading: false,
+          reqId: 0,
+          type: "upload",
+          loaded: false,
+        },
+      },
+      account: {
+        username: "",
+      },
     },
   };
   await refreshCatalog(state);

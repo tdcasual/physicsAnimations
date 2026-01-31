@@ -122,3 +122,11 @@ export async function updateCategory(id, patch) {
 export async function deleteCategory(id) {
   return apiFetch(`/api/categories/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
+
+export async function updateAccount({ currentPassword, newUsername, newPassword }) {
+  return apiFetch("/api/auth/account", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ currentPassword, newUsername, newPassword }),
+  });
+}
