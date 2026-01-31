@@ -1,18 +1,51 @@
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "admin";
-const DEFAULT_JWT_SECRET = "physicsAnimations";
+const JWT_SECRET_FILE = ".jwt_secret";
 
-function getAuthConfig() {
+function loadJwtSecretFromFile(filePath) {
+  try {
+    const raw = fs.readFileSync(filePath, "utf8").trim();
+    return raw || "";
+  } catch {
+    return "";
+  }
+}
+
+function persistJwtSecret(filePath, secret) {
+  try {
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, `${secret}\n`, { mode: 0o600 });
+  } catch {
+    // Ignore persistence errors; we'll fall back to in-memory secret.
+  }
+}
+
+function resolveJwtSecret({ rootDir } = {}) {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (!rootDir) return crypto.randomBytes(32).toString("hex");
+
+  const secretPath = path.join(rootDir, "content", JWT_SECRET_FILE);
+  const existing = loadJwtSecretFromFile(secretPath);
+  if (existing) return existing;
+
+  const generated = crypto.randomBytes(32).toString("hex");
+  persistJwtSecret(secretPath, generated);
+  return generated;
+}
+
+function getAuthConfig({ rootDir } = {}) {
   const adminUsername = process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME;
   const adminPasswordHash =
     process.env.ADMIN_PASSWORD_HASH ||
     bcrypt.hashSync(process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD, 10);
 
-  const jwtSecret = process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+  const jwtSecret = resolveJwtSecret({ rootDir });
 
   const jwtIssuer = process.env.JWT_ISSUER || "physicsAnimations";
   const jwtAudience = process.env.JWT_AUDIENCE || "physicsAnimations-web";

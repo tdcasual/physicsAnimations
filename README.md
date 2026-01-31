@@ -41,6 +41,8 @@ npm start
 
 如果登录提示“尝试过于频繁”，说明触发了接口限流；等待提示的秒数后再试即可（开发环境也可重启服务清空内存限流状态）。
 
+默认管理员账号：`admin` / `admin`（建议部署后立即修改）。
+
 ## 生成/更新动画清单与缩略图
 
 当你在 `animations/<分类>/` 目录新增/修改 HTML 后，建议执行：
@@ -106,10 +108,9 @@ npm run build-catalog
 服务端支持通过环境变量覆盖默认配置：
 
 - `PORT`：服务端口（默认 `4173`）
-- `ADMIN_USERNAME`：管理员用户名
-- `ADMIN_PASSWORD`：管理员密码（明文，启动时自动 hash；不设置则默认 `admin`）
+- `ADMIN_USERNAME`：管理员用户名（默认 `admin`）
+- `ADMIN_PASSWORD`：管理员密码（明文，启动时自动 hash；默认 `admin`）
 - `ADMIN_PASSWORD_HASH`：管理员密码的 bcrypt hash（如果设置则优先生效）
-- `JWT_SECRET`：登录 token 签名密钥（不设置则使用默认值，重启不会失效）
 - `STORAGE_MODE`：存储模式（默认 `local`，可设为 `webdav`）
 - `WEBDAV_URL`：WebDAV 根地址（例如 `https://example.com/dav/`）
 - `WEBDAV_BASE_PATH`：WebDAV 下的存储目录（默认 `physicsAnimations`）
@@ -155,7 +156,6 @@ docker run -d --name physics-animations \
   -e PORT=4173 \
   -e ADMIN_USERNAME=admin \
   -e ADMIN_PASSWORD='admin' \
-  -e JWT_SECRET='(your_secret)' \
   physics-animations:latest
 ```
 
@@ -180,7 +180,6 @@ services:
       PORT: 4173
       ADMIN_USERNAME: admin
       ADMIN_PASSWORD: "admin"
-      JWT_SECRET: "(your_secret)"
     volumes:
       - ./content:/app/content
     restart: unless-stopped

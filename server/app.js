@@ -53,7 +53,7 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   const app = express();
   app.disable("x-powered-by");
 
-  const authConfig = overrideAuthConfig || getAuthConfig();
+  const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
   const store = overrideStore || createContentStore({ rootDir });
 
   app.use(express.json({ limit: "2mb" }));
