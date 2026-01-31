@@ -164,6 +164,33 @@ docker run -d --name physics-animations \
 - 不挂载 `content/` 时，容器重建会丢失上传内容与配置
 - 镜像内已安装 Playwright Chromium 与系统依赖，用于上传后自动截图；如不需要截图可自行修改 `Dockerfile` 去掉该步骤
 
+### Docker Compose（推荐）
+
+使用 GitHub Container Registry（GHCR）镜像：
+
+```yaml
+services:
+  physics-animations:
+    image: ghcr.io/tdcasual/physicsanimations:latest
+    container_name: physics-animations
+    ports:
+      - "4173:4173"
+    environment:
+      PORT: 4173
+      ADMIN_USERNAME: tdcasual
+      ADMIN_PASSWORD_HASH: "(your_bcrypt_hash)"
+      JWT_SECRET: "(your_secret)"
+    volumes:
+      - ./content:/app/content
+    restart: unless-stopped
+```
+
+启动：
+
+```bash
+docker compose up -d
+```
+
 ### Vercel（Serverless）
 
 仓库已提供 `vercel.json` + `api/index.js`。注意：Vercel 文件系统不可持久写入，建议启用 WebDAV 存储：
