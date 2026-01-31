@@ -107,8 +107,9 @@ npm run build-catalog
 
 - `PORT`：服务端口（默认 `4173`）
 - `ADMIN_USERNAME`：管理员用户名
-- `ADMIN_PASSWORD_HASH`：管理员密码的 bcrypt hash
-- `JWT_SECRET`：登录 token 签名密钥（不设置则每次启动随机生成，重启会自动失效）
+- `ADMIN_PASSWORD`：管理员密码（明文，启动时自动 hash；不设置则默认 `admin`）
+- `ADMIN_PASSWORD_HASH`：管理员密码的 bcrypt hash（如果设置则优先生效）
+- `JWT_SECRET`：登录 token 签名密钥（不设置则使用默认值，重启不会失效）
 - `STORAGE_MODE`：存储模式（默认 `local`，可设为 `webdav`）
 - `WEBDAV_URL`：WebDAV 根地址（例如 `https://example.com/dav/`）
 - `WEBDAV_BASE_PATH`：WebDAV 下的存储目录（默认 `physicsAnimations`）
@@ -152,8 +153,8 @@ docker run -d --name physics-animations \
   -p 4173:4173 \
   -v "$(pwd)/content:/app/content" \
   -e PORT=4173 \
-  -e ADMIN_USERNAME=tdcasual \
-  -e ADMIN_PASSWORD_HASH='(your_bcrypt_hash)' \
+  -e ADMIN_USERNAME=admin \
+  -e ADMIN_PASSWORD='admin' \
   -e JWT_SECRET='(your_secret)' \
   physics-animations:latest
 ```
@@ -177,8 +178,8 @@ services:
       - "4173:4173"
     environment:
       PORT: 4173
-      ADMIN_USERNAME: tdcasual
-      ADMIN_PASSWORD_HASH: "(your_bcrypt_hash)"
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: "admin"
       JWT_SECRET: "(your_secret)"
     volumes:
       - ./content:/app/content
