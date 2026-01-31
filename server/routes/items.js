@@ -87,8 +87,10 @@ function normalizeZipPath(zipPath) {
 function normalizeExternalHttpLikeUrl(rawUrl) {
   const raw = String(rawUrl || "").trim();
   if (!raw) return null;
-  if (/^\/\//.test(raw)) return `https:${raw}`;
-  if (/^https?:\/\//i.test(raw)) return raw;
+  if (/^\/\//.test(raw)) {
+    return { key: raw, url: `https:${raw}`, fallbackUrl: `http:${raw}` };
+  }
+  if (/^https?:\/\//i.test(raw)) return { key: raw, url: raw };
   return null;
 }
 
@@ -100,8 +102,8 @@ function listExternalScriptSrcs(html) {
   let match = null;
   while ((match = re.exec(html))) {
     const normalized = normalizeExternalHttpLikeUrl(match[2]);
-    if (!normalized || seen.has(normalized)) continue;
-    seen.add(normalized);
+    if (!normalized || seen.has(normalized.key)) continue;
+    seen.add(normalized.key);
     out.push(normalized);
   }
   return out;
@@ -127,8 +129,8 @@ function listExternalStylesheetHrefs(html) {
     if (!relParts.includes("stylesheet")) continue;
 
     const normalized = normalizeExternalHttpLikeUrl(match[2]);
-    if (!normalized || seen.has(normalized)) continue;
-    seen.add(normalized);
+    if (!normalized || seen.has(normalized.key)) continue;
+    seen.add(normalized.key);
     out.push(normalized);
   }
   return out;
@@ -154,7 +156,7 @@ function rewriteExternalDepsInHtml(html, mapping) {
   out = out.replace(scriptTagRe, (tag, _q, src) => {
     const normalized = normalizeExternalHttpLikeUrl(src);
     if (!normalized) return tag;
-    const local = mapping.get(normalized);
+    const local = mapping.get(normalized.key);
     if (!local) return tag;
     const rewritten = tag.replace(/\bsrc\s*=\s*(['"]?)[^'">\s]+\1/i, `src="${local}"`);
     return stripAttrs(rewritten, ["integrity", "crossorigin"]);
@@ -167,7 +169,7 @@ function rewriteExternalDepsInHtml(html, mapping) {
 
     const normalized = normalizeExternalHttpLikeUrl(href);
     if (!normalized) return tag;
-    const local = mapping.get(normalized);
+    const local = mapping.get(normalized.key);
     if (!local) return tag;
     const rewritten = tag.replace(/\bhref\s*=\s*(['"]?)[^'">\s]+\1/i, `href="${local}"`);
     return stripAttrs(rewritten, ["integrity", "crossorigin"]);
@@ -243,6 +245,17 @@ async function readResponseBufferWithLimit(res, maxBytes) {
     chunks.push(chunk);
   }
   return Buffer.concat(chunks, total);
+}
+
+async function fetchPublicUrlWithFallback(primaryUrl, fallbackUrl, options) {
+  if (!fallbackUrl) return fetchPublicUrl(primaryUrl, options);
+  try {
+    const result = await fetchPublicUrl(primaryUrl, options);
+    if (result.res.ok) return result;
+  } catch {
+    // fall through to try fallback
+  }
+  return fetchPublicUrl(fallbackUrl, options);
 }
 
 function toApiItem(item) {
@@ -476,6 +489,12 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     const defaultTitle = String(originalName || "").replace(/\.(zip|html?|htm)$/i, "");
     let inferredTitle = "";
     let inferredDescription = "";
+    let wroteToStore = false;
+
+    async function writeUploadBuffer(key, buffer, options) {
+      wroteToStore = true;
+      return store.writeBuffer(key, buffer, options);
+    }
 
     try {
       if (isZip) {
@@ -577,7 +596,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
           }
 
           fs.writeFileSync(localPath, outBuf);
-          await store.writeBuffer(`uploads/${id}/${rel}`, outBuf, { contentType });
+          await writeUploadBuffer(`uploads/${id}/${rel}`, outBuf, { contentType });
           extracted.push(rel);
         }
 
@@ -603,7 +622,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
           files: extracted,
           createdAt: now,
         };
-        await store.writeBuffer(
+        await writeUploadBuffer(
           `uploads/${id}/manifest.json`,
           Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`, "utf8"),
           { contentType: "application/json; charset=utf-8" },
@@ -617,8 +636,8 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         const scripts = listExternalScriptSrcs(html);
         const styles = listExternalStylesheetHrefs(html);
         const externalDeps = [
-          ...scripts.map((url) => ({ url, kind: "js" })),
-          ...styles.map((url) => ({ url, kind: "css" })),
+          ...scripts.map((dep) => ({ ...dep, kind: "js" })),
+          ...styles.map((dep) => ({ ...dep, kind: "css" })),
         ];
 
         const maxDeps = 20;
@@ -635,12 +654,12 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         const maxTotalDepBytes = 30 * 1024 * 1024;
 
         for (const dep of externalDeps) {
-          if (depMapping.has(dep.url)) continue;
+          if (depMapping.has(dep.key)) continue;
 
-          const hash = crypto.createHash("sha256").update(dep.url).digest("hex").slice(0, 16);
+          const hash = crypto.createHash("sha256").update(dep.key).digest("hex").slice(0, 16);
           const rel = `deps/${hash}.${dep.kind}`;
 
-          const { res } = await fetchPublicUrl(dep.url);
+          const { res } = await fetchPublicUrlWithFallback(dep.url, dep.fallbackUrl);
           if (!res.ok) {
             const err = new Error("external_dep_download_failed");
             err.status = 400;
@@ -655,24 +674,24 @@ function createItemsRouter({ rootDir, authConfig, store }) {
             throw err;
           }
 
-          depMapping.set(dep.url, rel);
+          depMapping.set(dep.key, rel);
           downloaded.push(rel);
 
           const localPath = path.join(tmpDir, rel);
           fs.mkdirSync(path.dirname(localPath), { recursive: true });
           fs.writeFileSync(localPath, buf);
-          await store.writeBuffer(`uploads/${id}/${rel}`, buf, { contentType: guessContentType(rel) });
+          await writeUploadBuffer(`uploads/${id}/${rel}`, buf, { contentType: guessContentType(rel) });
         }
 
         const rewrittenHtml = depMapping.size ? rewriteExternalDepsInHtml(html, depMapping) : html;
         const sanitizedHtml = sanitizeUploadedHtml(rewrittenHtml, { allowLocalScripts: true });
         const uploadKey = `uploads/${id}/index.html`;
-        await store.writeBuffer(uploadKey, Buffer.from(sanitizedHtml, "utf8"), {
+        await writeUploadBuffer(uploadKey, Buffer.from(sanitizedHtml, "utf8"), {
           contentType: "text/html; charset=utf-8",
         });
         fs.writeFileSync(path.join(tmpDir, "index.html"), sanitizedHtml, "utf8");
         const manifestFiles = ["index.html", ...downloaded];
-        await store.writeBuffer(
+        await writeUploadBuffer(
           `uploads/${id}/manifest.json`,
           Buffer.from(
             `${JSON.stringify({ version: 1, id, entry: "index.html", files: manifestFiles, createdAt: now }, null, 2)}\n`,
@@ -693,7 +712,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
           allowedFileRoot: tmpDir,
         });
         const png = fs.readFileSync(outputPath);
-        await store.writeBuffer(`thumbnails/${id}.png`, png, { contentType: "image/png" });
+        await writeUploadBuffer(`thumbnails/${id}.png`, png, { contentType: "image/png" });
         thumbnail = `content/thumbnails/${id}.png`;
       } catch (err) {
         warnScreenshotDeps(err);
@@ -718,6 +737,12 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       });
 
       return { ok: true, id, thumbnail };
+    } catch (err) {
+      if (wroteToStore) {
+        await store.deletePath(`uploads/${id}`, { recursive: true }).catch(() => {});
+        await store.deletePath(`thumbnails/${id}.png`).catch(() => {});
+      }
+      throw err;
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }

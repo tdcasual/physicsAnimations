@@ -10,6 +10,16 @@ function isHttpUrl(url) {
   return typeof url === "string" && /^https?:\/\//i.test(url);
 }
 
+function isSafeViewerTarget(raw) {
+  const target = typeof raw === "string" ? raw.trim() : "";
+  if (!target) return false;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
+    return /^https?:/i.test(target);
+  }
+  if (target.startsWith("//")) return false;
+  return true;
+}
+
 function parseQuery() {
   const params = new URLSearchParams(window.location.search);
   return {
@@ -129,6 +139,15 @@ async function init() {
   if (!target) {
     setTitle("缺少参数");
     $("#viewer-title").textContent = "缺少参数：builtin / src";
+    open.classList.add("hidden");
+    modeBtn.classList.add("hidden");
+    hint.classList.add("hidden");
+    return;
+  }
+
+  if (!isSafeViewerTarget(target)) {
+    setTitle("无效参数");
+    $("#viewer-title").textContent = "参数无效或不安全。";
     open.classList.add("hidden");
     modeBtn.classList.add("hidden");
     hint.classList.add("hidden");

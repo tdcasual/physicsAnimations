@@ -40,12 +40,21 @@ function guessContentType(filePath) {
   return map[ext] || "application/octet-stream";
 }
 
-function createApp({ rootDir }) {
+function safeContentKey(reqPath, prefix) {
+  const raw = String(reqPath || "").replace(/^\/content\//, "");
+  const normalized = path.posix.normalize(raw).replace(/^\/+/, "");
+  if (!normalized || normalized === ".") return null;
+  if (normalized.startsWith("..") || normalized.includes("/../")) return null;
+  if (!normalized.startsWith(`${prefix}/`)) return null;
+  return normalized;
+}
+
+function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConfig }) {
   const app = express();
   app.disable("x-powered-by");
 
-  const authConfig = getAuthConfig();
-  const store = createContentStore({ rootDir });
+  const authConfig = overrideAuthConfig || getAuthConfig();
+  const store = overrideStore || createContentStore({ rootDir });
 
   app.use(express.json({ limit: "2mb" }));
 
@@ -87,7 +96,11 @@ function createApp({ rootDir }) {
   } else {
     app.get("/content/uploads/*", async (req, res, next) => {
       try {
-        const key = req.path.replace(/^\/content\//, "");
+        const key = safeContentKey(req.path, "uploads");
+        if (!key) {
+          res.status(400).json({ error: "invalid_path" });
+          return;
+        }
         const stream = await store.createReadStream(key);
         if (!stream) {
           res.status(404).send("Not Found");
@@ -112,7 +125,11 @@ function createApp({ rootDir }) {
 
     app.get("/content/thumbnails/*", async (req, res, next) => {
       try {
-        const key = req.path.replace(/^\/content\//, "");
+        const key = safeContentKey(req.path, "thumbnails");
+        if (!key) {
+          res.status(400).json({ error: "invalid_path" });
+          return;
+        }
         const stream = await store.createReadStream(key);
         if (!stream) {
           res.status(404).send("Not Found");
