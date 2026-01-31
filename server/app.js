@@ -4,6 +4,7 @@ const express = require("express");
 const { getAuthConfig } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
 const { createContentStore } = require("./lib/contentStore");
+const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
 const { UPLOAD_CSP } = require("./lib/uploadSecurity");
 
 const { errorHandler } = require("./middleware/errorHandler");
@@ -59,7 +60,19 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/api/health", (_req, res) => {
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      uptimeSec: Math.floor(process.uptime()),
+      screenshotQueue: getScreenshotQueueStats(),
+    });
+  });
+
+  app.get("/api/metrics", (_req, res) => {
+    res.json({
+      uptimeSec: Math.floor(process.uptime()),
+      memory: process.memoryUsage(),
+      screenshotQueue: getScreenshotQueueStats(),
+    });
   });
 
   app.get("/api/catalog", async (_req, res, next) => {

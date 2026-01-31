@@ -11,7 +11,7 @@ const { z } = require("zod");
 const { requireAuth, optionalAuth } = require("../lib/auth");
 const { listBuiltinItems, findBuiltinItem } = require("../lib/animationsIndex");
 const { extractHtmlTitleAndDescription } = require("../lib/htmlMeta");
-const { captureScreenshot, filePathToUrl } = require("../lib/screenshot");
+const { captureScreenshotQueued, filePathToUrl } = require("../lib/screenshot");
 const { assertPublicHttpUrl } = require("../lib/ssrf");
 const {
   loadItemsState,
@@ -436,7 +436,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     try {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-shot-"));
       const outputPath = path.join(tmpDir, `${id}.png`);
-      await captureScreenshot({
+      await captureScreenshotQueued({
         rootDir,
         targetUrl: parsedUrl.toString(),
         outputPath,
@@ -705,7 +705,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       try {
         const entryPath = path.join(tmpDir, entryRelPath);
         const outputPath = path.join(tmpDir, `${id}.png`);
-        await captureScreenshot({
+        await captureScreenshotQueued({
           rootDir,
           targetUrl: filePathToUrl(entryPath),
           outputPath,
@@ -1066,7 +1066,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
             return;
           }
 
-          await captureScreenshot({
+          await captureScreenshotQueued({
             rootDir,
             targetUrl: filePathToUrl(entryPath),
             outputPath,
@@ -1079,7 +1079,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
               : filePathToUrl(path.join(rootDir, item.path));
           const allowedFileRoot =
             item.type === "upload" ? path.join(rootDir, "content", "uploads", id) : undefined;
-          await captureScreenshot({ rootDir, targetUrl, outputPath, allowedFileRoot });
+          await captureScreenshotQueued({ rootDir, targetUrl, outputPath, allowedFileRoot });
         }
 
         const png = fs.readFileSync(outputPath);

@@ -3,6 +3,7 @@ const path = require("path");
 const { pathToFileURL } = require("url");
 
 const { chromium } = require("playwright-chromium");
+const { enqueueScreenshot } = require("./screenshotQueue");
 const { buildPlaywrightEnv } = require("./playwrightEnv");
 const { shouldAllowRequestUrl } = require("./ssrf");
 
@@ -69,11 +70,16 @@ async function captureScreenshot({ rootDir, targetUrl, outputPath, allowedFileRo
   }
 }
 
+async function captureScreenshotQueued(options) {
+  return enqueueScreenshot(() => captureScreenshot(options));
+}
+
 function filePathToUrl(filePath) {
   return pathToFileURL(filePath).toString();
 }
 
 module.exports = {
   captureScreenshot,
+  captureScreenshotQueued,
   filePathToUrl,
 };
