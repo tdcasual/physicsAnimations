@@ -2,7 +2,7 @@ const express = require("express");
 
 const { requireAuth } = require("../lib/auth");
 const { loadSystemState, mutateSystemState, normalizeMode, noSave } = require("../lib/systemState");
-const { syncLocalToWebdav } = require("../lib/webdavSync");
+const { syncWithWebdav } = require("../lib/webdavSync");
 
 function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
   const router = express.Router();
@@ -33,6 +33,7 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
           timeoutMs: Number.isFinite(webdav.timeoutMs) ? webdav.timeoutMs : 15000,
           hasPassword: Boolean(webdav.password),
           configured: Boolean(webdav.url),
+          scanRemote: webdav.scanRemote === true,
         },
       },
     });
@@ -59,6 +60,7 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
             nextWebdav.basePath = incoming.basePath.trim() || "physicsAnimations";
           }
           if (typeof incoming.username === "string") nextWebdav.username = incoming.username.trim();
+          if (typeof incoming.scanRemote === "boolean") nextWebdav.scanRemote = incoming.scanRemote;
           if (typeof incoming.password === "string" && incoming.password) {
             nextWebdav.password = incoming.password;
           }
@@ -97,7 +99,11 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
 
       let syncResult = null;
       if (sync && webdav.url) {
-        syncResult = await syncLocalToWebdav({ rootDir, webdavConfig: webdav });
+        syncResult = await syncWithWebdav({
+          rootDir,
+          webdavConfig: webdav,
+          scanRemote: webdav.scanRemote === true,
+        });
         await mutateSystemState({ rootDir }, (state) => {
           if (!state.storage) state.storage = {};
           state.storage.lastSyncedAt = new Date().toISOString();
@@ -123,6 +129,7 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
               : 15000,
             hasPassword: Boolean(refreshed.storage.webdav.password),
             configured: Boolean(refreshed.storage.webdav.url),
+            scanRemote: refreshed.storage.webdav.scanRemote === true,
           },
         },
       });

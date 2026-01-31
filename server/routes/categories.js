@@ -120,6 +120,7 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
       const body = parseWithSchema(createCategorySchema, req.body);
       const id = body.id.toLowerCase();
       const groupId = String(body.groupId || DEFAULT_GROUP_ID).toLowerCase();
+      const now = new Date().toISOString();
 
       try {
         const created = await mutateCategoriesState({ store }, (state) => {
@@ -133,6 +134,7 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
             title: body.title.trim(),
             order: body.order,
             hidden: body.hidden,
+            updatedAt: now,
           };
           return state.categories[id];
         });
@@ -161,6 +163,7 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
     async (req, res) => {
       const id = parseWithSchema(categoryIdSchema, req.params.id).toLowerCase();
       const body = parseWithSchema(updateCategorySchema, req.body);
+      const now = new Date().toISOString();
 
       if (
         body.groupId === undefined &&
@@ -189,6 +192,7 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
           if (body.title !== undefined) state.categories[id].title = body.title.trim();
           if (body.order !== undefined) state.categories[id].order = body.order;
           if (body.hidden !== undefined) state.categories[id].hidden = body.hidden;
+          state.categories[id].updatedAt = now;
 
           return state.categories[id];
         });

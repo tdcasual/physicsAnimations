@@ -297,10 +297,10 @@
 	              <details class="admin-accordion" id="taxonomy-add-group">
 	                <summary class="admin-accordion-summary">
 	                  <div class="admin-accordion-summary-inner">
-                    <div class="admin-accordion-summary-title">新增大类</div>
-                    <div class="admin-accordion-summary-meta">创建新的超级分类（如：数学/化学）</div>
-                  </div>
-                </summary>
+	                    <div class="admin-accordion-summary-title">新增大类</div>
+	                    <div class="admin-accordion-summary-meta">创建新的超级分类（如：数学/化学）</div>
+	                  </div>
+	                </summary>
 
                 <form class="admin-form admin-accordion-body" id="group-create-form">
                   <div class="admin-form-grid">
@@ -326,12 +326,15 @@
                   <div class="admin-actions">
                     <button class="btn btn-primary" id="group-create-submit" type="submit">创建</button>
                   </div>
-                </form>
-              </details>
+	                </form>
+	              </details>
 
-              <div class="admin-taxonomy" id="admin-taxonomy"></div>
-            </section>
-          </div>
+	              <div class="admin-taxonomy-layout">
+	                <div class="admin-taxonomy-tree" id="admin-taxonomy"></div>
+	                <div class="admin-taxonomy-editor" id="admin-taxonomy-editor"></div>
+	              </div>
+	            </section>
+	          </div>
 
               <div class="admin-panel hidden" id="admin-panel-account" role="tabpanel">
             <section class="admin-section">
@@ -473,19 +476,23 @@
                         <input class="field-input" id="system-webdav-timeout-input" type="number" min="1000" />
                       </label>
                     </div>
-                    <label class="admin-check">
-                      <input type="checkbox" id="system-sync-on-save" />
-                      保存后同步本地内容到 WebDAV
-                    </label>
-                    <div class="admin-actions admin-actions-between">
-                      <button class="btn btn-ghost" id="system-sync-now" type="button">立即同步</button>
-                      <button class="btn btn-primary" id="system-save" type="submit">保存配置</button>
-                    </div>
-                    <div class="admin-help">
-                      开启 WebDAV 后会把本地内容同步到远端；上传与删除仍以本地为主并同步备份。
-                    </div>
-                  </form>
-                </section>
+	                    <label class="admin-check">
+	                      <input type="checkbox" id="system-sync-on-save" />
+	                      保存后同步本地内容到 WebDAV
+	                    </label>
+	                    <label class="admin-check">
+	                      <input type="checkbox" id="system-scan-remote-on-sync" />
+	                      同步时扫描 WebDAV 并导入远端新增动画（默认关闭）
+	                    </label>
+	                    <div class="admin-actions admin-actions-between">
+	                      <button class="btn btn-ghost" id="system-sync-now" type="button">立即同步</button>
+	                      <button class="btn btn-primary" id="system-save" type="submit">保存配置</button>
+	                    </div>
+	                    <div class="admin-help">
+	                      同步默认以本地为主：会合并远端索引并备份本地内容；开启扫描后可把远端新增上传导入到列表。
+	                    </div>
+	                  </form>
+	                </section>
               </div>
             </div>
           </div>

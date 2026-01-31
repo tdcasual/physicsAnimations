@@ -69,6 +69,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
     async (req, res) => {
       const body = parseWithSchema(createGroupSchema, req.body);
       const id = body.id.toLowerCase();
+      const now = new Date().toISOString();
 
       try {
         const created = await mutateCategoriesState({ store }, (state) => {
@@ -79,6 +80,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
             title: body.title.trim(),
             order: body.order,
             hidden: body.hidden,
+            updatedAt: now,
           };
           return state.groups[id];
         });
@@ -103,6 +105,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
     async (req, res) => {
       const id = parseWithSchema(groupIdSchema, req.params.id).toLowerCase();
       const body = parseWithSchema(updateGroupSchema, req.body);
+      const now = new Date().toISOString();
 
       if (body.title === undefined && body.order === undefined && body.hidden === undefined) {
         res.status(400).json({ error: "no_changes" });
@@ -117,6 +120,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
           if (body.title !== undefined) state.groups[id].title = body.title.trim();
           if (body.order !== undefined) state.groups[id].order = body.order;
           if (body.hidden !== undefined) state.groups[id].hidden = body.hidden;
+          state.groups[id].updatedAt = now;
 
           return state.groups[id];
         });
@@ -167,4 +171,3 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
 module.exports = {
   createGroupsRouter,
 };
-

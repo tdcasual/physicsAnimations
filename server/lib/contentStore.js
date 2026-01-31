@@ -174,6 +174,27 @@ function createWebdavStore(options = {}) {
     return response;
   }
 
+  function decodeXmlText(value) {
+    return String(value || "")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  }
+
+  function extractPropfindHrefs(xml) {
+    const out = [];
+    const re = /<(?:[a-zA-Z0-9]+:)?href>([^<]+)<\/(?:[a-zA-Z0-9]+:)?href>/g;
+    const text = String(xml || "");
+    let match = null;
+    while ((match = re.exec(text))) {
+      const raw = decodeXmlText(match[1] || "").trim();
+      if (raw) out.push(raw);
+    }
+    return out;
+  }
+
   async function ensureRemoteDir(dirKey) {
     let baseCurrent = "";
     for (const segment of basePathSegments) {
@@ -209,6 +230,53 @@ function createWebdavStore(options = {}) {
     readOnly: false,
     baseUrl,
     basePath,
+
+    async listDir(dirKey, { depth = 1 } = {}) {
+      const dirUrl = urlForKey(dirKey, { isDir: true });
+      const body = `<?xml version="1.0" encoding="utf-8"?>\n<d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>`;
+      const headers = {
+        Depth: String(depth),
+        "Content-Type": "application/xml; charset=utf-8",
+      };
+
+      const res = await webdavRequest("PROPFIND", dirUrl, { headers, body });
+      if (res.status === 404) return [];
+      if (!(res.status === 207 || res.ok)) {
+        throw new Error(`webdav_propfind_failed_${res.status}`);
+      }
+
+      const xml = await res.text();
+      const basePathname = new URL(dirUrl).pathname;
+      const hrefs = extractPropfindHrefs(xml);
+
+      const entries = [];
+      for (const href of hrefs) {
+        let url = null;
+        try {
+          url = new URL(href, baseUrl);
+        } catch {
+          continue;
+        }
+
+        const pathname = url.pathname;
+        if (!pathname.startsWith(basePathname)) continue;
+
+        let rel = pathname.slice(basePathname.length);
+        if (!rel) continue;
+        const isDir = rel.endsWith("/");
+        rel = rel.replace(/\/+$/, "");
+        if (!rel) continue;
+        if (rel.includes("/")) continue;
+
+        entries.push({
+          key: joinUrlPath(dirKey, rel),
+          name: rel,
+          isDir,
+        });
+      }
+
+      return entries;
+    },
 
     async readBuffer(key) {
       const url = urlForKey(key);

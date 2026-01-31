@@ -18,6 +18,7 @@ const {
   mutateItemsState,
   loadBuiltinItemsState,
   mutateBuiltinItemsState,
+  mutateItemTombstonesState,
   noSave,
 } = require("../lib/state");
 const { sanitizeUploadedHtml } = require("../lib/uploadSecurity");
@@ -1111,6 +1112,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     rateLimit({ key: "items_write", windowMs: 60 * 60 * 1000, max: 120 }),
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
+      const deletedAt = new Date().toISOString();
 
       const deleted = await mutateItemsState({ store }, async (state) => {
         const before = state.items.length;
@@ -1128,6 +1130,10 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         return item;
       });
       if (deleted) {
+        await mutateItemTombstonesState({ store }, (tombstones) => {
+          if (!tombstones.tombstones) tombstones.tombstones = {};
+          tombstones.tombstones[id] = { deletedAt };
+        }).catch(() => {});
         res.json({ ok: true });
         return;
       }

@@ -3,6 +3,7 @@ const { createError } = require("./errors");
 const ITEMS_STATE_KEY = "items.json";
 const CATEGORIES_STATE_KEY = "categories.json";
 const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
+const ITEM_TOMBSTONES_KEY = "items_tombstones.json";
 const TAXONOMY_VERSION = 2;
 const DEFAULT_GROUP_ID = "physics";
 
@@ -229,6 +230,51 @@ async function loadBuiltinItemsState({ store }) {
   return { version: 1, items };
 }
 
+async function loadItemTombstonesState({ store }) {
+  const raw = await store.readBuffer(ITEM_TOMBSTONES_KEY);
+  if (!raw) return { version: 1, tombstones: {} };
+
+  let parsed = null;
+  try {
+    parsed = JSON.parse(raw.toString("utf8"));
+  } catch {
+    return { version: 1, tombstones: {} };
+  }
+
+  if (!parsed || typeof parsed !== "object" || !parsed.tombstones || typeof parsed.tombstones !== "object") {
+    return { version: 1, tombstones: {} };
+  }
+
+  const tombstones = {};
+  for (const [id, value] of Object.entries(parsed.tombstones)) {
+    if (typeof id !== "string" || !id) continue;
+    if (!value || typeof value !== "object") continue;
+    if (typeof value.deletedAt !== "string" || !value.deletedAt) continue;
+    tombstones[id] = { deletedAt: value.deletedAt };
+  }
+
+  return { version: 1, tombstones };
+}
+
+async function saveItemTombstonesState({ store, state }) {
+  const payload = {
+    version: 1,
+    tombstones: state?.tombstones && typeof state.tombstones === "object" ? state.tombstones : {},
+  };
+  const json = Buffer.from(`${JSON.stringify(payload, null, 2)}\n`, "utf8");
+  await store.writeBuffer(ITEM_TOMBSTONES_KEY, json, { contentType: "application/json; charset=utf-8" });
+}
+
+async function mutateItemTombstonesState({ store }, mutator) {
+  return withStateLock(ITEM_TOMBSTONES_KEY, async () => {
+    const state = await loadItemTombstonesState({ store });
+    const result = await mutator(state);
+    if (result && result[NO_SAVE]) return result.value;
+    await saveItemTombstonesState({ store, state });
+    return result;
+  });
+}
+
 async function saveBuiltinItemsState({ store, state }) {
   const payload = {
     version: 1,
@@ -264,6 +310,9 @@ module.exports = {
   loadBuiltinItemsState,
   saveBuiltinItemsState,
   mutateBuiltinItemsState,
+  loadItemTombstonesState,
+  saveItemTombstonesState,
+  mutateItemTombstonesState,
   noSave,
   assertAdmin,
 };

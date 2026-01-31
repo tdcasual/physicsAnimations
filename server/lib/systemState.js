@@ -62,6 +62,7 @@ function buildEnvDefaults() {
         username: String(process.env.WEBDAV_USERNAME || ""),
         password: String(process.env.WEBDAV_PASSWORD || ""),
         timeoutMs: toInt(process.env.WEBDAV_TIMEOUT_MS || "15000", 15000),
+        scanRemote: false,
       },
     },
   };
@@ -88,6 +89,7 @@ function normalizeState(raw, fallback) {
         timeoutMs: Number.isFinite(webdav.timeoutMs)
           ? toInt(webdav.timeoutMs, base.storage.webdav.timeoutMs)
           : base.storage.webdav.timeoutMs,
+        scanRemote: typeof webdav.scanRemote === "boolean" ? webdav.scanRemote : base.storage.webdav.scanRemote,
       },
     },
   };

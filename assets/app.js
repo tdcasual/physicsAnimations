@@ -261,10 +261,36 @@ function render({ catalog, selectedGroupId, selectedCategoryId, query }) {
   const allGroupItems = activeGroup ? Object.values(activeGroup.categories || {}).flatMap((c) => c.items || []) : [];
   const hasAny = allGroupItems.length > 0;
 
-  for (const group of groups) {
+  const maxGroupTabs = 8;
+  const directGroups = groups.slice(0, maxGroupTabs);
+  const overflowGroups = groups.slice(maxGroupTabs);
+
+  for (const group of directGroups) {
     const btn = buildTabButton({ id: group.id, title: group.title, active: group.id === activeGroupId });
     btn.dataset.group = group.id;
     groupTabs.appendChild(btn);
+  }
+
+  if (overflowGroups.length) {
+    const select = document.createElement("select");
+    const overflowActive = overflowGroups.some((g) => g.id === activeGroupId);
+    select.className = `tab tab-select ${overflowActive ? "active" : ""}`;
+    select.setAttribute("aria-label", "更多大类");
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "更多…";
+    select.appendChild(placeholder);
+
+    for (const group of overflowGroups) {
+      const option = document.createElement("option");
+      option.value = group.id;
+      option.textContent = group.title || group.id;
+      select.appendChild(option);
+    }
+
+    select.value = overflowActive ? activeGroupId : "";
+    groupTabs.appendChild(select);
   }
 
   const categories = sortByOrderAndTitle(Object.values(activeGroup?.categories || {}));
@@ -464,6 +490,14 @@ async function refreshCatalog(state) {
 }
 
 function initFiltering({ state }) {
+  const viewStateKey = "pa_view_state";
+  const persistViewState = () => {
+    writeStorageJson(viewStateKey, {
+      groupId: state.selectedGroupId,
+      categoryId: state.selectedCategoryId,
+    });
+  };
+
   const rerender = () =>
     render({
       catalog: state.catalog,
@@ -479,14 +513,27 @@ function initFiltering({ state }) {
     if (!nextGroupId) return;
     state.selectedGroupId = nextGroupId;
     state.selectedCategoryId = "all";
+    persistViewState();
     rerender();
     btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+  });
+
+  $("#group-tabs").addEventListener("change", (e) => {
+    const select = e.target.closest("select.tab-select");
+    if (!select) return;
+    const value = select.value || "";
+    if (!value) return;
+    state.selectedGroupId = value;
+    state.selectedCategoryId = "all";
+    persistViewState();
+    rerender();
   });
 
   $("#category-tabs").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-category]");
     if (!btn) return;
     state.selectedCategoryId = btn.dataset.category;
+    persistViewState();
     rerender();
     btn.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   });
@@ -497,6 +544,7 @@ function initFiltering({ state }) {
     const value = select.value || "";
     if (!value) return;
     state.selectedCategoryId = value;
+    persistViewState();
     rerender();
   });
 
@@ -745,6 +793,7 @@ async function loadSystemInfo(state) {
     typeof webdav.timeoutMs === "number" ? String(webdav.timeoutMs) : "15000";
   $("#system-webdav-password-input").value = "";
   $("#system-sync-on-save").checked = false;
+  $("#system-scan-remote-on-sync").checked = webdav.scanRemote === true;
   $("#system-sync-now").disabled = !webdav.url;
 
   state.admin.system.mode = uiMode;
@@ -764,11 +813,13 @@ function readSystemForm() {
   const password = $("#system-webdav-password-input").value;
   const timeoutRaw = $("#system-webdav-timeout-input").value.trim();
   const timeoutMs = timeoutRaw ? Number.parseInt(timeoutRaw, 10) : NaN;
+  const scanRemote = $("#system-scan-remote-on-sync").checked === true;
 
   const webdav = {
     url,
     basePath,
     username,
+    scanRemote,
   };
   if (password) webdav.password = password;
   if (Number.isFinite(timeoutMs)) webdav.timeoutMs = timeoutMs;
@@ -1035,8 +1086,10 @@ function renderAdminList(state, key) {
 }
 
 function renderAdminCategories(state) {
-  const container = $("#admin-taxonomy");
-  container.innerHTML = "";
+  const tree = $("#admin-taxonomy");
+  const editor = $("#admin-taxonomy-editor");
+  tree.innerHTML = "";
+  editor.innerHTML = "";
 
   const ui = state.admin.taxonomy.ui || {
     search: "",
@@ -1051,14 +1104,15 @@ function renderAdminCategories(state) {
   const groups = sortGroupList(state.admin.taxonomy.groups || []);
   const categories = [...(state.admin.taxonomy.categories || [])];
 
+  const groupsById = new Map(groups.map((g) => [g.id, g]));
+  const categoriesById = new Map(categories.map((c) => [c.id, c]));
+
   const categoriesByGroupId = new Map();
   for (const category of categories) {
     const groupId = safeText(category.groupId || DEFAULT_GROUP_ID) || DEFAULT_GROUP_ID;
     if (!categoriesByGroupId.has(groupId)) categoriesByGroupId.set(groupId, []);
     categoriesByGroupId.get(groupId).push({ ...category, groupId });
   }
-
-  const groupsById = new Map(groups.map((g) => [g.id, g]));
 
   function matchesEntity(entity) {
     if (!q) return true;
@@ -1084,6 +1138,34 @@ function renderAdminCategories(state) {
     return `${categoryText} · ${itemText}`;
   }
 
+  function normalizeSelection(value) {
+    if (!value || typeof value !== "object") return null;
+    const kind = value.kind === "category" ? "category" : value.kind === "group" ? "group" : "";
+    const id = safeText(value.id).trim();
+    if (!kind || !id) return null;
+    return { kind, id };
+  }
+
+  const defaultGroupId =
+    groups.find((g) => g.id === state.selectedGroupId)?.id || groups[0]?.id || DEFAULT_GROUP_ID;
+
+  let selection = normalizeSelection(ui.selection);
+  if (!selection) selection = { kind: "group", id: defaultGroupId };
+
+  if (selection.kind === "group" && !groupsById.has(selection.id)) {
+    selection = { kind: "group", id: defaultGroupId };
+  }
+  if (selection.kind === "category") {
+    const category = categoriesById.get(selection.id);
+    if (!category) {
+      selection = { kind: "group", id: defaultGroupId };
+    } else {
+      const groupId = safeText(category.groupId || DEFAULT_GROUP_ID) || DEFAULT_GROUP_ID;
+      if (ui.openGroups instanceof Set) ui.openGroups.add(groupId);
+    }
+  }
+  ui.selection = selection;
+
   let renderedGroups = 0;
   let renderedCategories = 0;
 
@@ -1098,12 +1180,16 @@ function renderAdminCategories(state) {
     const shownCategories = q && !groupMatches ? visibleCategories.filter(matchesEntity) : visibleCategories;
     if (q && !groupMatches && shownCategories.length === 0) continue;
 
+    renderedGroups += 1;
+    renderedCategories += shownCategories.length;
+
     const groupDetails = document.createElement("details");
-    groupDetails.className = "admin-accordion";
+    groupDetails.className = `admin-accordion admin-tree-group${
+      selection.kind === "group" && selection.id === groupId ? " selected" : ""
+    }`;
     groupDetails.dataset.kind = "group";
     groupDetails.dataset.id = groupId;
-    groupDetails.open =
-      ui.openGroups?.has(groupId) || (q && (groupMatches || shownCategories.length > 0));
+    groupDetails.open = ui.openGroups?.has(groupId) || (q && (groupMatches || shownCategories.length > 0));
 
     const summary = document.createElement("summary");
     summary.className = "admin-accordion-summary";
@@ -1131,328 +1217,63 @@ function renderAdminCategories(state) {
       addCategoryBtn.type = "button";
       addCategoryBtn.className = "btn btn-ghost btn-xs";
       addCategoryBtn.textContent = "＋ 二级分类";
-      addCategoryBtn.dataset.action = "group-open-category-create";
+      addCategoryBtn.dataset.action = "select-group-add-category";
 
       summaryActions.appendChild(addCategoryBtn);
       summary.appendChild(summaryActions);
     }
+
     groupDetails.appendChild(summary);
 
     const body = document.createElement("div");
     body.className = "admin-accordion-body";
 
-    const groupGrid = document.createElement("div");
-    groupGrid.className = "admin-category-grid";
-    groupGrid.dataset.editor = "group";
-
-    const groupTitleField = document.createElement("label");
-    groupTitleField.className = "field admin-field-span";
-    groupTitleField.innerHTML = `<span class="field-label">标题</span>`;
-    const groupTitleInput = document.createElement("input");
-    groupTitleInput.className = "field-input";
-    groupTitleInput.name = "title";
-    groupTitleInput.type = "text";
-    groupTitleInput.value = group.title || "";
-    groupTitleField.appendChild(groupTitleInput);
-
-    const groupOrderField = document.createElement("label");
-    groupOrderField.className = "field";
-    groupOrderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
-    const groupOrderInput = document.createElement("input");
-    groupOrderInput.className = "field-input";
-    groupOrderInput.name = "order";
-    groupOrderInput.type = "number";
-    groupOrderInput.value = String(group.order || 0);
-    groupOrderField.appendChild(groupOrderInput);
-
-    const groupHiddenField = document.createElement("label");
-    groupHiddenField.className = "admin-check";
-    const groupHiddenInput = document.createElement("input");
-    groupHiddenInput.type = "checkbox";
-    groupHiddenInput.name = "hidden";
-    groupHiddenInput.checked = group.hidden === true;
-    groupHiddenField.append(groupHiddenInput, document.createTextNode("隐藏该大类（首页不显示）"));
-
-    const groupAdvanced = document.createElement("details");
-    groupAdvanced.className = "admin-subaccordion";
-    groupAdvanced.open = group.hidden === true || Number(group.order || 0) !== 0;
-
-    const groupAdvancedSummary = document.createElement("summary");
-    groupAdvancedSummary.className = "admin-subaccordion-summary";
-    groupAdvancedSummary.textContent = "高级设置";
-    groupAdvanced.appendChild(groupAdvancedSummary);
-
-    const groupAdvancedBody = document.createElement("div");
-    groupAdvancedBody.className = "admin-subaccordion-body";
-
-    const groupAdvancedGrid = document.createElement("div");
-    groupAdvancedGrid.className = "admin-category-grid";
-    groupAdvancedGrid.append(groupOrderField, groupHiddenField);
-
-    groupAdvancedBody.appendChild(groupAdvancedGrid);
-    groupAdvanced.appendChild(groupAdvancedBody);
-
-    groupGrid.append(groupTitleField, groupAdvanced);
-
-    const groupActions = document.createElement("div");
-    groupActions.className = "admin-actions";
-
-    const groupResetBtn = document.createElement("button");
-    groupResetBtn.type = "button";
-    const groupIsBuiltin = groupId === DEFAULT_GROUP_ID;
-    groupResetBtn.className = `btn btn-ghost${groupIsBuiltin ? "" : " danger"}`;
-    groupResetBtn.textContent = groupIsBuiltin ? "重置" : "删除";
-    groupResetBtn.dataset.action = "group-reset";
-
-    const groupSaveBtn = document.createElement("button");
-    groupSaveBtn.type = "button";
-    groupSaveBtn.className = "btn btn-primary";
-    groupSaveBtn.textContent = "保存";
-    groupSaveBtn.dataset.action = "group-save";
-
-    groupActions.append(groupResetBtn, groupSaveBtn);
-
-    const categoriesWrap = document.createElement("div");
-    categoriesWrap.className = "admin-taxonomy admin-taxonomy-children";
+    const list = document.createElement("div");
+    list.className = "admin-tree-list";
 
     for (const category of shownCategories) {
       const categoryId = category.id;
 
-      const categoryDetails = document.createElement("details");
-      categoryDetails.className = "admin-accordion";
-      categoryDetails.dataset.kind = "category";
-      categoryDetails.dataset.id = categoryId;
-      categoryDetails.open = ui.openCategories?.has(categoryId) || (q && matchesEntity(category));
+      const categoryBtn = document.createElement("button");
+      categoryBtn.type = "button";
+      categoryBtn.className = `admin-tree-item${
+        selection.kind === "category" && selection.id === categoryId ? " selected" : ""
+      }`;
+      categoryBtn.dataset.action = "select-category";
+      categoryBtn.dataset.id = categoryId;
 
-      const catSummary = document.createElement("summary");
-      catSummary.className = "admin-accordion-summary";
-
-      const catSummaryInner = document.createElement("div");
-      catSummaryInner.className = "admin-accordion-summary-inner";
+      const main = document.createElement("div");
+      main.className = "admin-tree-item-main";
 
       const catTitle = document.createElement("div");
-      catTitle.className = "admin-accordion-summary-title";
-      const categoryTitleText = `${category.title || categoryId} (${categoryId})${showHidden && category.hidden ? " · 隐藏" : ""}`;
+      catTitle.className = "admin-tree-item-title";
+      const categoryTitleText = `${category.title || categoryId} (${categoryId})${
+        showHidden && category.hidden ? " · 隐藏" : ""
+      }`;
       setHighlightedText(catTitle, categoryTitleText, q);
 
       const catMeta = document.createElement("div");
-      catMeta.className = "admin-accordion-summary-meta";
-      catMeta.textContent = `内容 ${Number(category.count || 0)} · 内置 ${Number(category.builtinCount || 0)} · 新增 ${Number(category.dynamicCount || 0)}`;
+      catMeta.className = "admin-tree-item-meta";
+      catMeta.textContent = `内容 ${Number(category.count || 0)} · 内置 ${Number(category.builtinCount || 0)} · 新增 ${Number(
+        category.dynamicCount || 0,
+      )}`;
 
-      catSummaryInner.append(catTitle, catMeta);
-      catSummary.appendChild(catSummaryInner);
-      categoryDetails.appendChild(catSummary);
+      main.append(catTitle, catMeta);
+      categoryBtn.appendChild(main);
 
-      const catBody = document.createElement("div");
-      catBody.className = "admin-accordion-body";
-
-      const catGrid = document.createElement("div");
-      catGrid.className = "admin-category-grid";
-      catGrid.dataset.editor = "category";
-
-      const catGroupField = document.createElement("label");
-      catGroupField.className = "field";
-      catGroupField.innerHTML = `<span class="field-label">大类</span>`;
-      const catGroupSelect = document.createElement("select");
-      catGroupSelect.className = "field-input";
-      catGroupSelect.name = "groupId";
-      fillGroupSelect(catGroupSelect, groups);
-      catGroupSelect.value = category.groupId || DEFAULT_GROUP_ID;
-      catGroupField.appendChild(catGroupSelect);
-
-      const catTitleField = document.createElement("label");
-      catTitleField.className = "field";
-      catTitleField.innerHTML = `<span class="field-label">标题</span>`;
-      const catTitleInput = document.createElement("input");
-      catTitleInput.className = "field-input";
-      catTitleInput.name = "title";
-      catTitleInput.type = "text";
-      catTitleInput.value = category.title || "";
-      catTitleField.appendChild(catTitleInput);
-
-      const catOrderField = document.createElement("label");
-      catOrderField.className = "field";
-      catOrderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
-      const catOrderInput = document.createElement("input");
-      catOrderInput.className = "field-input";
-      catOrderInput.name = "order";
-      catOrderInput.type = "number";
-      catOrderInput.value = String(category.order || 0);
-      catOrderField.appendChild(catOrderInput);
-
-      const catHiddenField = document.createElement("label");
-      catHiddenField.className = "admin-check";
-      const catHiddenInput = document.createElement("input");
-      catHiddenInput.type = "checkbox";
-      catHiddenInput.name = "hidden";
-      catHiddenInput.checked = category.hidden === true;
-      catHiddenField.append(catHiddenInput, document.createTextNode("隐藏该分类（首页不显示）"));
-
-      const catAdvanced = document.createElement("details");
-      catAdvanced.className = "admin-subaccordion";
-      catAdvanced.open = category.hidden === true || Number(category.order || 0) !== 0;
-
-      const catAdvancedSummary = document.createElement("summary");
-      catAdvancedSummary.className = "admin-subaccordion-summary";
-      catAdvancedSummary.textContent = "高级设置";
-      catAdvanced.appendChild(catAdvancedSummary);
-
-      const catAdvancedBody = document.createElement("div");
-      catAdvancedBody.className = "admin-subaccordion-body";
-
-      const catAdvancedGrid = document.createElement("div");
-      catAdvancedGrid.className = "admin-category-grid";
-      catAdvancedGrid.append(catOrderField, catHiddenField);
-
-      catAdvancedBody.appendChild(catAdvancedGrid);
-      catAdvanced.appendChild(catAdvancedBody);
-
-      catGrid.append(catGroupField, catTitleField, catAdvanced);
-
-      const catActions = document.createElement("div");
-      catActions.className = "admin-actions";
-
-      const catResetBtn = document.createElement("button");
-      catResetBtn.type = "button";
-      const categoryIsBuiltin = Number(category.builtinCount || 0) > 0;
-      catResetBtn.className = `btn btn-ghost${categoryIsBuiltin ? "" : " danger"}`;
-      catResetBtn.textContent = categoryIsBuiltin ? "重置" : "删除";
-      catResetBtn.dataset.action = "category-reset";
-
-      const catSaveBtn = document.createElement("button");
-      catSaveBtn.type = "button";
-      catSaveBtn.className = "btn btn-primary";
-      catSaveBtn.textContent = "保存";
-      catSaveBtn.dataset.action = "category-save";
-
-      catActions.append(catResetBtn, catSaveBtn);
-
-      catBody.append(catGrid, catActions);
-      categoryDetails.appendChild(catBody);
-      categoriesWrap.appendChild(categoryDetails);
-
-      renderedCategories += 1;
+      list.appendChild(categoryBtn);
     }
 
-    if (!q) {
-      const addDetails = document.createElement("details");
-      addDetails.className = "admin-accordion";
-      addDetails.dataset.kind = "category-create";
-      addDetails.dataset.groupId = groupId;
-
-      const addSummary = document.createElement("summary");
-      addSummary.className = "admin-accordion-summary";
-
-      const addInner = document.createElement("div");
-      addInner.className = "admin-accordion-summary-inner";
-
-      const addTitle = document.createElement("div");
-      addTitle.className = "admin-accordion-summary-title";
-      addTitle.textContent = "新增二级分类";
-
-      const addMeta = document.createElement("div");
-      addMeta.className = "admin-accordion-summary-meta";
-      addMeta.textContent = "在该大类下创建新的二级分类";
-
-      addInner.append(addTitle, addMeta);
-      addSummary.appendChild(addInner);
-      addDetails.appendChild(addSummary);
-
-      const addBody = document.createElement("div");
-      addBody.className = "admin-accordion-body";
-
-      const addGrid = document.createElement("div");
-      addGrid.className = "admin-category-grid";
-
-      const idField = document.createElement("label");
-      idField.className = "field";
-      idField.innerHTML = `<span class="field-label">二级分类 ID（英文/数字）</span>`;
-      const idInput = document.createElement("input");
-      idInput.className = "field-input";
-      idInput.name = "id";
-      idInput.type = "text";
-      idInput.placeholder = "custom";
-      idField.appendChild(idInput);
-
-      const titleField = document.createElement("label");
-      titleField.className = "field";
-      titleField.innerHTML = `<span class="field-label">标题</span>`;
-      const titleInput = document.createElement("input");
-      titleInput.className = "field-input";
-      titleInput.name = "title";
-      titleInput.type = "text";
-      titleInput.placeholder = "自定义分类";
-      titleField.appendChild(titleInput);
-
-      const orderField = document.createElement("label");
-      orderField.className = "field";
-      orderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
-      const orderInput = document.createElement("input");
-      orderInput.className = "field-input";
-      orderInput.name = "order";
-      orderInput.type = "number";
-      orderInput.value = "0";
-      orderField.appendChild(orderInput);
-
-      const hiddenField = document.createElement("label");
-      hiddenField.className = "admin-check";
-      const hiddenInput = document.createElement("input");
-      hiddenInput.type = "checkbox";
-      hiddenInput.name = "hidden";
-      hiddenField.append(hiddenInput, document.createTextNode("隐藏"));
-
-      const addAdvanced = document.createElement("details");
-      addAdvanced.className = "admin-subaccordion";
-
-      const addAdvancedSummary = document.createElement("summary");
-      addAdvancedSummary.className = "admin-subaccordion-summary";
-      addAdvancedSummary.textContent = "高级设置";
-      addAdvanced.appendChild(addAdvancedSummary);
-
-      const addAdvancedBody = document.createElement("div");
-      addAdvancedBody.className = "admin-subaccordion-body";
-
-      const addAdvancedGrid = document.createElement("div");
-      addAdvancedGrid.className = "admin-category-grid";
-      addAdvancedGrid.append(orderField, hiddenField);
-
-      addAdvancedBody.appendChild(addAdvancedGrid);
-      addAdvanced.appendChild(addAdvancedBody);
-
-      addGrid.append(idField, titleField, addAdvanced);
-
-      const addActions = document.createElement("div");
-      addActions.className = "admin-actions";
-
-      const createBtn = document.createElement("button");
-      createBtn.type = "button";
-      createBtn.className = "btn btn-primary";
-      createBtn.textContent = "创建";
-      createBtn.dataset.action = "category-create";
-
-      addActions.appendChild(createBtn);
-
-      addBody.append(addGrid, addActions);
-      addDetails.appendChild(addBody);
-      categoriesWrap.appendChild(addDetails);
-    }
-
-    if (!shownCategories.length && q) {
+    if (!shownCategories.length) {
       const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "未找到匹配的二级分类。";
-      categoriesWrap.appendChild(empty);
-    } else if (!visibleCategories.length && !q) {
-      const empty = document.createElement("div");
-      empty.className = "empty";
-      empty.textContent = "暂无二级分类。";
-      categoriesWrap.appendChild(empty);
+      empty.className = "admin-help";
+      empty.textContent = q ? "未找到匹配的二级分类。" : "暂无二级分类。";
+      list.appendChild(empty);
     }
 
-    body.append(groupGrid, groupActions, categoriesWrap);
+    body.appendChild(list);
     groupDetails.appendChild(body);
-    container.appendChild(groupDetails);
-    renderedGroups += 1;
+    tree.appendChild(groupDetails);
   }
 
   const metaEl = document.querySelector("#taxonomy-meta");
@@ -1466,7 +1287,313 @@ function renderAdminCategories(state) {
     const empty = document.createElement("div");
     empty.className = "empty";
     empty.textContent = q ? "未找到匹配的分类。" : "暂无大类。";
-    container.appendChild(empty);
+    tree.appendChild(empty);
+  }
+
+  renderAdminTaxonomyEditor(state, { selection, groups, categories });
+}
+
+function renderAdminTaxonomyEditor(state, { selection, groups, categories } = {}) {
+  const editor = $("#admin-taxonomy-editor");
+  editor.innerHTML = "";
+
+  const groupsList = Array.isArray(groups) ? groups : [];
+  const categoriesList = Array.isArray(categories) ? categories : [];
+  const groupsById = new Map(groupsList.map((g) => [g.id, g]));
+  const categoriesById = new Map(categoriesList.map((c) => [c.id, c]));
+
+  if (!selection || !selection.id) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "请选择左侧的大类或二级分类进行编辑。";
+    editor.appendChild(empty);
+    return;
+  }
+
+  if (selection.kind === "group") {
+    const groupId = selection.id;
+    const group = groupsById.get(groupId) || { id: groupId, title: groupId, order: 0, hidden: false, count: 0, categoryCount: 0 };
+    const isBuiltin = groupId === DEFAULT_GROUP_ID;
+
+    const header = document.createElement("div");
+    header.className = "admin-section-title";
+    header.textContent = `大类：${group.title || groupId} (${groupId})`;
+
+    const meta = document.createElement("div");
+    meta.className = "admin-help";
+    meta.textContent = `分类 ${Number(group.categoryCount || 0)} · 内容 ${Number(group.count || 0)}`;
+
+    const form = document.createElement("form");
+    form.className = "admin-form";
+    form.id = "taxonomy-group-editor-form";
+    form.dataset.id = groupId;
+
+    const grid = document.createElement("div");
+    grid.className = "admin-category-grid";
+
+    const titleField = document.createElement("label");
+    titleField.className = "field admin-field-span";
+    titleField.innerHTML = `<span class="field-label">标题</span>`;
+    const titleInput = document.createElement("input");
+    titleInput.className = "field-input";
+    titleInput.name = "title";
+    titleInput.type = "text";
+    titleInput.value = group.title || "";
+    titleField.appendChild(titleInput);
+
+    const orderField = document.createElement("label");
+    orderField.className = "field";
+    orderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
+    const orderInput = document.createElement("input");
+    orderInput.className = "field-input";
+    orderInput.name = "order";
+    orderInput.type = "number";
+    orderInput.value = String(group.order || 0);
+    orderField.appendChild(orderInput);
+
+    const hiddenField = document.createElement("label");
+    hiddenField.className = "admin-check";
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "checkbox";
+    hiddenInput.name = "hidden";
+    hiddenInput.checked = group.hidden === true;
+    hiddenField.append(hiddenInput, document.createTextNode("隐藏该大类（首页不显示）"));
+
+    const advanced = document.createElement("details");
+    advanced.className = "admin-subaccordion";
+    advanced.open = group.hidden === true || Number(group.order || 0) !== 0;
+
+    const advancedSummary = document.createElement("summary");
+    advancedSummary.className = "admin-subaccordion-summary";
+    advancedSummary.textContent = "高级设置";
+    advanced.appendChild(advancedSummary);
+
+    const advancedBody = document.createElement("div");
+    advancedBody.className = "admin-subaccordion-body";
+
+    const advancedGrid = document.createElement("div");
+    advancedGrid.className = "admin-category-grid";
+    advancedGrid.append(orderField, hiddenField);
+    advancedBody.appendChild(advancedGrid);
+    advanced.appendChild(advancedBody);
+
+    grid.append(titleField, advanced);
+
+    const actions = document.createElement("div");
+    actions.className = "admin-actions";
+
+    const resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = `btn btn-ghost${isBuiltin ? "" : " danger"}`;
+    resetBtn.textContent = isBuiltin ? "重置" : "删除";
+    resetBtn.dataset.action = "group-reset";
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.className = "btn btn-primary";
+    saveBtn.textContent = "保存";
+
+    actions.append(resetBtn, saveBtn);
+
+    form.append(grid, actions);
+
+    const createHeader = document.createElement("div");
+    createHeader.className = "admin-section-title";
+    createHeader.textContent = "新增二级分类";
+
+    const createForm = document.createElement("form");
+    createForm.className = "admin-form";
+    createForm.id = "taxonomy-category-create-form";
+    createForm.dataset.groupId = groupId;
+
+    const createGrid = document.createElement("div");
+    createGrid.className = "admin-category-grid";
+
+    const idField = document.createElement("label");
+    idField.className = "field";
+    idField.innerHTML = `<span class="field-label">二级分类 ID（英文/数字）</span>`;
+    const idInput = document.createElement("input");
+    idInput.className = "field-input";
+    idInput.name = "id";
+    idInput.type = "text";
+    idInput.placeholder = "custom";
+    idInput.id = "taxonomy-category-create-id";
+    idField.appendChild(idInput);
+
+    const catTitleField = document.createElement("label");
+    catTitleField.className = "field";
+    catTitleField.innerHTML = `<span class="field-label">标题</span>`;
+    const catTitleInput = document.createElement("input");
+    catTitleInput.className = "field-input";
+    catTitleInput.name = "title";
+    catTitleInput.type = "text";
+    catTitleInput.placeholder = "自定义分类";
+    catTitleField.appendChild(catTitleInput);
+
+    const catOrderField = document.createElement("label");
+    catOrderField.className = "field";
+    catOrderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
+    const catOrderInput = document.createElement("input");
+    catOrderInput.className = "field-input";
+    catOrderInput.name = "order";
+    catOrderInput.type = "number";
+    catOrderInput.value = "0";
+    catOrderField.appendChild(catOrderInput);
+
+    const catHiddenField = document.createElement("label");
+    catHiddenField.className = "admin-check";
+    const catHiddenInput = document.createElement("input");
+    catHiddenInput.type = "checkbox";
+    catHiddenInput.name = "hidden";
+    catHiddenField.append(catHiddenInput, document.createTextNode("隐藏"));
+
+    const createAdvanced = document.createElement("details");
+    createAdvanced.className = "admin-subaccordion";
+
+    const createAdvancedSummary = document.createElement("summary");
+    createAdvancedSummary.className = "admin-subaccordion-summary";
+    createAdvancedSummary.textContent = "高级设置";
+    createAdvanced.appendChild(createAdvancedSummary);
+
+    const createAdvancedBody = document.createElement("div");
+    createAdvancedBody.className = "admin-subaccordion-body";
+
+    const createAdvancedGrid = document.createElement("div");
+    createAdvancedGrid.className = "admin-category-grid";
+    createAdvancedGrid.append(catOrderField, catHiddenField);
+    createAdvancedBody.appendChild(createAdvancedGrid);
+    createAdvanced.appendChild(createAdvancedBody);
+
+    createGrid.append(idField, catTitleField, createAdvanced);
+
+    const createActions = document.createElement("div");
+    createActions.className = "admin-actions";
+
+    const createBtn = document.createElement("button");
+    createBtn.type = "submit";
+    createBtn.className = "btn btn-primary";
+    createBtn.textContent = "创建";
+
+    createActions.appendChild(createBtn);
+
+    createForm.append(createGrid, createActions);
+
+    editor.append(header, meta, form, createHeader, createForm);
+    return;
+  }
+
+  if (selection.kind === "category") {
+    const categoryId = selection.id;
+    const category = categoriesById.get(categoryId);
+    if (!category) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "该二级分类不存在或已被删除。";
+      editor.appendChild(empty);
+      return;
+    }
+
+    const header = document.createElement("div");
+    header.className = "admin-section-title";
+    header.textContent = `二级分类：${category.title || categoryId} (${categoryId})`;
+
+    const meta = document.createElement("div");
+    meta.className = "admin-help";
+    meta.textContent = `内容 ${Number(category.count || 0)} · 内置 ${Number(category.builtinCount || 0)} · 新增 ${Number(
+      category.dynamicCount || 0,
+    )}`;
+
+    const form = document.createElement("form");
+    form.className = "admin-form";
+    form.id = "taxonomy-category-editor-form";
+    form.dataset.id = categoryId;
+
+    const grid = document.createElement("div");
+    grid.className = "admin-category-grid";
+
+    const groupField = document.createElement("label");
+    groupField.className = "field";
+    groupField.innerHTML = `<span class="field-label">大类</span>`;
+    const groupSelect = document.createElement("select");
+    groupSelect.className = "field-input";
+    groupSelect.name = "groupId";
+    fillGroupSelect(groupSelect, groupsList);
+    groupSelect.value = category.groupId || DEFAULT_GROUP_ID;
+    groupField.appendChild(groupSelect);
+
+    const titleField = document.createElement("label");
+    titleField.className = "field";
+    titleField.innerHTML = `<span class="field-label">标题</span>`;
+    const titleInput = document.createElement("input");
+    titleInput.className = "field-input";
+    titleInput.name = "title";
+    titleInput.type = "text";
+    titleInput.value = category.title || "";
+    titleField.appendChild(titleInput);
+
+    const orderField = document.createElement("label");
+    orderField.className = "field";
+    orderField.innerHTML = `<span class="field-label">排序（越大越靠前）</span>`;
+    const orderInput = document.createElement("input");
+    orderInput.className = "field-input";
+    orderInput.name = "order";
+    orderInput.type = "number";
+    orderInput.value = String(category.order || 0);
+    orderField.appendChild(orderInput);
+
+    const hiddenField = document.createElement("label");
+    hiddenField.className = "admin-check";
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "checkbox";
+    hiddenInput.name = "hidden";
+    hiddenInput.checked = category.hidden === true;
+    hiddenField.append(hiddenInput, document.createTextNode("隐藏该分类（首页不显示）"));
+
+    const advanced = document.createElement("details");
+    advanced.className = "admin-subaccordion";
+    advanced.open = category.hidden === true || Number(category.order || 0) !== 0;
+
+    const advancedSummary = document.createElement("summary");
+    advancedSummary.className = "admin-subaccordion-summary";
+    advancedSummary.textContent = "高级设置";
+    advanced.appendChild(advancedSummary);
+
+    const advancedBody = document.createElement("div");
+    advancedBody.className = "admin-subaccordion-body";
+
+    const advancedGrid = document.createElement("div");
+    advancedGrid.className = "admin-category-grid";
+    advancedGrid.append(orderField, hiddenField);
+    advancedBody.appendChild(advancedGrid);
+    advanced.appendChild(advancedBody);
+
+    grid.append(groupField, titleField, advanced);
+
+    const actions = document.createElement("div");
+    actions.className = "admin-actions";
+
+    const canDelete = Number(category.count || 0) === 0;
+
+    const resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = `btn btn-ghost${canDelete ? " danger" : ""}`;
+    resetBtn.textContent = canDelete ? "删除" : "重置";
+    resetBtn.dataset.action = "category-reset";
+
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.className = "btn btn-primary";
+    saveBtn.textContent = "保存";
+
+    actions.append(resetBtn, saveBtn);
+
+    form.append(grid, actions);
+
+    const createHint = document.createElement("div");
+    createHint.className = "admin-help";
+    createHint.textContent = "提示：要新增二级分类，请先在左侧选择对应的大类。";
+
+    editor.append(header, meta, form, createHint);
   }
 }
 
@@ -1526,6 +1653,7 @@ function initAdmin({ state }) {
         if (typeof saved.showHidden === "boolean") ui.showHidden = saved.showHidden;
         if (Array.isArray(saved.openGroups)) ui.openGroups = new Set(saved.openGroups);
         if (Array.isArray(saved.openCategories)) ui.openCategories = new Set(saved.openCategories);
+        if (saved.selection && typeof saved.selection === "object") ui.selection = saved.selection;
       }
       ui._hydrated = true;
     }
@@ -1548,6 +1676,7 @@ function initAdmin({ state }) {
       showHidden: ui.showHidden === true,
       openGroups: [...(ui.openGroups || [])],
       openCategories: [...(ui.openCategories || [])],
+      selection: ui.selection || null,
     });
   }
 
@@ -1572,6 +1701,28 @@ function initAdmin({ state }) {
     renderAdminCategories(state);
   });
 
+  $("#taxonomy-search").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const q = String(e.target.value || "").trim().toLowerCase();
+    if (!q) return;
+
+    const container = document.querySelector("#admin-taxonomy");
+    if (!container) return;
+    const match =
+      [...container.querySelectorAll('details[data-kind="group"]')].find((d) => {
+        const title = d.querySelector(".admin-accordion-summary-title")?.textContent || "";
+        return title.toLowerCase().includes(q);
+      }) ||
+      [...container.querySelectorAll('button[data-action="select-category"]')].find((btn) => {
+        const title = btn.textContent || "";
+        return title.toLowerCase().includes(q);
+      });
+    if (!match) return;
+
+    e.preventDefault();
+    match.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
   $("#taxonomy-show-hidden").addEventListener("change", (e) => {
     ensureTaxonomyUi().showHidden = e.target.checked === true;
     persistTaxonomyUi();
@@ -1594,11 +1745,7 @@ function initAdmin({ state }) {
         .filter((g) => showHidden || g.hidden !== true)
         .map((g) => g.id),
     );
-    ui.openCategories = new Set(
-      (state.admin.taxonomy.categories || [])
-        .filter((c) => showHidden || c.hidden !== true)
-        .map((c) => c.id),
-    );
+    ui.openCategories = new Set();
     persistTaxonomyUi();
     renderAdminCategories(state);
   });
@@ -1616,10 +1763,6 @@ function initAdmin({ state }) {
       if (kind === "group") {
         if (details.open) ui.openGroups.add(id);
         else ui.openGroups.delete(id);
-      }
-      if (kind === "category") {
-        if (details.open) ui.openCategories.add(id);
-        else ui.openCategories.delete(id);
       }
       persistTaxonomyUi();
     },
@@ -1639,6 +1782,49 @@ function initAdmin({ state }) {
       }
       showToast("加载失败", { kind: "info" });
     });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.defaultPrevented) return;
+    if (e.key !== "/") return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+
+    const target = e.target;
+    if (
+      target instanceof HTMLInputElement ||
+      target instanceof HTMLTextAreaElement ||
+      target instanceof HTMLSelectElement ||
+      target?.isContentEditable
+    ) {
+      return;
+    }
+
+    e.preventDefault();
+
+    if (isAdminOpen()) {
+      const activeTab = state.admin.tab || "dashboard";
+      const targetSelector =
+        activeTab === "categories"
+          ? "#taxonomy-search"
+          : activeTab === "uploads"
+            ? "#admin-uploads-search"
+            : activeTab === "content"
+              ? "#admin-items-search"
+              : "#taxonomy-search";
+
+      const input = document.querySelector(targetSelector);
+      if (input instanceof HTMLInputElement) {
+        input.focus();
+        input.select();
+      }
+      return;
+    }
+
+    const input = document.querySelector("#search-input");
+    if (input instanceof HTMLInputElement) {
+      input.focus();
+      input.select();
+    }
   });
 
   $("#admin-button").addEventListener("click", async () => {
@@ -1943,7 +2129,9 @@ function initAdmin({ state }) {
       $("#group-create-title").value = "";
       $("#group-create-order").value = "0";
       $("#group-create-hidden").checked = false;
-      ensureTaxonomyUi().openGroups.add(id);
+      const ui = ensureTaxonomyUi();
+      ui.openGroups.add(id);
+      ui.selection = { kind: "group", id };
       persistTaxonomyUi();
       $("#taxonomy-add-group").open = false;
       showToast("大类已创建", { kind: "success" });
@@ -1966,86 +2154,120 @@ function initAdmin({ state }) {
     }
   });
 
-  $("#admin-taxonomy").addEventListener("click", async (e) => {
-    const btn = e.target.closest("button[data-action]");
-    if (!btn) return;
+  function applyTaxonomySelectionToTree(selection) {
+    const tree = document.querySelector("#admin-taxonomy");
+    if (!tree) return;
 
-    const action = btn.dataset.action;
-    const ui = ensureTaxonomyUi();
+    tree.querySelectorAll(".admin-tree-group.selected").forEach((el) => el.classList.remove("selected"));
+    tree.querySelectorAll(".admin-tree-item.selected").forEach((el) => el.classList.remove("selected"));
 
-    if (action === "group-open-category-create") {
-      e.preventDefault();
-      e.stopPropagation();
+    if (!selection || typeof selection !== "object") return;
+    if (!selection.id) return;
 
-      const groupDetails = btn.closest('details[data-kind="group"]');
-      const id = groupDetails?.dataset?.id;
-      if (!groupDetails || !id) return;
-
-      groupDetails.open = true;
-      ui.openGroups.add(id);
-      persistTaxonomyUi();
-
-      const createDetails = groupDetails.querySelector('details[data-kind="category-create"]');
-      if (createDetails) {
-        createDetails.open = true;
-        createDetails.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        createDetails.querySelector('input[name="id"]')?.focus();
+    if (selection.kind === "group") {
+      for (const details of tree.querySelectorAll('details[data-kind="group"]')) {
+        if (details.dataset.id === selection.id) details.classList.add("selected");
       }
       return;
     }
 
-    if (action === "group-reset" || action === "group-save") {
-      const details = btn.closest('details[data-kind="group"]');
-      const id = details?.dataset?.id;
-      if (!details || !id) return;
+    if (selection.kind === "category") {
+      for (const btn of tree.querySelectorAll('button[data-action="select-category"]')) {
+        if (btn.dataset.id === selection.id) btn.classList.add("selected");
+      }
+    }
+  }
 
-      if (action === "group-reset") {
-        const isBuiltin = id === DEFAULT_GROUP_ID;
-        const confirmText = isBuiltin
-          ? `确定重置大类「${id}」的设置为默认吗？`
-          : `确定删除大类「${id}」吗？（删除前需先移动/删除其二级分类）`;
-        if (!window.confirm(confirmText)) return;
+  function setTaxonomySelection(selection, { openGroupId = "", focusCreate = false } = {}) {
+    const ui = ensureTaxonomyUi();
+    const groupId = safeText(openGroupId).trim();
+    if (groupId) ui.openGroups.add(groupId);
+    ui.selection = selection;
+    persistTaxonomyUi();
 
-        btn.disabled = true;
-        try {
-          await deleteGroup(id);
-          if (isBuiltin) ui.openGroups.add(id);
-          else ui.openGroups.delete(id);
-          persistTaxonomyUi();
-          showToast(isBuiltin ? "已重置" : "已删除", { kind: "success" });
-          await loadAdminCategories(state);
-          await refreshCatalog(state);
-        } catch (err) {
-          if (err?.status === 401) {
-            clearToken();
-            setLoginUi({ loggedIn: false });
-            closeAdminModal();
-            return;
-          }
-          if (err?.status === 400 && err?.data?.error === "group_not_empty") {
-            showToast("该大类下仍有二级分类，请先移动/删除二级分类", { kind: "info" });
-            return;
-          }
-          showToast(isBuiltin ? "重置失败" : "删除失败", { kind: "info" });
-        } finally {
-          btn.disabled = false;
-        }
+    if (groupId) {
+      const tree = document.querySelector("#admin-taxonomy");
+      const details = [...(tree?.querySelectorAll('details[data-kind="group"]') || [])].find((d) => d.dataset.id === groupId);
+      if (details) details.open = true;
+    }
+
+    applyTaxonomySelectionToTree(selection);
+    renderAdminTaxonomyEditor(state, {
+      selection,
+      groups: sortGroupList(state.admin.taxonomy.groups || []),
+      categories: state.admin.taxonomy.categories || [],
+    });
+
+    if (focusCreate) document.querySelector("#taxonomy-category-create-id")?.focus();
+  }
+
+  function selectTaxonomyGroup(groupId, { focusCreate = false, open = false } = {}) {
+    const id = safeText(groupId || "").trim() || DEFAULT_GROUP_ID;
+    setTaxonomySelection(
+      { kind: "group", id },
+      {
+        openGroupId: open ? id : "",
+        focusCreate,
+      },
+    );
+  }
+
+  function selectTaxonomyCategory(categoryId) {
+    const id = safeText(categoryId || "").trim();
+    if (!id) return;
+    const category = (state.admin.taxonomy.categories || []).find((c) => c.id === id);
+    const groupId = safeText(category?.groupId || DEFAULT_GROUP_ID) || DEFAULT_GROUP_ID;
+    setTaxonomySelection({ kind: "category", id }, { openGroupId: groupId });
+  }
+
+  $("#admin-taxonomy").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (btn) {
+      const action = btn.dataset.action;
+      if (action === "select-group-add-category") {
+        e.preventDefault();
+        e.stopPropagation();
+        const groupId = btn.closest('details[data-kind="group"]')?.dataset?.id || DEFAULT_GROUP_ID;
+        selectTaxonomyGroup(groupId, { focusCreate: true, open: true });
         return;
       }
+      if (action === "select-category") {
+        selectTaxonomyCategory(btn.dataset.id);
+        return;
+      }
+    }
 
-      const title = details.querySelector('input[name="title"]')?.value ?? "";
-      const orderRaw = details.querySelector('input[name="order"]')?.value ?? "0";
-      const hidden = details.querySelector('input[name="hidden"]')?.checked ?? false;
+    const summary = e.target.closest("summary.admin-accordion-summary");
+    if (!summary) return;
+    const groupId = summary.closest('details[data-kind="group"]')?.dataset?.id;
+    if (groupId) selectTaxonomyGroup(groupId);
+  });
+
+  $("#admin-taxonomy-editor").addEventListener("submit", async (e) => {
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+
+    if (form.id === "taxonomy-group-editor-form") {
+      e.preventDefault();
+      const id = form.dataset.id;
+      if (!id) return;
+
+      const title = form.querySelector('input[name="title"]')?.value ?? "";
+      const orderRaw = form.querySelector('input[name="order"]')?.value ?? "0";
+      const hidden = form.querySelector('input[name="hidden"]')?.checked ?? false;
       const order = Number.parseInt(orderRaw || "0", 10);
 
-      btn.disabled = true;
+      const saveBtn = form.querySelector('button[type="submit"]');
+      if (saveBtn) saveBtn.disabled = true;
       try {
         await updateGroup(id, {
           title: title.trim(),
           order: Number.isFinite(order) ? order : 0,
           hidden,
         });
+        const ui = ensureTaxonomyUi();
         ui.openGroups.add(id);
+        ui.selection = { kind: "group", id };
         persistTaxonomyUi();
         showToast("大类已保存", { kind: "success" });
         await loadAdminCategories(state);
@@ -2059,54 +2281,24 @@ function initAdmin({ state }) {
         }
         showToast("保存失败", { kind: "info" });
       } finally {
-        btn.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
       }
       return;
     }
 
-    if (action === "category-reset" || action === "category-save") {
-      const details = btn.closest('details[data-kind="category"]');
-      const id = details?.dataset?.id;
-      if (!details || !id) return;
+    if (form.id === "taxonomy-category-editor-form") {
+      e.preventDefault();
+      const id = form.dataset.id;
+      if (!id) return;
 
-      if (action === "category-reset") {
-        const category = (state.admin.taxonomy.categories || []).find((c) => c.id === id);
-        const isBuiltin = Number(category?.builtinCount || 0) > 0;
-        const confirmText = isBuiltin
-          ? `确定重置二级分类「${id}」的设置为默认吗？`
-          : `确定删除二级分类「${id}」吗？`;
-        if (!window.confirm(confirmText)) return;
-
-        btn.disabled = true;
-        try {
-          await deleteCategory(id);
-          if (isBuiltin) ui.openCategories.add(id);
-          else ui.openCategories.delete(id);
-          persistTaxonomyUi();
-          showToast(isBuiltin ? "已重置" : "已删除", { kind: "success" });
-          await loadAdminCategories(state);
-          await refreshCatalog(state);
-        } catch (err) {
-          if (err?.status === 401) {
-            clearToken();
-            setLoginUi({ loggedIn: false });
-            closeAdminModal();
-            return;
-          }
-          showToast(isBuiltin ? "重置失败" : "删除失败", { kind: "info" });
-        } finally {
-          btn.disabled = false;
-        }
-        return;
-      }
-
-      const groupId = details.querySelector('select[name="groupId"]')?.value ?? DEFAULT_GROUP_ID;
-      const title = details.querySelector('input[name="title"]')?.value ?? "";
-      const orderRaw = details.querySelector('input[name="order"]')?.value ?? "0";
-      const hidden = details.querySelector('input[name="hidden"]')?.checked ?? false;
+      const groupId = form.querySelector('select[name="groupId"]')?.value ?? DEFAULT_GROUP_ID;
+      const title = form.querySelector('input[name="title"]')?.value ?? "";
+      const orderRaw = form.querySelector('input[name="order"]')?.value ?? "0";
+      const hidden = form.querySelector('input[name="hidden"]')?.checked ?? false;
       const order = Number.parseInt(orderRaw || "0", 10);
 
-      btn.disabled = true;
+      const saveBtn = form.querySelector('button[type="submit"]');
+      if (saveBtn) saveBtn.disabled = true;
       try {
         await updateCategory(id, {
           groupId,
@@ -2114,8 +2306,9 @@ function initAdmin({ state }) {
           order: Number.isFinite(order) ? order : 0,
           hidden,
         });
+        const ui = ensureTaxonomyUi();
         ui.openGroups.add(groupId);
-        ui.openCategories.add(id);
+        ui.selection = { kind: "category", id };
         persistTaxonomyUi();
         showToast("分类已保存", { kind: "success" });
         await loadAdminCategories(state);
@@ -2133,20 +2326,18 @@ function initAdmin({ state }) {
         }
         showToast("保存失败", { kind: "info" });
       } finally {
-        btn.disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
       }
       return;
     }
 
-    if (action === "category-create") {
-      const details = btn.closest('details[data-kind="category-create"]');
-      const groupId = details?.dataset?.groupId || DEFAULT_GROUP_ID;
-      if (!details) return;
-
-      const idInput = details.querySelector('input[name="id"]');
-      const titleInput = details.querySelector('input[name="title"]');
-      const orderInput = details.querySelector('input[name="order"]');
-      const hiddenInput = details.querySelector('input[name="hidden"]');
+    if (form.id === "taxonomy-category-create-form") {
+      e.preventDefault();
+      const groupId = form.dataset.groupId || DEFAULT_GROUP_ID;
+      const idInput = form.querySelector('input[name="id"]');
+      const titleInput = form.querySelector('input[name="title"]');
+      const orderInput = form.querySelector('input[name="order"]');
+      const hiddenInput = form.querySelector('input[name="hidden"]');
 
       const id = idInput?.value.trim() || "";
       const title = titleInput?.value.trim() || "";
@@ -2158,17 +2349,20 @@ function initAdmin({ state }) {
         return;
       }
 
-      btn.disabled = true;
+      const createBtn = form.querySelector('button[type="submit"]');
+      if (createBtn) createBtn.disabled = true;
       try {
         await createCategory({ id, groupId, title, order: Number.isFinite(order) ? order : 0, hidden });
         if (idInput) idInput.value = "";
         if (titleInput) titleInput.value = "";
         if (orderInput) orderInput.value = "0";
         if (hiddenInput) hiddenInput.checked = false;
+
+        const ui = ensureTaxonomyUi();
         ui.openGroups.add(groupId);
-        ui.openCategories.add(id);
+        ui.selection = { kind: "category", id };
         persistTaxonomyUi();
-        details.open = false;
+
         showToast("分类已创建", { kind: "success" });
         await loadAdminCategories(state);
         await refreshCatalog(state);
@@ -2188,6 +2382,92 @@ function initAdmin({ state }) {
           return;
         }
         showToast("创建分类失败", { kind: "info" });
+      } finally {
+        if (createBtn) createBtn.disabled = false;
+      }
+    }
+  });
+
+  $("#admin-taxonomy-editor").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+    const ui = ensureTaxonomyUi();
+
+    if (action === "group-reset") {
+      const form = btn.closest("#taxonomy-group-editor-form");
+      const id = form?.dataset?.id;
+      if (!id) return;
+
+      const isBuiltin = id === DEFAULT_GROUP_ID;
+      const confirmText = isBuiltin
+        ? `确定重置大类「${id}」的设置为默认吗？`
+        : `确定删除大类「${id}」吗？（删除前需先移动/删除其二级分类）`;
+      if (!window.confirm(confirmText)) return;
+
+      btn.disabled = true;
+      try {
+        await deleteGroup(id);
+        ui.openGroups.add(DEFAULT_GROUP_ID);
+        ui.selection = { kind: "group", id: DEFAULT_GROUP_ID };
+        persistTaxonomyUi();
+        showToast(isBuiltin ? "已重置" : "已删除", { kind: "success" });
+        await loadAdminCategories(state);
+        await refreshCatalog(state);
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        if (err?.status === 400 && err?.data?.error === "group_not_empty") {
+          showToast("该大类下仍有二级分类，请先移动/删除二级分类", { kind: "info" });
+          return;
+        }
+        showToast(isBuiltin ? "重置失败" : "删除失败", { kind: "info" });
+      } finally {
+        btn.disabled = false;
+      }
+      return;
+    }
+
+    if (action === "category-reset") {
+      const form = btn.closest("#taxonomy-category-editor-form");
+      const id = form?.dataset?.id;
+      if (!id) return;
+
+      const category = (state.admin.taxonomy.categories || []).find((c) => c.id === id);
+      const canDelete = Number(category?.count || 0) === 0;
+      const confirmText = canDelete
+        ? `确定删除二级分类「${id}」吗？`
+        : `该二级分类下仍有内容，当前操作只会重置分类设置（标题/排序/隐藏/所属大类），内容不会删除；所属大类将恢复为默认（物理）。确定继续吗？`;
+      if (!window.confirm(confirmText)) return;
+
+      btn.disabled = true;
+      try {
+        await deleteCategory(id);
+        if (canDelete) {
+          const groupId = safeText(category?.groupId || DEFAULT_GROUP_ID) || DEFAULT_GROUP_ID;
+          ui.selection = { kind: "group", id: groupId };
+          ui.openGroups.add(groupId);
+        } else {
+          ui.selection = { kind: "category", id };
+          ui.openGroups.add(DEFAULT_GROUP_ID);
+        }
+        persistTaxonomyUi();
+        showToast(canDelete ? "已删除" : "已重置", { kind: "success" });
+        await loadAdminCategories(state);
+        await refreshCatalog(state);
+      } catch (err) {
+        if (err?.status === 401) {
+          clearToken();
+          setLoginUi({ loggedIn: false });
+          closeAdminModal();
+          return;
+        }
+        showToast(canDelete ? "删除失败" : "重置失败", { kind: "info" });
       } finally {
         btn.disabled = false;
       }
@@ -2237,7 +2517,10 @@ function initAdmin({ state }) {
   $("#system-sync-now").addEventListener("click", async () => {
     $("#system-sync-now").disabled = true;
     try {
-      await updateSystemStorage({ sync: true });
+      await updateSystemStorage({
+        sync: true,
+        webdav: { scanRemote: $("#system-scan-remote-on-sync").checked === true },
+      });
       await loadSystemInfo(state);
       showToast("同步完成", { kind: "success" });
     } catch (err) {
@@ -2367,7 +2650,22 @@ document.addEventListener("DOMContentLoaded", async () => {
       },
     },
   };
+
+  const savedView = readStorageJson("pa_view_state");
+  if (savedView && typeof savedView === "object") {
+    if (typeof savedView.groupId === "string" && savedView.groupId.trim()) {
+      state.selectedGroupId = savedView.groupId.trim();
+    }
+    if (typeof savedView.categoryId === "string" && savedView.categoryId.trim()) {
+      state.selectedCategoryId = savedView.categoryId.trim();
+    }
+  }
+
   await refreshCatalog(state);
+  writeStorageJson("pa_view_state", {
+    groupId: state.selectedGroupId,
+    categoryId: state.selectedCategoryId,
+  });
   initFiltering({ state });
   initAdmin({ state });
 });
