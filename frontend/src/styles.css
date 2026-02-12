@@ -138,6 +138,11 @@ a {
   font-size: 18px;
 }
 
+.modal-form {
+  display: grid;
+  gap: 12px;
+}
+
 .field {
   display: grid;
   gap: 6px;

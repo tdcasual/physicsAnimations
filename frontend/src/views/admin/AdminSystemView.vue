@@ -176,57 +176,59 @@ onMounted(async () => {
 
     <div class="panel">
       <h3>存储配置</h3>
-      <div class="form-grid">
-        <label class="field">
-          <span>模式</span>
-          <select v-model="mode" class="field-input" @change="handleModeChange">
-            <option value="local">local</option>
-            <option value="hybrid">hybrid</option>
-            <option value="webdav">webdav</option>
-          </select>
-        </label>
+      <form class="storage-form" @submit.prevent="saveStorage">
+        <div class="form-grid">
+          <label class="field">
+            <span>模式</span>
+            <select v-model="mode" class="field-input" @change="handleModeChange">
+              <option value="local">local</option>
+              <option value="hybrid">hybrid</option>
+              <option value="webdav">webdav</option>
+            </select>
+          </label>
 
-        <label class="field">
-          <span>WebDAV URL</span>
-          <input v-model="url" class="field-input" type="url" placeholder="https://example.com/dav/" />
-        </label>
+          <label class="field">
+            <span>WebDAV URL</span>
+            <input v-model="url" class="field-input" type="url" placeholder="https://example.com/dav/" />
+          </label>
 
-        <label class="field">
-          <span>WebDAV Base Path</span>
-          <input v-model="basePath" class="field-input" type="text" />
-        </label>
+          <label class="field">
+            <span>WebDAV Base Path</span>
+            <input v-model="basePath" class="field-input" type="text" />
+          </label>
 
-        <label class="field">
-          <span>WebDAV 用户名</span>
-          <input v-model="username" class="field-input" type="text" />
-        </label>
+          <label class="field">
+            <span>WebDAV 用户名</span>
+            <input v-model="username" class="field-input" type="text" />
+          </label>
 
-        <label class="field">
-          <span>WebDAV 密码（留空表示不更新）</span>
-          <input v-model="password" class="field-input" type="password" />
-        </label>
+          <label class="field">
+            <span>WebDAV 密码（留空表示不更新）</span>
+            <input v-model="password" class="field-input" type="password" />
+          </label>
 
-        <label class="field">
-          <span>超时（毫秒）</span>
-          <input v-model.number="timeoutMs" class="field-input" type="number" min="1000" />
-        </label>
-      </div>
+          <label class="field">
+            <span>超时（毫秒）</span>
+            <input v-model.number="timeoutMs" class="field-input" type="number" min="1000" />
+          </label>
+        </div>
 
-      <div class="checkbox-row">
-        <label class="checkbox">
-          <input v-model="scanRemote" type="checkbox" />
-          <span>同步时扫描远端目录</span>
-        </label>
-        <label class="checkbox">
-          <input v-model="syncOnSave" type="checkbox" />
-          <span>保存后立即同步</span>
-        </label>
-      </div>
+        <div class="checkbox-row">
+          <label class="checkbox">
+            <input v-model="scanRemote" type="checkbox" />
+            <span>同步时扫描远端目录</span>
+          </label>
+          <label class="checkbox">
+            <input v-model="syncOnSave" type="checkbox" />
+            <span>保存后立即同步</span>
+          </label>
+        </div>
 
-      <div class="actions">
-        <button type="button" class="btn btn-ghost" :disabled="saving || !canSyncNow" @click="syncNow">立即同步</button>
-        <button type="button" class="btn btn-primary" :disabled="saving" @click="saveStorage">保存配置</button>
-      </div>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" :disabled="saving || !canSyncNow" @click="syncNow">立即同步</button>
+          <button type="submit" class="btn btn-primary" :disabled="saving">保存配置</button>
+        </div>
+      </form>
     </div>
   </section>
 </template>
@@ -267,6 +269,11 @@ h3 {
 .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.storage-form {
+  display: grid;
   gap: 10px;
 }
 

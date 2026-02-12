@@ -113,29 +113,29 @@ onBeforeUnmount(() => {
     <div v-if="loginOpen" class="modal-backdrop" @click="closeLogin">
       <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-title" @click.stop>
         <h2 id="login-title" class="modal-title">管理员登录</h2>
+        <form class="modal-form" @submit.prevent="submitLogin">
+          <label class="field">
+            <span>用户名</span>
+            <input v-model="loginUsername" class="field-input" type="text" autocomplete="username" />
+          </label>
 
-        <label class="field">
-          <span>用户名</span>
-          <input v-model="loginUsername" class="field-input" type="text" autocomplete="username" />
-        </label>
+          <label class="field">
+            <span>密码</span>
+            <input
+              v-model="loginPassword"
+              class="field-input"
+              type="password"
+              autocomplete="current-password"
+            />
+          </label>
 
-        <label class="field">
-          <span>密码</span>
-          <input
-            v-model="loginPassword"
-            class="field-input"
-            type="password"
-            autocomplete="current-password"
-            @keydown.enter.prevent="submitLogin"
-          />
-        </label>
+          <div v-if="loginError" class="error">{{ loginError }}</div>
 
-        <div v-if="loginError" class="error">{{ loginError }}</div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn btn-ghost" @click="closeLogin">取消</button>
-          <button type="button" class="btn btn-primary" :disabled="auth.loading" @click="submitLogin">登录</button>
-        </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" @click="closeLogin">取消</button>
+            <button type="submit" class="btn btn-primary" :disabled="auth.loading">登录</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

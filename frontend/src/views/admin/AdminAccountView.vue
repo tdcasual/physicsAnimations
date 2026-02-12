@@ -73,7 +73,7 @@ async function submit() {
     <div v-if="errorText" class="error-text">{{ errorText }}</div>
     <div v-if="successText" class="success-text">{{ successText }}</div>
 
-    <div class="panel">
+    <form class="panel" @submit.prevent="submit">
       <div class="current-user">
         当前登录用户：<strong>{{ auth.username || "-" }}</strong>
       </div>
@@ -99,9 +99,9 @@ async function submit() {
       </label>
 
       <div class="actions">
-        <button type="button" class="btn btn-primary" :disabled="saving" @click="submit">保存</button>
+        <button type="submit" class="btn btn-primary" :disabled="saving">保存</button>
       </div>
-    </div>
+    </form>
   </section>
 </template>
 
