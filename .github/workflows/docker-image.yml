@@ -18,7 +18,40 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright runtime dependencies
+        run: npm run install-playwright-deps
+
+      - name: Frontend tests
+        run: npm run test:frontend -- --run
+
+      - name: Backend tests
+        run: npm test
+
+      - name: SPA admin smoke
+        run: npm run smoke:spa-admin
+
+      - name: SPA admin write-path smoke
+        run: npm run smoke:spa-admin-write
+
   build:
+    needs: verify
     runs-on: ubuntu-latest
     permissions:
       contents: read

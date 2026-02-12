@@ -14,6 +14,7 @@
     "generate-thumbnails": "node scripts/generate_thumbnails.js",
     "build-catalog": "node scripts/build_catalog.js",
     "smoke:spa-admin": "node scripts/smoke_spa_admin.js",
+    "smoke:spa-admin-write": "node scripts/smoke_spa_admin_writepath.js",
     "backup:webdav": "node scripts/backup_to_webdav.js",
     "prepare": "node scripts/prepare.js",
     "test": "node --test tests/*.test.js"

@@ -90,8 +90,10 @@ content/builtin_items.json
 content/admin.json
 content/system.json
 content/.jwt_secret
+content/items_tombstones.json
 content/uploads/
 content/thumbnails/
+output/playwright/
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
