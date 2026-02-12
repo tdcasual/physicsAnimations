@@ -42,6 +42,15 @@ export function isSafeViewerTarget(raw: unknown): boolean {
   return true;
 }
 
+function normalizeViewerTarget(raw: unknown): string {
+  const target = typeof raw === "string" ? raw.trim() : "";
+  if (!target) return "";
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target)) return target;
+  if (target.startsWith("//")) return target;
+  if (target.startsWith("/")) return target;
+  return `/${target.replace(/^\.?\//, "")}`;
+}
+
 function toBuiltinUrl(builtinPath: string): string {
   return `animations/${builtinPath}`;
 }
@@ -150,6 +159,8 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
       message: "参数无效或不安全。",
     };
   }
+
+  target = normalizeViewerTarget(target);
 
   if (item?.title) title = String(item.title);
   if (item?.thumbnail) screenshotUrl = String(item.thumbnail);

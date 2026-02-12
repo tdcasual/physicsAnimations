@@ -52,6 +52,7 @@ npm start
 - 构建产物：`npm run build:frontend`
 - SPA 管理台冒烟：`npm run smoke:spa-admin`（自动启动临时服务并跑登录/管理页导航/退出）
 - SPA 管理台写路径冒烟：`npm run smoke:spa-admin-write`（创建链接 -> 列表校验 -> 删除回滚，避免残留测试数据）
+- SPA 公开页冒烟：`npm run smoke:spa-public`（覆盖 Catalog 分组/搜索 与 Viewer 预览，并自动清理测试数据）
 
 构建后，服务端会自动挂载：
 

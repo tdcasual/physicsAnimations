@@ -44,11 +44,17 @@ jobs:
       - name: Backend tests
         run: npm test
 
+      - name: Build frontend bundle
+        run: npm run build:frontend
+
       - name: SPA admin smoke
         run: npm run smoke:spa-admin
 
       - name: SPA admin write-path smoke
         run: npm run smoke:spa-admin-write
+
+      - name: SPA public smoke
+        run: npm run smoke:spa-public
 
   build:
     needs: verify
