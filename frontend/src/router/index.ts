@@ -1,4 +1,4 @@
-import { getToken } from "../features/auth/authApi";
+import { clearToken, getToken, me } from "../features/auth/authApi";
 import {
   createRouter,
   createWebHistory,
@@ -9,22 +9,40 @@ import { appRoutes } from "./routes";
 export function createAppRouter({
   history = createWebHistory(import.meta.env.BASE_URL),
 }: { history?: RouterHistory } = {}) {
+  let validatedToken = "";
+
   const router = createRouter({
     history,
     routes: appRoutes,
   });
 
-  router.beforeEach((to) => {
+  router.beforeEach(async (to) => {
     const isAdminPath = to.path.startsWith("/admin");
     if (!isAdminPath) return true;
 
     const token = getToken();
-    if (token) return true;
+    if (!token) {
+      validatedToken = "";
+      return {
+        path: "/login",
+        query: { redirect: to.fullPath },
+      };
+    }
 
-    return {
-      path: "/login",
-      query: { redirect: to.fullPath },
-    };
+    if (validatedToken === token) return true;
+
+    try {
+      await me();
+      validatedToken = token;
+      return true;
+    } catch {
+      clearToken();
+      validatedToken = "";
+      return {
+        path: "/login",
+        query: { redirect: to.fullPath },
+      };
+    }
   });
 
   return router;

@@ -1,9 +1,13 @@
 import { createMemoryHistory } from "vue-router";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createAppRouter } from "../src/router";
+
+const originalFetch = globalThis.fetch;
 
 afterEach(() => {
   sessionStorage.clear();
+  vi.restoreAllMocks();
+  globalThis.fetch = originalFetch;
 });
 
 describe("admin route guard", () => {
@@ -18,10 +22,35 @@ describe("admin route guard", () => {
 
   it("allows authenticated users to visit /admin routes", async () => {
     sessionStorage.setItem("pa_admin_token", "token-1");
+    globalThis.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ username: "admin" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    ) as typeof fetch;
+
     const router = createAppRouter({ history: createMemoryHistory("/app/") });
     await router.push("/admin/dashboard");
     await router.isReady();
 
     expect(router.currentRoute.value.path).toBe("/admin/dashboard");
+  });
+
+  it("redirects stale-token users to /login and clears token", async () => {
+    sessionStorage.setItem("pa_admin_token", "stale");
+    globalThis.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      }),
+    ) as typeof fetch;
+
+    const router = createAppRouter({ history: createMemoryHistory("/app/") });
+    await router.push("/admin/dashboard");
+    await router.isReady();
+
+    expect(router.currentRoute.value.path).toBe("/login");
+    expect(router.currentRoute.value.query.redirect).toBe("/admin/dashboard");
+    expect(sessionStorage.getItem("pa_admin_token")).toBeNull();
   });
 });
