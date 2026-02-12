@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 
 const { getAuthConfig } = require("./lib/auth");
@@ -115,6 +116,23 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   app.use("/api", createGroupsRouter({ rootDir, authConfig, store }));
   app.use("/api", createCategoriesRouter({ rootDir, authConfig, store }));
   app.use("/api", createItemsRouter({ rootDir, authConfig, store }));
+
+  const spaDistDir = path.join(rootDir, "frontend", "dist");
+  const spaAssetsDir = path.join(spaDistDir, "assets");
+  const spaIndexPath = path.join(spaDistDir, "index.html");
+
+  app.use("/app/assets", express.static(spaAssetsDir, { fallthrough: false }));
+
+  function sendSpaEntry(_req, res) {
+    if (!fs.existsSync(spaIndexPath)) {
+      res.status(404).json({ error: "not_found" });
+      return;
+    }
+    res.sendFile(spaIndexPath);
+  }
+
+  app.get("/app", sendSpaEntry);
+  app.get("/app/*", sendSpaEntry);
 
   app.use("/assets", express.static(path.join(rootDir, "assets")));
   app.use("/animations", express.static(path.join(rootDir, "animations")));

@@ -43,6 +43,22 @@ npm start
 
 默认管理员账号：`admin` / `admin`（建议部署后立即修改）。
 
+## Vue SPA（Phase A）
+
+项目已新增基于 `Vue 3 + Vite + TypeScript` 的前端骨架（目录：`frontend/`），用于后续逐步迁移旧前端。
+
+- 本地开发：`npm run dev:frontend`
+- 前端测试：`npm run test:frontend`
+- 构建产物：`npm run build:frontend`
+
+构建后，服务端会自动挂载：
+
+- `/app`（SPA 入口）
+- `/app/*`（SPA history fallback）
+- `/app/assets/*`（前端静态资源）
+
+如果 `frontend/dist/index.html` 不存在，`/app` 会返回 `404`（不影响旧版 `/` 与 `viewer.html`）。
+
 ## 生成/更新动画清单与缩略图
 
 当你在 `animations/<分类>/` 目录新增/修改 HTML 后，建议执行：
