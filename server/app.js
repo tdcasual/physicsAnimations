@@ -113,7 +113,7 @@ function createApp({
 
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
   const systemState = loadSystemState({ rootDir });
-  const spaDefaultEntry = parseBoolean(overrideSpaDefaultEntry ?? process.env.SPA_DEFAULT_ENTRY, false);
+  const spaDefaultEntry = parseBoolean(overrideSpaDefaultEntry ?? process.env.SPA_DEFAULT_ENTRY, true);
   const storeManager = overrideStore
     ? { store: overrideStore, setConfig: () => {} }
     : createStoreManager({ rootDir, config: systemState });

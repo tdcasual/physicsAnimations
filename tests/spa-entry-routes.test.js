@@ -87,6 +87,28 @@ test("spa default entry serves / and rewrites legacy viewer path", async () => {
   }
 });
 
+test("spa defaults to serving / from SPA dist when available", async () => {
+  const rootDir = makeTempRoot();
+  const spaDist = path.join(rootDir, "frontend", "dist");
+  fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
+  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>new-default-auto</title>");
+
+  const app = createApp({ rootDir });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const home = await fetch(`${baseUrl}/`);
+    assert.equal(home.status, 200);
+    assert.match(await home.text(), /new-default-auto/);
+
+    const legacyViewer = await fetch(`${baseUrl}/viewer.html?id=demo-2`, { redirect: "manual" });
+    assert.equal(legacyViewer.status, 302);
+    assert.equal(legacyViewer.headers.get("location"), "/app/viewer/demo-2");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("spa default entry falls back to legacy pages when spa dist is missing", async () => {
   const rootDir = makeTempRoot();
   const app = createApp({ rootDir, spaDefaultEntry: true });
