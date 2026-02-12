@@ -1,6 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { getSystemInfo, updateSystemStorage } from "../../features/admin/adminApi";
+import {
+  buildSystemUpdatePayload,
+  normalizeUiMode,
+  shouldAutoEnableSyncOnSave,
+  shouldRequireWebdavUrl,
+} from "../../features/admin/systemFormState";
 
 interface SystemStorage {
   mode: string;
@@ -32,6 +38,9 @@ const password = ref("");
 const timeoutMs = ref(15000);
 const scanRemote = ref(false);
 const syncOnSave = ref(false);
+const loadedMode = ref("local");
+
+const canSyncNow = computed(() => Boolean(url.value.trim()));
 
 function formatDate(raw: string): string {
   if (!raw) return "-";
@@ -61,7 +70,9 @@ async function loadSystem() {
       },
     };
 
-    mode.value = storage.value.mode || "local";
+    const uiMode = normalizeUiMode(storage.value.mode || "local");
+    loadedMode.value = uiMode;
+    mode.value = uiMode;
     url.value = storage.value.webdav.url || "";
     basePath.value = storage.value.webdav.basePath || "physicsAnimations";
     username.value = storage.value.webdav.username || "";
@@ -77,8 +88,14 @@ async function loadSystem() {
   }
 }
 
+function handleModeChange() {
+  if (shouldAutoEnableSyncOnSave({ loadedMode: loadedMode.value, nextMode: mode.value })) {
+    syncOnSave.value = true;
+  }
+}
+
 async function saveStorage() {
-  if ((mode.value === "hybrid" || mode.value === "webdav") && !url.value.trim()) {
+  if (shouldRequireWebdavUrl(mode.value) && !url.value.trim()) {
     errorText.value = "请填写 WebDAV 地址。";
     return;
   }
@@ -87,18 +104,17 @@ async function saveStorage() {
   errorText.value = "";
   successText.value = "";
   try {
-    await updateSystemStorage({
+    const payload = buildSystemUpdatePayload({
       mode: mode.value,
-      webdav: {
-        url: url.value.trim(),
-        basePath: basePath.value.trim() || "physicsAnimations",
-        username: username.value.trim(),
-        password: password.value || undefined,
-        timeoutMs: Number(timeoutMs.value || 15000),
-        scanRemote: scanRemote.value,
-      },
+      url: url.value,
+      basePath: basePath.value,
+      username: username.value,
+      password: password.value,
+      timeoutRaw: String(timeoutMs.value ?? ""),
+      scanRemote: scanRemote.value,
       sync: syncOnSave.value,
     });
+    await updateSystemStorage(payload);
     successText.value = "系统配置已保存。";
     await loadSystem();
   } catch (err) {
@@ -151,6 +167,7 @@ onMounted(async () => {
         <div><span>实际模式：</span>{{ storage.effectiveMode }}</div>
         <div><span>本地路径：</span>{{ storage.localPath || "-" }}</div>
         <div><span>WebDAV URL：</span>{{ storage.webdav.url || "-" }}</div>
+        <div><span>WebDAV Base Path：</span>{{ storage.webdav.basePath || "-" }}</div>
         <div><span>WebDAV 用户：</span>{{ storage.webdav.username || "-" }}</div>
         <div><span>WebDAV 密码：</span>{{ storage.webdav.hasPassword ? "已配置" : "未配置" }}</div>
         <div><span>上次同步：</span>{{ formatDate(storage.lastSyncedAt) }}</div>
@@ -162,7 +179,7 @@ onMounted(async () => {
       <div class="form-grid">
         <label class="field">
           <span>模式</span>
-          <select v-model="mode" class="field-input">
+          <select v-model="mode" class="field-input" @change="handleModeChange">
             <option value="local">local</option>
             <option value="hybrid">hybrid</option>
             <option value="webdav">webdav</option>
@@ -207,7 +224,7 @@ onMounted(async () => {
       </div>
 
       <div class="actions">
-        <button type="button" class="btn btn-ghost" :disabled="saving" @click="syncNow">立即同步</button>
+        <button type="button" class="btn btn-ghost" :disabled="saving || !canSyncNow" @click="syncNow">立即同步</button>
         <button type="button" class="btn btn-primary" :disabled="saving" @click="saveStorage">保存配置</button>
       </div>
     </div>
