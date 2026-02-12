@@ -9,6 +9,7 @@ import {
   getSystemInfo,
   listAdminItems,
   listTaxonomy,
+  restoreBuiltinItem,
   updateAccount,
   uploadHtmlItem,
   updateCategory,
@@ -80,6 +81,7 @@ describe("adminApi", () => {
     });
     await updateAdminItem("l_1", { title: "标题2" });
     await deleteAdminItem("l_1");
+    await restoreBuiltinItem("builtin_demo");
     await listTaxonomy();
 
     const authCalls = fetchMock.mock.calls.filter((call) =>
@@ -91,6 +93,20 @@ describe("adminApi", () => {
       const headers = options.headers as Record<string, string>;
       expect(headers.Authorization).toBe("Bearer token-1");
     }
+  });
+
+  it("restoreBuiltinItem sends deleted=false patch", async () => {
+    sessionStorage.setItem("pa_admin_token", "token-1");
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true }));
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await restoreBuiltinItem("builtin_demo");
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/items/builtin_demo");
+    expect(options.method).toBe("PUT");
+    expect(options.body).toBe(JSON.stringify({ deleted: false }));
   });
 
   it("uploadHtmlItem posts multipart payload", async () => {

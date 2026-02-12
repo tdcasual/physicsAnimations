@@ -100,6 +100,14 @@ export async function deleteAdminItem(id: string): Promise<any> {
   return apiFetch(`/api/items/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
+export async function restoreBuiltinItem(id: string): Promise<any> {
+  return apiFetch(`/api/items/${encodeURIComponent(id)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deleted: false }),
+  });
+}
+
 export async function createGroup(payload: {
   id: string;
   title: string;

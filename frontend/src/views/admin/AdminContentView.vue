@@ -5,6 +5,7 @@ import {
   deleteAdminItem,
   listAdminItems,
   listTaxonomy,
+  restoreBuiltinItem,
   updateAdminItem,
 } from "../../features/admin/adminApi";
 
@@ -188,6 +189,20 @@ async function removeItem(id: string) {
   }
 }
 
+async function restoreItem(id: string) {
+  saving.value = true;
+  errorText.value = "";
+  try {
+    await restoreBuiltinItem(id);
+    await reloadItems({ reset: true });
+  } catch (err) {
+    const e = err as { status?: number };
+    errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "恢复失败。";
+  } finally {
+    saving.value = false;
+  }
+}
+
 let timer = 0;
 watch(query, () => {
   window.clearTimeout(timer);
@@ -260,16 +275,33 @@ onMounted(async () => {
           <div>
             <div class="item-title">{{ item.title || item.id }}</div>
             <div class="item-meta">
-              {{ item.categoryId }} · {{ item.type }} · {{ item.hidden ? "隐藏" : "可见" }} ·
+              {{ item.categoryId }} · {{ item.type }} · {{ item.deleted ? "已删除" : "正常" }} · {{ item.hidden ? "隐藏" : "可见" }} ·
               {{ item.published === false ? "草稿" : "已发布" }}
             </div>
           </div>
           <div class="item-actions">
             <a class="btn btn-ghost" :href="viewerHref(item.id)" target="_blank" rel="noreferrer">预览</a>
+            <button
+              v-if="item.deleted"
+              type="button"
+              class="btn btn-primary"
+              :disabled="saving"
+              @click="restoreItem(item.id)"
+            >
+              恢复
+            </button>
             <button type="button" class="btn btn-ghost" @click="beginEdit(item)">
               {{ editingId === item.id ? "编辑中" : "编辑" }}
             </button>
-            <button type="button" class="btn btn-danger" :disabled="saving" @click="removeItem(item.id)">删除</button>
+            <button
+              v-if="!item.deleted"
+              type="button"
+              class="btn btn-danger"
+              :disabled="saving"
+              @click="removeItem(item.id)"
+            >
+              删除
+            </button>
           </div>
         </div>
 
