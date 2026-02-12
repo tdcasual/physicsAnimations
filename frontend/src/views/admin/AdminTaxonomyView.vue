@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, ref, watch } from "vue";
 import {
   createCategory,
+  createGroup,
   deleteCategory,
   deleteGroup,
   listTaxonomy,
@@ -38,6 +39,11 @@ const selection = ref<TaxonomySelection | null>(null);
 const groupFormTitle = ref("");
 const groupFormOrder = ref(0);
 const groupFormHidden = ref(false);
+
+const createGroupId = ref("");
+const createGroupTitle = ref("");
+const createGroupOrder = ref(0);
+const createGroupHidden = ref(false);
 
 const createCategoryId = ref("");
 const createCategoryTitle = ref("");
@@ -200,6 +206,13 @@ function resetCreateCategoryForm() {
   createCategoryHidden.value = false;
 }
 
+function resetCreateGroupForm() {
+  createGroupId.value = "";
+  createGroupTitle.value = "";
+  createGroupOrder.value = 0;
+  createGroupHidden.value = false;
+}
+
 function selectGroup(groupId: string, options: { focusCreate?: boolean } = {}) {
   selection.value = { kind: "group", id: groupId };
   setGroupOpen(groupId, true);
@@ -307,6 +320,42 @@ async function saveGroup() {
   } catch (err) {
     const e = err as { status?: number };
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "保存大类失败。";
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function createGroupEntry() {
+  if (!createGroupId.value.trim()) {
+    errorText.value = "请填写大类 ID。";
+    return;
+  }
+  if (!createGroupTitle.value.trim()) {
+    errorText.value = "请填写大类标题。";
+    return;
+  }
+
+  saving.value = true;
+  errorText.value = "";
+
+  try {
+    const id = createGroupId.value.trim();
+    await createGroup({
+      id,
+      title: createGroupTitle.value.trim(),
+      order: Number(createGroupOrder.value || 0),
+      hidden: createGroupHidden.value,
+    });
+    resetCreateGroupForm();
+    await reloadTaxonomy();
+    selectGroup(id);
+  } catch (err) {
+    const e = err as { status?: number };
+    if (e?.status === 409) {
+      errorText.value = "该大类 ID 已存在。";
+      return;
+    }
+    errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "新增大类失败。";
   } finally {
     saving.value = false;
   }
@@ -556,6 +605,40 @@ onMounted(async () => {
       </div>
 
       <div class="panel">
+        <h3>新增大类</h3>
+        <div class="form-grid">
+          <label class="field">
+            <span>大类 ID（英文/数字）</span>
+            <input v-model="createGroupId" class="field-input" type="text" />
+          </label>
+
+          <label class="field">
+            <span>标题</span>
+            <input v-model="createGroupTitle" class="field-input" type="text" />
+          </label>
+
+          <details class="subaccordion" :open="createGroupHidden || Number(createGroupOrder || 0) !== 0">
+            <summary>高级设置</summary>
+            <div class="form-grid subaccordion-body">
+              <label class="field">
+                <span>排序（越大越靠前）</span>
+                <input v-model.number="createGroupOrder" class="field-input" type="number" />
+              </label>
+              <label class="checkbox">
+                <input v-model="createGroupHidden" type="checkbox" />
+                <span>隐藏该大类（首页不显示）</span>
+              </label>
+            </div>
+          </details>
+        </div>
+
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" :disabled="saving" @click="resetCreateGroupForm">重置</button>
+          <button type="button" class="btn btn-primary" :disabled="saving" @click="createGroupEntry">创建</button>
+        </div>
+
+        <div class="panel-divider" />
+
         <template v-if="selectedGroup">
           <h3>大类：{{ selectedGroup.title || selectedGroup.id }} ({{ selectedGroup.id }})</h3>
           <div class="meta-line">
@@ -879,6 +962,11 @@ h3 {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.panel-divider {
+  border-top: 1px dashed var(--border);
+  margin-top: 2px;
 }
 
 .btn {
