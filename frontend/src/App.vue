@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onBeforeUnmount, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
@@ -64,9 +64,25 @@ async function logout() {
   }
 }
 
+function handleAuthExpired() {
+  auth.logout();
+  const currentPath = String(route.fullPath || "");
+  if (currentPath.startsWith("/admin")) {
+    void router.replace({
+      path: "/login",
+      query: { redirect: currentPath },
+    });
+  }
+}
+
 onMounted(async () => {
+  window.addEventListener("pa-auth-expired", handleAuthExpired as EventListener);
   applyStoredTheme();
   await auth.bootstrap();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("pa-auth-expired", handleAuthExpired as EventListener);
 });
 </script>
 

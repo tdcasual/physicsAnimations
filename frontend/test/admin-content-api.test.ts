@@ -181,4 +181,23 @@ describe("adminApi", () => {
     expect(urls).toContain("/api/system/storage");
     expect(urls).toContain("/api/auth/account");
   });
+
+  it("clears token and emits auth-expired event on 401", async () => {
+    sessionStorage.setItem("pa_admin_token", "expired-token");
+
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({ error: "unauthorized" }, 401),
+    );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const eventHandler = vi.fn();
+    window.addEventListener("pa-auth-expired", eventHandler as EventListener);
+
+    await expect(listTaxonomy()).rejects.toBeTruthy();
+
+    expect(sessionStorage.getItem("pa_admin_token")).toBeNull();
+    expect(eventHandler).toHaveBeenCalledTimes(1);
+
+    window.removeEventListener("pa-auth-expired", eventHandler as EventListener);
+  });
 });

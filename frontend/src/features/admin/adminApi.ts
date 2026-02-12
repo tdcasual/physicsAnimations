@@ -1,4 +1,4 @@
-import { getToken } from "../auth/authApi";
+import { clearToken, getToken } from "../auth/authApi";
 
 interface ApiError extends Error {
   status?: number;
@@ -27,6 +27,13 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
   const data = contentType.includes("application/json")
     ? await response.json().catch(() => null)
     : null;
+
+  if (response.status === 401) {
+    clearToken();
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("pa-auth-expired"));
+    }
+  }
 
   if (response.ok) return data;
 
