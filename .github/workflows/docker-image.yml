@@ -18,7 +18,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  verify:
+  verify-tests:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -44,23 +44,44 @@ jobs:
       - name: Backend tests
         run: npm test
 
+  verify-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        smoke_script:
+          - "smoke:spa-admin"
+          - "smoke:spa-admin-write"
+          - "smoke:spa-public"
+          - "smoke:spa-legacy-fallback"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright runtime dependencies
+        run: npm run install-playwright-deps
+
       - name: Build frontend bundle
         run: npm run build:frontend
 
-      - name: SPA admin smoke
-        run: npm run smoke:spa-admin
-
-      - name: SPA admin write-path smoke
-        run: npm run smoke:spa-admin-write
-
-      - name: SPA public smoke
-        run: npm run smoke:spa-public
-
-      - name: SPA legacy fallback smoke
-        run: npm run smoke:spa-legacy-fallback
+      - name: Run smoke script
+        run: npm run ${{ matrix.smoke_script }}
 
   build:
-    needs: verify
+    needs:
+      - verify-tests
+      - verify-smoke
     runs-on: ubuntu-latest
     permissions:
       contents: read
