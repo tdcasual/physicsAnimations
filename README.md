@@ -50,6 +50,7 @@ npm start
 - 本地开发：`npm run dev:frontend`
 - 前端测试：`npm run test:frontend`
 - 构建产物：`npm run build:frontend`
+- SPA 管理台冒烟：`npm run smoke:spa-admin`（自动启动临时服务并跑登录/管理页导航/退出）
 
 构建后，服务端会自动挂载：
 

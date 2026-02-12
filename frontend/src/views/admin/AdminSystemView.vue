@@ -189,27 +189,47 @@ onMounted(async () => {
 
           <label class="field">
             <span>WebDAV URL</span>
-            <input v-model="url" class="field-input" type="url" placeholder="https://example.com/dav/" />
+            <input
+              v-model="url"
+              class="field-input"
+              type="url"
+              name="webdav_url"
+              autocomplete="url"
+              placeholder="https://example.com/dav/"
+            />
           </label>
 
           <label class="field">
             <span>WebDAV Base Path</span>
-            <input v-model="basePath" class="field-input" type="text" />
+            <input v-model="basePath" class="field-input" type="text" name="webdav_base_path" autocomplete="off" />
           </label>
 
           <label class="field">
             <span>WebDAV 用户名</span>
-            <input v-model="username" class="field-input" type="text" />
+            <input v-model="username" class="field-input" type="text" name="webdav_username" autocomplete="username" />
           </label>
 
           <label class="field">
             <span>WebDAV 密码（留空表示不更新）</span>
-            <input v-model="password" class="field-input" type="password" />
+            <input
+              v-model="password"
+              class="field-input"
+              type="password"
+              name="webdav_password"
+              autocomplete="current-password"
+            />
           </label>
 
           <label class="field">
             <span>超时（毫秒）</span>
-            <input v-model.number="timeoutMs" class="field-input" type="number" min="1000" />
+            <input
+              v-model.number="timeoutMs"
+              class="field-input"
+              type="number"
+              name="webdav_timeout_ms"
+              autocomplete="off"
+              min="1000"
+            />
           </label>
         </div>
 

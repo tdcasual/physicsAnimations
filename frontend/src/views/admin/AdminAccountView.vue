@@ -80,22 +80,34 @@ async function submit() {
 
       <label class="field">
         <span>当前密码</span>
-        <input v-model="currentPassword" class="field-input" type="password" autocomplete="current-password" />
+        <input
+          v-model="currentPassword"
+          class="field-input"
+          type="password"
+          name="current_password"
+          autocomplete="current-password"
+        />
       </label>
 
       <label class="field">
         <span>新用户名（可选）</span>
-        <input v-model="newUsername" class="field-input" type="text" autocomplete="username" />
+        <input v-model="newUsername" class="field-input" type="text" name="username" autocomplete="username" />
       </label>
 
       <label class="field">
         <span>新密码（可选）</span>
-        <input v-model="newPassword" class="field-input" type="password" autocomplete="new-password" />
+        <input v-model="newPassword" class="field-input" type="password" name="new_password" autocomplete="new-password" />
       </label>
 
       <label class="field">
         <span>确认新密码</span>
-        <input v-model="confirmPassword" class="field-input" type="password" autocomplete="new-password" />
+        <input
+          v-model="confirmPassword"
+          class="field-input"
+          type="password"
+          name="confirm_new_password"
+          autocomplete="new-password"
+        />
       </label>
 
       <div class="actions">

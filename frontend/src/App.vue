@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
         <form class="modal-form" @submit.prevent="submitLogin">
           <label class="field">
             <span>用户名</span>
-            <input v-model="loginUsername" class="field-input" type="text" autocomplete="username" />
+            <input v-model="loginUsername" class="field-input" type="text" name="username" autocomplete="username" />
           </label>
 
           <label class="field">
@@ -125,6 +125,7 @@ onBeforeUnmount(() => {
               v-model="loginPassword"
               class="field-input"
               type="password"
+              name="password"
               autocomplete="current-password"
             />
           </label>
