@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
 import { applyStoredTheme, toggleTheme } from "./features/theme/theme";
 
+const router = useRouter();
+const route = useRoute();
 const auth = useAuthStore();
 
 const loginOpen = ref(false);
@@ -54,6 +57,13 @@ async function submitLogin() {
   }
 }
 
+async function logout() {
+  auth.logout();
+  if (String(route.path || "").startsWith("/admin")) {
+    await router.replace("/");
+  }
+}
+
 onMounted(async () => {
   applyStoredTheme();
   await auth.bootstrap();
@@ -72,7 +82,10 @@ onMounted(async () => {
         <div class="actions">
           <button type="button" class="btn btn-ghost" @click="toggleTheme()">主题</button>
           <button v-if="!auth.loggedIn" type="button" class="btn btn-primary" @click="openLogin">登录</button>
-          <RouterLink v-else to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
+          <template v-else>
+            <RouterLink to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
+            <button type="button" class="btn btn-ghost" @click="logout">退出</button>
+          </template>
         </div>
       </div>
     </header>

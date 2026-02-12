@@ -54,4 +54,17 @@ describe("useAuthStore", () => {
     expect(store.username).toBe("");
     expect(sessionStorage.getItem("pa_admin_token")).toBeNull();
   });
+
+  it("logout clears token and store state", () => {
+    sessionStorage.setItem("pa_admin_token", "token-1");
+    const store = useAuthStore();
+    store.loggedIn = true;
+    store.username = "admin";
+
+    store.logout();
+
+    expect(store.loggedIn).toBe(false);
+    expect(store.username).toBe("");
+    expect(sessionStorage.getItem("pa_admin_token")).toBeNull();
+  });
 });
