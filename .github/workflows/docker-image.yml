@@ -56,6 +56,9 @@ jobs:
       - name: SPA public smoke
         run: npm run smoke:spa-public
 
+      - name: SPA legacy fallback smoke
+        run: npm run smoke:spa-legacy-fallback
+
   build:
     needs: verify
     runs-on: ubuntu-latest

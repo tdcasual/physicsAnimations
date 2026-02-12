@@ -126,3 +126,29 @@ test("spa default entry falls back to legacy pages when spa dist is missing", as
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("spa default entry can be disabled explicitly even when dist exists", async () => {
+  const rootDir = makeTempRoot();
+  const spaDist = path.join(rootDir, "frontend", "dist");
+  fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
+  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>new-dist</title>");
+
+  const app = createApp({ rootDir, spaDefaultEntry: false });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const home = await fetch(`${baseUrl}/`);
+    assert.equal(home.status, 200);
+    assert.match(await home.text(), /legacy/);
+
+    const viewer = await fetch(`${baseUrl}/viewer.html?id=demo-3`, { redirect: "manual" });
+    assert.equal(viewer.status, 200);
+    assert.match(await viewer.text(), /viewer/);
+
+    const appEntry = await fetch(`${baseUrl}/app`);
+    assert.equal(appEntry.status, 200);
+    assert.match(await appEntry.text(), /new-dist/);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
