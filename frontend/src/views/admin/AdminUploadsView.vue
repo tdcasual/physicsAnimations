@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { listAdminItems, listTaxonomy, uploadHtmlItem } from "../../features/admin/adminApi";
+import {
+  deleteAdminItem,
+  listAdminItems,
+  listTaxonomy,
+  updateAdminItem,
+  uploadHtmlItem,
+} from "../../features/admin/adminApi";
 
 interface AdminItem {
   id: string;
@@ -8,6 +14,9 @@ interface AdminItem {
   categoryId: string;
   title: string;
   description: string;
+  order?: number;
+  published?: boolean;
+  hidden?: boolean;
   src?: string;
   thumbnail?: string;
 }
@@ -41,6 +50,14 @@ const file = ref<File | null>(null);
 const title = ref("");
 const description = ref("");
 
+const editingId = ref("");
+const editTitle = ref("");
+const editDescription = ref("");
+const editCategoryId = ref("other");
+const editOrder = ref(0);
+const editPublished = ref(true);
+const editHidden = ref(false);
+
 const hasMore = computed(() => items.value.length < total.value);
 const categoryOptions = computed(() => {
   const groupMap = new Map(groups.value.map((group) => [group.id, group.title]));
@@ -58,6 +75,26 @@ function viewerHref(id: string): string {
 function onSelectFile(event: Event) {
   const target = event.target as HTMLInputElement;
   file.value = target.files?.[0] || null;
+}
+
+function resetEdit() {
+  editingId.value = "";
+  editTitle.value = "";
+  editDescription.value = "";
+  editCategoryId.value = "other";
+  editOrder.value = 0;
+  editPublished.value = true;
+  editHidden.value = false;
+}
+
+function beginEdit(item: AdminItem) {
+  editingId.value = item.id;
+  editTitle.value = item.title || "";
+  editDescription.value = item.description || "";
+  editCategoryId.value = item.categoryId || "other";
+  editOrder.value = Number(item.order || 0);
+  editPublished.value = item.published !== false;
+  editHidden.value = item.hidden === true;
 }
 
 async function reloadTaxonomy() {
@@ -86,6 +123,9 @@ async function reloadUploads(params: { reset: boolean } = { reset: true }) {
     page.value = Number(data?.page || nextPage);
     total.value = Number(data?.total || 0);
     items.value = params.reset ? received : [...items.value, ...received];
+    if (!items.value.some((item) => item.id === editingId.value)) {
+      resetEdit();
+    }
   } catch (err) {
     const e = err as { status?: number };
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "加载上传列表失败。";
@@ -130,6 +170,44 @@ async function submitUpload() {
       return;
     }
     errorText.value = "上传失败。";
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function saveEdit(id: string) {
+  saving.value = true;
+  errorText.value = "";
+  try {
+    await updateAdminItem(id, {
+      title: editTitle.value.trim(),
+      description: editDescription.value.trim(),
+      categoryId: editCategoryId.value,
+      order: Number(editOrder.value || 0),
+      published: editPublished.value,
+      hidden: editHidden.value,
+    });
+    resetEdit();
+    await reloadUploads({ reset: true });
+  } catch (err) {
+    const e = err as { status?: number };
+    errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "保存失败。";
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function removeItem(id: string) {
+  if (!window.confirm("确定删除该上传内容吗？")) return;
+  saving.value = true;
+  errorText.value = "";
+  try {
+    await deleteAdminItem(id);
+    if (editingId.value === id) resetEdit();
+    await reloadUploads({ reset: true });
+  } catch (err) {
+    const e = err as { status?: number };
+    errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "删除失败。";
   } finally {
     saving.value = false;
   }
@@ -212,9 +290,63 @@ onMounted(async () => {
         <div class="item-head">
           <div>
             <div class="item-title">{{ item.title || item.id }}</div>
-            <div class="item-meta">{{ item.categoryId }} · {{ item.type }}</div>
+            <div class="item-meta">
+              {{ item.categoryId }} · {{ item.type }} · {{ item.hidden ? "隐藏" : "可见" }} ·
+              {{ item.published === false ? "草稿" : "已发布" }}
+            </div>
           </div>
-          <a class="btn btn-ghost" :href="viewerHref(item.id)" target="_blank" rel="noreferrer">预览</a>
+          <div class="item-actions">
+            <a class="btn btn-ghost" :href="viewerHref(item.id)" target="_blank" rel="noreferrer">预览</a>
+            <button type="button" class="btn btn-ghost" @click="beginEdit(item)">
+              {{ editingId === item.id ? "编辑中" : "编辑" }}
+            </button>
+            <button type="button" class="btn btn-danger" :disabled="saving" @click="removeItem(item.id)">删除</button>
+          </div>
+        </div>
+
+        <div v-if="editingId === item.id" class="item-edit">
+          <label class="field">
+            <span>标题</span>
+            <input v-model="editTitle" class="field-input" type="text" />
+          </label>
+
+          <label class="field">
+            <span>描述</span>
+            <textarea v-model="editDescription" class="field-input field-textarea" />
+          </label>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>分类</span>
+              <select v-model="editCategoryId" class="field-input">
+                <option v-for="option in categoryOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>排序（越大越靠前）</span>
+              <input v-model.number="editOrder" class="field-input" type="number" />
+            </label>
+          </div>
+
+          <div class="form-grid">
+            <label class="checkbox">
+              <input v-model="editPublished" type="checkbox" />
+              <span>已发布</span>
+            </label>
+
+            <label class="checkbox">
+              <input v-model="editHidden" type="checkbox" />
+              <span>隐藏</span>
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn btn-ghost" @click="resetEdit">取消</button>
+            <button type="button" class="btn btn-primary" :disabled="saving" @click="saveEdit(item.id)">保存</button>
+          </div>
         </div>
       </article>
 
@@ -311,7 +443,7 @@ h3 {
 .item-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
 }
 
@@ -322,6 +454,21 @@ h3 {
 .item-meta {
   color: var(--muted);
   font-size: 12px;
+}
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.item-edit {
+  margin-top: 12px;
+  border-top: 1px dashed var(--border);
+  padding-top: 10px;
+  display: grid;
+  gap: 10px;
 }
 
 .btn {
@@ -343,6 +490,18 @@ h3 {
   background: linear-gradient(135deg, var(--primary), var(--primary-2));
   color: #fff;
   border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
+}
+
+.btn-danger {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  color: color-mix(in srgb, var(--danger) 75%, var(--text));
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
 }
 
 .error-text {
