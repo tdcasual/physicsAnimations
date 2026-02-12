@@ -1,0 +1,165 @@
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #d1d5db;
+  --primary: #2563eb;
+  --primary-2: #1d4ed8;
+  --danger: #dc2626;
+  font-family: "Segoe UI", "PingFang SC", sans-serif;
+  color: var(--text);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1220;
+  --surface: #111b2f;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --border: #334155;
+  --primary: #60a5fa;
+  --primary-2: #3b82f6;
+  --danger: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, color-mix(in srgb, var(--surface) 70%, var(--bg)), var(--bg) 60%);
+  color: var(--text);
+}
+
+a {
+  color: var(--primary);
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.topbar-inner {
+  width: min(1120px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 12px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.brand-subtitle {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+  color: inherit;
+  background: var(--surface);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-ghost {
+  background: color-mix(in srgb, var(--surface) 85%, var(--bg));
+}
+
+.btn-primary {
+  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+  color: #ffffff;
+}
+
+.app-main {
+  width: min(1120px, calc(100% - 28px));
+  margin: 16px auto 24px;
+  padding: 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(15, 23, 42, 0.46);
+  display: grid;
+  place-items: center;
+  padding: 14px;
+}
+
+.modal-card {
+  width: min(440px, 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.field-input {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 9px 10px;
+}
+
+.error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
