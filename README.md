@@ -59,6 +59,16 @@ npm start
 
 如果 `frontend/dist/index.html` 不存在，`/app` 会返回 `404`（不影响旧版 `/` 与 `viewer.html`）。
 
+当你准备切流到 Vue SPA 作为默认入口时，可设置：
+
+- `SPA_DEFAULT_ENTRY=true`
+
+启用后：
+
+- `/` 与 `/index.html` 会优先返回 SPA（若 `frontend/dist/index.html` 存在）
+- 旧地址 `viewer.html?id=...` 会重定向到 `/app/viewer/:id`
+- 若 SPA 构建产物缺失，会自动回退到旧版 `index.html` / `viewer.html`
+
 ## 生成/更新动画清单与缩略图
 
 当你在 `animations/<分类>/` 目录新增/修改 HTML 后，建议执行：
@@ -129,6 +139,7 @@ npm run build-catalog
 服务端支持通过环境变量覆盖默认配置：
 
 - `PORT`：服务端口（默认 `4173`）
+- `SPA_DEFAULT_ENTRY`：是否将 Vue SPA 作为默认入口（默认 `false`，设为 `true` 后 `/` 指向 SPA）
 - `ADMIN_USERNAME`：管理员用户名（默认 `admin`）
 - `ADMIN_PASSWORD`：管理员密码（明文，启动时自动 hash；默认 `admin`）
 - `ADMIN_PASSWORD_HASH`：管理员密码的 bcrypt hash（如果设置则优先生效）
