@@ -136,6 +136,31 @@ function applyGroupConfig(group, config) {
   if (typeof config.hidden === "boolean") group.hidden = config.hidden;
 }
 
+async function loadDynamicCatalogItems({
+  store,
+  includeHiddenItems = false,
+  includeUnpublishedItems = false,
+} = {}) {
+  const supportsSqlCatalogQuery =
+    typeof store?.stateDbQuery?.queryDynamicItemsForCatalog === "function";
+
+  if (supportsSqlCatalogQuery) {
+    try {
+      const sqlResult = await store.stateDbQuery.queryDynamicItemsForCatalog({
+        includeHiddenItems,
+        includeUnpublishedItems,
+      });
+      if (sqlResult && Array.isArray(sqlResult.items)) {
+        return sqlResult;
+      }
+    } catch (err) {
+      console.warn("[catalog] SQL dynamic query failed; fallback to items.json", err?.message || err);
+    }
+  }
+
+  return loadItemsState({ store });
+}
+
 async function loadCatalog({
   rootDir,
   store,
@@ -151,7 +176,11 @@ async function loadCatalog({
     includeHiddenItems,
     includeUnpublishedItems,
   });
-  const dynamic = await loadItemsState({ store });
+  const dynamic = await loadDynamicCatalogItems({
+    store,
+    includeHiddenItems,
+    includeUnpublishedItems,
+  });
   const categoryState = await loadCategoriesState({ store });
 
   const categories = { ...builtin.categories };

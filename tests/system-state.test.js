@@ -150,9 +150,80 @@ test("system storage persists scanRemote flag", async () => {
     assert.equal(res.status, 200);
     const system = await res.json();
     assert.equal(system?.storage?.webdav?.scanRemote, true);
+    assert.equal(system?.storage?.stateDb?.enabled, false);
+    assert.equal(typeof system?.taskQueue, "object");
+    assert.equal(typeof system?.taskQueue?.concurrency, "number");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
 
+test("state db sqlite mirrors state writes", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const dbPath = path.join(rootDir, "content", "state.sqlite");
+
+  const app = createApp({
+    rootDir,
+    authConfig,
+    stateDbMode: "sqlite",
+    stateDbPath: dbPath,
+  });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const createRes = await fetch(`${baseUrl}/api/items/link`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "link",
+        url: "https://example.com",
+        categoryId: "other",
+        title: "State DB Test",
+        description: "",
+      }),
+    });
+    assert.equal(createRes.status, 200);
+
+    const metricsRes = await fetch(`${baseUrl}/api/metrics`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(metricsRes.status, 200);
+    const metrics = await metricsRes.json();
+    assert.equal(metrics?.stateDb?.enabled, true);
+    assert.equal(metrics?.stateDb?.mode, "sqlite");
+    assert.equal(metrics?.stateDb?.available, true);
+    assert.equal(metrics?.stateDb?.healthy, true);
+    assert.equal(metrics?.stateDb?.circuitOpen, false);
+    assert.equal(typeof metrics?.taskQueue, "object");
+
+    const systemRes = await fetch(`${baseUrl}/api/system`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(systemRes.status, 200);
+    const system = await systemRes.json();
+    assert.equal(system?.storage?.stateDb?.enabled, true);
+    assert.equal(system?.storage?.stateDb?.mode, "sqlite");
+    assert.equal(system?.storage?.stateDb?.healthy, true);
+    assert.equal(typeof system?.taskQueue, "object");
+
+    assert.equal(fs.existsSync(dbPath), true);
+    const sqlite = require("node:sqlite");
+    const db = new sqlite.DatabaseSync(dbPath);
+    const row = db
+      .prepare("SELECT LENGTH(value) as bytes FROM state_blobs WHERE key = ?")
+      .get("items.json");
+    assert.ok(row);
+    assert.equal(Number.isFinite(row.bytes), true);
+    assert.ok(row.bytes > 0);
+    db.close();
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

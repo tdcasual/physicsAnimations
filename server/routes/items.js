@@ -21,7 +21,6 @@ const {
   mutateItemTombstonesState,
   noSave,
 } = require("../lib/state");
-const { sanitizeUploadedHtml } = require("../lib/uploadSecurity");
 const { decodeHtmlBuffer, decodeTextBuffer } = require("../lib/textEncoding");
 const { parseWithSchema, idSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
@@ -307,11 +306,114 @@ function createWarnScreenshotDeps() {
   };
 }
 
-function createItemsRouter({ rootDir, authConfig, store }) {
+function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
   const router = express.Router();
   const authRequired = requireAuth({ authConfig });
   const authOptional = optionalAuth({ authConfig });
   const warnScreenshotDeps = createWarnScreenshotDeps();
+
+  const queue = taskQueue || null;
+
+  async function runScreenshotTask({ id }) {
+    const item = await mutateItemsState({ store }, (state) => {
+      const found = state.items.find((it) => it.id === id);
+      if (!found) return noSave(null);
+      return noSave({
+        id: found.id,
+        type: found.type,
+        url: found.url,
+        path: found.path,
+      });
+    });
+    if (!item) {
+      const err = new Error("not_found");
+      err.status = 404;
+      throw err;
+    }
+
+    const now = new Date().toISOString();
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-shot-"));
+    const outputPath = path.join(tmpDir, `${id}.png`);
+
+    try {
+      if (item.type === "upload" && store.mode === "webdav") {
+        const manifestRaw = await store.readBuffer(`uploads/${id}/manifest.json`);
+        let manifest = null;
+        if (manifestRaw) {
+          try {
+            manifest = JSON.parse(manifestRaw.toString("utf8"));
+          } catch {
+            manifest = null;
+          }
+        }
+
+        const entryRaw = typeof manifest?.entry === "string" && manifest.entry ? manifest.entry : "index.html";
+        const entry = normalizeZipPath(entryRaw) || "index.html";
+        const files = Array.isArray(manifest?.files) ? manifest.files : [entry];
+
+        for (const rel of files) {
+          const normalized = normalizeZipPath(rel);
+          if (!normalized) continue;
+          const buf = await store.readBuffer(`uploads/${id}/${normalized}`);
+          if (!buf) continue;
+          const localPath = path.join(tmpDir, normalized);
+          fs.mkdirSync(path.dirname(localPath), { recursive: true });
+          fs.writeFileSync(localPath, buf);
+        }
+
+        const entryPath = path.join(tmpDir, entry);
+        if (!fs.existsSync(entryPath)) {
+          const err = new Error("not_found");
+          err.status = 404;
+          throw err;
+        }
+
+        await captureScreenshotQueued({
+          rootDir,
+          targetUrl: filePathToUrl(entryPath),
+          outputPath,
+          allowedFileRoot: tmpDir,
+        });
+      } else {
+        const targetUrl =
+          item.type === "link"
+            ? (await assertPublicHttpUrl(item.url)).toString()
+            : filePathToUrl(path.join(rootDir, item.path));
+        const allowedFileRoot =
+          item.type === "upload" ? path.join(rootDir, "content", "uploads", id) : undefined;
+        await captureScreenshotQueued({ rootDir, targetUrl, outputPath, allowedFileRoot });
+      }
+
+      const png = fs.readFileSync(outputPath);
+      await store.writeBuffer(`thumbnails/${id}.png`, png, { contentType: "image/png" });
+
+      const thumbnail = await mutateItemsState({ store }, (state) => {
+        const found = state.items.find((it) => it.id === id);
+        if (!found) return noSave(null);
+        found.thumbnail = `content/thumbnails/${id}.png`;
+        found.updatedAt = now;
+        return found.thumbnail;
+      });
+
+      if (!thumbnail) {
+        await store.deletePath(`thumbnails/${id}.png`).catch(() => {});
+        const err = new Error("not_found");
+        err.status = 404;
+        throw err;
+      }
+
+      return { ok: true, thumbnail, itemId: id };
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+  }
+
+  if (queue && !queue.hasHandler("screenshot")) {
+    queue.registerHandler("screenshot", async (payload) => {
+      const id = parseWithSchema(idSchema, payload?.id);
+      return runScreenshotTask({ id });
+    });
+  }
 
   function loadBuiltinIndex() {
     return listBuiltinItems({ rootDir }).map((item) => ({
@@ -585,8 +687,7 @@ function createItemsRouter({ rootDir, authConfig, store }) {
             const html = decodeHtmlBuffer(buf);
             const meta = extractHtmlTitleAndDescription(html);
             htmlMetaByPath.set(rel, meta);
-            const sanitized = sanitizeUploadedHtml(html, { allowLocalScripts: true });
-            outBuf = Buffer.from(sanitized, "utf8");
+            outBuf = Buffer.from(html, "utf8");
             contentType = "text/html; charset=utf-8";
             htmlCandidates.push(rel);
           } else if (textExts.has(extLower)) {
@@ -685,12 +786,11 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         }
 
         const rewrittenHtml = depMapping.size ? rewriteExternalDepsInHtml(html, depMapping) : html;
-        const sanitizedHtml = sanitizeUploadedHtml(rewrittenHtml, { allowLocalScripts: true });
         const uploadKey = `uploads/${id}/index.html`;
-        await writeUploadBuffer(uploadKey, Buffer.from(sanitizedHtml, "utf8"), {
+        await writeUploadBuffer(uploadKey, Buffer.from(rewrittenHtml, "utf8"), {
           contentType: "text/html; charset=utf-8",
         });
-        fs.writeFileSync(path.join(tmpDir, "index.html"), sanitizedHtml, "utf8");
+        fs.writeFileSync(path.join(tmpDir, "index.html"), rewrittenHtml, "utf8");
         const manifestFiles = ["index.html", ...downloaded];
         await writeUploadBuffer(
           `uploads/${id}/manifest.json`,
@@ -758,22 +858,120 @@ function createItemsRouter({ rootDir, authConfig, store }) {
       const q = (query.q || "").trim().toLowerCase();
       const categoryId = (query.categoryId || "").trim();
       const type = (query.type || "").trim();
+      const supportsSqlMergedQuery =
+        typeof store?.stateDbQuery?.queryItems === "function";
+      const supportsSqlDynamicQuery =
+        typeof store?.stateDbQuery?.queryDynamicItems === "function";
+      const supportsSqlBuiltinQuery =
+        typeof store?.stateDbQuery?.queryBuiltinItems === "function";
 
-      const state = await loadItemsState({ store });
+      const offset = (query.page - 1) * query.pageSize;
+
+      if (supportsSqlMergedQuery) {
+        try {
+          const sqlMerged = await store.stateDbQuery.queryItems({
+            isAdmin,
+            includeDeleted: isAdmin,
+            q,
+            categoryId,
+            type,
+            offset,
+            limit: query.pageSize,
+          });
+
+          const total = Number.isFinite(sqlMerged?.total) ? sqlMerged.total : 0;
+          const items = Array.isArray(sqlMerged?.items) ? sqlMerged.items : [];
+          res.json({ items: items.map(toApiItem), page: query.page, pageSize: query.pageSize, total });
+          return;
+        } catch (sqlErr) {
+          console.warn("[items] SQL merged query failed; fallback to split SQL path", sqlErr);
+        }
+      }
+
+      let dynamicItems = [];
+      let dynamicTotal = 0;
+      let loadedDynamicFromSql = false;
+
+      if (supportsSqlDynamicQuery) {
+        try {
+          const sqlDynamic = await store.stateDbQuery.queryDynamicItems({
+            isAdmin,
+            q,
+            categoryId,
+            type,
+            offset,
+            limit: query.pageSize,
+          });
+          dynamicItems = Array.isArray(sqlDynamic?.items) ? sqlDynamic.items : [];
+          dynamicTotal = Number.isFinite(sqlDynamic?.total) ? sqlDynamic.total : dynamicItems.length;
+          loadedDynamicFromSql = true;
+        } catch (sqlErr) {
+          console.warn("[items] SQL dynamic query failed; fallback to in-memory dynamic path", sqlErr);
+        }
+      }
+
+      if (!loadedDynamicFromSql) {
+        const state = await loadItemsState({ store });
+        dynamicItems = Array.isArray(state?.items) ? [...state.items] : [];
+        if (!isAdmin) dynamicItems = dynamicItems.filter((it) => it.published !== false && it.hidden !== true);
+        if (categoryId) dynamicItems = dynamicItems.filter((it) => it.categoryId === categoryId);
+        if (type) dynamicItems = dynamicItems.filter((it) => it.type === type);
+        if (q) {
+          dynamicItems = dynamicItems.filter((it) => {
+            const hay = `${it.title || ""}\n${it.description || ""}\n${it.url || ""}\n${it.path || ""}\n${it.id || ""}`.toLowerCase();
+            return hay.includes(q);
+          });
+        }
+        dynamicItems.sort((a, b) => {
+          const timeDiff = (b.createdAt || "").localeCompare(a.createdAt || "");
+          if (timeDiff) return timeDiff;
+          return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
+        });
+        dynamicTotal = dynamicItems.length;
+      }
+
+      if (supportsSqlDynamicQuery && supportsSqlBuiltinQuery) {
+        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicItems.length));
+        const remaining = query.pageSize - dynamicSliceCount;
+        const builtinOffset = Math.max(0, offset - dynamicTotal);
+
+        try {
+          const sqlBuiltin = await store.stateDbQuery.queryBuiltinItems({
+            isAdmin,
+            includeDeleted: isAdmin,
+            q,
+            categoryId,
+            type,
+            offset: builtinOffset,
+            limit: remaining,
+          });
+
+          const builtinTotal = Number.isFinite(sqlBuiltin?.total) ? sqlBuiltin.total : 0;
+          const builtinSlice = Array.isArray(sqlBuiltin?.items) ? sqlBuiltin.items : [];
+          const total = dynamicTotal + builtinTotal;
+          const pageItems = [...dynamicItems.slice(0, query.pageSize), ...builtinSlice].map(toApiItem);
+
+          res.json({ items: pageItems, page: query.page, pageSize: query.pageSize, total });
+          return;
+        } catch (sqlErr) {
+          console.warn("[items] SQL builtin query failed; fallback to in-memory builtin path", sqlErr);
+        }
+      }
+
       const builtinItems = await loadBuiltinItems({ includeDeleted: isAdmin });
-      let items = [...state.items, ...builtinItems];
 
-      if (!isAdmin) items = items.filter((it) => it.published !== false && it.hidden !== true);
-      if (categoryId) items = items.filter((it) => it.categoryId === categoryId);
-      if (type) items = items.filter((it) => it.type === type);
+      let filteredBuiltin = builtinItems;
+      if (!isAdmin) filteredBuiltin = filteredBuiltin.filter((it) => it.published !== false && it.hidden !== true);
+      if (categoryId) filteredBuiltin = filteredBuiltin.filter((it) => it.categoryId === categoryId);
+      if (type) filteredBuiltin = filteredBuiltin.filter((it) => it.type === type);
       if (q) {
-        items = items.filter((it) => {
+        filteredBuiltin = filteredBuiltin.filter((it) => {
           const hay = `${it.title || ""}\n${it.description || ""}\n${it.url || ""}\n${it.path || ""}\n${it.id || ""}`.toLowerCase();
           return hay.includes(q);
         });
       }
 
-      items.sort((a, b) => {
+      filteredBuiltin.sort((a, b) => {
         const timeDiff = (b.createdAt || "").localeCompare(a.createdAt || "");
         if (timeDiff) return timeDiff;
         const deletedDiff = Number(a.deleted === true) - Number(b.deleted === true);
@@ -781,9 +979,27 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
       });
 
-      const total = items.length;
-      const start = (query.page - 1) * query.pageSize;
-      const pageItems = items.slice(start, start + query.pageSize).map(toApiItem);
+      const builtinTotal = filteredBuiltin.length;
+      const total = dynamicTotal + builtinTotal;
+
+      let pageItems = [];
+      if (supportsSqlDynamicQuery) {
+        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicItems.length));
+        const remaining = query.pageSize - dynamicSliceCount;
+        const builtinOffset = Math.max(0, offset - dynamicTotal);
+        const builtinSlice = remaining > 0 ? filteredBuiltin.slice(builtinOffset, builtinOffset + remaining) : [];
+        pageItems = [...dynamicItems.slice(0, query.pageSize), ...builtinSlice].map(toApiItem);
+      } else {
+        let items = [...dynamicItems, ...filteredBuiltin];
+        items.sort((a, b) => {
+          const timeDiff = (b.createdAt || "").localeCompare(a.createdAt || "");
+          if (timeDiff) return timeDiff;
+          const deletedDiff = Number(a.deleted === true) - Number(b.deleted === true);
+          if (deletedDiff) return deletedDiff;
+          return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
+        });
+        pageItems = items.slice(offset, offset + query.pageSize).map(toApiItem);
+      }
 
       res.json({ items: pageItems, page: query.page, pageSize: query.pageSize, total });
     }),
@@ -981,6 +1197,22 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     asyncHandler(async (req, res) => {
       const isAdmin = req.user?.role === "admin";
       const id = parseWithSchema(idSchema, req.params.id);
+      const supportsSqlDynamicItemLookup =
+        typeof store?.stateDbQuery?.queryDynamicItemById === "function";
+      const supportsSqlBuiltinItemLookup =
+        typeof store?.stateDbQuery?.queryBuiltinItemById === "function";
+
+      if (supportsSqlDynamicItemLookup) {
+        try {
+          const sqlItem = await store.stateDbQuery.queryDynamicItemById({ id, isAdmin });
+          if (sqlItem) {
+            res.json({ item: toApiItem(sqlItem) });
+            return;
+          }
+        } catch (sqlErr) {
+          console.warn("[items] SQL item detail lookup failed; fallback to items.json", sqlErr);
+        }
+      }
 
       const state = await loadItemsState({ store });
       const item = state.items.find((it) => it.id === id);
@@ -991,6 +1223,22 @@ function createItemsRouter({ rootDir, authConfig, store }) {
         }
         res.json({ item: toApiItem(item) });
         return;
+      }
+
+      if (supportsSqlBuiltinItemLookup) {
+        try {
+          const sqlBuiltin = await store.stateDbQuery.queryBuiltinItemById({
+            id,
+            isAdmin,
+            includeDeleted: isAdmin,
+          });
+          if (sqlBuiltin) {
+            res.json({ item: toApiItem(sqlBuiltin) });
+            return;
+          }
+        } catch (sqlErr) {
+          console.warn("[items] SQL builtin detail lookup failed; fallback to builtin merge path", sqlErr);
+        }
       }
 
       const builtin = await findBuiltinItemById(id, { includeDeleted: isAdmin });
@@ -1015,94 +1263,60 @@ function createItemsRouter({ rootDir, authConfig, store }) {
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
 
-      const item = await mutateItemsState({ store }, (state) => {
-        const found = state.items.find((it) => it.id === id);
-        if (!found) return noSave(null);
-        return noSave({
-          id: found.id,
-          type: found.type,
-          url: found.url,
-          path: found.path,
-        });
-      });
-      if (!item) {
-        res.status(404).json({ error: "not_found" });
+      if (queue) {
+        const task = queue.enqueueTask({ type: "screenshot", payload: { id }, maxAttempts: 2 });
+        res.status(202).json({ ok: true, task });
         return;
       }
 
-      const now = new Date().toISOString();
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-shot-"));
-      const outputPath = path.join(tmpDir, `${id}.png`);
+      const result = await runScreenshotTask({ id });
+      res.json(result);
+    }),
+  );
 
+  router.get(
+    "/tasks/:taskId",
+    authRequired,
+    asyncHandler(async (req, res) => {
+      if (!queue) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+      const taskId = parseWithSchema(idSchema, req.params.taskId);
+      const task = queue.getTask(taskId);
+      if (!task) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+      res.json({ task });
+    }),
+  );
+
+  router.post(
+    "/tasks/:taskId/retry",
+    authRequired,
+    rateLimit({ key: "tasks_retry", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      if (!queue) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+      const taskId = parseWithSchema(idSchema, req.params.taskId);
+      let task = null;
       try {
-        if (item.type === "upload" && store.mode === "webdav") {
-          const manifestRaw = await store.readBuffer(`uploads/${id}/manifest.json`);
-          let manifest = null;
-          if (manifestRaw) {
-            try {
-              manifest = JSON.parse(manifestRaw.toString("utf8"));
-            } catch {
-              manifest = null;
-            }
-          }
-
-          const entryRaw =
-            typeof manifest?.entry === "string" && manifest.entry ? manifest.entry : "index.html";
-          const entry = normalizeZipPath(entryRaw) || "index.html";
-          const files = Array.isArray(manifest?.files) ? manifest.files : [entry];
-
-          for (const rel of files) {
-            const normalized = normalizeZipPath(rel);
-            if (!normalized) continue;
-            const buf = await store.readBuffer(`uploads/${id}/${normalized}`);
-            if (!buf) continue;
-            const localPath = path.join(tmpDir, normalized);
-            fs.mkdirSync(path.dirname(localPath), { recursive: true });
-            fs.writeFileSync(localPath, buf);
-          }
-
-          const entryPath = path.join(tmpDir, entry);
-          if (!fs.existsSync(entryPath)) {
-            res.status(404).json({ error: "not_found" });
-            return;
-          }
-
-          await captureScreenshotQueued({
-            rootDir,
-            targetUrl: filePathToUrl(entryPath),
-            outputPath,
-            allowedFileRoot: tmpDir,
-          });
-        } else {
-          const targetUrl =
-            item.type === "link"
-              ? (await assertPublicHttpUrl(item.url)).toString()
-              : filePathToUrl(path.join(rootDir, item.path));
-          const allowedFileRoot =
-            item.type === "upload" ? path.join(rootDir, "content", "uploads", id) : undefined;
-          await captureScreenshotQueued({ rootDir, targetUrl, outputPath, allowedFileRoot });
-        }
-
-        const png = fs.readFileSync(outputPath);
-        await store.writeBuffer(`thumbnails/${id}.png`, png, { contentType: "image/png" });
-
-        const thumbnail = await mutateItemsState({ store }, (state) => {
-          const found = state.items.find((it) => it.id === id);
-          if (!found) return noSave(null);
-          found.thumbnail = `content/thumbnails/${id}.png`;
-          found.updatedAt = now;
-          return found.thumbnail;
-        });
-        if (!thumbnail) {
-          await store.deletePath(`thumbnails/${id}.png`).catch(() => {});
-          res.status(404).json({ error: "not_found" });
+        task = queue.retryTask(taskId);
+      } catch (err) {
+        if (err?.message === "task_not_retryable") {
+          res.status(400).json({ error: "task_not_retryable" });
           return;
         }
-
-        res.json({ ok: true, thumbnail });
-      } finally {
-        fs.rmSync(tmpDir, { recursive: true, force: true });
+        throw err;
       }
+      if (!task) {
+        res.status(404).json({ error: "not_found" });
+        return;
+      }
+      res.json({ ok: true, task });
     }),
   );
 

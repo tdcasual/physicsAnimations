@@ -4,7 +4,7 @@ const { requireAuth } = require("../lib/auth");
 const { loadSystemState, mutateSystemState, normalizeMode, noSave } = require("../lib/systemState");
 const { syncWithWebdav } = require("../lib/webdavSync");
 
-function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
+function createSystemRouter({ authConfig, store, taskQueue, rootDir, updateStoreConfig }) {
   const router = express.Router();
   const authRequired = requireAuth({ authConfig });
 
@@ -24,6 +24,12 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
         mode: state.storage.mode,
         effectiveMode,
         readOnly: Boolean(store?.readOnly),
+        stateDb: store?.stateDb || {
+          enabled: false,
+          mode: "off",
+          available: false,
+          dbPath: "",
+        },
         localPath: `${rootDir}/content`,
         lastSyncedAt: state.storage.lastSyncedAt || "",
         webdav: {
@@ -36,6 +42,7 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
           scanRemote: webdav.scanRemote === true,
         },
       },
+      taskQueue: typeof taskQueue?.getStats === "function" ? taskQueue.getStats() : null,
     });
   });
 
@@ -118,6 +125,12 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
         storage: {
           mode: refreshed.storage.mode,
           effectiveMode: store?.mode || "local",
+          stateDb: store?.stateDb || {
+            enabled: false,
+            mode: "off",
+            available: false,
+            dbPath: "",
+          },
           localPath: `${rootDir}/content`,
           lastSyncedAt: refreshed.storage.lastSyncedAt || "",
           webdav: {
@@ -132,6 +145,7 @@ function createSystemRouter({ authConfig, store, rootDir, updateStoreConfig }) {
             scanRemote: refreshed.storage.webdav.scanRemote === true,
           },
         },
+        taskQueue: typeof taskQueue?.getStats === "function" ? taskQueue.getStats() : null,
       });
     } catch (err) {
       next(err);

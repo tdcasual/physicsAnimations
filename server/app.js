@@ -1,11 +1,13 @@
 const path = require("path");
 const express = require("express");
 
-const { getAuthConfig } = require("./lib/auth");
+const { getAuthConfig, requireAuth } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
 const { createStoreManager } = require("./lib/contentStore");
 const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
 const { loadSystemState } = require("./lib/systemState");
+const { createStateDbStore } = require("./lib/stateDb");
+const { createTaskQueue } = require("./lib/taskQueue");
 
 const { errorHandler } = require("./middleware/errorHandler");
 const { createAuthRouter } = require("./routes/auth");
@@ -23,6 +25,16 @@ function parseTrustProxy(value) {
   const n = Number.parseInt(raw, 10);
   if (Number.isFinite(n) && String(n) === raw) return n;
   return raw;
+}
+
+function parseBoolean(value) {
+  if (typeof value === "boolean") return value;
+  if (value === undefined || value === null) return undefined;
+  const raw = String(value).trim().toLowerCase();
+  if (!raw) return undefined;
+  if (raw === "1" || raw === "true" || raw === "yes" || raw === "on") return true;
+  if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return false;
+  return undefined;
 }
 
 function guessContentType(filePath) {
@@ -63,7 +75,16 @@ function safeContentKey(reqPath, prefix) {
   return normalized;
 }
 
-function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConfig }) {
+function createApp({
+  rootDir,
+  store: overrideStore,
+  authConfig: overrideAuthConfig,
+  metricsPublic: overrideMetricsPublic,
+  stateDbMode: overrideStateDbMode,
+  stateDbPath: overrideStateDbPath,
+  stateDbMaxErrors: overrideStateDbMaxErrors,
+  taskQueue: overrideTaskQueue,
+}) {
   const app = express();
   app.disable("x-powered-by");
 
@@ -77,11 +98,28 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   }
 
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
+  const parsedMetricsPublic = parseBoolean(overrideMetricsPublic);
+  const envMetricsPublic = parseBoolean(process.env.METRICS_PUBLIC);
+  const metricsPublic = parsedMetricsPublic ?? envMetricsPublic ?? false;
+  const authRequired = requireAuth({ authConfig });
+  const taskQueue =
+    overrideTaskQueue ||
+    createTaskQueue({
+      stateFile: path.join(rootDir, "content", "tasks.json"),
+    });
   const systemState = loadSystemState({ rootDir });
   const storeManager = overrideStore
     ? { store: overrideStore, setConfig: () => {} }
     : createStoreManager({ rootDir, config: systemState });
-  const store = storeManager.store;
+  const storeBase = storeManager.store;
+  const stateDbWrapped = createStateDbStore({
+    rootDir,
+    store: storeBase,
+    mode: overrideStateDbMode,
+    dbPath: overrideStateDbPath,
+    maxErrors: overrideStateDbMaxErrors,
+  });
+  const store = stateDbWrapped.store;
 
   app.use(express.json({ limit: "2mb" }));
 
@@ -93,13 +131,18 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
     });
   });
 
-  app.get("/api/metrics", (_req, res) => {
+  const metricsHandler = (_req, res) => {
     res.json({
       uptimeSec: Math.floor(process.uptime()),
       memory: process.memoryUsage(),
       screenshotQueue: getScreenshotQueueStats(),
+      taskQueue: taskQueue.getStats(),
+      stateDb: stateDbWrapped.info,
     });
-  });
+  };
+
+  if (metricsPublic) app.get("/api/metrics", metricsHandler);
+  else app.get("/api/metrics", authRequired, metricsHandler);
 
   app.get("/api/catalog", async (_req, res, next) => {
     try {
@@ -111,10 +154,19 @@ function createApp({ rootDir, store: overrideStore, authConfig: overrideAuthConf
   });
 
   app.use("/api", createAuthRouter({ authConfig, store }));
-  app.use("/api", createSystemRouter({ authConfig, store, rootDir, updateStoreConfig: storeManager.setConfig }));
+  app.use(
+    "/api",
+    createSystemRouter({
+      authConfig,
+      store,
+      taskQueue,
+      rootDir,
+      updateStoreConfig: storeManager.setConfig,
+    }),
+  );
   app.use("/api", createGroupsRouter({ rootDir, authConfig, store }));
   app.use("/api", createCategoriesRouter({ rootDir, authConfig, store }));
-  app.use("/api", createItemsRouter({ rootDir, authConfig, store }));
+  app.use("/api", createItemsRouter({ rootDir, authConfig, store, taskQueue }));
 
   app.use("/assets", express.static(path.join(rootDir, "assets")));
   app.use("/animations", express.static(path.join(rootDir, "animations")));

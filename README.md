@@ -93,6 +93,10 @@ npm run build-catalog
   - 未登录：仅能获取 `published=true && hidden=false`
   - 已登录：可获取全部
 - `POST /api/items/:id/screenshot`：重新截图（需要登录）
+  - 当前返回 `202 Accepted`，并返回 `task`
+- `GET /api/tasks/:taskId`：查询异步任务状态（需要登录）
+- `POST /api/tasks/:taskId/retry`：重试失败任务（需要登录）
+- 默认启用任务状态持久化（`content/tasks.json`），服务重启后可恢复
 
 分类管理（需要登录）：
 
@@ -121,6 +125,14 @@ npm run build-catalog
 - `WEBDAV_BASE_PATH`：WebDAV 下的存储目录（默认 `physicsAnimations`）
 - `WEBDAV_USERNAME` / `WEBDAV_PASSWORD`：WebDAV 账号密码（如服务端需要）
 - `WEBDAV_TIMEOUT_MS`：WebDAV 请求超时（默认 `15000`）
+- `STATE_DB_MODE`：状态数据库模式（`off`/`sqlite`，默认 `off`）
+- `STATE_DB_PATH`：状态数据库文件路径（默认 `content/state.sqlite`）
+- `METRICS_PUBLIC`：是否公开 `GET /api/metrics`（默认 `false`，建议保持关闭）
+- `TASK_QUEUE_CONCURRENCY`：异步任务并发数（默认 `1`）
+- `TASK_QUEUE_MAX`：任务等待队列长度上限（默认 `200`）
+- `TASKS_MAX`：内存中保留的任务记录上限（默认 `2000`）
+- `TASK_TIMEOUT_MS`：单任务执行超时（默认 `90000`）
+- `STATE_DB_MAX_ERRORS`：SQLite 连续失败熔断阈值（默认 `3`）
 
 生成 bcrypt hash 示例：
 
@@ -141,6 +153,36 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 ```bash
 npm run backup:webdav
 ```
+
+## 状态数据库（C 路线第 1 阶段）
+
+当前支持可选 SQLite 状态镜像层（默认关闭）：
+
+- 开启：`STATE_DB_MODE=sqlite`
+- 路径：默认 `content/state.sqlite`，可通过 `STATE_DB_PATH` 覆盖
+- 覆盖范围：`items.json`、`categories.json`、`builtin_items.json`、`items_tombstones.json`、`admin.json`
+
+说明：
+
+- 该能力为兼容增强，不改变现有 JSON / WebDAV 主流程
+- 读路径支持读穿透缓存，写路径同步镜像到 SQLite
+- 当连续 SQL/镜像错误达到阈值时会自动熔断并回退到 JSON 路径（阈值由 `STATE_DB_MAX_ERRORS` 控制）
+- 可在 `GET /api/system`（需登录）与 `GET /api/metrics`（默认需登录）查看 `stateDb` 状态
+
+## SQL 查询下推（C 路线第 3 阶段，进行中）
+
+当 `STATE_DB_MODE=sqlite` 开启时：
+
+- `GET /api/items` 优先走 SQLite merged 查询（动态+内置统一过滤/排序/分页）
+- merged 查询不可用时，会回退到动态/内置分离 SQL 路径
+- `GET /api/items/:id` 的动态内容详情查询优先走 SQLite
+- `GET /api/items/:id` 的内置内容详情可选走 SQLite builtin 索引表
+- `GET /api/categories` 的动态内容计数优先走 SQLite 分类聚合（保留原有 taxonomy 语义）
+- `GET /api/catalog` 的动态项读取优先走 SQLite（保留原有分组/分类/排序语义）
+- `items` 相关 SQL 语句按模板复用 `prepare`，减少高频查询编译开销
+- merged 列表查询增加排序索引（`created_at/title/id` 与 `deleted/title/id`）
+- 内置内容（builtin）仍保留现有合并逻辑，以保证兼容性
+- 若 SQL 查询不可用，会自动回退到原有 JSON 内存过滤路径
 
 ## 部署
 
@@ -238,13 +280,13 @@ docker compose up -d
 
 - 目前为单管理员模式，建议仅在内网/本机使用；如需公网部署，建议增加多用户/权限/审计与更严格的上传策略。
 - “上传网页”支持单 HTML 或 ZIP（解压到独立目录）；如需更复杂的资源/跨域请求，需评估并调整 CSP/沙箱策略。
-- 外链站点可能因 `X-Frame-Options` 无法嵌入，可在预览页增加“仅截图模式/自动降级提示”。
+- 外链站点默认直接加载原站点；若因 `X-Frame-Options` / CSP 无法嵌入，可在预览页切换“仅截图”或点“打开原页面”。
 - 可扩展批量导入/导出（JSON）、标签/收藏夹、排序与置顶等管理能力。
 - 可以从每个动画 HTML 的 `<title>`/`<meta name="description">` 自动提取标题与描述，减少手工维护。
 
 ## 安全说明（当前实现）
 
 - 预览页 iframe 使用最小化 `sandbox`（仅 `allow-scripts`），并设置 `referrerpolicy="no-referrer"`。
-- 上传 HTML 会做基础清洗（移除外链样式、`form/base/iframe` 等标签），并对外部 JS/CSS 依赖做服务端下载与本地改写（仅允许公共 `http(s)` 地址、限制数量/大小），然后注入 CSP（禁外部脚本/连接/表单提交）。
+- 上传 HTML 支持自动下载外部 JS/CSS 依赖并改写为本地引用（仅允许公共 `http(s)` 地址，且限制数量/大小），以提升离线可用性。
 - 服务端截图（Playwright）对网络请求做 SSRF 防护：阻止访问 localhost/私有网段/`.local` 等。
 - 写入类接口带简单的内存限流（登录、写入、截图）。

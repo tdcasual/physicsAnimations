@@ -167,11 +167,11 @@ async function init() {
   const isExternalLink = item ? item.type === "link" : isHttpUrl(target);
   if (isExternalLink) {
     hintText.textContent =
-      "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：默认仅截图展示；如需交互可点“进入交互”，若仍失败请点“打开原页面”。";
+      "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：默认直接进入交互；若无法嵌入请点“打开原页面”。";
     hint.classList.remove("hidden");
     if (screenshotUrl) {
-      screenshotMode = true;
-      modeBtn.textContent = "进入交互";
+      screenshotMode = false;
+      modeBtn.textContent = "仅截图";
       modeBtn.classList.remove("hidden");
     } else {
       screenshotMode = false;
