@@ -2,7 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const express = require("express");
 
-const { getAuthConfig } = require("./lib/auth");
+const { getAuthConfig, requireAuth } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
 const { createStoreManager } = require("./lib/contentStore");
 const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
@@ -98,6 +98,7 @@ function createApp({
   store: overrideStore,
   authConfig: overrideAuthConfig,
   spaDefaultEntry: overrideSpaDefaultEntry,
+  metricsPublic: overrideMetricsPublic,
 }) {
   const app = express();
   app.disable("x-powered-by");
@@ -112,6 +113,10 @@ function createApp({
   }
 
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
+  const parsedMetricsPublic = parseBoolean(overrideMetricsPublic, undefined);
+  const envMetricsPublic = parseBoolean(process.env.METRICS_PUBLIC, undefined);
+  const metricsPublic = parsedMetricsPublic ?? envMetricsPublic ?? false;
+  const authRequired = requireAuth({ authConfig });
   const systemState = loadSystemState({ rootDir });
   const spaDefaultEntry = parseBoolean(overrideSpaDefaultEntry ?? process.env.SPA_DEFAULT_ENTRY, true);
   const storeManager = overrideStore
@@ -129,13 +134,15 @@ function createApp({
     });
   });
 
-  app.get("/api/metrics", (_req, res) => {
+  const metricsHandler = (_req, res) => {
     res.json({
       uptimeSec: Math.floor(process.uptime()),
       memory: process.memoryUsage(),
       screenshotQueue: getScreenshotQueueStats(),
     });
-  });
+  };
+  if (metricsPublic) app.get("/api/metrics", metricsHandler);
+  else app.get("/api/metrics", authRequired, metricsHandler);
 
   app.get("/api/catalog", async (_req, res, next) => {
     try {
@@ -244,20 +251,26 @@ function createApp({
   app.get("/viewer.html", (req, res) => {
     if (shouldServeSpaAsDefault()) {
       const id = getFirstQueryValue(req.query.id || req.query.builtin).trim();
-      if (!id) {
-        res.redirect(302, "/app");
-        return;
-      }
-
       const search = new URLSearchParams();
       Object.entries(req.query || {}).forEach(([key, value]) => {
         if (key === "id" || key === "builtin") return;
         appendQueryValue(search, key, value);
       });
-
-      const target = `/app/viewer/${encodeURIComponent(id)}`;
       const query = search.toString();
-      res.redirect(302, query ? `${target}?${query}` : target);
+
+      if (id) {
+        const target = `/app/viewer/${encodeURIComponent(id)}`;
+        res.redirect(302, query ? `${target}?${query}` : target);
+        return;
+      }
+
+      const src = getFirstQueryValue(req.query.src).trim();
+      if (src) {
+        res.redirect(302, query ? `/app/viewer?${query}` : "/app/viewer");
+        return;
+      }
+
+      res.redirect(302, "/app");
       return;
     }
     res.sendFile(path.join(rootDir, "viewer.html"));

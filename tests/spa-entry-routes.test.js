@@ -81,6 +81,16 @@ test("spa default entry serves / and rewrites legacy viewer path", async () => {
     const legacyViewer = await fetch(`${baseUrl}/viewer.html?id=demo-1`, { redirect: "manual" });
     assert.equal(legacyViewer.status, 302);
     assert.equal(legacyViewer.headers.get("location"), "/app/viewer/demo-1");
+
+    const srcOnly = await fetch(
+      `${baseUrl}/viewer.html?src=${encodeURIComponent("animations/demo.html")}&from=legacy`,
+      { redirect: "manual" },
+    );
+    assert.equal(srcOnly.status, 302);
+    const redirectTarget = new URL(String(srcOnly.headers.get("location") || ""), "http://localhost");
+    assert.equal(redirectTarget.pathname, "/app/viewer");
+    assert.equal(redirectTarget.searchParams.get("src"), "animations/demo.html");
+    assert.equal(redirectTarget.searchParams.get("from"), "legacy");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
