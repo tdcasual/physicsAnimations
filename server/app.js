@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs");
 const express = require("express");
 
 const { getAuthConfig, requireAuth } = require("./lib/auth");
@@ -27,14 +28,33 @@ function parseTrustProxy(value) {
   return raw;
 }
 
-function parseBoolean(value) {
+function parseBoolean(value, fallback = undefined) {
+  if (value === undefined || value === null) return fallback;
   if (typeof value === "boolean") return value;
-  if (value === undefined || value === null) return undefined;
   const raw = String(value).trim().toLowerCase();
-  if (!raw) return undefined;
+  if (!raw) return fallback;
   if (raw === "1" || raw === "true" || raw === "yes" || raw === "on") return true;
   if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return false;
-  return undefined;
+  return fallback;
+}
+
+function getFirstQueryValue(value) {
+  if (Array.isArray(value)) {
+    return getFirstQueryValue(value[0]);
+  }
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return "";
+}
+
+function appendQueryValue(params, key, value) {
+  if (Array.isArray(value)) {
+    value.forEach((entry) => appendQueryValue(params, key, entry));
+    return;
+  }
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    params.append(key, String(value));
+  }
 }
 
 function guessContentType(filePath) {
@@ -79,6 +99,7 @@ function createApp({
   rootDir,
   store: overrideStore,
   authConfig: overrideAuthConfig,
+  spaDefaultEntry: overrideSpaDefaultEntry,
   metricsPublic: overrideMetricsPublic,
   stateDbMode: overrideStateDbMode,
   stateDbPath: overrideStateDbPath,
@@ -108,6 +129,7 @@ function createApp({
       stateFile: path.join(rootDir, "content", "tasks.json"),
     });
   const systemState = loadSystemState({ rootDir });
+  const spaDefaultEntry = parseBoolean(overrideSpaDefaultEntry ?? process.env.SPA_DEFAULT_ENTRY, true);
   const storeManager = overrideStore
     ? { store: overrideStore, setConfig: () => {} }
     : createStoreManager({ rootDir, config: systemState });
@@ -140,7 +162,6 @@ function createApp({
       stateDb: stateDbWrapped.info,
     });
   };
-
   if (metricsPublic) app.get("/api/metrics", metricsHandler);
   else app.get("/api/metrics", authRequired, metricsHandler);
 
@@ -167,6 +188,27 @@ function createApp({
   app.use("/api", createGroupsRouter({ rootDir, authConfig, store }));
   app.use("/api", createCategoriesRouter({ rootDir, authConfig, store }));
   app.use("/api", createItemsRouter({ rootDir, authConfig, store, taskQueue }));
+
+  const spaDistDir = path.join(rootDir, "frontend", "dist");
+  const spaAssetsDir = path.join(spaDistDir, "assets");
+  const spaIndexPath = path.join(spaDistDir, "index.html");
+
+  app.use("/app/assets", express.static(spaAssetsDir, { fallthrough: false }));
+
+  function sendSpaEntry(_req, res) {
+    if (!fs.existsSync(spaIndexPath)) {
+      res.status(404).json({ error: "not_found" });
+      return;
+    }
+    res.sendFile(spaIndexPath);
+  }
+
+  app.get("/app", sendSpaEntry);
+  app.get("/app/*", sendSpaEntry);
+
+  function shouldServeSpaAsDefault() {
+    return spaDefaultEntry && fs.existsSync(spaIndexPath);
+  }
 
   app.use("/assets", express.static(path.join(rootDir, "assets")));
   app.use("/animations", express.static(path.join(rootDir, "animations")));
@@ -222,13 +264,45 @@ function createApp({
     res.sendFile(path.join(rootDir, "animations.json"));
   });
 
-  app.get("/", (_req, res) => {
+  app.get("/", (req, res) => {
+    if (shouldServeSpaAsDefault()) {
+      sendSpaEntry(req, res);
+      return;
+    }
     res.sendFile(path.join(rootDir, "index.html"));
   });
-  app.get("/index.html", (_req, res) => {
+  app.get("/index.html", (req, res) => {
+    if (shouldServeSpaAsDefault()) {
+      sendSpaEntry(req, res);
+      return;
+    }
     res.sendFile(path.join(rootDir, "index.html"));
   });
-  app.get("/viewer.html", (_req, res) => {
+  app.get("/viewer.html", (req, res) => {
+    if (shouldServeSpaAsDefault()) {
+      const id = getFirstQueryValue(req.query.id || req.query.builtin).trim();
+      const search = new URLSearchParams();
+      Object.entries(req.query || {}).forEach(([key, value]) => {
+        if (key === "id" || key === "builtin") return;
+        appendQueryValue(search, key, value);
+      });
+      const query = search.toString();
+
+      if (id) {
+        const target = `/app/viewer/${encodeURIComponent(id)}`;
+        res.redirect(302, query ? `${target}?${query}` : target);
+        return;
+      }
+
+      const src = getFirstQueryValue(req.query.src).trim();
+      if (src) {
+        res.redirect(302, query ? `/app/viewer?${query}` : "/app/viewer");
+        return;
+      }
+
+      res.redirect(302, "/app");
+      return;
+    }
     res.sendFile(path.join(rootDir, "viewer.html"));
   });
 

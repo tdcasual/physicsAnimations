@@ -61,8 +61,7 @@ async function login(baseUrl) {
 
 test("/api/metrics requires auth by default", async () => {
   const rootDir = makeTempRoot();
-  const authConfig = makeAuthConfig();
-  const app = createApp({ rootDir, authConfig });
+  const app = createApp({ rootDir, authConfig: makeAuthConfig() });
   const { server, baseUrl } = await startServer(app);
   try {
     const response = await fetch(`${baseUrl}/api/metrics`);
@@ -77,8 +76,7 @@ test("/api/metrics requires auth by default", async () => {
 
 test("/api/metrics returns data when authenticated", async () => {
   const rootDir = makeTempRoot();
-  const authConfig = makeAuthConfig();
-  const app = createApp({ rootDir, authConfig });
+  const app = createApp({ rootDir, authConfig: makeAuthConfig() });
   const { server, baseUrl } = await startServer(app);
   try {
     const token = await login(baseUrl);
@@ -89,6 +87,7 @@ test("/api/metrics returns data when authenticated", async () => {
     const data = await response.json();
     assert.equal(typeof data?.uptimeSec, "number");
     assert.equal(typeof data?.memory, "object");
+    assert.equal(typeof data?.screenshotQueue, "object");
     assert.equal(typeof data?.taskQueue, "object");
     assert.equal(typeof data?.taskQueue?.concurrency, "number");
     assert.equal(typeof data?.stateDb, "object");
@@ -100,8 +99,11 @@ test("/api/metrics returns data when authenticated", async () => {
 
 test("/api/metrics supports explicit public mode", async () => {
   const rootDir = makeTempRoot();
-  const authConfig = makeAuthConfig();
-  const app = createApp({ rootDir, authConfig, metricsPublic: true });
+  const app = createApp({
+    rootDir,
+    authConfig: makeAuthConfig(),
+    metricsPublic: true,
+  });
   const { server, baseUrl } = await startServer(app);
   try {
     const response = await fetch(`${baseUrl}/api/metrics`);
@@ -111,4 +113,3 @@ test("/api/metrics supports explicit public mode", async () => {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
-

@@ -43,6 +43,36 @@ npm start
 
 默认管理员账号：`admin` / `admin`（建议部署后立即修改）。
 
+## Vue SPA（Phase A）
+
+项目已新增基于 `Vue 3 + Vite + TypeScript` 的前端骨架（目录：`frontend/`），用于后续逐步迁移旧前端。
+
+- 本地开发：`npm run dev:frontend`
+- 前端测试：`npm run test:frontend`
+- 构建产物：`npm run build:frontend`
+- SPA 管理台冒烟：`npm run smoke:spa-admin`（自动启动临时服务并跑登录/管理页导航/退出）
+- SPA 管理台写路径冒烟：`npm run smoke:spa-admin-write`（创建链接 -> 列表校验 -> 删除回滚，避免残留测试数据）
+- SPA 公开页冒烟：`npm run smoke:spa-public`（覆盖 Catalog 分组/搜索 与 Viewer 预览，并自动清理测试数据）
+- SPA 旧入口回退冒烟：`npm run smoke:spa-legacy-fallback`（`SPA_DEFAULT_ENTRY=false` 下验证旧首页/旧 viewer 可用，且 `/app` 仍可访问）
+
+构建后，服务端会自动挂载：
+
+- `/app`（SPA 入口）
+- `/app/*`（SPA history fallback）
+- `/app/assets/*`（前端静态资源）
+
+如果 `frontend/dist/index.html` 不存在，`/app` 会返回 `404`（不影响旧版 `/` 与 `viewer.html`）。
+
+当前默认入口已切到 Vue SPA（若 `frontend/dist/index.html` 存在）。行为如下：
+
+- `/` 与 `/index.html` 会优先返回 SPA（若 `frontend/dist/index.html` 存在）
+- 旧地址 `viewer.html?id=...` 会重定向到 `/app/viewer/:id`
+- 若 SPA 构建产物缺失，会自动回退到旧版 `index.html` / `viewer.html`
+
+如需临时回退旧版入口，可设置：
+
+- `SPA_DEFAULT_ENTRY=false`
+
 ## 生成/更新动画清单与缩略图
 
 当你在 `animations/<分类>/` 目录新增/修改 HTML 后，建议执行：
@@ -117,6 +147,7 @@ npm run build-catalog
 服务端支持通过环境变量覆盖默认配置：
 
 - `PORT`：服务端口（默认 `4173`）
+- `SPA_DEFAULT_ENTRY`：是否将 Vue SPA 作为默认入口（默认 `true`；设为 `false` 后 `/` 回退旧版入口）
 - `ADMIN_USERNAME`：管理员用户名（默认 `admin`）
 - `ADMIN_PASSWORD`：管理员密码（明文，启动时自动 hash；默认 `admin`）
 - `ADMIN_PASSWORD_HASH`：管理员密码的 bcrypt hash（如果设置则优先生效）
