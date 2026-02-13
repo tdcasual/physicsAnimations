@@ -59,15 +59,16 @@ async function login(baseUrl) {
   return data.token;
 }
 
-test("/api/metrics requires auth by default", async () => {
+test("/api/metrics is public by default", async () => {
   const rootDir = makeTempRoot();
   const app = createApp({ rootDir, authConfig: makeAuthConfig() });
   const { server, baseUrl } = await startServer(app);
   try {
     const response = await fetch(`${baseUrl}/api/metrics`);
-    assert.equal(response.status, 401);
+    assert.equal(response.status, 200);
     const data = await response.json();
-    assert.equal(data?.error, "missing_token");
+    assert.equal(typeof data?.uptimeSec, "number");
+    assert.equal(typeof data?.memory, "object");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
@@ -97,17 +98,19 @@ test("/api/metrics returns data when authenticated", async () => {
   }
 });
 
-test("/api/metrics supports explicit public mode", async () => {
+test("/api/metrics supports explicit private mode", async () => {
   const rootDir = makeTempRoot();
   const app = createApp({
     rootDir,
     authConfig: makeAuthConfig(),
-    metricsPublic: true,
+    metricsPublic: false,
   });
   const { server, baseUrl } = await startServer(app);
   try {
     const response = await fetch(`${baseUrl}/api/metrics`);
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 401);
+    const data = await response.json();
+    assert.equal(data?.error, "missing_token");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

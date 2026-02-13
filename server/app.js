@@ -121,7 +121,7 @@ function createApp({
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
   const parsedMetricsPublic = parseBoolean(overrideMetricsPublic);
   const envMetricsPublic = parseBoolean(process.env.METRICS_PUBLIC);
-  const metricsPublic = parsedMetricsPublic ?? envMetricsPublic ?? false;
+  const metricsPublic = parsedMetricsPublic ?? envMetricsPublic ?? true;
   const authRequired = requireAuth({ authConfig });
   const taskQueue =
     overrideTaskQueue ||
