@@ -6,6 +6,15 @@ const path = require("node:path");
 
 const { createStateDbStore } = require("../server/lib/stateDb");
 
+function hasNodeSqlite() {
+  try {
+    require("node:sqlite");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function makeTempRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-query-items-"));
   fs.mkdirSync(path.join(root, "content"), { recursive: true });
@@ -71,6 +80,8 @@ function makeInMemoryStore({ itemsState, builtinState }) {
 }
 
 test("state db queryItems preserves dynamic-first ordering and includeDeleted semantics", async () => {
+  if (!hasNodeSqlite()) return;
+
   const rootDir = makeTempRoot();
   const baseStore = makeInMemoryStore({
     itemsState: {
@@ -168,6 +179,8 @@ test("state db queryItems preserves dynamic-first ordering and includeDeleted se
 
 
 test("state db queryItems applies stable tie-break ordering across dynamic and builtin rows", async () => {
+  if (!hasNodeSqlite()) return;
+
   const rootDir = makeTempRoot();
   fs.writeFileSync(
     path.join(rootDir, "animations.json"),

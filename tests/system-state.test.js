@@ -8,6 +8,15 @@ const bcrypt = require("bcryptjs");
 
 const { createApp } = require("../server/app");
 
+function hasNodeSqlite() {
+  try {
+    require("node:sqlite");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function makeTempRoot({ animationsJson } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-test-"));
   fs.writeFileSync(path.join(root, "index.html"), "<!doctype html><title>test</title>");
@@ -160,6 +169,8 @@ test("system storage persists scanRemote flag", async () => {
 });
 
 test("state db sqlite mirrors state writes", async () => {
+  if (!hasNodeSqlite()) return;
+
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();
   const dbPath = path.join(rootDir, "content", "state.sqlite");
