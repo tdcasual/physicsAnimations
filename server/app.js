@@ -200,11 +200,11 @@ function createApp({
       res.status(404).json({ error: "not_found" });
       return;
     }
-    res.sendFile(spaIndexPath);
+    res.sendFile("index.html", { root: spaDistDir });
   }
 
   app.get("/app", sendSpaEntry);
-  app.get("/app/*", sendSpaEntry);
+  app.get(/^\/app\/.*/, sendSpaEntry);
 
   function shouldServeSpaAsDefault() {
     return spaDefaultEntry && fs.existsSync(spaIndexPath);
@@ -212,7 +212,7 @@ function createApp({
 
   app.use("/assets", express.static(path.join(rootDir, "assets")));
   app.use("/animations", express.static(path.join(rootDir, "animations")));
-  app.get("/content/uploads/*", async (req, res, next) => {
+  app.get(/^\/content\/uploads\/.*/, async (req, res, next) => {
     try {
       const key = safeContentKey(req.path, "uploads");
       if (!key) {
@@ -240,7 +240,7 @@ function createApp({
     }
   });
 
-  app.get("/content/thumbnails/*", async (req, res, next) => {
+  app.get(/^\/content\/thumbnails\/.*/, async (req, res, next) => {
     try {
       const key = safeContentKey(req.path, "thumbnails");
       if (!key) {
@@ -261,7 +261,7 @@ function createApp({
   });
 
   app.get("/animations.json", (_req, res) => {
-    res.sendFile(path.join(rootDir, "animations.json"));
+    res.sendFile("animations.json", { root: rootDir });
   });
 
   app.get("/", (req, res) => {
@@ -269,14 +269,14 @@ function createApp({
       sendSpaEntry(req, res);
       return;
     }
-    res.sendFile(path.join(rootDir, "index.html"));
+    res.sendFile("index.html", { root: rootDir });
   });
   app.get("/index.html", (req, res) => {
     if (shouldServeSpaAsDefault()) {
       sendSpaEntry(req, res);
       return;
     }
-    res.sendFile(path.join(rootDir, "index.html"));
+    res.sendFile("index.html", { root: rootDir });
   });
   app.get("/viewer.html", (req, res) => {
     if (shouldServeSpaAsDefault()) {
@@ -303,7 +303,7 @@ function createApp({
       res.redirect(302, "/app");
       return;
     }
-    res.sendFile(path.join(rootDir, "viewer.html"));
+    res.sendFile("viewer.html", { root: rootDir });
   });
 
   app.use((_req, res) => {
