@@ -111,4 +111,41 @@ describe("loadViewerModel", () => {
     expect(model.target).toBe("/content/uploads/upload-1/index.html");
     expect(model.openHref).toBe("/content/uploads/upload-1/index.html");
   });
+
+  it("retries public item fetch without token when token is invalid", async () => {
+    sessionStorage.setItem("pa_admin_token", "stale-token");
+
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      if (url.includes("/api/items/")) {
+        const headers = new Headers(init?.headers || {});
+        if (headers.get("Authorization")) {
+          return jsonResponse({ error: "invalid_token" }, 401);
+        }
+
+        return jsonResponse({
+          item: {
+            id: "public-link",
+            type: "link",
+            src: "https://example.com/public",
+            title: "公开外链",
+            thumbnail: "",
+          },
+        });
+      }
+      return new Response("not_found", { status: 404 });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const model = await loadViewerModel({ id: "public-link" });
+    expect(model.status).toBe("ready");
+    if (model.status !== "ready") return;
+
+    expect(model.target).toBe("https://example.com/public");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const firstCallHeaders = new Headers(fetchMock.mock.calls[0]?.[1]?.headers || {});
+    const secondCallHeaders = new Headers(fetchMock.mock.calls[1]?.[1]?.headers || {});
+    expect(firstCallHeaders.get("Authorization")).toBe("Bearer stale-token");
+    expect(secondCallHeaders.get("Authorization")).toBeNull();
+  });
 });

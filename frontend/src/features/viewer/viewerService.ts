@@ -73,21 +73,30 @@ async function tryFetchItemMeta(id: string): Promise<{
   status: number;
   networkError: boolean;
 }> {
-  const token = getToken();
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-  try {
-    const response = await fetch(`/api/items/${encodeURIComponent(id)}`, {
-      cache: "no-store",
-      headers,
-    });
-    if (!response.ok) {
-      return { item: null, status: response.status, networkError: false };
+  const fetchMeta = async (headers: HeadersInit) => {
+    try {
+      const response = await fetch(`/api/items/${encodeURIComponent(id)}`, {
+        cache: "no-store",
+        headers,
+      });
+      if (!response.ok) {
+        return { item: null, status: response.status, networkError: false };
+      }
+      const data = await response.json().catch(() => null);
+      return { item: data?.item || null, status: response.status, networkError: false };
+    } catch {
+      return { item: null, status: 0, networkError: true };
     }
-    const data = await response.json().catch(() => null);
-    return { item: data?.item || null, status: response.status, networkError: false };
-  } catch {
-    return { item: null, status: 0, networkError: true };
+  };
+
+  const token = getToken();
+  const firstAttempt = await fetchMeta(token ? { Authorization: `Bearer ${token}` } : {});
+
+  if (firstAttempt.status === 401 && token) {
+    return fetchMeta({});
   }
+
+  return firstAttempt;
 }
 
 async function hasBackend(): Promise<boolean> {

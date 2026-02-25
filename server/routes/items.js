@@ -931,7 +931,10 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
       }
 
       if (supportsSqlDynamicQuery && supportsSqlBuiltinQuery) {
-        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicItems.length));
+        const dynamicSlice = loadedDynamicFromSql
+          ? dynamicItems.slice(0, query.pageSize)
+          : dynamicItems.slice(offset, offset + query.pageSize);
+        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicSlice.length));
         const remaining = query.pageSize - dynamicSliceCount;
         const builtinOffset = Math.max(0, offset - dynamicTotal);
 
@@ -949,7 +952,7 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
           const builtinTotal = Number.isFinite(sqlBuiltin?.total) ? sqlBuiltin.total : 0;
           const builtinSlice = Array.isArray(sqlBuiltin?.items) ? sqlBuiltin.items : [];
           const total = dynamicTotal + builtinTotal;
-          const pageItems = [...dynamicItems.slice(0, query.pageSize), ...builtinSlice].map(toApiItem);
+          const pageItems = [...dynamicSlice, ...builtinSlice].map(toApiItem);
 
           res.json({ items: pageItems, page: query.page, pageSize: query.pageSize, total });
           return;
@@ -984,11 +987,14 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
 
       let pageItems = [];
       if (supportsSqlDynamicQuery) {
-        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicItems.length));
+        const dynamicSlice = loadedDynamicFromSql
+          ? dynamicItems.slice(0, query.pageSize)
+          : dynamicItems.slice(offset, offset + query.pageSize);
+        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicSlice.length));
         const remaining = query.pageSize - dynamicSliceCount;
         const builtinOffset = Math.max(0, offset - dynamicTotal);
         const builtinSlice = remaining > 0 ? filteredBuiltin.slice(builtinOffset, builtinOffset + remaining) : [];
-        pageItems = [...dynamicItems.slice(0, query.pageSize), ...builtinSlice].map(toApiItem);
+        pageItems = [...dynamicSlice, ...builtinSlice].map(toApiItem);
       } else {
         let items = [...dynamicItems, ...filteredBuiltin];
         items.sort((a, b) => {
