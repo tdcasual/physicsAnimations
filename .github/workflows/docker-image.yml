@@ -58,7 +58,6 @@ jobs:
           - "smoke:spa-admin"
           - "smoke:spa-admin-write"
           - "smoke:spa-public"
-          - "smoke:spa-legacy-fallback"
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -114,7 +114,7 @@ async function run() {
         pageErrors.push(error?.message || String(error));
       });
 
-      await page.goto(`${baseUrl}/app/`, { waitUntil: "networkidle" });
+      await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
 
       await page.getByRole("banner").getByRole("button", { name: "登录" }).click();
       const loginDialog = page.getByRole("dialog", { name: "管理员登录" });
@@ -124,14 +124,14 @@ async function run() {
 
       await page.getByRole("link", { name: "管理" }).waitFor({ state: "visible", timeout: 10000 });
       await page.getByRole("link", { name: "管理" }).click();
-      await page.waitForURL(/\/app\/admin\/dashboard$/, { timeout: 10000 });
+      await page.waitForURL(/\/admin\/dashboard$/, { timeout: 10000 });
 
       const adminPages = [
-        { nav: "内容", heading: "内容管理", url: /\/app\/admin\/content$/ },
-        { nav: "上传", heading: "上传管理", url: /\/app\/admin\/uploads$/ },
-        { nav: "分类", heading: "分类管理", url: /\/app\/admin\/taxonomy$/ },
-        { nav: "系统", heading: "系统设置", url: /\/app\/admin\/system$/ },
-        { nav: "账号", heading: "账号设置", url: /\/app\/admin\/account$/ },
+        { nav: "内容", heading: "内容管理", url: /\/admin\/content$/ },
+        { nav: "上传", heading: "上传管理", url: /\/admin\/uploads$/ },
+        { nav: "分类", heading: "分类管理", url: /\/admin\/taxonomy$/ },
+        { nav: "系统", heading: "系统设置", url: /\/admin\/system$/ },
+        { nav: "账号", heading: "账号设置", url: /\/admin\/account$/ },
       ];
 
       for (const pageCase of adminPages) {
@@ -141,7 +141,7 @@ async function run() {
       }
 
       await page.getByRole("button", { name: "退出" }).click();
-      await page.waitForURL(/\/app\/$/, { timeout: 10000 });
+      await page.waitForURL(/\/$/, { timeout: 10000 });
       await page.getByRole("button", { name: "登录" }).waitFor({ state: "visible", timeout: 10000 });
       await page.screenshot({ path: screenshotPath, fullPage: false });
     } finally {

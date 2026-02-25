@@ -317,7 +317,7 @@ async function run() {
         pageErrors.push(message);
       });
 
-      await page.goto(`${baseUrl}/app/`, { waitUntil: "networkidle" });
+      await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
       await page.getByRole("navigation", { name: "大类" }).waitFor({ state: "visible", timeout: 10000 });
       await page.getByRole("navigation", { name: "分类" }).waitFor({ state: "visible", timeout: 10000 });
       await page.locator(".catalog-search").waitFor({ state: "visible", timeout: 10000 });
@@ -338,7 +338,7 @@ async function run() {
       }
       await page.screenshot({ path: screenshotCatalogPath, fullPage: false });
 
-      await page.goto(`${baseUrl}/app/viewer/${encodeURIComponent(createdId)}`, { waitUntil: "networkidle" });
+      await page.goto(`${baseUrl}/viewer/${encodeURIComponent(createdId)}`, { waitUntil: "networkidle" });
       await page.getByRole("link", { name: "打开原页面" }).waitFor({ state: "visible", timeout: 10000 });
       await page.getByText(smokeTitle).first().waitFor({ state: "visible", timeout: 10000 });
       const viewerFrame = page.locator("iframe.viewer-frame");

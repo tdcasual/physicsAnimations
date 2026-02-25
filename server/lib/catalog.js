@@ -93,7 +93,7 @@ function loadBuiltinCatalog({
         title: itemTitle,
         description,
         order: 0,
-        href: `viewer.html?id=${encodeURIComponent(file)}`,
+        href: `/viewer/${encodeURIComponent(file)}`,
         src: `animations/${file}`,
         thumbnail,
         published: true,
@@ -208,7 +208,7 @@ async function loadCatalog({
 
     const category = ensureCategory(categories, { id: item.categoryId, groupId: DEFAULT_GROUP_ID });
 
-    const href = `viewer.html?id=${encodeURIComponent(item.id)}`;
+    const href = `/viewer/${encodeURIComponent(item.id)}`;
     const src =
       item.type === "link" ? safeText(item.url || "") : safeText(item.path || "");
 

@@ -12,7 +12,7 @@ afterEach(() => {
 
 describe("admin route guard", () => {
   it("redirects unauthenticated users to /login", async () => {
-    const router = createAppRouter({ history: createMemoryHistory("/app/") });
+    const router = createAppRouter({ history: createMemoryHistory("/") });
     await router.push("/admin/dashboard");
     await router.isReady();
 
@@ -29,7 +29,7 @@ describe("admin route guard", () => {
       }),
     ) as typeof fetch;
 
-    const router = createAppRouter({ history: createMemoryHistory("/app/") });
+    const router = createAppRouter({ history: createMemoryHistory("/") });
     await router.push("/admin/dashboard");
     await router.isReady();
 
@@ -45,7 +45,7 @@ describe("admin route guard", () => {
       }),
     ) as typeof fetch;
 
-    const router = createAppRouter({ history: createMemoryHistory("/app/") });
+    const router = createAppRouter({ history: createMemoryHistory("/") });
     await router.push("/admin/dashboard");
     await router.isReady();
 

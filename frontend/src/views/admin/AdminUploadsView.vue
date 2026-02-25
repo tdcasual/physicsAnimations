@@ -68,7 +68,7 @@ const categoryOptions = computed(() => {
 });
 
 function viewerHref(id: string): string {
-  const base = import.meta.env.BASE_URL || "/app/";
+  const base = import.meta.env.BASE_URL || "/";
   return `${base.replace(/\/+$/, "/")}viewer/${encodeURIComponent(id)}`;
 }
 

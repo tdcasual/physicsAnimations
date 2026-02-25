@@ -155,7 +155,7 @@ async function run() {
         void dialog.dismiss();
       });
 
-      await page.goto(`${baseUrl}/app/`, { waitUntil: "networkidle" });
+      await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
 
       await page.getByRole("banner").getByRole("button", { name: "登录" }).click();
       const loginDialog = page.getByRole("dialog", { name: "管理员登录" });
@@ -167,10 +167,10 @@ async function run() {
       authToken = await page.evaluate(() => sessionStorage.getItem("pa_admin_token") || "");
 
       await page.getByRole("link", { name: "管理" }).click();
-      await page.waitForURL(/\/app\/admin\/dashboard$/, { timeout: 10000 });
+      await page.waitForURL(/\/admin\/dashboard$/, { timeout: 10000 });
 
       await page.getByRole("link", { name: "内容" }).click();
-      await page.waitForURL(/\/app\/admin\/content$/, { timeout: 10000 });
+      await page.waitForURL(/\/admin\/content$/, { timeout: 10000 });
       await page.getByRole("heading", { name: "内容管理" }).waitFor({ state: "visible", timeout: 10000 });
 
       const addPanel = page.locator(".admin-panel", {

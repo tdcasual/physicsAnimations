@@ -8,12 +8,9 @@ const { createApp } = require("../server/app");
 
 function makeTempRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-spa-test-"));
-  fs.mkdirSync(path.join(root, "assets"), { recursive: true });
   fs.mkdirSync(path.join(root, "animations"), { recursive: true });
   fs.mkdirSync(path.join(root, "content"), { recursive: true });
   fs.writeFileSync(path.join(root, "animations.json"), "{}");
-  fs.writeFileSync(path.join(root, "index.html"), "<!doctype html><title>legacy</title>");
-  fs.writeFileSync(path.join(root, "viewer.html"), "<!doctype html><title>viewer</title>");
   return root;
 }
 
@@ -34,129 +31,82 @@ async function stopServer(server) {
   await new Promise((resolve) => server.close(resolve));
 }
 
-test("/app routes serve SPA entry and static assets", async () => {
+test("root routes serve SPA entry and static assets", async () => {
   const rootDir = makeTempRoot();
   const spaDist = path.join(rootDir, "frontend", "dist");
   fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
-  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>new-spa</title>");
+  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>root-spa</title>");
   fs.writeFileSync(path.join(spaDist, "assets", "app.js"), "console.log('ok');");
 
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
-    const entry = await fetch(`${baseUrl}/app`);
+    const entry = await fetch(`${baseUrl}/`);
     assert.equal(entry.status, 200);
-    assert.match(await entry.text(), /new-spa/);
+    assert.match(await entry.text(), /root-spa/);
 
-    const nested = await fetch(`${baseUrl}/app/viewer/abc`);
+    const nested = await fetch(`${baseUrl}/viewer/abc`);
     assert.equal(nested.status, 200);
-    assert.match(await nested.text(), /new-spa/);
+    assert.match(await nested.text(), /root-spa/);
 
-    const asset = await fetch(`${baseUrl}/app/assets/app.js`);
+    const admin = await fetch(`${baseUrl}/admin/dashboard`);
+    assert.equal(admin.status, 200);
+    assert.match(await admin.text(), /root-spa/);
+
+    const asset = await fetch(`${baseUrl}/assets/app.js`);
     assert.equal(asset.status, 200);
     assert.equal(await asset.text(), "console.log('ok');");
+
+    const apiHealth = await fetch(`${baseUrl}/api/health`);
+    assert.equal(apiHealth.status, 200);
+    const health = await apiHealth.json();
+    assert.equal(health.ok, true);
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
 
-test("spa default entry serves / and rewrites legacy viewer path", async () => {
+test("legacy frontend entry points return not_found", async () => {
   const rootDir = makeTempRoot();
   const spaDist = path.join(rootDir, "frontend", "dist");
   fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
-  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>new-default</title>");
-
-  const app = createApp({ rootDir, spaDefaultEntry: true });
-  const { server, baseUrl } = await startServer(app);
-  try {
-    const home = await fetch(`${baseUrl}/`);
-    assert.equal(home.status, 200);
-    assert.match(await home.text(), /new-default/);
-
-    const index = await fetch(`${baseUrl}/index.html`);
-    assert.equal(index.status, 200);
-    assert.match(await index.text(), /new-default/);
-
-    const legacyViewer = await fetch(`${baseUrl}/viewer.html?id=demo-1`, { redirect: "manual" });
-    assert.equal(legacyViewer.status, 302);
-    assert.equal(legacyViewer.headers.get("location"), "/app/viewer/demo-1");
-
-    const srcOnly = await fetch(
-      `${baseUrl}/viewer.html?src=${encodeURIComponent("animations/demo.html")}&from=legacy`,
-      { redirect: "manual" },
-    );
-    assert.equal(srcOnly.status, 302);
-    const redirectTarget = new URL(String(srcOnly.headers.get("location") || ""), "http://localhost");
-    assert.equal(redirectTarget.pathname, "/app/viewer");
-    assert.equal(redirectTarget.searchParams.get("src"), "animations/demo.html");
-    assert.equal(redirectTarget.searchParams.get("from"), "legacy");
-  } finally {
-    await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
-  }
-});
-
-test("spa defaults to serving / from SPA dist when available", async () => {
-  const rootDir = makeTempRoot();
-  const spaDist = path.join(rootDir, "frontend", "dist");
-  fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
-  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>new-default-auto</title>");
+  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>cutover</title>");
+  fs.writeFileSync(path.join(spaDist, "assets", "main.js"), "console.log('main');");
 
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
-    const home = await fetch(`${baseUrl}/`);
-    assert.equal(home.status, 200);
-    assert.match(await home.text(), /new-default-auto/);
-
-    const legacyViewer = await fetch(`${baseUrl}/viewer.html?id=demo-2`, { redirect: "manual" });
-    assert.equal(legacyViewer.status, 302);
-    assert.equal(legacyViewer.headers.get("location"), "/app/viewer/demo-2");
+    const urls = ["/index.html", "/viewer.html", "/app", "/app/", "/app/viewer/demo"];
+    for (const urlPath of urls) {
+      const response = await fetch(`${baseUrl}${urlPath}`);
+      assert.equal(response.status, 404, `${urlPath} should be 404`);
+      const payload = await response.json();
+      assert.equal(payload.error, "not_found", `${urlPath} should return not_found`);
+    }
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
 
-test("spa default entry falls back to legacy pages when spa dist is missing", async () => {
+test("returns service_unavailable when SPA dist is missing", async () => {
   const rootDir = makeTempRoot();
-  const app = createApp({ rootDir, spaDefaultEntry: true });
+  const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
     const home = await fetch(`${baseUrl}/`);
-    assert.equal(home.status, 200);
-    assert.match(await home.text(), /legacy/);
+    assert.equal(home.status, 503);
+    assert.deepEqual(await home.json(), { error: "service_unavailable" });
 
-    const viewer = await fetch(`${baseUrl}/viewer.html`);
-    assert.equal(viewer.status, 200);
-    assert.match(await viewer.text(), /viewer/);
-  } finally {
-    await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
-  }
-});
+    const viewerRoute = await fetch(`${baseUrl}/viewer/demo-3`);
+    assert.equal(viewerRoute.status, 503);
+    assert.deepEqual(await viewerRoute.json(), { error: "service_unavailable" });
 
-test("spa default entry can be disabled explicitly even when dist exists", async () => {
-  const rootDir = makeTempRoot();
-  const spaDist = path.join(rootDir, "frontend", "dist");
-  fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
-  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>new-dist</title>");
-
-  const app = createApp({ rootDir, spaDefaultEntry: false });
-  const { server, baseUrl } = await startServer(app);
-  try {
-    const home = await fetch(`${baseUrl}/`);
-    assert.equal(home.status, 200);
-    assert.match(await home.text(), /legacy/);
-
-    const viewer = await fetch(`${baseUrl}/viewer.html?id=demo-3`, { redirect: "manual" });
-    assert.equal(viewer.status, 200);
-    assert.match(await viewer.text(), /viewer/);
-
-    const appEntry = await fetch(`${baseUrl}/app`);
-    assert.equal(appEntry.status, 200);
-    assert.match(await appEntry.text(), /new-dist/);
+    const apiHealth = await fetch(`${baseUrl}/api/health`);
+    assert.equal(apiHealth.status, 200);
+    const health = await apiHealth.json();
+    assert.equal(health.ok, true);
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

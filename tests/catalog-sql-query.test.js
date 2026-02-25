@@ -181,12 +181,19 @@ test("/api/catalog uses SQL-backed dynamic loader when available", async () => {
     assert.equal(mechanicsIds.has("dyn_mechanics_public"), true);
     assert.equal(mechanicsIds.has("dyn_mechanics_hidden"), false);
     assert.equal(mechanicsIds.has("dyn_mechanics_unpublished"), false);
+    const builtIn = mechanicsItems.find((item) => item.id === "mechanics/demo.html");
+    assert.equal(builtIn?.href, "/viewer/mechanics%2Fdemo.html");
+    const dynamicPublic = mechanicsItems.find((item) => item.id === "dyn_mechanics_public");
+    assert.equal(dynamicPublic?.href, "/viewer/dyn_mechanics_public");
 
     assert.ok(data?.groups?.math?.categories?.algebra);
     assert.equal(data.groups.math.title, "数学");
     assert.equal(data.groups.math.categories.algebra.title, "代数");
-    const algebraIds = new Set((data.groups.math.categories.algebra.items || []).map((item) => item.id));
+    const algebraItems = data.groups.math.categories.algebra.items || [];
+    const algebraIds = new Set(algebraItems.map((item) => item.id));
     assert.equal(algebraIds.has("dyn_algebra"), true);
+    const dynamicAlgebra = algebraItems.find((item) => item.id === "dyn_algebra");
+    assert.equal(dynamicAlgebra?.href, "/viewer/dyn_algebra");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

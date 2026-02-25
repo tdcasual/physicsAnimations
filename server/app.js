@@ -38,25 +38,6 @@ function parseBoolean(value, fallback = undefined) {
   return fallback;
 }
 
-function getFirstQueryValue(value) {
-  if (Array.isArray(value)) {
-    return getFirstQueryValue(value[0]);
-  }
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return "";
-}
-
-function appendQueryValue(params, key, value) {
-  if (Array.isArray(value)) {
-    value.forEach((entry) => appendQueryValue(params, key, entry));
-    return;
-  }
-  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
-    params.append(key, String(value));
-  }
-}
-
 function guessContentType(filePath) {
   const ext = path.extname(String(filePath || "")).toLowerCase();
   const map = {
@@ -95,11 +76,23 @@ function safeContentKey(reqPath, prefix) {
   return normalized;
 }
 
+function shouldServeSpaRoute(reqPath) {
+  const p = String(reqPath || "");
+  if (!p.startsWith("/")) return false;
+  if (p.startsWith("/api/") || p === "/api") return false;
+  if (p.startsWith("/assets/") || p === "/assets") return false;
+  if (p.startsWith("/animations/") || p === "/animations") return false;
+  if (p.startsWith("/content/") || p === "/content") return false;
+  if (p === "/animations.json") return false;
+  if (p === "/index.html" || p === "/viewer.html") return false;
+  if (p === "/app" || p.startsWith("/app/")) return false;
+  return true;
+}
+
 function createApp({
   rootDir,
   store: overrideStore,
   authConfig: overrideAuthConfig,
-  spaDefaultEntry: overrideSpaDefaultEntry,
   metricsPublic: overrideMetricsPublic,
   stateDbMode: overrideStateDbMode,
   stateDbPath: overrideStateDbPath,
@@ -129,7 +122,6 @@ function createApp({
       stateFile: path.join(rootDir, "content", "tasks.json"),
     });
   const systemState = loadSystemState({ rootDir });
-  const spaDefaultEntry = parseBoolean(overrideSpaDefaultEntry ?? process.env.SPA_DEFAULT_ENTRY, true);
   const storeManager = overrideStore
     ? { store: overrideStore, setConfig: () => {} }
     : createStoreManager({ rootDir, config: systemState });
@@ -193,24 +185,16 @@ function createApp({
   const spaAssetsDir = path.join(spaDistDir, "assets");
   const spaIndexPath = path.join(spaDistDir, "index.html");
 
-  app.use("/app/assets", express.static(spaAssetsDir, { fallthrough: false }));
+  app.use("/assets", express.static(spaAssetsDir));
 
   function sendSpaEntry(_req, res) {
     if (!fs.existsSync(spaIndexPath)) {
-      res.status(404).json({ error: "not_found" });
+      res.status(503).json({ error: "service_unavailable" });
       return;
     }
     res.sendFile("index.html", { root: spaDistDir });
   }
 
-  app.get("/app", sendSpaEntry);
-  app.get(/^\/app\/.*/, sendSpaEntry);
-
-  function shouldServeSpaAsDefault() {
-    return spaDefaultEntry && fs.existsSync(spaIndexPath);
-  }
-
-  app.use("/assets", express.static(path.join(rootDir, "assets")));
   app.use("/animations", express.static(path.join(rootDir, "animations")));
   app.get(/^\/content\/uploads\/.*/, async (req, res, next) => {
     try {
@@ -264,46 +248,12 @@ function createApp({
     res.sendFile("animations.json", { root: rootDir });
   });
 
-  app.get("/", (req, res) => {
-    if (shouldServeSpaAsDefault()) {
+  app.get(/^\/.*/, (req, res, next) => {
+    if (shouldServeSpaRoute(req.path)) {
       sendSpaEntry(req, res);
       return;
     }
-    res.sendFile("index.html", { root: rootDir });
-  });
-  app.get("/index.html", (req, res) => {
-    if (shouldServeSpaAsDefault()) {
-      sendSpaEntry(req, res);
-      return;
-    }
-    res.sendFile("index.html", { root: rootDir });
-  });
-  app.get("/viewer.html", (req, res) => {
-    if (shouldServeSpaAsDefault()) {
-      const id = getFirstQueryValue(req.query.id || req.query.builtin).trim();
-      const search = new URLSearchParams();
-      Object.entries(req.query || {}).forEach(([key, value]) => {
-        if (key === "id" || key === "builtin") return;
-        appendQueryValue(search, key, value);
-      });
-      const query = search.toString();
-
-      if (id) {
-        const target = `/app/viewer/${encodeURIComponent(id)}`;
-        res.redirect(302, query ? `${target}?${query}` : target);
-        return;
-      }
-
-      const src = getFirstQueryValue(req.query.src).trim();
-      if (src) {
-        res.redirect(302, query ? `/app/viewer?${query}` : "/app/viewer");
-        return;
-      }
-
-      res.redirect(302, "/app");
-      return;
-    }
-    res.sendFile("viewer.html", { root: rootDir });
+    next();
   });
 
   app.use((_req, res) => {
