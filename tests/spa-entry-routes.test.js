@@ -112,3 +112,21 @@ test("returns service_unavailable when SPA dist is missing", async () => {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("does not serve SPA entry for extension-like root paths", async () => {
+  const rootDir = makeTempRoot();
+  const spaDist = path.join(rootDir, "frontend", "dist");
+  fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
+  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>root-spa</title>");
+
+  const app = createApp({ rootDir });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const robots = await fetch(`${baseUrl}/robots.txt`);
+    assert.equal(robots.status, 404);
+    assert.deepEqual(await robots.json(), { error: "not_found" });
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

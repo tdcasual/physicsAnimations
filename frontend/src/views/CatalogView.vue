@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import { loadCatalogData } from "../features/catalog/catalogService";
+import { getCatalogItemHref, normalizePublicUrl } from "../features/catalog/catalogLink";
 import { computeCatalogView } from "../features/catalog/catalogState";
 import type { CatalogData, CatalogItem } from "../features/catalog/types";
 
@@ -57,17 +58,8 @@ const overflowGroups = computed(() => view.value.groups.slice(MAX_GROUP_TABS));
 const directCategories = computed(() => view.value.categories.slice(0, MAX_CATEGORY_TABS));
 const overflowCategories = computed(() => view.value.categories.slice(MAX_CATEGORY_TABS));
 
-function normalizePublicUrl(raw: string): string {
-  const value = String(raw || "").trim();
-  if (!value) return "#";
-  if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return value;
-  if (value.startsWith("//")) return value;
-  if (value.startsWith("/")) return value;
-  return `/${value.replace(/^\.?\//, "")}`;
-}
-
 function getItemHref(item: CatalogItem): string {
-  return normalizePublicUrl(item.src || item.href || "#");
+  return getCatalogItemHref(item);
 }
 
 function selectGroup(groupId: string) {
