@@ -203,7 +203,7 @@ test("group and category CRUD works", async () => {
   }
 });
 
-test("legacy categories.json v1 migrates to v2 with physics groupId", async () => {
+test("legacy categories.json v1 is ignored and defaults are used", async () => {
   const rootDir = makeTempRoot({
     animationsJson: {
       mechanics: { title: "力学", items: [{ file: "mechanics/a.html", title: "A", description: "", thumbnail: "" }] },
@@ -242,12 +242,11 @@ test("legacy categories.json v1 migrates to v2 with physics groupId", async () =
     const mechanics = data.categories.find((c) => c.id === "mechanics");
     assert.ok(mechanics);
     assert.equal(mechanics.groupId, "physics");
-    assert.equal(mechanics.title, "力学（自定义）");
-    assert.equal(mechanics.order, 9);
-    assert.equal(mechanics.hidden, true);
+    assert.equal(mechanics.title, "力学");
+    assert.equal(mechanics.order, 0);
+    assert.equal(mechanics.hidden, false);
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
-
