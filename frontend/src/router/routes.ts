@@ -18,11 +18,6 @@ export const appRoutes: RouteRecordRaw[] = [
     component: CatalogView,
   },
   {
-    path: "/viewer",
-    name: "viewer-query",
-    component: ViewerView,
-  },
-  {
     path: "/viewer/:id",
     name: "viewer",
     component: ViewerView,

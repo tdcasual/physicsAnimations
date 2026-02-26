@@ -28,14 +28,9 @@ const hintText = computed(() => {
 
 function getRouteParams() {
   const idParam = String(route.params.id || "").trim();
-  const idQuery = String(route.query.id || "").trim();
-  const builtin = String(route.query.builtin || "").trim();
-  const src = String(route.query.src || "").trim();
 
   return {
-    id: idParam || idQuery || builtin,
-    builtin,
-    src,
+    id: idParam,
   };
 }
 

@@ -5,10 +5,14 @@ describe("frontend route map", () => {
   it("contains required top-level route entries", () => {
     const topLevelPaths = appRoutes.map((route) => route.path);
     expect(topLevelPaths).toContain("/");
-    expect(topLevelPaths).toContain("/viewer");
     expect(topLevelPaths).toContain("/viewer/:id");
     expect(topLevelPaths).toContain("/login");
     expect(topLevelPaths).toContain("/admin");
+  });
+
+  it("does not keep legacy query-style viewer route", () => {
+    const hasLegacyViewerQueryRoute = appRoutes.some((route) => route.name === "viewer-query");
+    expect(hasLegacyViewerQueryRoute).toBe(false);
   });
 
   it("provides admin children routes", () => {
