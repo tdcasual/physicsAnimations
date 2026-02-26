@@ -51,3 +51,17 @@ npm run smoke:spa-public
 
 2. 访问旧链接（如 `/viewer.html?id=...`）报 `404`  
 这是硬切换后的预期行为，请改用 `/viewer/:id` 路由。
+
+## 前端 API 契约边界（Extensibility Phase 1）
+
+管理端 API 调用层已增加契约解析与类型边界：
+
+- `frontend/src/features/admin/adminTypes.ts`
+- `frontend/src/features/admin/adminContracts.ts`
+- `frontend/src/features/admin/adminApi.ts`
+
+当前约束：
+
+- `listAdminItems` 统一通过 `parseAdminItemsResponse` 返回稳定结构
+- 非 2xx 响应统一通过 `toApiError` 转为带 `status/code/data` 的错误对象
+- 该改造不改变后端协议，只收敛前端类型与错误处理语义
