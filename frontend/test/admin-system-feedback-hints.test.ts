@@ -11,7 +11,7 @@ describe("admin system disable reason hints", () => {
     const source = read("src/views/admin/AdminSystemView.vue");
     expect(source).toMatch(/const\s+saveDisabledHint\s*=\s*computed\(/);
     expect(source).toMatch(/const\s+continueDisabledHint\s*=\s*computed\(/);
-    expect(source).toMatch(/class="save-disabled-hint"/);
-    expect(source).toMatch(/class="continue-disabled-hint"/);
+    expect(source).toMatch(/class="[^"]*save-disabled-hint/);
+    expect(source).toMatch(/class="[^"]*continue-disabled-hint/);
   });
 });

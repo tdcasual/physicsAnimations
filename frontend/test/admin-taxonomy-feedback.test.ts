@@ -10,7 +10,7 @@ describe("admin taxonomy action feedback", () => {
   it("provides local action feedback region for right-panel operations", () => {
     const source = read("src/views/admin/AdminTaxonomyView.vue");
     expect(source).toMatch(/const\s+actionFeedback\s*=\s*ref\(""\)/);
-    expect(source).toMatch(/class="action-feedback"/);
+    expect(source).toMatch(/class="[^"]*action-feedback/);
     expect(source).toMatch(/actionFeedbackError/);
   });
 });

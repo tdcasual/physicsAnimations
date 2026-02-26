@@ -577,7 +577,7 @@ onMounted(async () => {
     <div class="meta-line">{{ taxonomyMetaText }}</div>
 
     <div class="layout-grid">
-      <div class="panel">
+      <div class="panel admin-card">
         <h3>大类 / 分类列表</h3>
 
         <div v-if="loading" class="empty">加载中...</div>
@@ -636,7 +636,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel admin-card">
         <h3>新增大类</h3>
         <div class="form-grid">
           <label class="field">
@@ -664,12 +664,12 @@ onMounted(async () => {
           </details>
         </div>
 
-        <div class="actions">
+        <div class="actions admin-actions">
           <button type="button" class="btn btn-ghost" :disabled="saving" @click="resetCreateGroupForm">重置</button>
           <button type="button" class="btn btn-primary" :disabled="saving" @click="createGroupEntry">创建</button>
         </div>
 
-        <div v-if="actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError, success: !actionFeedbackError }">
+        <div v-if="actionFeedback" class="action-feedback admin-feedback" :class="{ error: actionFeedbackError, success: !actionFeedbackError }">
           {{ actionFeedback }}
         </div>
 
@@ -702,7 +702,7 @@ onMounted(async () => {
             </details>
           </div>
 
-          <div class="actions">
+          <div class="actions admin-actions">
             <button
               type="button"
               class="btn"
@@ -742,7 +742,7 @@ onMounted(async () => {
             </details>
           </div>
 
-          <div class="actions">
+          <div class="actions admin-actions">
             <button type="button" class="btn btn-ghost" :disabled="saving" @click="resetCreateCategoryForm">重置</button>
             <button type="button" class="btn btn-primary" :disabled="saving" @click="createCategoryUnderGroup">创建</button>
           </div>
@@ -785,7 +785,7 @@ onMounted(async () => {
             </details>
           </div>
 
-          <div class="actions">
+          <div class="actions admin-actions">
             <button type="button" class="btn" :class="canDeleteSelectedCategory ? 'btn-danger' : 'btn-ghost'" :disabled="saving" @click="resetOrDeleteCategory">
               {{ canDeleteSelectedCategory ? "删除" : "重置" }}
             </button>

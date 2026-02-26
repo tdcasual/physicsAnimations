@@ -312,10 +312,10 @@ onBeforeUnmount(() => {
   <section class="admin-system-view">
     <h2>系统设置向导</h2>
 
-    <div v-if="errorText" class="error-text">{{ errorText }}</div>
-    <div v-if="successText" class="success-text">{{ successText }}</div>
+    <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
+    <div v-if="successText" class="success-text admin-feedback success">{{ successText }}</div>
 
-    <div class="panel">
+    <div class="panel admin-card">
       <h3>当前状态</h3>
       <div v-if="loading" class="empty">加载中...</div>
       <div v-else-if="storage" class="status-grid">
@@ -330,7 +330,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel admin-card">
       <h3>配置流程</h3>
       <ol class="step-list">
         <li v-for="item in steps" :key="item.id" class="step-item">
@@ -366,7 +366,7 @@ onBeforeUnmount(() => {
           </label>
         </div>
 
-        <div class="actions">
+        <div class="actions admin-actions">
           <button type="button" class="btn btn-primary" :disabled="loading" @click="nextFromMode">下一步</button>
         </div>
       </div>
@@ -428,7 +428,7 @@ onBeforeUnmount(() => {
 
         <div v-else class="empty">local 模式无需 WebDAV 配置，下一步可直接保存。</div>
 
-        <div class="actions">
+        <div class="actions admin-actions">
           <button type="button" class="btn btn-ghost" @click="goStep(1)">上一步</button>
           <button type="button" class="btn btn-primary" @click="nextFromConnection">下一步</button>
         </div>
@@ -447,10 +447,10 @@ onBeforeUnmount(() => {
 
         <div v-if="validateText" class="validate-text" :class="{ ok: validateOk }">{{ validateText }}</div>
         <div v-if="hasUnsavedChanges" class="pending-text">存在未保存改动。</div>
-        <div v-if="saveDisabledHint" class="save-disabled-hint">{{ saveDisabledHint }}</div>
-        <div v-if="continueDisabledHint" class="continue-disabled-hint">{{ continueDisabledHint }}</div>
+        <div v-if="saveDisabledHint" class="save-disabled-hint admin-feedback">{{ saveDisabledHint }}</div>
+        <div v-if="continueDisabledHint" class="continue-disabled-hint admin-feedback">{{ continueDisabledHint }}</div>
 
-        <div class="actions">
+        <div class="actions admin-actions">
           <button type="button" class="btn btn-ghost" @click="goStep(2)">上一步</button>
           <button
             v-if="remoteMode"
@@ -480,7 +480,7 @@ onBeforeUnmount(() => {
 
         <div v-else class="empty">local 模式已生效，无需远端同步。</div>
 
-        <div class="actions">
+        <div class="actions admin-actions">
           <button type="button" class="btn btn-ghost" @click="goStep(3)">上一步</button>
           <button type="button" class="btn btn-ghost" @click="goStep(1)">重新配置</button>
         </div>

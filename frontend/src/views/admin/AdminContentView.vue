@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
     <h2>内容管理</h2>
 
     <div class="workspace-grid">
-      <div class="admin-panel list-panel">
+      <div class="admin-panel list-panel admin-card">
         <h3>添加网页链接</h3>
         <div class="form-grid">
           <label class="field">
@@ -290,7 +290,7 @@ onBeforeUnmount(() => {
           <textarea v-model="linkDescription" class="field-input field-textarea" />
         </label>
 
-        <div class="actions">
+        <div class="actions admin-actions">
           <button type="button" class="btn btn-primary" :disabled="saving" @click="submitLink">添加</button>
         </div>
 
@@ -361,13 +361,13 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <aside class="admin-panel editor-panel">
+      <aside class="admin-panel editor-panel admin-card">
         <div class="editor-header">
           <h3>编辑面板</h3>
           <div class="meta" v-if="selectedItem">{{ selectedItem.id }}</div>
         </div>
 
-        <div v-if="actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError, success: !actionFeedbackError }">
+        <div v-if="actionFeedback" class="action-feedback admin-feedback" :class="{ error: actionFeedbackError, success: !actionFeedbackError }">
           {{ actionFeedback }}
         </div>
 
@@ -413,7 +413,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="editor-footer">
-            <div class="actions">
+            <div class="actions admin-actions">
               <button type="button" class="btn btn-ghost" @click="resetEdit">取消</button>
               <button
                 type="button"
