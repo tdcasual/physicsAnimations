@@ -9,4 +9,11 @@ describe("app shell copy", () => {
 
     expect(source.includes("迁移中")).toBe(false);
   });
+
+  it("removes legacy brand subtitle style after subtitle copy cleanup", () => {
+    const stylesPath = path.resolve(process.cwd(), "src", "styles.css");
+    const css = fs.readFileSync(stylesPath, "utf8");
+
+    expect(css.includes(".brand-subtitle")).toBe(false);
+  });
 });
