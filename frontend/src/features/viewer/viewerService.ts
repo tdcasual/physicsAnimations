@@ -2,8 +2,6 @@ import { getToken } from "../auth/authApi";
 
 interface ViewerParams {
   id?: string;
-  builtin?: string;
-  src?: string;
 }
 
 interface ReadyViewerModel {
@@ -109,9 +107,7 @@ async function hasBackend(): Promise<boolean> {
 }
 
 export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel> {
-  const builtin = String(params.builtin || "").trim();
-  const id = String(params.id || builtin || "").trim();
-  const src = String(params.src || "").trim();
+  const id = String(params.id || "").trim();
 
   let item: any = null;
   let screenshotUrl = "";
@@ -149,14 +145,12 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
     };
   }
 
-  if (!target) target = src;
-
   if (!target) {
     return {
       status: "error",
       code: "missing_params",
       title: "缺少参数",
-      message: "缺少参数：builtin / src",
+      message: "缺少参数：id",
     };
   }
 

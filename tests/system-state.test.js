@@ -19,8 +19,6 @@ function hasNodeSqlite() {
 
 function makeTempRoot({ animationsJson } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-test-"));
-  fs.writeFileSync(path.join(root, "index.html"), "<!doctype html><title>test</title>");
-  fs.writeFileSync(path.join(root, "viewer.html"), "<!doctype html><title>viewer</title>");
   fs.mkdirSync(path.join(root, "assets"), { recursive: true });
   fs.mkdirSync(path.join(root, "animations"), { recursive: true });
   fs.mkdirSync(path.join(root, "content"), { recursive: true });
@@ -162,6 +160,83 @@ test("system storage persists scanRemote flag", async () => {
     assert.equal(system?.storage?.stateDb?.enabled, false);
     assert.equal(typeof system?.taskQueue, "object");
     assert.equal(typeof system?.taskQueue?.concurrency, "number");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("system storage validate requires webdav url", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+    const res = await fetch(`${baseUrl}/api/system/storage/validate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        webdav: { url: "  " },
+      }),
+    });
+
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data?.error, "webdav_missing_url");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("system storage local mode does not trigger sync", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const preset = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        webdav: { url: "https://dav.example.com/root" },
+        sync: false,
+      }),
+    });
+    assert.equal(preset.status, 200);
+
+    const syncRes = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        sync: true,
+      }),
+    });
+    assert.equal(syncRes.status, 200);
+    const syncData = await syncRes.json();
+    assert.equal(syncData?.sync, null);
+
+    const systemRes = await fetch(`${baseUrl}/api/system`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(systemRes.status, 200);
+    const systemData = await systemRes.json();
+    assert.equal(systemData?.storage?.mode, "local");
+    assert.equal(systemData?.storage?.lastSyncedAt || "", "");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

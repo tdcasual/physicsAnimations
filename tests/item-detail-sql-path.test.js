@@ -9,8 +9,6 @@ const { createApp } = require("../server/app");
 
 function makeTempRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-item-detail-sql-"));
-  fs.writeFileSync(path.join(root, "index.html"), "<!doctype html><title>test</title>");
-  fs.writeFileSync(path.join(root, "viewer.html"), "<!doctype html><title>viewer</title>");
   fs.mkdirSync(path.join(root, "assets"), { recursive: true });
   fs.mkdirSync(path.join(root, "animations"), { recursive: true });
   fs.mkdirSync(path.join(root, "content"), { recursive: true });

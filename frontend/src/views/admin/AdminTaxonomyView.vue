@@ -27,6 +27,8 @@ type CategoryRow = TaxonomyCategory;
 const loading = ref(false);
 const saving = ref(false);
 const errorText = ref("");
+const actionFeedback = ref("");
+const actionFeedbackError = ref(false);
 
 const groups = ref<GroupRow[]>([]);
 const categories = ref<CategoryRow[]>([]);
@@ -101,6 +103,11 @@ const taxonomyMetaText = computed(() => {
 });
 
 const canDeleteSelectedCategory = computed(() => Number(selectedCategory.value?.count || 0) === 0);
+
+function setActionFeedback(text: string, isError = false) {
+  actionFeedback.value = text;
+  actionFeedbackError.value = isError;
+}
 
 function toUniqueIds(ids: string[]): string[] {
   return [...new Set((ids || []).map((id) => String(id || "").trim()).filter(Boolean))];
@@ -217,6 +224,7 @@ function selectGroup(groupId: string, options: { focusCreate?: boolean } = {}) {
   selection.value = { kind: "group", id: groupId };
   setGroupOpen(groupId, true);
   syncFormsFromSelection();
+  setActionFeedback("");
 
   if (options.focusCreate) {
     void nextTick(() => {
@@ -231,6 +239,7 @@ function selectCategory(categoryId: string) {
   selection.value = { kind: "category", id: categoryId };
   setGroupOpen(category.groupId, true);
   syncFormsFromSelection();
+  setActionFeedback("");
 }
 
 function isGroupOpen(groupId: string): boolean {
@@ -302,12 +311,13 @@ async function saveGroup() {
   if (!group) return;
 
   if (!groupFormTitle.value.trim()) {
-    errorText.value = "请填写大类标题。";
+    setActionFeedback("请填写大类标题。", true);
     return;
   }
 
   saving.value = true;
   errorText.value = "";
+  setActionFeedback("");
 
   try {
     await updateGroup(group.id, {
@@ -317,9 +327,11 @@ async function saveGroup() {
     });
     await reloadTaxonomy();
     selectGroup(group.id);
+    setActionFeedback("大类已保存。");
   } catch (err) {
     const e = err as { status?: number };
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "保存大类失败。";
+    setActionFeedback(errorText.value, true);
   } finally {
     saving.value = false;
   }
@@ -327,16 +339,17 @@ async function saveGroup() {
 
 async function createGroupEntry() {
   if (!createGroupId.value.trim()) {
-    errorText.value = "请填写大类 ID。";
+    setActionFeedback("请填写大类 ID。", true);
     return;
   }
   if (!createGroupTitle.value.trim()) {
-    errorText.value = "请填写大类标题。";
+    setActionFeedback("请填写大类标题。", true);
     return;
   }
 
   saving.value = true;
   errorText.value = "";
+  setActionFeedback("");
 
   try {
     const id = createGroupId.value.trim();
@@ -349,13 +362,16 @@ async function createGroupEntry() {
     resetCreateGroupForm();
     await reloadTaxonomy();
     selectGroup(id);
+    setActionFeedback("大类已创建。");
   } catch (err) {
     const e = err as { status?: number };
     if (e?.status === 409) {
       errorText.value = "该大类 ID 已存在。";
+      setActionFeedback(errorText.value, true);
       return;
     }
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "新增大类失败。";
+    setActionFeedback(errorText.value, true);
   } finally {
     saving.value = false;
   }
@@ -373,17 +389,21 @@ async function resetOrDeleteGroup() {
 
   saving.value = true;
   errorText.value = "";
+  setActionFeedback("");
 
   try {
     await deleteGroup(group.id);
     await reloadTaxonomy();
+    setActionFeedback(isBuiltin ? "大类已重置。" : "大类已删除。");
   } catch (err) {
     const e = err as { status?: number; data?: { error?: string } };
     if (e?.data?.error === "group_not_empty") {
       errorText.value = "该大类下仍有二级分类，请先移动/删除二级分类。";
+      setActionFeedback(errorText.value, true);
       return;
     }
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : isBuiltin ? "重置大类失败。" : "删除大类失败。";
+    setActionFeedback(errorText.value, true);
   } finally {
     saving.value = false;
   }
@@ -394,16 +414,17 @@ async function createCategoryUnderGroup() {
   if (!groupId) return;
 
   if (!createCategoryId.value.trim()) {
-    errorText.value = "请填写分类 ID。";
+    setActionFeedback("请填写分类 ID。", true);
     return;
   }
   if (!createCategoryTitle.value.trim()) {
-    errorText.value = "请填写分类标题。";
+    setActionFeedback("请填写分类标题。", true);
     return;
   }
 
   saving.value = true;
   errorText.value = "";
+  setActionFeedback("");
 
   try {
     const id = createCategoryId.value.trim();
@@ -418,17 +439,21 @@ async function createCategoryUnderGroup() {
     resetCreateCategoryForm();
     await reloadTaxonomy();
     selectCategory(id);
+    setActionFeedback("二级分类已创建。");
   } catch (err) {
     const e = err as { status?: number; data?: { error?: string } };
     if (e?.status === 409) {
       errorText.value = "该分类 ID 已存在。";
+      setActionFeedback(errorText.value, true);
       return;
     }
     if (e?.data?.error === "unknown_group") {
       errorText.value = "大类不存在。";
+      setActionFeedback(errorText.value, true);
       return;
     }
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "新增分类失败。";
+    setActionFeedback(errorText.value, true);
   } finally {
     saving.value = false;
   }
@@ -439,12 +464,13 @@ async function saveCategory() {
   if (!category) return;
 
   if (!categoryFormTitle.value.trim()) {
-    errorText.value = "请填写分类标题。";
+    setActionFeedback("请填写分类标题。", true);
     return;
   }
 
   saving.value = true;
   errorText.value = "";
+  setActionFeedback("");
 
   try {
     await updateCategory(category.id, {
@@ -455,13 +481,16 @@ async function saveCategory() {
     });
     await reloadTaxonomy();
     selectCategory(category.id);
+    setActionFeedback("二级分类已保存。");
   } catch (err) {
     const e = err as { status?: number; data?: { error?: string } };
     if (e?.data?.error === "unknown_group") {
       errorText.value = "大类不存在。";
+      setActionFeedback(errorText.value, true);
       return;
     }
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "保存分类失败。";
+    setActionFeedback(errorText.value, true);
   } finally {
     saving.value = false;
   }
@@ -479,6 +508,7 @@ async function resetOrDeleteCategory() {
 
   saving.value = true;
   errorText.value = "";
+  setActionFeedback("");
 
   try {
     await deleteCategory(category.id);
@@ -488,9 +518,11 @@ async function resetOrDeleteCategory() {
     } else {
       selectCategory(category.id);
     }
+    setActionFeedback(canDelete ? "二级分类已删除。" : "二级分类已重置。");
   } catch (err) {
     const e = err as { status?: number };
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : canDelete ? "删除分类失败。" : "重置分类失败。";
+    setActionFeedback(errorText.value, true);
   } finally {
     saving.value = false;
   }
@@ -545,7 +577,7 @@ onMounted(async () => {
     <div class="meta-line">{{ taxonomyMetaText }}</div>
 
     <div class="layout-grid">
-      <div class="panel">
+      <div class="panel admin-card">
         <h3>大类 / 分类列表</h3>
 
         <div v-if="loading" class="empty">加载中...</div>
@@ -604,7 +636,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <div class="panel">
+      <div class="panel admin-card">
         <h3>新增大类</h3>
         <div class="form-grid">
           <label class="field">
@@ -632,9 +664,13 @@ onMounted(async () => {
           </details>
         </div>
 
-        <div class="actions">
+        <div class="actions admin-actions">
           <button type="button" class="btn btn-ghost" :disabled="saving" @click="resetCreateGroupForm">重置</button>
           <button type="button" class="btn btn-primary" :disabled="saving" @click="createGroupEntry">创建</button>
+        </div>
+
+        <div v-if="actionFeedback" class="action-feedback admin-feedback" :class="{ error: actionFeedbackError, success: !actionFeedbackError }">
+          {{ actionFeedback }}
         </div>
 
         <div class="panel-divider" />
@@ -666,7 +702,7 @@ onMounted(async () => {
             </details>
           </div>
 
-          <div class="actions">
+          <div class="actions admin-actions">
             <button
               type="button"
               class="btn"
@@ -706,7 +742,7 @@ onMounted(async () => {
             </details>
           </div>
 
-          <div class="actions">
+          <div class="actions admin-actions">
             <button type="button" class="btn btn-ghost" :disabled="saving" @click="resetCreateCategoryForm">重置</button>
             <button type="button" class="btn btn-primary" :disabled="saving" @click="createCategoryUnderGroup">创建</button>
           </div>
@@ -749,7 +785,7 @@ onMounted(async () => {
             </details>
           </div>
 
-          <div class="actions">
+          <div class="actions admin-actions">
             <button type="button" class="btn" :class="canDeleteSelectedCategory ? 'btn-danger' : 'btn-ghost'" :disabled="saving" @click="resetOrDeleteCategory">
               {{ canDeleteSelectedCategory ? "删除" : "重置" }}
             </button>
@@ -830,6 +866,19 @@ h3 {
 .meta-line {
   color: var(--muted);
   font-size: 12px;
+}
+
+.action-feedback {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.action-feedback.error {
+  color: var(--danger);
+}
+
+.action-feedback.success {
+  color: #15803d;
 }
 
 .tree-list {

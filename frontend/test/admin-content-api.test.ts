@@ -16,6 +16,7 @@ import {
   updateAdminItem,
   updateGroup,
   updateSystemStorage,
+  validateSystemStorage,
 } from "../src/features/admin/adminApi";
 
 const originalFetch = globalThis.fetch;
@@ -54,7 +55,7 @@ describe("adminApi", () => {
 
     expect(data.total).toBe(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
     expect(url).toContain("/api/items?");
     expect(url).toContain("page=2");
     expect(url).toContain("pageSize=30");
@@ -89,7 +90,7 @@ describe("adminApi", () => {
     );
     expect(authCalls.length).toBeGreaterThan(0);
     for (const call of authCalls) {
-      const options = (call[1] || {}) as RequestInit;
+      const options = ((call as unknown as [RequestInfo | URL, RequestInit?])[1] || {}) as RequestInit;
       const headers = options.headers as Record<string, string>;
       expect(headers.Authorization).toBe("Bearer token-1");
     }
@@ -103,10 +104,10 @@ describe("adminApi", () => {
     await restoreBuiltinItem("builtin_demo");
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
     expect(url).toBe("/api/items/builtin_demo");
-    expect(options.method).toBe("PUT");
-    expect(options.body).toBe(JSON.stringify({ deleted: false }));
+    expect(options?.method).toBe("PUT");
+    expect(options?.body).toBe(JSON.stringify({ deleted: false }));
   });
 
   it("uploadHtmlItem posts multipart payload", async () => {
@@ -122,10 +123,10 @@ describe("adminApi", () => {
       description: "Desc",
     });
 
-    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
     expect(url).toBe("/api/items/upload");
-    expect(options.method).toBe("POST");
-    expect(options.body).toBeInstanceOf(FormData);
+    expect(options?.method).toBe("POST");
+    expect(options?.body).toBeInstanceOf(FormData);
   });
 
   it("group/category CRUD methods use expected routes", async () => {
@@ -141,7 +142,7 @@ describe("adminApi", () => {
     await updateCategory("algebra", { title: "代数2" });
     await deleteCategory("algebra");
 
-    const urls = fetchMock.mock.calls.map((call) => String(call[0]));
+    const urls = fetchMock.mock.calls.map((call) => String((call as unknown as [RequestInfo | URL])[0]));
     expect(urls).toContain("/api/groups");
     expect(urls).toContain("/api/groups/math");
     expect(urls).toContain("/api/categories");
@@ -168,6 +169,9 @@ describe("adminApi", () => {
       webdav: { url: "https://dav.example.com", scanRemote: true },
       sync: true,
     });
+    await validateSystemStorage({
+      webdav: { url: "https://dav.example.com", basePath: "physicsAnimations" },
+    });
     const account = await updateAccount({
       currentPassword: "old",
       newUsername: "admin2",
@@ -179,6 +183,7 @@ describe("adminApi", () => {
     const urls = fetchMock.mock.calls.map((call) => String(call[0]));
     expect(urls).toContain("/api/system");
     expect(urls).toContain("/api/system/storage");
+    expect(urls).toContain("/api/system/storage/validate");
     expect(urls).toContain("/api/auth/account");
   });
 

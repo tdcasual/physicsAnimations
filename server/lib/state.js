@@ -132,35 +132,20 @@ async function loadCategoriesState({ store }) {
   const groups = {};
   const categories = {};
 
-  if (version >= TAXONOMY_VERSION) {
-    for (const [id, group] of Object.entries(rawGroups)) {
-      if (typeof id !== "string" || !id) continue;
-      if (!group || typeof group !== "object") continue;
-
-      const title = typeof group.title === "string" ? group.title : "";
-      const order = toInt(group.order, 0);
-      const hidden = typeof group.hidden === "boolean" ? group.hidden : false;
-      groups[id] = { id, title, order, hidden };
-    }
-
-    for (const [id, category] of Object.entries(rawCategories)) {
-      if (typeof id !== "string" || !id) continue;
-      if (!category || typeof category !== "object") continue;
-
-      const title = typeof category.title === "string" ? category.title : "";
-      const order = toInt(category.order, 0);
-      const hidden = typeof category.hidden === "boolean" ? category.hidden : false;
-      const groupId =
-        typeof category.groupId === "string" && category.groupId
-          ? category.groupId
-          : DEFAULT_GROUP_ID;
-      categories[id] = { id, groupId, title, order, hidden };
-    }
-
+  if (version < TAXONOMY_VERSION) {
     return { version: TAXONOMY_VERSION, groups, categories };
   }
 
-  // Migrate legacy v1 state: categories only, all belong to the default group.
+  for (const [id, group] of Object.entries(rawGroups)) {
+    if (typeof id !== "string" || !id) continue;
+    if (!group || typeof group !== "object") continue;
+
+    const title = typeof group.title === "string" ? group.title : "";
+    const order = toInt(group.order, 0);
+    const hidden = typeof group.hidden === "boolean" ? group.hidden : false;
+    groups[id] = { id, title, order, hidden };
+  }
+
   for (const [id, category] of Object.entries(rawCategories)) {
     if (typeof id !== "string" || !id) continue;
     if (!category || typeof category !== "object") continue;
@@ -168,7 +153,11 @@ async function loadCategoriesState({ store }) {
     const title = typeof category.title === "string" ? category.title : "";
     const order = toInt(category.order, 0);
     const hidden = typeof category.hidden === "boolean" ? category.hidden : false;
-    categories[id] = { id, groupId: DEFAULT_GROUP_ID, title, order, hidden };
+    const groupId =
+      typeof category.groupId === "string" && category.groupId
+        ? category.groupId
+        : DEFAULT_GROUP_ID;
+    categories[id] = { id, groupId, title, order, hidden };
   }
 
   return { version: TAXONOMY_VERSION, groups, categories };

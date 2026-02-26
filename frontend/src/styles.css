@@ -70,11 +70,6 @@ a {
   font-weight: 700;
 }
 
-.brand-subtitle {
-  color: var(--muted);
-  font-size: 12px;
-}
-
 .actions {
   display: flex;
   align-items: center;
@@ -111,6 +106,55 @@ a {
   width: min(1120px, calc(100% - 28px));
   margin: 16px auto 24px;
   padding: 0;
+}
+
+.admin-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-input {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px 10px;
+}
+
+.admin-textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-feedback {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-feedback.error {
+  color: var(--danger);
+}
+
+.admin-feedback.success {
+  color: #15803d;
 }
 
 .modal-backdrop {
@@ -167,4 +211,25 @@ a {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .topbar-inner {
+    width: calc(100% - 20px);
+    padding: 10px 0;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .app-main {
+    width: calc(100% - 20px);
+    margin-top: 12px;
+  }
 }

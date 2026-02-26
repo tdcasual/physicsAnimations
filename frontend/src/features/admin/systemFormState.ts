@@ -24,8 +24,8 @@ export interface SystemUpdatePayload {
 
 export function normalizeUiMode(mode: string): string {
   const raw = String(mode || "").trim().toLowerCase();
-  if (raw === "webdav") return "hybrid";
-  if (raw === "hybrid" || raw === "local") return raw;
+  if (raw === "webdav" || raw === "hybrid" || raw === "local") return raw;
+  if (raw === "local+webdav" || raw === "mirror") return "hybrid";
   return "local";
 }
 
@@ -45,8 +45,14 @@ export function shouldRequireWebdavUrl(mode: string): boolean {
   return mode === "hybrid" || mode === "webdav";
 }
 
-export function shouldAutoEnableSyncOnSave(params: { loadedMode: string; nextMode: string }): boolean {
-  return params.nextMode === "hybrid" && params.loadedMode !== "hybrid";
+export function isRemoteMode(mode: string): boolean {
+  const normalized = normalizeUiMode(mode);
+  return normalized === "hybrid" || normalized === "webdav";
+}
+
+export function canRunManualSync(params: { mode: string; url: string }): boolean {
+  if (!isRemoteMode(params.mode)) return false;
+  return Boolean(String(params.url || "").trim());
 }
 
 export function buildSystemUpdatePayload(input: SystemFormInput): SystemUpdatePayload {

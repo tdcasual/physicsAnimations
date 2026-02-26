@@ -9,8 +9,6 @@ const { createApp } = require("../server/app");
 
 function makeTempRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-circuit-"));
-  fs.writeFileSync(path.join(root, "index.html"), "<!doctype html><title>test</title>");
-  fs.writeFileSync(path.join(root, "viewer.html"), "<!doctype html><title>viewer</title>");
   fs.mkdirSync(path.join(root, "assets"), { recursive: true });
   fs.mkdirSync(path.join(root, "animations"), { recursive: true });
   fs.mkdirSync(path.join(root, "content"), { recursive: true });
@@ -82,7 +80,7 @@ async function login(baseUrl, authConfig) {
   return data.token;
 }
 
-test("state db opens circuit after repeated SQL failures and /api/items falls back", async () => {
+test("state db opens circuit and /api/items returns state_db_unavailable when SQL path breaks", async () => {
   let sqlite = null;
   try {
     sqlite = require("node:sqlite");
@@ -113,9 +111,9 @@ test("state db opens circuit after repeated SQL failures and /api/items falls ba
     db.exec("DROP TABLE state_dynamic_items");
 
     const secondRes = await fetch(`${baseUrl}/api/items?page=1&pageSize=20`);
-    assert.equal(secondRes.status, 200);
+    assert.equal(secondRes.status, 503);
     const second = await secondRes.json();
-    assert.equal((second.items || []).some((it) => it.id === "l_public_1"), true);
+    assert.equal(second.error, "state_db_unavailable");
 
     const token = await login(baseUrl, authConfig);
     const metricsRes = await fetch(`${baseUrl}/api/metrics`, {
