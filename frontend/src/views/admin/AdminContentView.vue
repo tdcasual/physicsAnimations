@@ -428,6 +428,7 @@ h3 {
   justify-content: space-between;
   gap: 10px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .list-search {
@@ -447,6 +448,7 @@ h3 {
   display: flex;
   justify-content: space-between;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 .item-title {
@@ -461,6 +463,8 @@ h3 {
 .item-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .item-edit {
