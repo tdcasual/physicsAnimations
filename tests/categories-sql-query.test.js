@@ -9,7 +9,6 @@ const { createApp } = require("../server/app");
 
 function makeTempRoot({ animationsJson } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-categories-sql-"));
-  fs.writeFileSync(path.join(root, "index.html"), "<!doctype html><title>test</title>");
   fs.mkdirSync(path.join(root, "assets"), { recursive: true });
   fs.mkdirSync(path.join(root, "animations"), { recursive: true });
   fs.mkdirSync(path.join(root, "content"), { recursive: true });
