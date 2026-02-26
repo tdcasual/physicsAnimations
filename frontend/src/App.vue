@@ -92,7 +92,6 @@ onBeforeUnmount(() => {
       <div class="topbar-inner">
         <div class="brand">
           <div class="brand-title">我的物理动画集</div>
-          <div class="brand-subtitle">Vue SPA（迁移中）</div>
         </div>
 
         <div class="actions">
