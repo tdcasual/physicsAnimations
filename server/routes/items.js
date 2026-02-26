@@ -25,6 +25,7 @@ const { decodeHtmlBuffer, decodeTextBuffer } = require("../lib/textEncoding");
 const { parseWithSchema, idSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
+const { createItemsReadService } = require("../services/items/readService");
 
 function safeText(text) {
   if (typeof text !== "string") return "";
@@ -497,6 +498,17 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     return out;
   }
 
+  const readService = createItemsReadService({
+    store,
+    deps: {
+      loadItemsState,
+      loadBuiltinItems,
+      findBuiltinItemById,
+      toApiItem,
+      safeText,
+    },
+  });
+
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 25 * 1024 * 1024 },
@@ -855,161 +867,12 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     asyncHandler(async (req, res) => {
       const isAdmin = req.user?.role === "admin";
       const query = parseWithSchema(listQuerySchema, req.query);
-      const q = (query.q || "").trim().toLowerCase();
-      const categoryId = (query.categoryId || "").trim();
-      const type = (query.type || "").trim();
-      const supportsSqlMergedQuery =
-        typeof store?.stateDbQuery?.queryItems === "function";
-      const supportsSqlDynamicQuery =
-        typeof store?.stateDbQuery?.queryDynamicItems === "function";
-      const supportsSqlBuiltinQuery =
-        typeof store?.stateDbQuery?.queryBuiltinItems === "function";
-
-      const offset = (query.page - 1) * query.pageSize;
-
-      if (supportsSqlMergedQuery) {
-        try {
-          const sqlMerged = await store.stateDbQuery.queryItems({
-            isAdmin,
-            includeDeleted: isAdmin,
-            q,
-            categoryId,
-            type,
-            offset,
-            limit: query.pageSize,
-          });
-
-          const total = Number.isFinite(sqlMerged?.total) ? sqlMerged.total : 0;
-          const items = Array.isArray(sqlMerged?.items) ? sqlMerged.items : [];
-          res.json({ items: items.map(toApiItem), page: query.page, pageSize: query.pageSize, total });
-          return;
-        } catch (sqlErr) {
-          console.warn("[items] SQL merged query failed; returning state_db_unavailable", sqlErr);
-          res.status(503).json({ error: "state_db_unavailable" });
-          return;
-        }
+      const result = await readService.listItems({ isAdmin, query });
+      if (result?.error) {
+        res.status(Number(result.status || 500)).json({ error: result.error });
+        return;
       }
-
-      let dynamicItems = [];
-      let dynamicTotal = 0;
-      let loadedDynamicFromSql = false;
-
-      if (supportsSqlDynamicQuery) {
-        try {
-          const sqlDynamic = await store.stateDbQuery.queryDynamicItems({
-            isAdmin,
-            q,
-            categoryId,
-            type,
-            offset,
-            limit: query.pageSize,
-          });
-          dynamicItems = Array.isArray(sqlDynamic?.items) ? sqlDynamic.items : [];
-          dynamicTotal = Number.isFinite(sqlDynamic?.total) ? sqlDynamic.total : dynamicItems.length;
-          loadedDynamicFromSql = true;
-        } catch (sqlErr) {
-          console.warn("[items] SQL dynamic query failed; fallback to in-memory dynamic path", sqlErr);
-        }
-      }
-
-      if (!loadedDynamicFromSql) {
-        const state = await loadItemsState({ store });
-        dynamicItems = Array.isArray(state?.items) ? [...state.items] : [];
-        if (!isAdmin) dynamicItems = dynamicItems.filter((it) => it.published !== false && it.hidden !== true);
-        if (categoryId) dynamicItems = dynamicItems.filter((it) => it.categoryId === categoryId);
-        if (type) dynamicItems = dynamicItems.filter((it) => it.type === type);
-        if (q) {
-          dynamicItems = dynamicItems.filter((it) => {
-            const hay = `${it.title || ""}\n${it.description || ""}\n${it.url || ""}\n${it.path || ""}\n${it.id || ""}`.toLowerCase();
-            return hay.includes(q);
-          });
-        }
-        dynamicItems.sort((a, b) => {
-          const timeDiff = (b.createdAt || "").localeCompare(a.createdAt || "");
-          if (timeDiff) return timeDiff;
-          return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
-        });
-        dynamicTotal = dynamicItems.length;
-      }
-
-      if (supportsSqlDynamicQuery && supportsSqlBuiltinQuery) {
-        const dynamicSlice = loadedDynamicFromSql
-          ? dynamicItems.slice(0, query.pageSize)
-          : dynamicItems.slice(offset, offset + query.pageSize);
-        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicSlice.length));
-        const remaining = query.pageSize - dynamicSliceCount;
-        const builtinOffset = Math.max(0, offset - dynamicTotal);
-
-        try {
-          const sqlBuiltin = await store.stateDbQuery.queryBuiltinItems({
-            isAdmin,
-            includeDeleted: isAdmin,
-            q,
-            categoryId,
-            type,
-            offset: builtinOffset,
-            limit: remaining,
-          });
-
-          const builtinTotal = Number.isFinite(sqlBuiltin?.total) ? sqlBuiltin.total : 0;
-          const builtinSlice = Array.isArray(sqlBuiltin?.items) ? sqlBuiltin.items : [];
-          const total = dynamicTotal + builtinTotal;
-          const pageItems = [...dynamicSlice, ...builtinSlice].map(toApiItem);
-
-          res.json({ items: pageItems, page: query.page, pageSize: query.pageSize, total });
-          return;
-        } catch (sqlErr) {
-          console.warn("[items] SQL builtin query failed; fallback to in-memory builtin path", sqlErr);
-        }
-      }
-
-      const builtinItems = await loadBuiltinItems({ includeDeleted: isAdmin });
-
-      let filteredBuiltin = builtinItems;
-      if (!isAdmin) filteredBuiltin = filteredBuiltin.filter((it) => it.published !== false && it.hidden !== true);
-      if (categoryId) filteredBuiltin = filteredBuiltin.filter((it) => it.categoryId === categoryId);
-      if (type) filteredBuiltin = filteredBuiltin.filter((it) => it.type === type);
-      if (q) {
-        filteredBuiltin = filteredBuiltin.filter((it) => {
-          const hay = `${it.title || ""}\n${it.description || ""}\n${it.url || ""}\n${it.path || ""}\n${it.id || ""}`.toLowerCase();
-          return hay.includes(q);
-        });
-      }
-
-      filteredBuiltin.sort((a, b) => {
-        const timeDiff = (b.createdAt || "").localeCompare(a.createdAt || "");
-        if (timeDiff) return timeDiff;
-        const deletedDiff = Number(a.deleted === true) - Number(b.deleted === true);
-        if (deletedDiff) return deletedDiff;
-        return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
-      });
-
-      const builtinTotal = filteredBuiltin.length;
-      const total = dynamicTotal + builtinTotal;
-
-      let pageItems = [];
-      if (supportsSqlDynamicQuery) {
-        const dynamicSlice = loadedDynamicFromSql
-          ? dynamicItems.slice(0, query.pageSize)
-          : dynamicItems.slice(offset, offset + query.pageSize);
-        const dynamicSliceCount = Math.max(0, Math.min(query.pageSize, dynamicSlice.length));
-        const remaining = query.pageSize - dynamicSliceCount;
-        const builtinOffset = Math.max(0, offset - dynamicTotal);
-        const builtinSlice = remaining > 0 ? filteredBuiltin.slice(builtinOffset, builtinOffset + remaining) : [];
-        pageItems = [...dynamicSlice, ...builtinSlice].map(toApiItem);
-      } else {
-        let items = [...dynamicItems, ...filteredBuiltin];
-        items.sort((a, b) => {
-          const timeDiff = (b.createdAt || "").localeCompare(a.createdAt || "");
-          if (timeDiff) return timeDiff;
-          const deletedDiff = Number(a.deleted === true) - Number(b.deleted === true);
-          if (deletedDiff) return deletedDiff;
-          return safeText(a.title).localeCompare(safeText(b.title), "zh-CN");
-        });
-        pageItems = items.slice(offset, offset + query.pageSize).map(toApiItem);
-      }
-
-      res.json({ items: pageItems, page: query.page, pageSize: query.pageSize, total });
+      res.json(result);
     }),
   );
 
@@ -1205,62 +1068,12 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     asyncHandler(async (req, res) => {
       const isAdmin = req.user?.role === "admin";
       const id = parseWithSchema(idSchema, req.params.id);
-      const supportsSqlDynamicItemLookup =
-        typeof store?.stateDbQuery?.queryDynamicItemById === "function";
-      const supportsSqlBuiltinItemLookup =
-        typeof store?.stateDbQuery?.queryBuiltinItemById === "function";
-
-      if (supportsSqlDynamicItemLookup) {
-        try {
-          const sqlItem = await store.stateDbQuery.queryDynamicItemById({ id, isAdmin });
-          if (sqlItem) {
-            res.json({ item: toApiItem(sqlItem) });
-            return;
-          }
-        } catch (sqlErr) {
-          console.warn("[items] SQL item detail lookup failed; fallback to items.json", sqlErr);
-        }
-      }
-
-      const state = await loadItemsState({ store });
-      const item = state.items.find((it) => it.id === id);
-      if (item) {
-        if (!isAdmin && (item.published === false || item.hidden === true)) {
-          res.status(404).json({ error: "not_found" });
-          return;
-        }
-        res.json({ item: toApiItem(item) });
-        return;
-      }
-
-      if (supportsSqlBuiltinItemLookup) {
-        try {
-          const sqlBuiltin = await store.stateDbQuery.queryBuiltinItemById({
-            id,
-            isAdmin,
-            includeDeleted: isAdmin,
-          });
-          if (sqlBuiltin) {
-            res.json({ item: toApiItem(sqlBuiltin) });
-            return;
-          }
-        } catch (sqlErr) {
-          console.warn("[items] SQL builtin detail lookup failed; fallback to builtin merge path", sqlErr);
-        }
-      }
-
-      const builtin = await findBuiltinItemById(id, { includeDeleted: isAdmin });
-      if (!builtin) {
+      const item = await readService.getItemById({ id, isAdmin });
+      if (!item) {
         res.status(404).json({ error: "not_found" });
         return;
       }
-
-      if (!isAdmin && (builtin.published === false || builtin.hidden === true)) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-
-      res.json({ item: toApiItem(builtin) });
+      res.json({ item });
     }),
   );
 
