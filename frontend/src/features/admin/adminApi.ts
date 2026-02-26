@@ -1,9 +1,8 @@
 import { clearToken, getToken } from "../auth/authApi";
+import { parseAdminItemsResponse, toApiError } from "./adminContracts";
+import type { AdminItemsResponse } from "./adminTypes";
 
-interface ApiError extends Error {
-  status?: number;
-  data?: any;
-}
+export type { AdminApiError, AdminItemRow, AdminItemsResponse } from "./adminTypes";
 
 function withAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
   const token = getToken();
@@ -14,7 +13,7 @@ function withAuthHeaders(headers: Record<string, string> = {}): Record<string, s
   };
 }
 
-async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
+async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
     ...options,
     headers: withAuthHeaders({
@@ -35,12 +34,8 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
     }
   }
 
-  if (response.ok) return data;
-
-  const err = new Error(data?.error || "request_failed") as ApiError;
-  err.status = response.status;
-  err.data = data;
-  throw err;
+  if (response.ok) return data as T;
+  throw toApiError(response.status, data);
 }
 
 export interface AdminListParams {
@@ -50,14 +45,15 @@ export interface AdminListParams {
   type?: string;
 }
 
-export async function listAdminItems(params: AdminListParams = {}): Promise<any> {
+export async function listAdminItems(params: AdminListParams = {}): Promise<AdminItemsResponse> {
   const query = new URLSearchParams();
   query.set("page", String(params.page || 1));
   query.set("pageSize", String(params.pageSize || 24));
   if (params.q) query.set("q", params.q);
   if (params.type) query.set("type", params.type);
 
-  return apiFetch(`/api/items?${query.toString()}`, { method: "GET" });
+  const raw = await apiFetch(`/api/items?${query.toString()}`, { method: "GET" });
+  return parseAdminItemsResponse(raw);
 }
 
 export async function listTaxonomy(): Promise<any> {

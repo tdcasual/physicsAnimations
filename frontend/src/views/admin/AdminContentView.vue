@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
+  type AdminItemRow,
   createLinkItem,
   deleteAdminItem,
   listAdminItems,
@@ -9,19 +10,7 @@ import {
   updateAdminItem,
 } from "../../features/admin/adminApi";
 
-interface AdminItem {
-  id: string;
-  type: string;
-  categoryId: string;
-  title: string;
-  description: string;
-  thumbnail?: string;
-  src?: string;
-  order?: number;
-  published?: boolean;
-  hidden?: boolean;
-  deleted?: boolean;
-}
+type AdminItem = AdminItemRow;
 
 interface CategoryRow {
   id: string;
