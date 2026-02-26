@@ -166,6 +166,83 @@ test("system storage persists scanRemote flag", async () => {
   }
 });
 
+test("system storage validate requires webdav url", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+    const res = await fetch(`${baseUrl}/api/system/storage/validate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        webdav: { url: "  " },
+      }),
+    });
+
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data?.error, "webdav_missing_url");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("system storage local mode does not trigger sync", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const preset = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        webdav: { url: "https://dav.example.com/root" },
+        sync: false,
+      }),
+    });
+    assert.equal(preset.status, 200);
+
+    const syncRes = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        sync: true,
+      }),
+    });
+    assert.equal(syncRes.status, 200);
+    const syncData = await syncRes.json();
+    assert.equal(syncData?.sync, null);
+
+    const systemRes = await fetch(`${baseUrl}/api/system`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(systemRes.status, 200);
+    const systemData = await systemRes.json();
+    assert.equal(systemData?.storage?.mode, "local");
+    assert.equal(systemData?.storage?.lastSyncedAt || "", "");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("state db sqlite mirrors state writes", async () => {
   if (!hasNodeSqlite()) return;
 

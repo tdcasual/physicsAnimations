@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import {
   createLinkItem,
   deleteAdminItem,
@@ -69,6 +69,7 @@ const groupedCategoryOptions = computed(() => {
 });
 
 const hasMore = computed(() => items.value.length < total.value);
+let latestReloadSeq = 0;
 
 function viewerHref(id: string): string {
   const base = import.meta.env.BASE_URL || "/";
@@ -105,7 +106,7 @@ async function reloadTaxonomy() {
 }
 
 async function reloadItems(params: { reset: boolean } = { reset: true }) {
-  if (loading.value) return;
+  const requestSeq = ++latestReloadSeq;
   loading.value = true;
   errorText.value = "";
 
@@ -117,14 +118,18 @@ async function reloadItems(params: { reset: boolean } = { reset: true }) {
       q: query.value.trim(),
     });
     const received = Array.isArray(data?.items) ? data.items : [];
+    if (requestSeq !== latestReloadSeq) return;
     page.value = Number(data?.page || nextPage);
     total.value = Number(data?.total || 0);
     items.value = params.reset ? received : [...items.value, ...received];
   } catch (err) {
+    if (requestSeq !== latestReloadSeq) return;
     const e = err as { status?: number };
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "加载内容失败。";
   } finally {
-    loading.value = false;
+    if (requestSeq === latestReloadSeq) {
+      loading.value = false;
+    }
   }
 }
 
@@ -214,6 +219,10 @@ watch(query, () => {
 onMounted(async () => {
   await reloadTaxonomy().catch(() => {});
   await reloadItems({ reset: true });
+});
+
+onBeforeUnmount(() => {
+  window.clearTimeout(timer);
 });
 </script>
 

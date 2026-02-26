@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
@@ -13,8 +13,13 @@ const loginOpen = ref(false);
 const loginUsername = ref("");
 const loginPassword = ref("");
 const loginError = ref("");
+const modalCardRef = ref<HTMLElement | null>(null);
+const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
+
+let lastFocusedBeforeLogin: HTMLElement | null = null;
 
 function openLogin() {
+  lastFocusedBeforeLogin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   loginOpen.value = true;
   loginError.value = "";
 }
@@ -22,6 +27,51 @@ function openLogin() {
 function closeLogin() {
   loginOpen.value = false;
   loginError.value = "";
+  loginUsername.value = "";
+  loginPassword.value = "";
+}
+
+function getModalFocusables(): HTMLElement[] {
+  if (!modalCardRef.value) return [];
+  const focusable = modalCardRef.value.querySelectorAll<HTMLElement>(
+    'a[href],button:not([disabled]),textarea,input:not([disabled]),select,[tabindex]:not([tabindex="-1"])',
+  );
+  return Array.from(focusable).filter((node) => {
+    if (!(node instanceof HTMLElement)) return false;
+    return !node.hasAttribute("disabled") && node.tabIndex !== -1;
+  });
+}
+
+function handleLoginModalKeydown(event: KeyboardEvent) {
+  if (!loginOpen.value) return;
+
+  if (event.key === "Escape") {
+    event.preventDefault();
+    closeLogin();
+    return;
+  }
+
+  if (event.key !== "Tab") return;
+
+  const focusables = getModalFocusables();
+  if (focusables.length === 0) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const active = document.activeElement as HTMLElement | null;
+  const inModal = active ? modalCardRef.value?.contains(active) === true : false;
+
+  if (event.shiftKey) {
+    if (!inModal || active === first) {
+      event.preventDefault();
+      last.focus();
+    }
+    return;
+  }
+
+  if (!inModal || active === last) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function toLoginMessage(err: unknown): string {
@@ -81,8 +131,23 @@ onMounted(async () => {
   await auth.bootstrap();
 });
 
+watch(loginOpen, async (open) => {
+  if (open) {
+    window.addEventListener("keydown", handleLoginModalKeydown);
+    await nextTick();
+    loginUsernameInputRef.value?.focus();
+    return;
+  }
+
+  window.removeEventListener("keydown", handleLoginModalKeydown);
+  const restoreTarget = lastFocusedBeforeLogin;
+  lastFocusedBeforeLogin = null;
+  restoreTarget?.focus();
+});
+
 onBeforeUnmount(() => {
   window.removeEventListener("pa-auth-expired", handleAuthExpired as EventListener);
+  window.removeEventListener("keydown", handleLoginModalKeydown);
 });
 </script>
 
@@ -110,12 +175,26 @@ onBeforeUnmount(() => {
     </main>
 
     <div v-if="loginOpen" class="modal-backdrop" @click="closeLogin">
-      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="login-title" @click.stop>
+      <div
+        ref="modalCardRef"
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="login-title"
+        @click.stop
+      >
         <h2 id="login-title" class="modal-title">管理员登录</h2>
         <form class="modal-form" @submit.prevent="submitLogin">
           <label class="field">
             <span>用户名</span>
-            <input v-model="loginUsername" class="field-input" type="text" name="username" autocomplete="username" />
+            <input
+              ref="loginUsernameInputRef"
+              v-model="loginUsername"
+              class="field-input"
+              type="text"
+              name="username"
+              autocomplete="username"
+            />
           </label>
 
           <label class="field">

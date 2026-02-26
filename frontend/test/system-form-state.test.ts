@@ -2,18 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSystemUpdatePayload,
+  canRunManualSync,
+  isRemoteMode,
   normalizeUiMode,
   normalizeWebdavBasePath,
   parseTimeoutMs,
-  shouldAutoEnableSyncOnSave,
   shouldRequireWebdavUrl,
 } from "../src/features/admin/systemFormState";
 
 describe("systemFormState", () => {
-  it("maps storage mode webdav to hybrid in UI", () => {
-    expect(normalizeUiMode("webdav")).toBe("hybrid");
+  it("normalizes storage mode aliases without collapsing webdav to hybrid", () => {
+    expect(normalizeUiMode("webdav")).toBe("webdav");
     expect(normalizeUiMode("hybrid")).toBe("hybrid");
     expect(normalizeUiMode("local")).toBe("local");
+    expect(normalizeUiMode("local+webdav")).toBe("hybrid");
+    expect(normalizeUiMode("mirror")).toBe("hybrid");
     expect(normalizeUiMode("")).toBe("local");
   });
 
@@ -69,13 +72,18 @@ describe("systemFormState", () => {
     expect(payload.webdav.timeoutMs).toBe(30000);
   });
 
-  it("checks mode requirements and sync-on-save auto rule", () => {
+  it("checks mode requirements and manual sync eligibility", () => {
+    expect(isRemoteMode("hybrid")).toBe(true);
+    expect(isRemoteMode("webdav")).toBe(true);
+    expect(isRemoteMode("local")).toBe(false);
+
     expect(shouldRequireWebdavUrl("hybrid")).toBe(true);
     expect(shouldRequireWebdavUrl("webdav")).toBe(true);
     expect(shouldRequireWebdavUrl("local")).toBe(false);
 
-    expect(shouldAutoEnableSyncOnSave({ loadedMode: "local", nextMode: "hybrid" })).toBe(true);
-    expect(shouldAutoEnableSyncOnSave({ loadedMode: "hybrid", nextMode: "hybrid" })).toBe(false);
-    expect(shouldAutoEnableSyncOnSave({ loadedMode: "local", nextMode: "local" })).toBe(false);
+    expect(canRunManualSync({ mode: "hybrid", url: "https://dav.example.com" })).toBe(true);
+    expect(canRunManualSync({ mode: "webdav", url: "https://dav.example.com" })).toBe(true);
+    expect(canRunManualSync({ mode: "webdav", url: "   " })).toBe(false);
+    expect(canRunManualSync({ mode: "local", url: "https://dav.example.com" })).toBe(false);
   });
 });

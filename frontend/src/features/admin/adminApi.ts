@@ -201,6 +201,18 @@ export async function updateSystemStorage(payload: {
   });
 }
 
+export async function validateSystemStorage(payload: {
+  webdav?: Record<string, unknown>;
+}): Promise<any> {
+  return apiFetch("/api/system/storage/validate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      webdav: payload.webdav || {},
+    }),
+  });
+}
+
 export async function updateAccount(payload: {
   currentPassword: string;
   newUsername?: string;

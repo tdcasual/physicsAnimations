@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { loadViewerModel, type ViewerModel } from "../features/viewer/viewerService";
 
@@ -10,6 +10,7 @@ const model = ref<ViewerModel | null>(null);
 const screenshotMode = ref(false);
 const screenshotVisible = ref(false);
 const modeButtonText = ref("仅截图");
+let hideScreenshotTimer = 0;
 
 const frameSrc = computed(() => {
   if (model.value?.status !== "ready") return "";
@@ -35,6 +36,7 @@ function getRouteParams() {
 }
 
 async function refresh() {
+  clearHideScreenshotTimer();
   loading.value = true;
   try {
     const next = await loadViewerModel(getRouteParams());
@@ -53,10 +55,17 @@ async function refresh() {
   }
 }
 
+function clearHideScreenshotTimer() {
+  if (!hideScreenshotTimer) return;
+  window.clearTimeout(hideScreenshotTimer);
+  hideScreenshotTimer = 0;
+}
+
 function toggleMode() {
   if (model.value?.status !== "ready") return;
   if (!model.value.screenshotUrl) return;
 
+  clearHideScreenshotTimer();
   screenshotMode.value = !screenshotMode.value;
   screenshotVisible.value = screenshotMode.value;
   modeButtonText.value = screenshotMode.value ? "进入交互" : "仅截图";
@@ -65,8 +74,12 @@ function toggleMode() {
 function onFrameLoad() {
   if (model.value?.status !== "ready") return;
   if (screenshotMode.value) return;
-  window.setTimeout(() => {
-    screenshotVisible.value = false;
+  clearHideScreenshotTimer();
+  hideScreenshotTimer = window.setTimeout(() => {
+    hideScreenshotTimer = 0;
+    if (!screenshotMode.value) {
+      screenshotVisible.value = false;
+    }
   }, 250);
 }
 
@@ -77,6 +90,10 @@ watch(
     void refresh();
   },
 );
+
+onBeforeUnmount(() => {
+  clearHideScreenshotTimer();
+});
 </script>
 
 <template>
