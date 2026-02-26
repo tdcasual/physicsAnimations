@@ -81,11 +81,35 @@ describe("loadViewerModel", () => {
     expect(model.title).toBe("内置演示");
   });
 
-  it("returns invalid state for unsafe target", async () => {
-    const model = await loadViewerModel({ src: "javascript:alert(1)" });
+  it("returns invalid state when item target is unsafe", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/items/")) {
+        return jsonResponse({
+          item: {
+            id: "bad-1",
+            type: "link",
+            src: "javascript:alert(1)",
+            title: "bad",
+          },
+        });
+      }
+      return new Response("not_found", { status: 404 });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const model = await loadViewerModel({ id: "bad-1" });
     expect(model.status).toBe("error");
     if (model.status !== "error") return;
     expect(model.code).toBe("invalid_target");
+  });
+
+  it("returns missing_params when id is absent", async () => {
+    const model = await loadViewerModel({});
+    expect(model.status).toBe("error");
+    if (model.status !== "error") return;
+    expect(model.code).toBe("missing_params");
+    expect(model.message).toContain("id");
   });
 
   it("normalizes relative upload src to absolute path for viewer iframe", async () => {
