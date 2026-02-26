@@ -84,7 +84,6 @@ function shouldServeSpaRoute(reqPath) {
   if (p.startsWith("/animations/") || p === "/animations") return false;
   if (p.startsWith("/content/") || p === "/content") return false;
   if (p === "/animations.json") return false;
-  if (p === "/index.html") return false;
   if (p === "/app" || p.startsWith("/app/")) return false;
   if (/^\/[^/]+\.[^/]+$/.test(p)) return false;
   return true;
