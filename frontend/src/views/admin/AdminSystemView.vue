@@ -282,6 +282,12 @@ h3 {
   gap: 6px;
 }
 
+.status-grid > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .status-grid span {
   color: var(--muted);
 }
