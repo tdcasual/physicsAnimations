@@ -168,3 +168,24 @@ a {
   justify-content: flex-end;
   gap: 8px;
 }
+
+@media (max-width: 480px) {
+  .topbar-inner {
+    width: calc(100% - 20px);
+    padding: 10px 0;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .app-main {
+    width: calc(100% - 20px);
+    margin-top: 12px;
+  }
+}
