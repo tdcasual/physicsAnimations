@@ -3,11 +3,9 @@ const multer = require("multer");
 const { z } = require("zod");
 
 const { requireAuth, optionalAuth } = require("../lib/auth");
-const { listBuiltinItems, findBuiltinItem } = require("../lib/animationsIndex");
 const {
   loadItemsState,
   mutateItemsState,
-  loadBuiltinItemsState,
   mutateBuiltinItemsState,
   mutateItemTombstonesState,
   noSave,
@@ -15,6 +13,7 @@ const {
 const { parseWithSchema, idSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
+const { createItemsBuiltinService } = require("../services/items/builtinService");
 const { createItemsReadService } = require("../services/items/readService");
 const { createItemsWriteService } = require("../services/items/writeService");
 const { createUploadIngestService } = require("../services/items/uploadIngestService");
@@ -78,88 +77,14 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
   const warnScreenshotDeps = createWarnScreenshotDeps();
   const queue = taskQueue || null;
 
-  function loadBuiltinIndex() {
-    return listBuiltinItems({ rootDir }).map((item) => ({
-      id: item.id,
-      type: "builtin",
-      categoryId: item.categoryId,
-      title: item.title,
-      description: item.description,
-      thumbnail: item.thumbnail,
-      order: 0,
-      published: true,
-      hidden: false,
-      createdAt: "",
-      updatedAt: "",
-    }));
-  }
-
-  async function loadBuiltinItems({ includeDeleted = false } = {}) {
-    const base = loadBuiltinIndex();
-    if (!base.length) return [];
-
-    const state = await loadBuiltinItemsState({ store });
-    const overrides =
-      state?.items && typeof state.items === "object" ? state.items : {};
-
-    const merged = [];
-    for (const item of base) {
-      const override = overrides[item.id];
-      if (override?.deleted === true && !includeDeleted) continue;
-
-      const out = { ...item };
-      if (typeof override?.title === "string" && override.title.trim()) out.title = override.title.trim();
-      if (typeof override?.description === "string") out.description = override.description;
-      if (typeof override?.categoryId === "string" && override.categoryId.trim()) {
-        out.categoryId = normalizeCategoryId(override.categoryId);
-      }
-      if (Number.isFinite(override?.order)) out.order = Math.trunc(override.order);
-      if (typeof override?.published === "boolean") out.published = override.published;
-      if (typeof override?.hidden === "boolean") out.hidden = override.hidden;
-      if (typeof override?.updatedAt === "string") out.updatedAt = override.updatedAt;
-      if (override?.deleted === true) out.deleted = true;
-
-      merged.push(out);
-    }
-
-    return merged;
-  }
-
-  async function findBuiltinItemById(id, { includeDeleted = false } = {}) {
-    const base = findBuiltinItem({ rootDir, id });
-    if (!base) return null;
-
-    const state = await loadBuiltinItemsState({ store });
-    const override = state?.items?.[id];
-    if (override?.deleted === true && !includeDeleted) return null;
-
-    const out = {
-      id: base.id,
-      type: "builtin",
-      categoryId: base.categoryId,
-      title: base.title,
-      description: base.description,
-      thumbnail: base.thumbnail,
-      order: 0,
-      published: true,
-      hidden: false,
-      createdAt: "",
-      updatedAt: "",
-    };
-
-    if (typeof override?.title === "string" && override.title.trim()) out.title = override.title.trim();
-    if (typeof override?.description === "string") out.description = override.description;
-    if (typeof override?.categoryId === "string" && override.categoryId.trim()) {
-      out.categoryId = normalizeCategoryId(override.categoryId);
-    }
-    if (Number.isFinite(override?.order)) out.order = Math.trunc(override.order);
-    if (typeof override?.published === "boolean") out.published = override.published;
-    if (typeof override?.hidden === "boolean") out.hidden = override.hidden;
-    if (typeof override?.updatedAt === "string") out.updatedAt = override.updatedAt;
-    if (override?.deleted === true) out.deleted = true;
-
-    return out;
-  }
+  const builtinService = createItemsBuiltinService({
+    rootDir,
+    store,
+    deps: { normalizeCategoryId },
+  });
+  const loadBuiltinIndex = builtinService.loadBuiltinIndex;
+  const loadBuiltinItems = builtinService.loadBuiltinItems;
+  const findBuiltinItemById = builtinService.findBuiltinItemById;
 
   const readService = createItemsReadService({
     store,
