@@ -884,7 +884,9 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
           res.json({ items: items.map(toApiItem), page: query.page, pageSize: query.pageSize, total });
           return;
         } catch (sqlErr) {
-          console.warn("[items] SQL merged query failed; fallback to split SQL path", sqlErr);
+          console.warn("[items] SQL merged query failed; returning state_db_unavailable", sqlErr);
+          res.status(503).json({ error: "state_db_unavailable" });
+          return;
         }
       }
 
