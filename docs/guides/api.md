@@ -57,6 +57,19 @@
 - `POST /api/items/link`
 - `POST /api/items/upload`
 
+## 后端实现边界（Extensibility Phase 1）
+
+在 2026-02-26 的可扩展性一期中，`items` 相关读取/写入逻辑已从路由文件中拆分为服务层：
+
+- `server/services/items/readService.js`
+- `server/services/items/writeService.js`
+
+说明：
+
+- 对外 API 路径、请求字段、响应结构保持不变（向后兼容）
+- 路由层负责参数解析与状态码映射
+- 服务层负责 `items` 领域读写业务逻辑
+
 ## 请求示例
 
 创建外链：
