@@ -356,6 +356,10 @@ onBeforeUnmount(() => {
           <div class="meta" v-if="selectedItem">{{ selectedItem.id }}</div>
         </div>
 
+        <div v-if="actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError, success: !actionFeedbackError }">
+          {{ actionFeedback }}
+        </div>
+
         <div v-if="!selectedItem" class="empty">请先在左侧选择一条上传内容进行编辑。</div>
 
         <div v-else class="editor-form">
@@ -398,9 +402,6 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="editor-footer">
-            <div v-if="actionFeedback" class="action-feedback" :class="{ error: actionFeedbackError, success: !actionFeedbackError }">
-              {{ actionFeedback }}
-            </div>
             <div class="actions">
               <button type="button" class="btn btn-ghost" @click="resetEdit">取消</button>
               <button
