@@ -75,6 +75,17 @@ const syncHint = computed(() => {
 });
 
 const hasUnsavedChanges = computed(() => buildFormSnapshot() !== loadedSnapshot.value);
+const saveDisabledHint = computed(() => {
+  if (wizardStep.value !== 3) return "";
+  if (saving.value) return "正在保存配置，请稍候。";
+  if (readOnlyMode.value) return "当前为只读模式，无法保存配置。";
+  return "";
+});
+const continueDisabledHint = computed(() => {
+  if (wizardStep.value !== 3) return "";
+  if (hasUnsavedChanges.value) return "请先保存配置后再继续下一步。";
+  return "";
+});
 
 function formatDate(raw: string): string {
   if (!raw) return "-";
@@ -436,6 +447,8 @@ onBeforeUnmount(() => {
 
         <div v-if="validateText" class="validate-text" :class="{ ok: validateOk }">{{ validateText }}</div>
         <div v-if="hasUnsavedChanges" class="pending-text">存在未保存改动。</div>
+        <div v-if="saveDisabledHint" class="save-disabled-hint">{{ saveDisabledHint }}</div>
+        <div v-if="continueDisabledHint" class="continue-disabled-hint">{{ continueDisabledHint }}</div>
 
         <div class="actions">
           <button type="button" class="btn btn-ghost" @click="goStep(2)">上一步</button>
@@ -670,7 +683,9 @@ h4 {
 
 .sync-hint,
 .pending-text,
-.validate-text {
+.validate-text,
+.save-disabled-hint,
+.continue-disabled-hint {
   font-size: 13px;
   color: var(--muted);
 }
