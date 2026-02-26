@@ -27,6 +27,12 @@ const hintText = computed(() => {
   return model.value.hintText;
 });
 
+const modeStateText = computed(() => {
+  if (model.value?.status !== "ready") return "";
+  if (!model.value.showModeToggle) return "";
+  return screenshotMode.value ? "当前：截图模式" : "当前：交互模式";
+});
+
 function getRouteParams() {
   const idParam = String(route.params.id || "").trim();
 
@@ -113,6 +119,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="viewer-actions">
+        <div v-if="modeStateText" class="viewer-mode-state">{{ modeStateText }}</div>
         <button
           v-if="model?.status === 'ready' && model.showModeToggle"
           type="button"
@@ -170,9 +177,13 @@ onBeforeUnmount(() => {
 }
 
 .viewer-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -196,7 +207,15 @@ onBeforeUnmount(() => {
 
 .viewer-actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+  justify-content: flex-end;
+}
+
+.viewer-mode-state {
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .viewer-btn {
