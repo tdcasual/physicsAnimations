@@ -26,6 +26,7 @@ const { parseWithSchema, idSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
 const { createItemsReadService } = require("../services/items/readService");
+const { createItemsWriteService } = require("../services/items/writeService");
 
 function safeText(text) {
   if (typeof text !== "string") return "";
@@ -508,6 +509,19 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
       safeText,
     },
   });
+  const writeService = createItemsWriteService({
+    store,
+    deps: {
+      mutateItemsState,
+      mutateBuiltinItemsState,
+      mutateItemTombstonesState,
+      normalizeCategoryId,
+      noSave,
+      loadBuiltinIndex,
+      findBuiltinItemById,
+      toApiItem,
+    },
+  });
 
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -939,81 +953,12 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
         return;
       }
 
-      const dynamicResult = await mutateItemsState({ store }, (state) => {
-        const dynamicItem = state.items.find((it) => it.id === id);
-        if (!dynamicItem) return noSave(null);
-        if (body.deleted !== undefined) return noSave({ __kind: "unsupported_change" });
-
-        if (body.title !== undefined) dynamicItem.title = body.title;
-        if (body.description !== undefined) dynamicItem.description = body.description;
-        if (body.categoryId !== undefined) dynamicItem.categoryId = normalizeCategoryId(body.categoryId);
-        if (body.order !== undefined) dynamicItem.order = body.order;
-        if (body.published !== undefined) dynamicItem.published = body.published;
-        if (body.hidden !== undefined) dynamicItem.hidden = body.hidden;
-
-        dynamicItem.updatedAt = new Date().toISOString();
-        return dynamicItem;
-      });
-
-      if (dynamicResult?.__kind === "unsupported_change") {
-        res.status(400).json({ error: "unsupported_change" });
+      const result = await writeService.updateItem({ id, patch: body });
+      if (result?.error) {
+        res.status(Number(result.status || 500)).json({ error: result.error });
         return;
       }
-      if (dynamicResult) {
-        res.json({ ok: true, item: toApiItem(dynamicResult) });
-        return;
-      }
-
-      const builtinBase = loadBuiltinIndex().find((it) => it.id === id);
-      if (!builtinBase) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-
-      await mutateBuiltinItemsState({ store }, (builtinState) => {
-        if (!builtinState.items) builtinState.items = {};
-        const current =
-          builtinState.items[id] && typeof builtinState.items[id] === "object"
-            ? { ...builtinState.items[id] }
-            : {};
-
-        if (body.title !== undefined) {
-          const title = String(body.title || "").trim();
-          if (!title) delete current.title;
-          else current.title = title;
-        }
-        if (body.description !== undefined) {
-          const desc = String(body.description || "");
-          if (!desc.trim()) delete current.description;
-          else current.description = desc;
-        }
-        if (body.categoryId !== undefined) {
-          const raw = String(body.categoryId || "").trim();
-          if (!raw) delete current.categoryId;
-          else current.categoryId = normalizeCategoryId(raw);
-        }
-        if (body.order !== undefined) current.order = body.order;
-        if (body.published !== undefined) current.published = body.published;
-        if (body.hidden !== undefined) current.hidden = body.hidden;
-        if (body.deleted === true) current.deleted = true;
-        if (body.deleted === false) delete current.deleted;
-
-        current.updatedAt = new Date().toISOString();
-
-        const hasAnyOverride = Object.entries(current).some(
-          ([k, v]) => k !== "updatedAt" && v !== undefined,
-        );
-        if (hasAnyOverride) builtinState.items[id] = current;
-        else delete builtinState.items[id];
-      });
-
-      const updated = await findBuiltinItemById(id, { includeDeleted: true });
-      if (!updated) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-
-      res.json({ ok: true, item: toApiItem(updated) });
+      res.json(result);
     }),
   );
 
@@ -1147,51 +1092,12 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     rateLimit({ key: "items_write", windowMs: 60 * 60 * 1000, max: 120 }),
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
-      const deletedAt = new Date().toISOString();
-
-      const deleted = await mutateItemsState({ store }, async (state) => {
-        const before = state.items.length;
-        const item = state.items.find((it) => it.id === id);
-        state.items = state.items.filter((it) => it.id !== id);
-        if (!item || state.items.length === before) return noSave(null);
-
-        if (item.type === "upload") {
-          await store.deletePath(`uploads/${id}`, { recursive: true });
-        }
-        if (item.thumbnail) {
-          await store.deletePath(`thumbnails/${id}.png`);
-        }
-
-        return item;
-      });
-      if (deleted) {
-        await mutateItemTombstonesState({ store }, (tombstones) => {
-          if (!tombstones.tombstones) tombstones.tombstones = {};
-          tombstones.tombstones[id] = { deletedAt };
-        }).catch(() => {});
-        res.json({ ok: true });
+      const result = await writeService.deleteItem({ id });
+      if (result?.error) {
+        res.status(Number(result.status || 500)).json({ error: result.error });
         return;
       }
-
-      const builtinBase = loadBuiltinIndex().find((it) => it.id === id);
-      if (!builtinBase) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-
-      await mutateBuiltinItemsState({ store }, (builtinState) => {
-        if (!builtinState.items) builtinState.items = {};
-        const current =
-          builtinState.items[id] && typeof builtinState.items[id] === "object"
-            ? { ...builtinState.items[id] }
-            : {};
-
-        current.deleted = true;
-        current.updatedAt = new Date().toISOString();
-        builtinState.items[id] = current;
-      });
-
-      res.json({ ok: true });
+      res.json(result);
     }),
   );
 
