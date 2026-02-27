@@ -11,7 +11,25 @@ const { createLibraryService } = require("../services/library/libraryService");
 function createLibraryRouter({ authConfig, store }) {
   const router = express.Router();
   const authRequired = requireAuth({ authConfig });
-  const service = createLibraryService({ store });
+  const safeStore =
+    store &&
+    typeof store.readBuffer === "function" &&
+    typeof store.writeBuffer === "function" &&
+    typeof store.deletePath === "function"
+      ? store
+      : {
+          async readBuffer() {
+            return null;
+          },
+          async writeBuffer() {
+            throw new Error("storage_unavailable");
+          },
+          async deletePath() {},
+          async createReadStream() {
+            return null;
+          },
+        };
+  const service = createLibraryService({ store: safeStore });
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: { fileSize: 50 * 1024 * 1024 },
