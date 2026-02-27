@@ -3,11 +3,13 @@ import type { RouteRecordRaw } from "vue-router";
 import AdminAccountView from "../views/admin/AdminAccountView.vue";
 import AdminContentView from "../views/admin/AdminContentView.vue";
 import AdminDashboardView from "../views/admin/AdminDashboardView.vue";
+import AdminLibraryView from "../views/admin/AdminLibraryView.vue";
 import AdminLayoutView from "../views/admin/AdminLayoutView.vue";
 import AdminSystemView from "../views/admin/AdminSystemView.vue";
 import AdminTaxonomyView from "../views/admin/AdminTaxonomyView.vue";
 import AdminUploadsView from "../views/admin/AdminUploadsView.vue";
 import CatalogView from "../views/CatalogView.vue";
+import LibraryFolderView from "../views/LibraryFolderView.vue";
 import LoginView from "../views/LoginView.vue";
 import ViewerView from "../views/ViewerView.vue";
 
@@ -21,6 +23,12 @@ export const appRoutes: RouteRecordRaw[] = [
     path: "/viewer/:id",
     name: "viewer",
     component: ViewerView,
+    props: true,
+  },
+  {
+    path: "/library/folder/:id",
+    name: "library-folder",
+    component: LibraryFolderView,
     props: true,
   },
   {
@@ -50,6 +58,11 @@ export const appRoutes: RouteRecordRaw[] = [
         path: "uploads",
         name: "admin-uploads",
         component: AdminUploadsView,
+      },
+      {
+        path: "library",
+        name: "admin-library",
+        component: AdminLibraryView,
       },
       {
         path: "taxonomy",

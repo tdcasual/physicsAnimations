@@ -5,6 +5,7 @@
       <RouterLink class="admin-link" active-class="active" to="/admin/dashboard">概览</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/content">内容</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/uploads">上传</RouterLink>
+      <RouterLink class="admin-link" active-class="active" to="/admin/library">资源库</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/taxonomy">分类</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/system">系统</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/account">账号</RouterLink>

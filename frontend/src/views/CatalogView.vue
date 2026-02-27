@@ -4,6 +4,8 @@ import { loadCatalogData } from "../features/catalog/catalogService";
 import { getCatalogItemHref, normalizePublicUrl } from "../features/catalog/catalogLink";
 import { computeCatalogView } from "../features/catalog/catalogState";
 import type { CatalogData, CatalogItem } from "../features/catalog/types";
+import { listLibraryCatalog } from "../features/library/libraryApi";
+import type { LibraryFolder } from "../features/library/types";
 
 const VIEW_STATE_KEY = "pa_view_state";
 const MAX_GROUP_TABS = 8;
@@ -15,6 +17,7 @@ const query = ref("");
 const selectedGroupId = ref("physics");
 const selectedCategoryId = ref("all");
 const catalog = ref<CatalogData>({ groups: {} });
+const libraryFolders = ref<LibraryFolder[]>([]);
 
 function readViewState(): { groupId: string; categoryId: string } | null {
   try {
@@ -57,9 +60,24 @@ const directGroups = computed(() => view.value.groups.slice(0, MAX_GROUP_TABS));
 const overflowGroups = computed(() => view.value.groups.slice(MAX_GROUP_TABS));
 const directCategories = computed(() => view.value.categories.slice(0, MAX_CATEGORY_TABS));
 const overflowCategories = computed(() => view.value.categories.slice(MAX_CATEGORY_TABS));
+const filteredLibraryFolders = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  const activeCategoryId = view.value.activeCategoryId;
+  return libraryFolders.value.filter((folder) => {
+    if (activeCategoryId !== "all" && folder.categoryId !== activeCategoryId) return false;
+    if (!q) return true;
+    const hay = `${folder.name || ""}\n${folder.categoryId || ""}`.toLowerCase();
+    return hay.includes(q);
+  });
+});
 
 function getItemHref(item: CatalogItem): string {
   return getCatalogItemHref(item);
+}
+
+function getFolderHref(folderId: string): string {
+  const base = import.meta.env.BASE_URL || "/";
+  return `${base.replace(/\/+$/, "/")}library/folder/${encodeURIComponent(folderId)}`;
 }
 
 function selectGroup(groupId: string) {
@@ -96,6 +114,9 @@ onMounted(async () => {
     selectedGroupId.value = next.activeGroupId;
     selectedCategoryId.value = next.activeCategoryId;
     persistViewState();
+
+    const libraryCatalog = await listLibraryCatalog().catch(() => ({ folders: [] }));
+    libraryFolders.value = Array.isArray(libraryCatalog.folders) ? libraryCatalog.folders : [];
   } catch {
     loadError.value = "加载目录失败，请稍后重试。";
   } finally {
@@ -182,6 +203,25 @@ onMounted(async () => {
 
     <div v-else class="catalog-grid">
       <a
+        v-for="folder in filteredLibraryFolders"
+        :key="`folder-${folder.id}`"
+        class="catalog-card catalog-folder-card"
+        :href="getFolderHref(folder.id)"
+      >
+        <div class="catalog-thumb">
+          <img v-if="folder.coverPath" :src="normalizePublicUrl(folder.coverPath)" alt="" loading="lazy" />
+          <div v-else class="catalog-thumb-placeholder">文件夹</div>
+        </div>
+        <div class="catalog-card-body">
+          <div class="catalog-card-title">
+            {{ folder.name || folder.id }}
+            <small class="catalog-folder-tag">文件夹</small>
+          </div>
+          <div class="catalog-card-desc">{{ folder.assetCount || 0 }} 个资源</div>
+        </div>
+      </a>
+
+      <a
         v-for="item in view.items"
         :key="item.id"
         class="catalog-card"
@@ -200,7 +240,7 @@ onMounted(async () => {
         </div>
       </a>
 
-      <div v-if="view.items.length === 0" class="catalog-empty">
+      <div v-if="view.items.length === 0 && filteredLibraryFolders.length === 0" class="catalog-empty">
         {{ view.hasAnyItems ? "没有匹配的作品。" : "未找到任何作品。" }}
       </div>
     </div>
@@ -304,6 +344,15 @@ onMounted(async () => {
 
 .catalog-link-tag {
   color: #0369a1;
+  font-weight: 500;
+}
+
+.catalog-folder-card {
+  border-style: dashed;
+}
+
+.catalog-folder-tag {
+  color: #475569;
   font-weight: 500;
 }
 
