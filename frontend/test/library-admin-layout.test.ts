@@ -126,6 +126,14 @@ describe("admin library layout", () => {
     expect(combined).toMatch(/runAssetBatchMove/);
   });
 
+  it("moves batch action implementations into the asset selection composable", () => {
+    const { state, assetSelection } = readLibrarySources();
+    expect(state).not.toMatch(/async function runAssetBatchDelete/);
+    expect(state).not.toMatch(/async function runAssetBatchMove/);
+    expect(assetSelection).toMatch(/async function runAssetBatchDelete/);
+    expect(assetSelection).toMatch(/async function runAssetBatchMove/);
+  });
+
   it("routes panel switching through setActivePanelTab to keep sections expanded", () => {
     const { state } = readLibrarySources();
     expect(state).toMatch(/function setActivePanelTab/);
