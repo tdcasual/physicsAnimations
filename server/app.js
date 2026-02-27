@@ -164,7 +164,11 @@ function createApp({
 
   app.get("/api/catalog", async (_req, res, next) => {
     try {
-      const catalog = await loadCatalog({ rootDir, store });
+      const catalog = await loadCatalog({
+        rootDir,
+        store,
+        taxonomyQueryRepo: queryRepos.taxonomyQueryRepo,
+      });
       res.json(catalog);
     } catch (err) {
       next(err);

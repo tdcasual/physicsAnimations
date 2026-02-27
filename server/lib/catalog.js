@@ -139,15 +139,20 @@ function applyGroupConfig(group, config) {
 
 async function loadDynamicCatalogItems({
   store,
+  taxonomyQueryRepo,
   includeHiddenItems = false,
   includeUnpublishedItems = false,
 } = {}) {
-  const supportsSqlCatalogQuery =
-    typeof store?.stateDbQuery?.queryDynamicItemsForCatalog === "function";
+  const queryDynamicItemsForCatalog =
+    typeof taxonomyQueryRepo?.queryDynamicItemsForCatalog === "function"
+      ? (options) => taxonomyQueryRepo.queryDynamicItemsForCatalog(options)
+      : typeof store?.stateDbQuery?.queryDynamicItemsForCatalog === "function"
+        ? (options) => store.stateDbQuery.queryDynamicItemsForCatalog(options)
+        : null;
 
-  if (supportsSqlCatalogQuery) {
+  if (queryDynamicItemsForCatalog) {
     try {
-      const sqlResult = await store.stateDbQuery.queryDynamicItemsForCatalog({
+      const sqlResult = await queryDynamicItemsForCatalog({
         includeHiddenItems,
         includeUnpublishedItems,
       });
@@ -168,6 +173,7 @@ async function loadDynamicCatalogItems({
 async function loadCatalog({
   rootDir,
   store,
+  taxonomyQueryRepo,
   includeHiddenCategories = false,
   includeHiddenItems = false,
   includeUnpublishedItems = false,
@@ -182,6 +188,7 @@ async function loadCatalog({
   });
   const dynamic = await loadDynamicCatalogItems({
     store,
+    taxonomyQueryRepo,
     includeHiddenItems,
     includeUnpublishedItems,
   });
