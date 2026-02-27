@@ -4,6 +4,7 @@ const path = require("path");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const { loadAdminState } = require("./adminState");
+const logger = require("./logger");
 
 const DEFAULT_ADMIN_USERNAME = "admin";
 const DEFAULT_ADMIN_PASSWORD = "admin";
@@ -52,9 +53,11 @@ function getAuthConfig({ rootDir } = {}) {
   const { secret: jwtSecret, source: jwtSecretSource } = resolveJwtSecretWithSource({ rootDir });
   if (jwtSecretSource === "memory" && !process.env.JWT_SECRET && !didWarnEphemeralJwtSecret) {
     didWarnEphemeralJwtSecret = true;
-    console.warn(
-      "[auth] JWT secret is ephemeral (not persisted). Tokens will be invalid after restart/cold start. Set JWT_SECRET in env.",
-    );
+    logger.warn("auth_ephemeral_jwt_secret", {
+      message:
+        "JWT secret is ephemeral (not persisted). Tokens will be invalid after restart/cold start.",
+      hint: "set JWT_SECRET in env",
+    });
   }
 
   const jwtIssuer = process.env.JWT_ISSUER || "physicsAnimations";

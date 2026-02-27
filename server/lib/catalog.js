@@ -4,6 +4,7 @@ const path = require("path");
 const { DEFAULT_GROUP_ID, GROUP_TITLES, CATEGORY_TITLES } = require("./categories");
 const { readAnimationsJson } = require("./animationsIndex");
 const { loadItemsState, loadCategoriesState, loadBuiltinItemsState } = require("./state");
+const logger = require("./logger");
 
 function safeText(text) {
   if (typeof text !== "string") return "";
@@ -154,7 +155,10 @@ async function loadDynamicCatalogItems({
         return sqlResult;
       }
     } catch (err) {
-      console.warn("[catalog] SQL dynamic query failed; fallback to items.json", err?.message || err);
+      logger.warn("catalog_sql_dynamic_query_failed", {
+        fallback: "items_json",
+        error: err,
+      });
     }
   }
 

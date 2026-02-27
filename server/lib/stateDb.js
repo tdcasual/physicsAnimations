@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const { Readable } = require("stream");
+const logger = require("./logger");
+const { loadNodeSqlite } = require("./nodeSqlite");
 
 const STATE_BLOB_KEYS = new Set([
   "items.json",
@@ -165,12 +167,8 @@ function resolveDbPath({ rootDir, dbPath }) {
 }
 
 function createSqliteMirror({ rootDir, dbPath }) {
-  let sqlite = null;
-  try {
-    sqlite = require("node:sqlite");
-  } catch {
-    return null;
-  }
+  const sqlite = loadNodeSqlite();
+  if (!sqlite) return null;
 
   const DatabaseSync = sqlite?.DatabaseSync;
   if (typeof DatabaseSync !== "function") return null;
@@ -813,7 +811,10 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
 
   const mirror = createSqliteMirror({ rootDir, dbPath: dbPath || process.env.STATE_DB_PATH });
   if (!mirror) {
-    console.warn("[state-db] SQLite backend requested but node:sqlite is unavailable; disabled.");
+    logger.warn("state_db_sqlite_unavailable", {
+      mode: "sqlite",
+      fallback: "disabled",
+    });
     return { store, info: defaultStateDbInfo() };
   }
 
@@ -876,7 +877,12 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
       info.degraded = true;
     }
 
-    console.warn(`[state-db] ${operation} failed`, message);
+    logger.warn("state_db_operation_failed", {
+      operation,
+      message,
+      consecutiveErrors,
+      circuitOpen: info.circuitOpen,
+    });
   }
 
   function ensureUsable() {

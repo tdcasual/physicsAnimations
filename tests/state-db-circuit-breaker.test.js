@@ -6,6 +6,7 @@ const path = require("node:path");
 const bcrypt = require("bcryptjs");
 
 const { createApp } = require("../server/app");
+const { loadNodeSqlite } = require("../server/lib/nodeSqlite");
 
 function makeTempRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-circuit-"));
@@ -81,12 +82,8 @@ async function login(baseUrl, authConfig) {
 }
 
 test("state db opens circuit and /api/items returns state_db_unavailable when SQL path breaks", async () => {
-  let sqlite = null;
-  try {
-    sqlite = require("node:sqlite");
-  } catch {
-    return;
-  }
+  const sqlite = loadNodeSqlite();
+  if (!sqlite) return;
 
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();

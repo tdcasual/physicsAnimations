@@ -7,14 +7,10 @@ const path = require("node:path");
 const bcrypt = require("bcryptjs");
 
 const { createApp } = require("../server/app");
+const { loadNodeSqlite } = require("../server/lib/nodeSqlite");
 
 function hasNodeSqlite() {
-  try {
-    require("node:sqlite");
-    return true;
-  } catch {
-    return false;
-  }
+  return Boolean(loadNodeSqlite());
 }
 
 function makeTempRoot({ animationsJson } = {}) {
@@ -299,7 +295,8 @@ test("state db sqlite mirrors state writes", async () => {
     assert.equal(typeof system?.taskQueue, "object");
 
     assert.equal(fs.existsSync(dbPath), true);
-    const sqlite = require("node:sqlite");
+    const sqlite = loadNodeSqlite();
+    assert.ok(sqlite);
     const db = new sqlite.DatabaseSync(dbPath);
     const row = db
       .prepare("SELECT LENGTH(value) as bytes FROM state_blobs WHERE key = ?")

@@ -7,6 +7,7 @@ const { loadCatalog } = require("../lib/catalog");
 const { loadCategoriesState, mutateCategoriesState, noSave } = require("../lib/state");
 const { parseWithSchema } = require("../lib/validation");
 const { rateLimit } = require("../middleware/rateLimit");
+const logger = require("../lib/logger");
 
 const EMPTY_ITEMS_STATE_BUFFER = Buffer.from('{"version":2,"items":[]}\n', "utf8");
 
@@ -267,7 +268,10 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
           res.json(sqlPayload);
           return;
         } catch (sqlErr) {
-          console.warn("[categories] SQL dynamic category counts failed; fallback to catalog", sqlErr);
+          logger.warn("categories_sql_dynamic_counts_failed", {
+            fallback: "catalog",
+            error: sqlErr,
+          });
         }
       }
 
@@ -283,7 +287,7 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
       res.json(buildCategoriesPayload(catalog));
     } catch (err) {
       res.status(500).json({ error: "server_error" });
-      console.error(err);
+      logger.error("categories_list_failed", err, { route: "GET /categories" });
     }
   });
 
@@ -326,7 +330,7 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
         res.json({ ok: true, category: created });
       } catch (err) {
         res.status(500).json({ error: "server_error" });
-        console.error(err);
+        logger.error("categories_create_failed", err, { route: "POST /categories", categoryId: id });
       }
     },
   );
@@ -380,7 +384,10 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
         res.json({ ok: true, category: updated });
       } catch (err) {
         res.status(500).json({ error: "server_error" });
-        console.error(err);
+        logger.error("categories_update_failed", err, {
+          route: "PUT /categories/:id",
+          categoryId: id,
+        });
       }
     },
   );
@@ -400,7 +407,10 @@ function createCategoriesRouter({ rootDir, authConfig, store }) {
         res.json({ ok: true });
       } catch (err) {
         res.status(500).json({ error: "server_error" });
-        console.error(err);
+        logger.error("categories_delete_failed", err, {
+          route: "DELETE /categories/:id",
+          categoryId: id,
+        });
       }
     },
   );

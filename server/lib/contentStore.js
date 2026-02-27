@@ -3,6 +3,7 @@ const path = require("path");
 const { Readable } = require("stream");
 
 const { createError } = require("./errors");
+const logger = require("./logger");
 
 function ensureTrailingSlash(url) {
   return url.endsWith("/") ? url : `${url}/`;
@@ -324,7 +325,10 @@ function createHybridStore({ rootDir, webdavConfig }) {
     try {
       await op();
     } catch (err) {
-      console.warn(`[webdav] ${label} failed`, err?.message || err);
+      logger.warn("webdav_mirror_failed", {
+        operation: label,
+        error: err,
+      });
     }
   }
 
@@ -401,21 +405,29 @@ function createContentStore({ rootDir, config } = {}) {
 
   if (effectiveMode === "hybrid") {
     if (!hasWebdav) {
-      console.warn("[storage] STORAGE_MODE=hybrid but WEBDAV_URL is missing; falling back to local storage.");
+      logger.warn("storage_hybrid_missing_webdav_url", {
+        fallback: "local",
+      });
       if (localWritable) return createLocalStore({ rootDir });
-      console.warn("[storage] Local storage is not writable; running in read-only mode.");
+      logger.warn("storage_local_not_writable", {
+        fallback: "local_readonly",
+      });
       return createReadOnlyLocalStore({ rootDir, reason: "content_dir_not_writable" });
     }
 
     if (localWritable) return createHybridStore({ rootDir, webdavConfig });
 
-    console.warn("[storage] Local storage is not writable; falling back to WebDAV-only mode.");
+    logger.warn("storage_local_not_writable", {
+      fallback: "webdav",
+    });
     return createWebdavStore(webdavConfig);
   }
 
   if (localWritable) return createLocalStore({ rootDir });
 
-  console.warn("[storage] Local storage is not writable; running in read-only mode.");
+  logger.warn("storage_local_not_writable", {
+    fallback: "local_readonly",
+  });
   return createReadOnlyLocalStore({ rootDir, reason: "content_dir_not_writable" });
 }
 

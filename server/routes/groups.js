@@ -7,6 +7,7 @@ const { loadCatalog } = require("../lib/catalog");
 const { mutateCategoriesState, noSave } = require("../lib/state");
 const { parseWithSchema } = require("../lib/validation");
 const { rateLimit } = require("../middleware/rateLimit");
+const logger = require("../lib/logger");
 
 function createGroupsRouter({ rootDir, authConfig, store }) {
   const router = express.Router();
@@ -58,7 +59,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
       })
       .catch((err) => {
         res.status(500).json({ error: "server_error" });
-        console.error(err);
+        logger.error("groups_list_failed", err, { route: "GET /groups" });
       });
   });
 
@@ -93,7 +94,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
         res.json({ ok: true, group: created });
       } catch (err) {
         res.status(500).json({ error: "server_error" });
-        console.error(err);
+        logger.error("groups_create_failed", err, { route: "POST /groups", groupId: id });
       }
     },
   );
@@ -128,7 +129,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
         res.json({ ok: true, group: updated });
       } catch (err) {
         res.status(500).json({ error: "server_error" });
-        console.error(err);
+        logger.error("groups_update_failed", err, { route: "PUT /groups/:id", groupId: id });
       }
     },
   );
@@ -160,7 +161,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
         res.json({ ok: true });
       } catch (err) {
         res.status(500).json({ error: "server_error" });
-        console.error(err);
+        logger.error("groups_delete_failed", err, { route: "DELETE /groups/:id", groupId: id });
       }
     },
   );

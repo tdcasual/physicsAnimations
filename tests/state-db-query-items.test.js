@@ -5,14 +5,10 @@ const os = require("node:os");
 const path = require("node:path");
 
 const { createStateDbStore } = require("../server/lib/stateDb");
+const { loadNodeSqlite } = require("../server/lib/nodeSqlite");
 
 function hasNodeSqlite() {
-  try {
-    require("node:sqlite");
-    return true;
-  } catch {
-    return false;
-  }
+  return Boolean(loadNodeSqlite());
 }
 
 function makeTempRoot() {
