@@ -91,6 +91,7 @@ content/admin.json
 content/system.json
 content/.jwt_secret
 content/items_tombstones.json
+content/library/
 content/uploads/
 content/thumbnails/
 output/playwright/
