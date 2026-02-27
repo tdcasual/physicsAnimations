@@ -44,6 +44,7 @@ const errorText = ref("");
 const successText = ref("");
 const validateText = ref("");
 const validateOk = ref(false);
+const fieldErrors = ref<Record<string, string>>({});
 
 const storage = ref<SystemStorage | null>(null);
 const wizardStep = ref<WizardStep>(1);
@@ -86,6 +87,28 @@ const continueDisabledHint = computed(() => {
   if (hasUnsavedChanges.value) return "请先保存配置后再继续下一步。";
   return "";
 });
+
+function setFieldError(key: string, message: string) {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [key]: message,
+  };
+}
+
+function clearFieldErrors(key?: string) {
+  if (!key) {
+    fieldErrors.value = {};
+    return;
+  }
+  if (!(key in fieldErrors.value)) return;
+  const next = { ...fieldErrors.value };
+  delete next[key];
+  fieldErrors.value = next;
+}
+
+function getFieldError(key: string): string {
+  return fieldErrors.value[key] || "";
+}
 
 function formatDate(raw: string): string {
   if (!raw) return "-";
@@ -136,6 +159,7 @@ function applyStorage(nextStorage: any, options: { resetStep: boolean } = { rese
   password.value = "";
   validateText.value = "";
   validateOk.value = false;
+  clearFieldErrors("webdavUrl");
   markLoadedSnapshot();
 
   if (options.resetStep) wizardStep.value = 1;
@@ -159,6 +183,9 @@ function onModeChanged() {
   successText.value = "";
   validateText.value = "";
   validateOk.value = false;
+  if (!shouldRequireWebdavUrl(mode.value)) {
+    clearFieldErrors("webdavUrl");
+  }
   if (wizardStep.value > 2) wizardStep.value = 2;
 }
 
@@ -174,9 +201,11 @@ function nextFromMode() {
 function nextFromConnection() {
   errorText.value = "";
   if (requiresWebdavUrl.value && !String(url.value || "").trim()) {
+    setFieldError("webdavUrl", "请填写 WebDAV 地址。");
     errorText.value = "请填写 WebDAV 地址。";
     return;
   }
+  clearFieldErrors("webdavUrl");
   wizardStep.value = 3;
 }
 
@@ -187,9 +216,11 @@ async function runValidation() {
     return;
   }
   if (!String(url.value || "").trim()) {
+    setFieldError("webdavUrl", "请填写 WebDAV 地址。");
     errorText.value = "请填写 WebDAV 地址。";
     return;
   }
+  clearFieldErrors("webdavUrl");
 
   validating.value = true;
   errorText.value = "";
@@ -211,6 +242,7 @@ async function runValidation() {
     const e = err as { status?: number; data?: any };
     const reason = String(e?.data?.reason || "").trim();
     if (e?.data?.error === "webdav_missing_url") {
+      setFieldError("webdavUrl", "请填写 WebDAV 地址。");
       errorText.value = "请填写 WebDAV 地址。";
       return;
     }
@@ -223,9 +255,11 @@ async function runValidation() {
 
 async function saveStorage() {
   if (requiresWebdavUrl.value && !String(url.value || "").trim()) {
+    setFieldError("webdavUrl", "请填写 WebDAV 地址。");
     errorText.value = "请填写 WebDAV 地址。";
     return;
   }
+  clearFieldErrors("webdavUrl");
   if (readOnlyMode.value) {
     errorText.value = "当前为只读模式，无法保存配置。";
     return;
@@ -254,6 +288,7 @@ async function saveStorage() {
   } catch (err) {
     const e = err as { status?: number; data?: any };
     if (e?.data?.error === "webdav_missing_url") {
+      setFieldError("webdavUrl", "请填写 WebDAV 地址。");
       errorText.value = "请填写 WebDAV 地址。";
       return;
     }
@@ -375,7 +410,7 @@ onBeforeUnmount(() => {
         <h4>连接配置</h4>
 
         <div v-if="remoteMode" class="form-grid">
-          <label class="field">
+          <label class="field" :class="{ 'has-error': getFieldError('webdavUrl') }">
             <span>WebDAV URL</span>
             <input
               v-model="url"
@@ -384,7 +419,9 @@ onBeforeUnmount(() => {
               name="webdav_url"
               autocomplete="url"
               placeholder="https://example.com/dav/"
+              @input="clearFieldErrors('webdavUrl')"
             />
+            <div v-if="getFieldError('webdavUrl')" class="field-error-text">{{ getFieldError("webdavUrl") }}</div>
           </label>
 
           <label class="field">

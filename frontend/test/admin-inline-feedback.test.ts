@@ -7,11 +7,13 @@ function read(relPath: string): string {
 }
 
 describe("admin inline feedback", () => {
-  it("uses inline field errors in content and uploads forms", () => {
+  it("uses inline field errors in content, uploads, account and system forms", () => {
     const content = read("src/views/admin/AdminContentView.vue");
     const uploads = read("src/views/admin/AdminUploadsView.vue");
+    const account = read("src/views/admin/AdminAccountView.vue");
+    const system = read("src/views/admin/AdminSystemView.vue");
 
-    for (const source of [content, uploads]) {
+    for (const source of [content, uploads, account, system]) {
       expect(source).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
       expect(source).toMatch(/function setFieldError/);
       expect(source).toMatch(/function clearFieldErrors/);
@@ -22,5 +24,8 @@ describe("admin inline feedback", () => {
 
     expect(content).toMatch(/getFieldError\("createLinkUrl"\)/);
     expect(uploads).toMatch(/getFieldError\("uploadFile"\)/);
+    expect(account).toMatch(/getFieldError\("currentPassword"\)/);
+    expect(account).toMatch(/getFieldError\("confirmPassword"\)/);
+    expect(system).toMatch(/getFieldError\("webdavUrl"\)/);
   });
 });

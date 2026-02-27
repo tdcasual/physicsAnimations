@@ -9,26 +9,51 @@ const auth = useAuthStore();
 const saving = ref(false);
 const errorText = ref("");
 const successText = ref("");
+const fieldErrors = ref<Record<string, string>>({});
 
 const currentPassword = ref("");
 const newUsername = ref("");
 const newPassword = ref("");
 const confirmPassword = ref("");
 
+function setFieldError(key: string, message: string) {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [key]: message,
+  };
+}
+
+function clearFieldErrors(key?: string) {
+  if (!key) {
+    fieldErrors.value = {};
+    return;
+  }
+  if (!(key in fieldErrors.value)) return;
+  const next = { ...fieldErrors.value };
+  delete next[key];
+  fieldErrors.value = next;
+}
+
+function getFieldError(key: string): string {
+  return fieldErrors.value[key] || "";
+}
+
 async function submit() {
   errorText.value = "";
   successText.value = "";
+  clearFieldErrors();
 
   if (!currentPassword.value) {
-    errorText.value = "请输入当前密码。";
+    setFieldError("currentPassword", "请输入当前密码。");
     return;
   }
-  if (!newUsername.value.trim() && !newPassword.value) {
-    errorText.value = "请填写新用户名或新密码。";
+  if (!newUsername.value.trim() && !newPassword.value.trim()) {
+    setFieldError("newUsername", "请填写新用户名或新密码。");
+    setFieldError("newPassword", "请填写新用户名或新密码。");
     return;
   }
   if (newPassword.value && newPassword.value !== confirmPassword.value) {
-    errorText.value = "两次密码不一致。";
+    setFieldError("confirmPassword", "两次密码不一致。");
     return;
   }
 
@@ -53,11 +78,12 @@ async function submit() {
   } catch (err) {
     const e = err as { status?: number; data?: any };
     if (e?.status === 401 && e?.data?.error === "invalid_credentials") {
-      errorText.value = "当前密码错误。";
+      setFieldError("currentPassword", "当前密码错误。");
       return;
     }
     if (e?.data?.error === "no_changes") {
-      errorText.value = "请填写新用户名或新密码。";
+      setFieldError("newUsername", "请填写新用户名或新密码。");
+      setFieldError("newPassword", "请填写新用户名或新密码。");
       return;
     }
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "更新账号失败。";
@@ -70,15 +96,15 @@ async function submit() {
 <template>
   <section class="admin-account-view">
     <h2>账号设置</h2>
-    <div v-if="errorText" class="error-text">{{ errorText }}</div>
-    <div v-if="successText" class="success-text">{{ successText }}</div>
+    <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
+    <div v-if="successText" class="success-text admin-feedback success">{{ successText }}</div>
 
-    <form class="panel" @submit.prevent="submit">
+    <form class="panel admin-card" @submit.prevent="submit">
       <div class="current-user">
         当前登录用户：<strong>{{ auth.username || "-" }}</strong>
       </div>
 
-      <label class="field">
+      <label class="field" :class="{ 'has-error': getFieldError('currentPassword') }">
         <span>当前密码</span>
         <input
           v-model="currentPassword"
@@ -86,20 +112,38 @@ async function submit() {
           type="password"
           name="current_password"
           autocomplete="current-password"
+          @input="clearFieldErrors('currentPassword')"
         />
+        <div v-if="getFieldError('currentPassword')" class="field-error-text">{{ getFieldError("currentPassword") }}</div>
       </label>
 
-      <label class="field">
+      <label class="field" :class="{ 'has-error': getFieldError('newUsername') }">
         <span>新用户名（可选）</span>
-        <input v-model="newUsername" class="field-input" type="text" name="username" autocomplete="username" />
+        <input
+          v-model="newUsername"
+          class="field-input"
+          type="text"
+          name="username"
+          autocomplete="username"
+          @input="clearFieldErrors('newUsername')"
+        />
+        <div v-if="getFieldError('newUsername')" class="field-error-text">{{ getFieldError("newUsername") }}</div>
       </label>
 
-      <label class="field">
+      <label class="field" :class="{ 'has-error': getFieldError('newPassword') }">
         <span>新密码（可选）</span>
-        <input v-model="newPassword" class="field-input" type="password" name="new_password" autocomplete="new-password" />
+        <input
+          v-model="newPassword"
+          class="field-input"
+          type="password"
+          name="new_password"
+          autocomplete="new-password"
+          @input="clearFieldErrors('newPassword')"
+        />
+        <div v-if="getFieldError('newPassword')" class="field-error-text">{{ getFieldError("newPassword") }}</div>
       </label>
 
-      <label class="field">
+      <label class="field" :class="{ 'has-error': getFieldError('confirmPassword') }">
         <span>确认新密码</span>
         <input
           v-model="confirmPassword"
@@ -107,10 +151,12 @@ async function submit() {
           type="password"
           name="confirm_new_password"
           autocomplete="new-password"
+          @input="clearFieldErrors('confirmPassword')"
         />
+        <div v-if="getFieldError('confirmPassword')" class="field-error-text">{{ getFieldError("confirmPassword") }}</div>
       </label>
 
-      <div class="actions">
+      <div class="actions admin-actions">
         <button type="submit" class="btn btn-primary" :disabled="saving">保存</button>
       </div>
     </form>
@@ -127,32 +173,8 @@ h2 {
   margin: 0;
 }
 
-.panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-}
-
 .current-user {
   color: var(--muted);
   font-size: 14px;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.error-text {
-  color: var(--danger);
-  font-size: 13px;
-}
-
-.success-text {
-  color: #15803d;
-  font-size: 13px;
 }
 </style>
