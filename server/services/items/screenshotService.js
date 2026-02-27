@@ -7,15 +7,16 @@ const {
   filePathToUrl: defaultFilePathToUrl,
 } = require("../../lib/screenshot");
 const { assertPublicHttpUrl: defaultAssertPublicHttpUrl } = require("../../lib/ssrf");
+const logger = require("../../lib/logger");
 
 function createWarnScreenshotDeps() {
   let didWarn = false;
   return (err) => {
     if (didWarn) return;
     didWarn = true;
-    console.error("[screenshot] Failed to generate thumbnails.");
-    console.error("[screenshot] Try: `npm run install-playwright-deps`");
-    if (err?.message) console.error(`[screenshot] ${err.message}`);
+    logger.error("screenshot_dependency_unavailable", err, {
+      hint: "run `npm run install-playwright-deps`",
+    });
   };
 }
 
@@ -148,4 +149,3 @@ module.exports = {
   createWarnScreenshotDeps,
   createScreenshotService,
 };
-

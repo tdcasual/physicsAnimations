@@ -1,3 +1,5 @@
+const logger = require("../../lib/logger");
+
 function createItemsReadService({ store, deps }) {
   const {
     loadItemsState,
@@ -41,7 +43,10 @@ function createItemsReadService({ store, deps }) {
           total,
         };
       } catch (sqlErr) {
-        console.warn("[items] SQL merged query failed; returning state_db_unavailable", sqlErr);
+        logger.warn("items_sql_merged_query_failed", {
+          fallback: "state_db_unavailable",
+          error: sqlErr,
+        });
         return { status: 503, error: "state_db_unavailable" };
       }
     }
@@ -64,7 +69,10 @@ function createItemsReadService({ store, deps }) {
         dynamicTotal = Number.isFinite(sqlDynamic?.total) ? sqlDynamic.total : dynamicItems.length;
         loadedDynamicFromSql = true;
       } catch (sqlErr) {
-        console.warn("[items] SQL dynamic query failed; fallback to in-memory dynamic path", sqlErr);
+        logger.warn("items_sql_dynamic_query_failed", {
+          fallback: "in_memory_dynamic",
+          error: sqlErr,
+        });
       }
     }
 
@@ -114,7 +122,10 @@ function createItemsReadService({ store, deps }) {
 
         return { items: pageItems, page: query.page, pageSize: query.pageSize, total };
       } catch (sqlErr) {
-        console.warn("[items] SQL builtin query failed; fallback to in-memory builtin path", sqlErr);
+        logger.warn("items_sql_builtin_query_failed", {
+          fallback: "in_memory_builtin",
+          error: sqlErr,
+        });
       }
     }
 
@@ -178,7 +189,10 @@ function createItemsReadService({ store, deps }) {
         const sqlItem = await store.stateDbQuery.queryDynamicItemById({ id, isAdmin });
         if (sqlItem) return toApiItem(sqlItem);
       } catch (sqlErr) {
-        console.warn("[items] SQL item detail lookup failed; fallback to items.json", sqlErr);
+        logger.warn("items_sql_dynamic_item_lookup_failed", {
+          fallback: "items_json",
+          error: sqlErr,
+        });
       }
     }
 
@@ -198,7 +212,10 @@ function createItemsReadService({ store, deps }) {
         });
         if (sqlBuiltin) return toApiItem(sqlBuiltin);
       } catch (sqlErr) {
-        console.warn("[items] SQL builtin detail lookup failed; fallback to builtin merge path", sqlErr);
+        logger.warn("items_sql_builtin_item_lookup_failed", {
+          fallback: "builtin_merge",
+          error: sqlErr,
+        });
       }
     }
 
@@ -217,4 +234,3 @@ function createItemsReadService({ store, deps }) {
 module.exports = {
   createItemsReadService,
 };
-

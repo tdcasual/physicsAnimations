@@ -1,4 +1,6 @@
-function errorHandler(err, _req, res, _next) {
+const logger = require("../lib/logger");
+
+function errorHandler(err, req, res, _next) {
   if (res.headersSent) return;
 
   if (err?.code === "LIMIT_FILE_SIZE") {
@@ -20,7 +22,12 @@ function errorHandler(err, _req, res, _next) {
   }
 
   if (status >= 500) {
-    console.error(err);
+    logger.error("request_failed", err, {
+      status,
+      code,
+      method: req?.method,
+      path: req?.originalUrl || req?.url,
+    });
   }
 
   res.status(status).json(payload);

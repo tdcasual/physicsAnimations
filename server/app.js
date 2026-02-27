@@ -11,6 +11,7 @@ const { createStateDbStore } = require("./lib/stateDb");
 const { createTaskQueue } = require("./lib/taskQueue");
 
 const { errorHandler } = require("./middleware/errorHandler");
+const { requestContextMiddleware } = require("./middleware/requestContext");
 const { createAuthRouter } = require("./routes/auth");
 const { createGroupsRouter } = require("./routes/groups");
 const { createCategoriesRouter } = require("./routes/categories");
@@ -135,6 +136,7 @@ function createApp({
   });
   const store = stateDbWrapped.store;
 
+  app.use(requestContextMiddleware);
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/api/health", (_req, res) => {
