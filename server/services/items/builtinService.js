@@ -1,11 +1,6 @@
 const { listBuiltinItems, findBuiltinItem } = require("../../lib/animationsIndex");
 const { loadBuiltinItemsState } = require("../../lib/state");
-
-function defaultNormalizeCategoryId(categoryId) {
-  if (typeof categoryId !== "string") return "other";
-  const trimmed = categoryId.trim();
-  return trimmed || "other";
-}
+const { normalizeCategoryId: defaultNormalizeCategoryId } = require("./itemModel");
 
 function applyBuiltinOverride(item, override, normalizeCategoryId) {
   if (typeof override?.title === "string" && override.title.trim()) {

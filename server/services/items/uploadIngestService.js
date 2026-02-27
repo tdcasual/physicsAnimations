@@ -9,12 +9,7 @@ const { extractHtmlTitleAndDescription } = require("../../lib/htmlMeta");
 const { captureScreenshotQueued, filePathToUrl } = require("../../lib/screenshot");
 const { assertPublicHttpUrl } = require("../../lib/ssrf");
 const { decodeHtmlBuffer, decodeTextBuffer } = require("../../lib/textEncoding");
-
-function defaultNormalizeCategoryId(categoryId) {
-  if (typeof categoryId !== "string") return "other";
-  const trimmed = categoryId.trim();
-  return trimmed || "other";
-}
+const { normalizeCategoryId: defaultNormalizeCategoryId } = require("./itemModel");
 
 function guessContentType(filePath) {
   const ext = path.extname(String(filePath || "")).toLowerCase();
@@ -576,4 +571,3 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
 module.exports = {
   createUploadIngestService,
 };
-
