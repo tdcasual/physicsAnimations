@@ -22,6 +22,7 @@ const {
 const { createItemsReadService } = require("../services/items/readService");
 const { createItemsWriteService } = require("../services/items/writeService");
 const { createUploadIngestService } = require("../services/items/uploadIngestService");
+const { createItemsTaskService } = require("../services/items/taskService");
 const {
   createWarnScreenshotDeps,
   createScreenshotService,
@@ -87,12 +88,14 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     },
   });
 
-  if (queue && !queue.hasHandler("screenshot")) {
-    queue.registerHandler("screenshot", async (payload) => {
-      const id = parseWithSchema(idSchema, payload?.id);
-      return screenshotService.runScreenshotTask({ id });
-    });
-  }
+  const taskService = createItemsTaskService({
+    queue,
+    screenshotService,
+    deps: {
+      parseId: (value) => parseWithSchema(idSchema, value),
+    },
+  });
+  taskService.registerScreenshotHandler();
 
   const upload = multer({
     storage: multer.memoryStorage(),
@@ -278,15 +281,8 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     rateLimit({ key: "items_screenshot", windowMs: 60 * 60 * 1000, max: 60 }),
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
-
-      if (queue) {
-        const task = queue.enqueueTask({ type: "screenshot", payload: { id }, maxAttempts: 2 });
-        res.status(202).json({ ok: true, task });
-        return;
-      }
-
-      const result = await screenshotService.runScreenshotTask({ id });
-      res.json(result);
+      const response = await taskService.createScreenshotTask({ id });
+      res.status(response.status).json(response.body);
     }),
   );
 
@@ -294,17 +290,8 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     "/tasks/:taskId",
     authRequired,
     asyncHandler(async (req, res) => {
-      if (!queue) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-      const taskId = parseWithSchema(idSchema, req.params.taskId);
-      const task = queue.getTask(taskId);
-      if (!task) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-      res.json({ task });
+      const response = taskService.getTaskById({ taskId: req.params.taskId });
+      res.status(response.status).json(response.body);
     }),
   );
 
@@ -313,26 +300,8 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
     authRequired,
     rateLimit({ key: "tasks_retry", windowMs: 60 * 60 * 1000, max: 120 }),
     asyncHandler(async (req, res) => {
-      if (!queue) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-      const taskId = parseWithSchema(idSchema, req.params.taskId);
-      let task = null;
-      try {
-        task = queue.retryTask(taskId);
-      } catch (err) {
-        if (err?.message === "task_not_retryable") {
-          res.status(400).json({ error: "task_not_retryable" });
-          return;
-        }
-        throw err;
-      }
-      if (!task) {
-        res.status(404).json({ error: "not_found" });
-        return;
-      }
-      res.json({ ok: true, task });
+      const response = taskService.retryTaskById({ taskId: req.params.taskId });
+      res.status(response.status).json(response.body);
     }),
   );
 
