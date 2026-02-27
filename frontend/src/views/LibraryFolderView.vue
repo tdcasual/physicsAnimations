@@ -139,7 +139,7 @@ watch(
 
 .library-assets {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--library-card-min-width, 240px), 1fr));
   gap: 12px;
 }
 
@@ -154,11 +154,12 @@ watch(
 
 .asset-name {
   font-weight: 600;
+  font-size: calc(15px * var(--ui-scale, 1));
 }
 
 .asset-meta {
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .asset-actions {

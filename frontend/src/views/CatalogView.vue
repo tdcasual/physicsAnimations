@@ -261,7 +261,7 @@ onMounted(async () => {
   border: 1px solid #d1d5db;
   border-radius: 999px;
   padding: 9px 12px;
-  font-size: 14px;
+  font-size: calc(14px * var(--ui-scale, 1));
 }
 
 .catalog-tabs {
@@ -278,6 +278,7 @@ onMounted(async () => {
   padding: 6px 12px;
   cursor: pointer;
   white-space: nowrap;
+  font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .catalog-tab.active {
@@ -298,7 +299,7 @@ onMounted(async () => {
 
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--catalog-card-min-width, 220px), 1fr));
   gap: 14px;
 }
 
@@ -339,6 +340,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: calc(15px * var(--ui-scale, 1));
 }
 
 .catalog-link-tag {
@@ -358,7 +360,7 @@ onMounted(async () => {
 .catalog-card-desc {
   margin-top: 6px;
   color: #475569;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .catalog-empty {

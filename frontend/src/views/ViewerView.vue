@@ -214,7 +214,7 @@ onBeforeUnmount(() => {
 }
 
 .viewer-mode-state {
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale, 1));
   color: var(--muted);
 }
 
@@ -225,7 +225,7 @@ onBeforeUnmount(() => {
   background: var(--surface);
   text-decoration: none;
   color: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .viewer-hint {
@@ -233,7 +233,7 @@ onBeforeUnmount(() => {
   border-radius: 10px;
   color: var(--muted);
   padding: 10px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale, 1));
   background: color-mix(in srgb, var(--surface) 85%, var(--bg));
 }
 
@@ -264,7 +264,7 @@ onBeforeUnmount(() => {
 
 .viewer-frame {
   width: 100%;
-  min-height: 70vh;
+  min-height: var(--viewer-min-height, 70vh);
   border: 0;
   display: block;
   background: #ffffff;

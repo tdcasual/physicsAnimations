@@ -3,6 +3,7 @@ import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
+import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
 import { applyStoredTheme, toggleTheme } from "./features/theme/theme";
 
 const router = useRouter();
@@ -13,6 +14,7 @@ const loginOpen = ref(false);
 const loginUsername = ref("");
 const loginPassword = ref("");
 const loginError = ref("");
+const classroomModeEnabled = ref(false);
 const modalCardRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
 
@@ -74,6 +76,10 @@ function handleLoginModalKeydown(event: KeyboardEvent) {
   }
 }
 
+function toggleClassroom() {
+  classroomModeEnabled.value = toggleClassroomMode();
+}
+
 function toLoginMessage(err: unknown): string {
   const e = err as ApiError;
   const status = e?.status;
@@ -127,6 +133,7 @@ function handleAuthExpired() {
 
 onMounted(async () => {
   window.addEventListener("pa-auth-expired", handleAuthExpired as EventListener);
+  classroomModeEnabled.value = applyStoredClassroomMode();
   applyStoredTheme();
   await auth.bootstrap();
 });
@@ -160,6 +167,9 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="actions">
+          <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
+            课堂模式{{ classroomModeEnabled ? "开" : "关" }}
+          </button>
           <button type="button" class="btn btn-ghost" @click="toggleTheme()">主题</button>
           <button v-if="!auth.loggedIn" type="button" class="btn btn-primary" @click="openLogin">登录</button>
           <template v-else>
