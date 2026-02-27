@@ -7,17 +7,23 @@ function read(relPath: string): string {
 }
 
 describe("admin preview default open", () => {
-  it("AdminContentView previews src directly by default", () => {
-    const source = read("src/views/admin/AdminContentView.vue");
-    expect(source).toMatch(/function previewHref\(item: AdminItem\)/);
-    expect(source).toMatch(/normalizePublicUrl\(item\.src \|\| viewerHref\(item\.id\)\)/);
-    expect(source).toMatch(/:href="previewHref\(item\)"/);
+  it("content admin keeps preview normalization in composable and list panel", () => {
+    const logic = read("src/features/admin/content/useContentAdmin.ts");
+    const listPanel = read("src/views/admin/content/ContentListPanel.vue");
+    const page = read("src/views/admin/AdminContentView.vue");
+    expect(logic).toMatch(/function previewHref\(item: AdminItem\)/);
+    expect(logic).toMatch(/normalizePublicUrl\(item\.src \|\| viewerHref\(item\.id\)\)/);
+    expect(listPanel).toMatch(/:href="props\.previewHref\(item\)"/);
+    expect(page).toMatch(/:preview-href="vm\.previewHref"/);
   });
 
-  it("AdminUploadsView previews src directly by default", () => {
-    const source = read("src/views/admin/AdminUploadsView.vue");
-    expect(source).toMatch(/function previewHref\(item: AdminItem\)/);
-    expect(source).toMatch(/normalizePublicUrl\(item\.src \|\| viewerHref\(item\.id\)\)/);
-    expect(source).toMatch(/:href="previewHref\(item\)"/);
+  it("uploads admin keeps preview normalization in composable and list panel", () => {
+    const logic = read("src/features/admin/uploads/useUploadAdmin.ts");
+    const listPanel = read("src/views/admin/uploads/UploadsListPanel.vue");
+    const page = read("src/views/admin/AdminUploadsView.vue");
+    expect(logic).toMatch(/function previewHref\(item: AdminItem\)/);
+    expect(logic).toMatch(/normalizePublicUrl\(item\.src \|\| viewerHref\(item\.id\)\)/);
+    expect(listPanel).toMatch(/:href="props\.previewHref\(item\)"/);
+    expect(page).toMatch(/:preview-href="vm\.previewHref"/);
   });
 });

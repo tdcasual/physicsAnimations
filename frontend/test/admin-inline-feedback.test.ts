@@ -8,24 +8,36 @@ function read(relPath: string): string {
 
 describe("admin inline feedback", () => {
   it("uses inline field errors in content, uploads, account and system forms", () => {
-    const content = read("src/views/admin/AdminContentView.vue");
-    const uploads = read("src/views/admin/AdminUploadsView.vue");
+    const contentLogic = read("src/features/admin/content/useContentAdmin.ts");
+    const uploadsLogic = read("src/features/admin/uploads/useUploadAdmin.ts");
+    const contentForm = read("src/views/admin/content/ContentCreateForm.vue");
+    const uploadsForm = read("src/views/admin/uploads/UploadsCreateForm.vue");
+    const contentPage = read("src/views/admin/AdminContentView.vue");
+    const uploadsPage = read("src/views/admin/AdminUploadsView.vue");
     const account = read("src/views/admin/AdminAccountView.vue");
-    const system = read("src/views/admin/AdminSystemView.vue");
+    const systemView = read("src/views/admin/AdminSystemView.vue");
+    const systemState = read("src/features/admin/system/useSystemWizard.ts");
+    const systemSteps = read("src/views/admin/system/SystemWizardSteps.vue");
 
-    for (const source of [content, uploads, account, system]) {
+    for (const source of [contentLogic, uploadsLogic, account]) {
       expect(source).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
       expect(source).toMatch(/function setFieldError/);
       expect(source).toMatch(/function clearFieldErrors/);
       expect(source).toMatch(/function getFieldError/);
+    }
+    expect(systemState).toMatch(/useFieldErrors/);
+    expect(systemState).toMatch(/const \{ fieldErrors, setFieldError, clearFieldErrors, getFieldError \} = useFieldErrors\(\)/);
+
+    for (const source of [contentForm, uploadsForm, account, systemSteps]) {
       expect(source).toMatch(/field-error-text/);
       expect(source).toMatch(/has-error/);
     }
 
-    expect(content).toMatch(/getFieldError\("createLinkUrl"\)/);
-    expect(uploads).toMatch(/getFieldError\("uploadFile"\)/);
+    expect(contentPage).toMatch(/getFieldError\('createLinkUrl'\)/);
+    expect(uploadsPage).toMatch(/getFieldError\('uploadFile'\)/);
     expect(account).toMatch(/getFieldError\("currentPassword"\)/);
     expect(account).toMatch(/getFieldError\("confirmPassword"\)/);
-    expect(system).toMatch(/getFieldError\("webdavUrl"\)/);
+    expect(systemView).toMatch(/getFieldError/);
+    expect(systemSteps).toMatch(/getFieldError\("webdavUrl"\)/);
   });
 });

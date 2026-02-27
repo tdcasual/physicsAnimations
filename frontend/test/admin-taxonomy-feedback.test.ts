@@ -7,10 +7,24 @@ function read(relPath: string): string {
 }
 
 describe("admin taxonomy action feedback", () => {
-  it("provides local action feedback region for right-panel operations", () => {
-    const source = read("src/views/admin/AdminTaxonomyView.vue");
-    expect(source).toMatch(/const\s+actionFeedback\s*=\s*ref\(""\)/);
-    expect(source).toMatch(/class="[^"]*action-feedback/);
-    expect(source).toMatch(/actionFeedbackError/);
+  it("splits taxonomy page into composable + tree/edit panels with feedback hooks", () => {
+    const view = read("src/views/admin/AdminTaxonomyView.vue");
+    const state = read("src/features/admin/taxonomy/useTaxonomyAdmin.ts");
+    const treePanel = read("src/views/admin/taxonomy/TaxonomyTreePanel.vue");
+    const groupPanel = read("src/views/admin/taxonomy/GroupEditorPanel.vue");
+    const categoryPanel = read("src/views/admin/taxonomy/CategoryEditorPanel.vue");
+
+    expect(view).toMatch(/import\s+\{\s*useTaxonomyAdmin\s*\}/);
+    expect(view).toMatch(/import\s+TaxonomyTreePanel/);
+    expect(view).toMatch(/import\s+GroupEditorPanel/);
+    expect(view).toMatch(/import\s+CategoryEditorPanel/);
+    expect(view).toMatch(/const\s+taxonomy\s*=\s*useTaxonomyAdmin\(/);
+
+    expect(state).toMatch(/const\s+actionFeedback\s*=\s*ref\(""\)/);
+    expect(state).toMatch(/const\s+actionFeedbackError\s*=\s*ref\(false\)/);
+
+    expect(treePanel).toMatch(/class="[^"]*tree-list/);
+    expect(groupPanel).toMatch(/class="[^"]*action-feedback/);
+    expect(categoryPanel).toMatch(/class="[^"]*action-feedback/);
   });
 });

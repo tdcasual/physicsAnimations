@@ -33,6 +33,29 @@ function createTestAdapterRegistry() {
   return createAdapterRegistry([createGeogebraAdapter(), createPhETAdapter()]);
 }
 
+test("createAssetsService exposes stable asset operations", async () => {
+  const { createAssetsService } = require("../server/services/library/assetsService");
+  const service = createAssetsService({
+    store: createMemoryStore(),
+    adapterRegistry: createTestAdapterRegistry(),
+    loadLibraryAssetsState: async () => ({ assets: [] }),
+    mutateLibraryAssetsState: async () => {},
+    getFolderById: async () => ({ id: "f_1" }),
+    getEmbedProfileById: async () => null,
+    generateViewerFromAssetMeta: async () => ({ ok: true, generatedEntryPath: "content/library/assets/a_1/viewer/index.html" }),
+  });
+
+  assert.equal(typeof service.listFolderAssets, "function");
+  assert.equal(typeof service.getAssetById, "function");
+  assert.equal(typeof service.listDeletedAssets, "function");
+  assert.equal(typeof service.uploadAsset, "function");
+  assert.equal(typeof service.updateAsset, "function");
+  assert.equal(typeof service.getAssetOpenInfo, "function");
+  assert.equal(typeof service.deleteAsset, "function");
+  assert.equal(typeof service.deleteAssetPermanently, "function");
+  assert.equal(typeof service.restoreAsset, "function");
+});
+
 function createMockEmbedFetcher(baseUrl = "https://field.infinitas.fun") {
   const embedJs = `
     (function (global) {

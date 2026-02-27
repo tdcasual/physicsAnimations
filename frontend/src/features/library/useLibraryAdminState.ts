@@ -1,0 +1,1450 @@
+import { computed, onMounted, ref, watch } from "vue";
+import { listTaxonomy } from "../admin/adminApi";
+import {
+  createLibraryEmbedProfile,
+  createLibraryFolder,
+  deleteLibraryAsset,
+  deleteLibraryAssetPermanently,
+  deleteLibraryEmbedProfile,
+  deleteLibraryFolder,
+  getLibraryFolder,
+  listLibraryDeletedAssets,
+  listLibraryEmbedProfiles,
+  listLibraryFolderAssets,
+  listLibraryFolders,
+  restoreLibraryAsset,
+  syncLibraryEmbedProfile,
+  updateLibraryAsset,
+  updateLibraryEmbedProfile,
+  updateLibraryFolder,
+  uploadLibraryAsset,
+  uploadLibraryFolderCover,
+} from "./libraryApi";
+import type { LibraryAsset, LibraryEmbedProfile, LibraryFolder, LibraryOpenMode } from "./types";
+
+interface CategoryRow {
+  id: string;
+  groupId: string;
+  title: string;
+}
+
+interface GroupRow {
+  id: string;
+  title: string;
+}
+
+type LibraryPanelTab = "folder" | "asset" | "embed";
+type AssetSortMode = "updated_desc" | "updated_asc" | "name_asc" | "name_desc";
+
+interface AssetBatchResult {
+  actionLabel: string;
+  successIds: string[];
+  failed: Array<{ id: string; reason: string }>;
+}
+
+interface OperationLogEntry {
+  id: string;
+  message: string;
+  level: "success" | "error" | "info";
+  at: string;
+}
+
+
+export function useLibraryAdminState() {
+  const loading = ref(false);
+  const savingFolder = ref(false);
+  const savingAsset = ref(false);
+  const savingEmbed = ref(false);
+  const saving = computed(() => savingFolder.value || savingAsset.value || savingEmbed.value);
+  const feedback = ref("");
+  const feedbackError = ref(false);
+  const fieldErrors = ref<Record<string, string>>({});
+  
+  const folders = ref<LibraryFolder[]>([]);
+  const selectedFolderId = ref("");
+  const folderAssets = ref<LibraryAsset[]>([]);
+  const deletedAssets = ref<LibraryAsset[]>([]);
+  const embedProfiles = ref<LibraryEmbedProfile[]>([]);
+  const categories = ref<CategoryRow[]>([]);
+  const groups = ref<GroupRow[]>([]);
+  
+  const folderName = ref("");
+  const folderCategoryId = ref("other");
+  const createCoverFile = ref<File | null>(null);
+  const folderEditName = ref("");
+  const folderEditCategoryId = ref("other");
+  
+  const coverFile = ref<File | null>(null);
+  const assetFile = ref<File | null>(null);
+  const assetDisplayName = ref("");
+  const openMode = ref<LibraryOpenMode>("embed");
+  const assetParserMode = ref<"auto" | "profile">("auto");
+  const assetEmbedProfileId = ref("");
+  const assetEmbedOptionsJson = ref("");
+  const editingAssetId = ref("");
+  const assetEditDisplayName = ref("");
+  const assetEditFolderId = ref("");
+  const assetEditOpenMode = ref<LibraryOpenMode>("embed");
+  const assetEditParserMode = ref<"auto" | "profile">("auto");
+  const assetEditEmbedProfileId = ref("");
+  const assetEditEmbedOptionsJson = ref("{}");
+  
+  const embedProfileName = ref("");
+  const embedScriptUrl = ref("");
+  const embedFallbackScriptUrl = ref("");
+  const embedViewerPath = ref("");
+  const embedConstructorName = ref("ElectricFieldApp");
+  const embedAssetUrlOptionKey = ref("sceneUrl");
+  const embedExtensionsText = ref("");
+  const embedDefaultOptionsJson = ref("{}");
+  const embedEnabled = ref(true);
+  const editingEmbedProfileId = ref("");
+  const embedEditName = ref("");
+  const embedEditScriptUrl = ref("");
+  const embedEditFallbackScriptUrl = ref("");
+  const embedEditViewerPath = ref("");
+  const embedEditConstructorName = ref("ElectricFieldApp");
+  const embedEditAssetUrlOptionKey = ref("sceneUrl");
+  const embedEditExtensionsText = ref("");
+  const embedEditDefaultOptionsJson = ref("{}");
+  const embedEditEnabled = ref(true);
+  const activePanelTab = ref<LibraryPanelTab>("folder");
+  const folderSearchQuery = ref("");
+  const assetSearchQuery = ref("");
+  const profileSearchQuery = ref("");
+  const assetModeFilter = ref<"all" | LibraryOpenMode>("all");
+  const assetEmbedProfileFilter = ref("all");
+  const assetSortMode = ref<AssetSortMode>("updated_desc");
+  const assetBatchMoveFolderId = ref("");
+  const selectedAssetIds = ref<string[]>([]);
+  const assetBatchResult = ref<AssetBatchResult | null>(null);
+  const undoAssetIds = ref<string[]>([]);
+  const operationLogs = ref<OperationLogEntry[]>([]);
+  const operationLogFilter = ref<"all" | "success" | "error" | "info">("all");
+  const folderAssetsLoadSeq = ref(0);
+  const panelSections = ref<Record<string, boolean>>({
+    "folder:meta": true,
+    "folder:cover": true,
+    "asset:upload": true,
+    "asset:edit": true,
+    "embed:create": true,
+    "embed:list": true,
+    "embed:edit": true,
+    "recent:log": true,
+  });
+  
+  const selectedFolder = computed(() => folders.value.find((folder) => folder.id === selectedFolderId.value) || null);
+  const groupedCategoryOptions = computed(() => {
+    const groupsMap = new Map(groups.value.map((group) => [group.id, group.title]));
+    const options = categories.value.map((category) => ({
+      value: category.id,
+      label: `${groupsMap.get(category.groupId) || category.groupId} / ${category.title}`,
+    }));
+    if (options.length === 0) {
+      options.push({
+        value: "other",
+        label: "物理 / 其他",
+      });
+    }
+    return options;
+  });
+  const selectableEmbedProfiles = computed(() => embedProfiles.value.filter((profile) => profile.enabled !== false));
+  const editingAsset = computed(() => folderAssets.value.find((asset) => asset.id === editingAssetId.value) || null);
+  const selectedFolderAssetCount = computed(() => {
+    if (!selectedFolder.value) return 0;
+    return Number(selectedFolder.value.assetCount || folderAssets.value.length || 0);
+  });
+  const filteredFolders = computed(() => {
+    const query = folderSearchQuery.value.trim().toLowerCase();
+    if (!query) return folders.value;
+    return folders.value.filter((folder) => {
+      const hay = `${folder.name || ""}\n${folder.categoryId || ""}\n${folder.id || ""}`.toLowerCase();
+      return hay.includes(query);
+    });
+  });
+  const filteredFolderAssets = computed(() => {
+    const query = assetSearchQuery.value.trim().toLowerCase();
+    return folderAssets.value.filter((asset) => {
+      if (assetModeFilter.value !== "all" && asset.openMode !== assetModeFilter.value) return false;
+      if (assetEmbedProfileFilter.value === "none" && asset.embedProfileId) return false;
+      if (
+        assetEmbedProfileFilter.value !== "all" &&
+        assetEmbedProfileFilter.value !== "none" &&
+        asset.embedProfileId !== assetEmbedProfileFilter.value
+      ) {
+        return false;
+      }
+      if (!query) return true;
+      const hay = `${asset.displayName || ""}\n${asset.fileName || ""}\n${asset.id || ""}\n${asset.embedProfileId || ""}`.toLowerCase();
+      return hay.includes(query);
+    });
+  });
+  const sortedFilteredFolderAssets = computed(() => {
+    const list = filteredFolderAssets.value.slice();
+    const safeText = (value: unknown) => String(value || "").toLowerCase();
+    const toTime = (value: unknown) => {
+      const n = new Date(String(value || "")).getTime();
+      return Number.isFinite(n) ? n : 0;
+    };
+  
+    list.sort((a, b) => {
+      if (assetSortMode.value === "name_asc") {
+        return safeText(a.displayName || a.fileName).localeCompare(safeText(b.displayName || b.fileName));
+      }
+      if (assetSortMode.value === "name_desc") {
+        return safeText(b.displayName || b.fileName).localeCompare(safeText(a.displayName || a.fileName));
+      }
+      if (assetSortMode.value === "updated_asc") {
+        return toTime(a.updatedAt || a.createdAt) - toTime(b.updatedAt || b.createdAt);
+      }
+      return toTime(b.updatedAt || b.createdAt) - toTime(a.updatedAt || a.createdAt);
+    });
+  
+    return list;
+  });
+  const filteredEmbedProfiles = computed(() => {
+    const query = profileSearchQuery.value.trim().toLowerCase();
+    if (!query) return embedProfiles.value;
+    return embedProfiles.value.filter((profile) => {
+      const hay = `${profile.name || ""}\n${profile.id || ""}\n${profile.remoteScriptUrl || profile.scriptUrl || ""}`.toLowerCase();
+      return hay.includes(query);
+    });
+  });
+  const selectedAssetCount = computed(() => selectedAssetIds.value.length);
+  const hasSelectedAssets = computed(() => selectedAssetIds.value.length > 0);
+  const hasUndoAssets = computed(() => undoAssetIds.value.length > 0);
+  const filteredOperationLogs = computed(() => {
+    if (operationLogFilter.value === "all") return operationLogs.value;
+    return operationLogs.value.filter((item) => item.level === operationLogFilter.value);
+  });
+  const allFilteredAssetsSelected = computed(() => {
+    if (filteredFolderAssets.value.length === 0) return false;
+    const selected = new Set(selectedAssetIds.value);
+    return filteredFolderAssets.value.every((asset) => selected.has(asset.id));
+  });
+  
+  function parseJsonObjectInput(
+    raw: string,
+    fieldLabel: string,
+    fieldKey = "",
+  ): { ok: true; value: Record<string, unknown> } | { ok: false } {
+    const text = String(raw || "").trim();
+    if (!text) return { ok: true, value: {} };
+    try {
+      const parsed = JSON.parse(text);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        if (fieldKey) setFieldError(fieldKey, `${fieldLabel} 需要是对象。`);
+        setFeedback(`${fieldLabel} 需要是对象。`, true);
+        return { ok: false };
+      }
+      return { ok: true, value: parsed as Record<string, unknown> };
+    } catch {
+      if (fieldKey) setFieldError(fieldKey, `${fieldLabel} 格式错误。`);
+      setFeedback(`${fieldLabel} 格式错误。`, true);
+      return { ok: false };
+    }
+  }
+  
+  function syncFolderEditDraft() {
+    const folder = selectedFolder.value;
+    if (!folder) {
+      folderEditName.value = "";
+      folderEditCategoryId.value = groupedCategoryOptions.value[0]?.value || "other";
+      return;
+    }
+    folderEditName.value = folder.name || "";
+    folderEditCategoryId.value = folder.categoryId || groupedCategoryOptions.value[0]?.value || "other";
+  }
+  
+  function cancelAssetEdit() {
+    editingAssetId.value = "";
+    assetEditDisplayName.value = "";
+    assetEditFolderId.value = "";
+    assetEditOpenMode.value = "embed";
+    assetEditParserMode.value = "auto";
+    assetEditEmbedProfileId.value = "";
+    assetEditEmbedOptionsJson.value = "{}";
+    clearFieldErrors("editAssetFolderId", "editAssetEmbedProfile", "editAssetEmbedOptionsJson");
+  }
+  
+  function clearSelectedAssets() {
+    selectedAssetIds.value = [];
+    assetBatchMoveFolderId.value = "";
+  }
+  
+  function isAssetSelected(assetId: string) {
+    return selectedAssetIds.value.includes(assetId);
+  }
+  
+  function toggleAssetSelection(assetId: string, checked: boolean) {
+    const current = new Set(selectedAssetIds.value);
+    if (checked) current.add(assetId);
+    else current.delete(assetId);
+    selectedAssetIds.value = Array.from(current);
+  }
+  
+  function onAssetSelectChange(assetId: string, event: Event) {
+    const target = event.target as HTMLInputElement | null;
+    toggleAssetSelection(assetId, !!target?.checked);
+  }
+  
+  function onSelectAllFilteredAssetsChange(event: Event) {
+    const target = event.target as HTMLInputElement | null;
+    const checked = !!target?.checked;
+    if (!checked) {
+      clearSelectedAssets();
+      return;
+    }
+    selectedAssetIds.value = sortedFilteredFolderAssets.value.map((asset) => asset.id);
+  }
+  
+  function cancelEmbedProfileEdit() {
+    editingEmbedProfileId.value = "";
+    embedEditName.value = "";
+    embedEditScriptUrl.value = "";
+    embedEditFallbackScriptUrl.value = "";
+    embedEditViewerPath.value = "";
+    embedEditConstructorName.value = "ElectricFieldApp";
+    embedEditAssetUrlOptionKey.value = "sceneUrl";
+    embedEditExtensionsText.value = "";
+    embedEditDefaultOptionsJson.value = "{}";
+    embedEditEnabled.value = true;
+    clearFieldErrors("editEmbedProfileName", "editEmbedScriptUrl", "editEmbedDefaultOptionsJson");
+  }
+  
+  function setFeedback(text: string, isError = false) {
+    feedback.value = text;
+    feedbackError.value = isError;
+    const clean = String(text || "").trim();
+    if (clean) {
+      pushOperationLog(clean, isError ? "error" : "success");
+    }
+  }
+  
+  function setFieldError(fieldKey: string, text: string) {
+    const key = String(fieldKey || "").trim();
+    if (!key) return;
+    fieldErrors.value = {
+      ...fieldErrors.value,
+      [key]: String(text || "").trim(),
+    };
+  }
+  
+  function clearFieldErrors(...fieldKeys: string[]) {
+    if (fieldKeys.length === 0) {
+      fieldErrors.value = {};
+      return;
+    }
+    const next = { ...fieldErrors.value };
+    for (const key of fieldKeys) delete next[key];
+    fieldErrors.value = next;
+  }
+  
+  function getFieldError(fieldKey: string) {
+    return String(fieldErrors.value[String(fieldKey || "").trim()] || "");
+  }
+  
+  function setActivePanelTab(tab: LibraryPanelTab) {
+    activePanelTab.value = tab;
+    if (tab === "folder") ensurePanelSectionOpen("folder:meta");
+    if (tab === "asset") ensurePanelSectionOpen("asset:upload");
+    if (tab === "embed") ensurePanelSectionOpen("embed:create");
+  }
+  
+  function isPanelSectionOpen(key: string) {
+    return panelSections.value[key] !== false;
+  }
+  
+  function togglePanelSection(key: string) {
+    panelSections.value[key] = !isPanelSectionOpen(key);
+  }
+  
+  function ensurePanelSectionOpen(key: string) {
+    panelSections.value[key] = true;
+  }
+  
+  function formatOperationTime(value: string) {
+    const date = new Date(String(value || ""));
+    const time = date.getTime();
+    if (!Number.isFinite(time)) return String(value || "");
+    return date.toLocaleString("zh-CN", { hour12: false });
+  }
+  
+  function pushOperationLog(message: string, level: "success" | "error" | "info" = "info") {
+    const entry: OperationLogEntry = {
+      id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      message: String(message || "").trim(),
+      level,
+      at: new Date().toISOString(),
+    };
+    if (!entry.message) return;
+    operationLogs.value = [entry, ...operationLogs.value].slice(0, 18);
+  }
+  
+  function clearOperationLogs() {
+    operationLogs.value = [];
+  }
+  
+  function getApiErrorCode(err: unknown): string {
+    const e = err as { data?: any; message?: string };
+    if (typeof e?.data?.error === "string" && e.data.error) return e.data.error;
+    if (typeof e?.message === "string" && e.message) return e.message;
+    return "unknown_error";
+  }
+  
+  function setAssetBatchResult(actionLabel: string, successIds: string[], failed: Array<{ id: string; reason: string }>) {
+    assetBatchResult.value = {
+      actionLabel,
+      successIds,
+      failed,
+    };
+  }
+  
+  function onCreateCoverFileChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    createCoverFile.value = target.files?.[0] || null;
+  }
+  
+  function onCoverFileChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    coverFile.value = target.files?.[0] || null;
+  }
+  
+  function onAssetFileChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    assetFile.value = target.files?.[0] || null;
+    clearFieldErrors("uploadAssetFile");
+  }
+  
+  async function reloadFolders() {
+    const list = await listLibraryFolders();
+    folders.value = list;
+    if (!selectedFolderId.value && list.length > 0) {
+      selectedFolderId.value = list[0].id;
+    } else if (selectedFolderId.value && !list.some((folder) => folder.id === selectedFolderId.value)) {
+      selectedFolderId.value = list[0]?.id || "";
+    }
+    syncFolderEditDraft();
+  }
+  
+  function syncCategorySelection() {
+    if (groupedCategoryOptions.value.some((item) => item.value === folderCategoryId.value)) return;
+    folderCategoryId.value = groupedCategoryOptions.value[0]?.value || "other";
+  }
+  
+  function syncFolderEditCategorySelection() {
+    if (groupedCategoryOptions.value.some((item) => item.value === folderEditCategoryId.value)) return;
+    folderEditCategoryId.value = groupedCategoryOptions.value[0]?.value || "other";
+  }
+  
+  async function reloadTaxonomy() {
+    const data = await listTaxonomy();
+    groups.value = Array.isArray(data?.groups) ? data.groups : [];
+    categories.value = Array.isArray(data?.categories) ? data.categories : [];
+    syncCategorySelection();
+    syncFolderEditCategorySelection();
+  }
+  
+  async function reloadFolderAssets() {
+    const folderId = selectedFolderId.value;
+    const requestId = folderAssetsLoadSeq.value + 1;
+    folderAssetsLoadSeq.value = requestId;
+    if (!folderId) {
+      folderAssets.value = [];
+      deletedAssets.value = [];
+      cancelAssetEdit();
+      clearSelectedAssets();
+      return;
+    }
+    try {
+      const [folder, assets, deleted] = await Promise.all([
+        getLibraryFolder(folderId),
+        listLibraryFolderAssets(folderId),
+        listLibraryDeletedAssets(folderId),
+      ]);
+      if (requestId !== folderAssetsLoadSeq.value || selectedFolderId.value !== folderId) return;
+      const idx = folders.value.findIndex((value) => value.id === folder.id);
+      if (idx >= 0) {
+        const nextCount = Number(folder.assetCount ?? assets.assets.length);
+        folders.value[idx] = {
+          ...folders.value[idx],
+          ...folder,
+          assetCount: Number.isFinite(nextCount) ? nextCount : assets.assets.length,
+        };
+      }
+      folderAssets.value = assets.assets;
+      deletedAssets.value = deleted.assets;
+      const idSet = new Set(assets.assets.map((asset) => asset.id));
+      selectedAssetIds.value = selectedAssetIds.value.filter((id) => idSet.has(id));
+      undoAssetIds.value = undoAssetIds.value.filter((id) => deleted.assets.some((asset) => asset.id === id));
+      if (editingAssetId.value && !assets.assets.some((asset) => asset.id === editingAssetId.value)) {
+        cancelAssetEdit();
+      }
+      syncFolderEditDraft();
+    } catch (err) {
+      if (requestId !== folderAssetsLoadSeq.value || selectedFolderId.value !== folderId) return;
+      folderAssets.value = [];
+      deletedAssets.value = [];
+      clearSelectedAssets();
+      cancelAssetEdit();
+      syncFolderEditDraft();
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "加载文件夹资源失败。", true);
+    }
+  }
+  
+  async function reloadEmbedProfiles() {
+    const list = await listLibraryEmbedProfiles();
+    embedProfiles.value = list;
+    if (!assetEmbedProfileId.value || !list.some((profile) => profile.id === assetEmbedProfileId.value && profile.enabled !== false)) {
+      assetEmbedProfileId.value = list.find((profile) => profile.enabled !== false)?.id || "";
+    }
+    if (
+      assetEditParserMode.value === "profile" &&
+      (!assetEditEmbedProfileId.value || !list.some((profile) => profile.id === assetEditEmbedProfileId.value && profile.enabled !== false))
+    ) {
+      assetEditEmbedProfileId.value = list.find((profile) => profile.enabled !== false)?.id || "";
+    }
+    if (editingEmbedProfileId.value && !list.some((profile) => profile.id === editingEmbedProfileId.value)) {
+      cancelEmbedProfileEdit();
+    }
+  }
+  
+  async function createFolderEntry() {
+    clearFieldErrors("createFolderName");
+    const name = folderName.value.trim();
+    if (!name) {
+      setFieldError("createFolderName", "请填写文件夹名称。");
+      setFeedback("请填写文件夹名称。", true);
+      return;
+    }
+    savingFolder.value = true;
+    setFeedback("");
+    try {
+      const created = await createLibraryFolder({
+        name,
+        categoryId: folderCategoryId.value.trim() || "other",
+        coverType: "blank",
+      });
+      const createdFolderId = String(created?.folder?.id || "");
+      if (createCoverFile.value && createdFolderId) {
+        await uploadLibraryFolderCover({
+          folderId: createdFolderId,
+          file: createCoverFile.value,
+        });
+      }
+      folderName.value = "";
+      createCoverFile.value = null;
+      const createCoverInput = document.querySelector<HTMLInputElement>("#library-create-cover-file");
+      if (createCoverInput) createCoverInput.value = "";
+      await reloadFolders();
+      await reloadFolderAssets();
+      setActivePanelTab("folder");
+      clearFieldErrors("createFolderName");
+      setFeedback("文件夹已创建。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.data?.error === "cover_invalid_type") {
+        setFeedback("封面仅支持图片类型。", true);
+        return;
+      }
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "创建文件夹失败。", true);
+    } finally {
+      savingFolder.value = false;
+    }
+  }
+  
+  async function saveFolderMeta() {
+    clearFieldErrors("editFolderName");
+    if (!selectedFolderId.value) {
+      setFeedback("请先选择文件夹。", true);
+      return;
+    }
+    const name = folderEditName.value.trim();
+    if (!name) {
+      setFieldError("editFolderName", "文件夹名称不能为空。");
+      setFeedback("文件夹名称不能为空。", true);
+      return;
+    }
+    savingFolder.value = true;
+    setFeedback("");
+    try {
+      await updateLibraryFolder(selectedFolderId.value, {
+        name,
+        categoryId: folderEditCategoryId.value.trim() || "other",
+      });
+      await reloadFolders();
+      await reloadFolderAssets();
+      setActivePanelTab("folder");
+      clearFieldErrors("editFolderName");
+      setFeedback("文件夹信息已更新。");
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "更新文件夹失败。", true);
+    } finally {
+      savingFolder.value = false;
+    }
+  }
+  
+  async function uploadCover() {
+    if (!selectedFolderId.value) {
+      setFeedback("请先选择文件夹。", true);
+      return;
+    }
+    if (!coverFile.value) {
+      setFeedback("请选择封面图片。", true);
+      return;
+    }
+    savingFolder.value = true;
+    setFeedback("");
+    try {
+      await uploadLibraryFolderCover({
+        folderId: selectedFolderId.value,
+        file: coverFile.value,
+      });
+      coverFile.value = null;
+      const input = document.querySelector<HTMLInputElement>("#library-cover-file");
+      if (input) input.value = "";
+      await reloadFolders();
+      await reloadFolderAssets();
+      setActivePanelTab("folder");
+      setFeedback("封面上传成功。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "cover_invalid_type") {
+        setFeedback("封面仅支持图片类型。", true);
+        return;
+      }
+      setFeedback("封面上传失败。", true);
+    } finally {
+      savingFolder.value = false;
+    }
+  }
+  
+  async function uploadAssetEntry() {
+    clearFieldErrors("uploadAssetFile", "uploadAssetEmbedProfile", "uploadAssetEmbedOptionsJson");
+    if (!selectedFolderId.value) {
+      setFeedback("请先选择文件夹。", true);
+      return;
+    }
+    if (!assetFile.value) {
+      setFieldError("uploadAssetFile", "请选择要上传的资源文件。");
+      setFeedback("请选择要上传的资源文件。", true);
+      return;
+    }
+    if (assetParserMode.value === "profile" && !assetEmbedProfileId.value) {
+      setFieldError("uploadAssetEmbedProfile", "请选择用于解析的 Embed 平台。");
+      setFeedback("请选择用于解析的 Embed 平台。", true);
+      return;
+    }
+  
+    let embedOptionsJson = "";
+    if (assetParserMode.value === "profile" && assetEmbedOptionsJson.value.trim()) {
+      const parsed = parseJsonObjectInput(assetEmbedOptionsJson.value, "Embed 参数 JSON", "uploadAssetEmbedOptionsJson");
+      if (!parsed.ok) return;
+      embedOptionsJson = JSON.stringify(parsed.value);
+    }
+  
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      await uploadLibraryAsset({
+        folderId: selectedFolderId.value,
+        file: assetFile.value,
+        openMode: openMode.value,
+        displayName: assetDisplayName.value.trim(),
+        embedProfileId: assetParserMode.value === "profile" ? assetEmbedProfileId.value : "",
+        embedOptionsJson: assetParserMode.value === "profile" ? embedOptionsJson : "",
+      });
+      assetFile.value = null;
+      assetDisplayName.value = "";
+      openMode.value = "embed";
+      assetEmbedOptionsJson.value = "";
+      assetParserMode.value = "auto";
+      clearFieldErrors("uploadAssetFile", "uploadAssetEmbedProfile", "uploadAssetEmbedOptionsJson");
+      const input = document.querySelector<HTMLInputElement>("#library-asset-file");
+      if (input) input.value = "";
+      await reloadFolders();
+      await reloadFolderAssets();
+      setActivePanelTab("asset");
+      setFeedback("资源上传成功。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "unsupported_asset_type") {
+        setFeedback("当前仅支持 .ggb/PhET HTML 自动识别，或选择 Embed 平台进行解析。", true);
+        return;
+      }
+      if (e?.data?.error === "embed_profile_not_found") {
+        setFeedback("所选 Embed 平台不存在或已禁用。", true);
+        return;
+      }
+      if (e?.data?.error === "invalid_embed_options_json") {
+        setFeedback("Embed 参数 JSON 无效。", true);
+        return;
+      }
+      if (e?.data?.error === "embed_profile_extension_mismatch") {
+        setFeedback("该文件扩展名不在 Embed 平台允许列表中。", true);
+        return;
+      }
+      setFeedback("资源上传失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function switchAssetOpenMode(asset: LibraryAsset, mode: LibraryOpenMode) {
+    if (asset.openMode === mode) return;
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      await updateLibraryAsset(asset.id, { openMode: mode });
+      await reloadFolders();
+      await reloadFolderAssets();
+      setFeedback(mode === "embed" ? "已切换为演示模式。" : "已切换为仅下载模式。");
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "切换打开方式失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function runAssetBatchOpenMode(mode: LibraryOpenMode) {
+    if (selectedAssetIds.value.length === 0) {
+      setFeedback("请先选择要批量操作的资源。", true);
+      return;
+    }
+    const targetIds = [...selectedAssetIds.value];
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      const successIds: string[] = [];
+      const failed: Array<{ id: string; reason: string }> = [];
+      for (const assetId of targetIds) {
+        try {
+          await updateLibraryAsset(assetId, { openMode: mode });
+          successIds.push(assetId);
+        } catch (err) {
+          failed.push({
+            id: assetId,
+            reason: getApiErrorCode(err),
+          });
+        }
+      }
+      await reloadFolders();
+      await reloadFolderAssets();
+      clearSelectedAssets();
+      setAssetBatchResult(mode === "embed" ? "批量设为演示" : "批量设为下载", successIds, failed);
+      if (failed.length > 0) {
+        setFeedback(`批量操作完成：成功 ${successIds.length}，失败 ${failed.length}。`, true);
+        return;
+      }
+      setFeedback(mode === "embed" ? `已批量设为演示（${successIds.length}）。` : `已批量设为下载（${successIds.length}）。`);
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "批量切换失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function runAssetBatchMove() {
+    if (selectedAssetIds.value.length === 0) {
+      setFeedback("请先选择要批量移动的资源。", true);
+      return;
+    }
+    if (!assetBatchMoveFolderId.value) {
+      setFeedback("请选择目标文件夹。", true);
+      return;
+    }
+    const targetIds = [...selectedAssetIds.value];
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      const successIds: string[] = [];
+      const failed: Array<{ id: string; reason: string }> = [];
+      for (const assetId of targetIds) {
+        try {
+          await updateLibraryAsset(assetId, { folderId: assetBatchMoveFolderId.value });
+          successIds.push(assetId);
+        } catch (err) {
+          failed.push({
+            id: assetId,
+            reason: getApiErrorCode(err),
+          });
+        }
+      }
+      await reloadFolders();
+      await reloadFolderAssets();
+      clearSelectedAssets();
+      setAssetBatchResult("批量移动", successIds, failed);
+      if (failed.length > 0) {
+        setFeedback(`批量移动完成：成功 ${successIds.length}，失败 ${failed.length}。`, true);
+        return;
+      }
+      setFeedback(`资源已批量移动（${successIds.length}）。`);
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "批量移动失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function runAssetBatchDelete() {
+    if (selectedAssetIds.value.length === 0) {
+      setFeedback("请先选择要删除的资源。", true);
+      return;
+    }
+    if (!window.confirm(`确定删除选中的 ${selectedAssetIds.value.length} 个资源吗？`)) return;
+    const targetIds = [...selectedAssetIds.value];
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      const successIds: string[] = [];
+      const failed: Array<{ id: string; reason: string }> = [];
+      for (const assetId of targetIds) {
+        try {
+          await deleteLibraryAsset(assetId);
+          successIds.push(assetId);
+        } catch (err) {
+          failed.push({
+            id: assetId,
+            reason: getApiErrorCode(err),
+          });
+        }
+      }
+      await reloadFolders();
+      await reloadFolderAssets();
+      clearSelectedAssets();
+      undoAssetIds.value = successIds;
+      setAssetBatchResult("批量删除", successIds, failed);
+      if (failed.length > 0) {
+        setFeedback(`批量删除完成：成功 ${successIds.length}，失败 ${failed.length}。`, true);
+        return;
+      }
+      setFeedback(`批量删除完成：成功 ${successIds.length}。可点击“撤销最近删除”。`);
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "批量删除失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function runAssetBatchUndo() {
+    if (undoAssetIds.value.length === 0) {
+      setFeedback("当前没有可撤销的删除。", true);
+      return;
+    }
+    const targetIds = [...undoAssetIds.value];
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      const successIds: string[] = [];
+      const failed: Array<{ id: string; reason: string }> = [];
+      for (const assetId of targetIds) {
+        try {
+          await restoreLibraryAsset(assetId);
+          successIds.push(assetId);
+        } catch (err) {
+          failed.push({
+            id: assetId,
+            reason: getApiErrorCode(err),
+          });
+        }
+      }
+      await reloadFolders();
+      await reloadFolderAssets();
+      undoAssetIds.value = failed.map((item) => item.id);
+      setAssetBatchResult("撤销删除", successIds, failed);
+      if (failed.length > 0) {
+        setFeedback(`撤销完成：恢复 ${successIds.length}，失败 ${failed.length}。`, true);
+        return;
+      }
+      setFeedback(`撤销完成：已恢复 ${successIds.length} 个资源。`);
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "撤销删除失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function restoreDeletedAsset(assetId: string) {
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      await restoreLibraryAsset(assetId);
+      await reloadFolders();
+      await reloadFolderAssets();
+      setFeedback("资源已恢复。");
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "恢复资源失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function removeDeletedAssetPermanently(asset: LibraryAsset) {
+    const label = asset.displayName || asset.fileName || asset.id;
+    if (!window.confirm(`确定永久删除“${label}”吗？该操作不可恢复。`)) return;
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      await deleteLibraryAssetPermanently(asset.id);
+      await reloadFolders();
+      await reloadFolderAssets();
+      setFeedback("资源已永久删除，不可恢复。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "asset_not_deleted") {
+        setFeedback("请先将资源移入回收站，再执行永久删除。", true);
+        return;
+      }
+      setFeedback("永久删除失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  function startEditAsset(asset: LibraryAsset) {
+    setActivePanelTab("asset");
+    ensurePanelSectionOpen("asset:edit");
+    editingAssetId.value = asset.id;
+    assetEditDisplayName.value = asset.displayName || "";
+    assetEditFolderId.value = asset.folderId || selectedFolderId.value;
+    assetEditOpenMode.value = asset.openMode;
+    if (asset.embedProfileId) {
+      assetEditParserMode.value = "profile";
+      assetEditEmbedProfileId.value = asset.embedProfileId;
+      assetEditEmbedOptionsJson.value = JSON.stringify(asset.embedOptions || {}, null, 2);
+    } else {
+      assetEditParserMode.value = "auto";
+      assetEditEmbedProfileId.value = "";
+      assetEditEmbedOptionsJson.value = "{}";
+    }
+  }
+  
+  async function saveAssetEdit() {
+    clearFieldErrors("editAssetFolderId", "editAssetEmbedProfile", "editAssetEmbedOptionsJson");
+    if (!editingAssetId.value) return;
+    if (!assetEditFolderId.value) {
+      setFieldError("editAssetFolderId", "请选择资源所属文件夹。");
+      setFeedback("请选择资源所属文件夹。", true);
+      return;
+    }
+    if (assetEditParserMode.value === "profile" && !assetEditEmbedProfileId.value) {
+      setFieldError("editAssetEmbedProfile", "请选择 Embed 平台。");
+      setFeedback("请选择 Embed 平台。", true);
+      return;
+    }
+    const parsed = parseJsonObjectInput(
+      assetEditParserMode.value === "profile" ? assetEditEmbedOptionsJson.value : "{}",
+      "Embed 参数 JSON",
+      "editAssetEmbedOptionsJson",
+    );
+    if (!parsed.ok) return;
+  
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      await updateLibraryAsset(editingAssetId.value, {
+        displayName: assetEditDisplayName.value.trim(),
+        folderId: assetEditFolderId.value,
+        openMode: assetEditOpenMode.value,
+        embedProfileId: assetEditParserMode.value === "profile" ? assetEditEmbedProfileId.value : "",
+        embedOptions: assetEditParserMode.value === "profile" ? parsed.value : {},
+      });
+      const previousFolderId = selectedFolderId.value;
+      await reloadFolders();
+      if (previousFolderId) selectedFolderId.value = previousFolderId;
+      await reloadFolderAssets();
+      setActivePanelTab("asset");
+      setFeedback("资源已更新。");
+      cancelAssetEdit();
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "embed_profile_not_found") {
+        setFeedback("所选 Embed 平台不存在或已禁用。", true);
+        return;
+      }
+      if (e?.data?.error === "embed_profile_extension_mismatch") {
+        setFeedback("资源扩展名不在目标 Embed 平台支持范围内。", true);
+        return;
+      }
+      if (e?.data?.error === "unsupported_asset_type") {
+        setFeedback("当前资源无法切换到自动适配，请保持 Embed 平台模式。", true);
+        return;
+      }
+      setFeedback("更新资源失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function createEmbedProfileEntry() {
+    clearFieldErrors("createEmbedProfileName", "createEmbedScriptUrl", "createEmbedDefaultOptionsJson");
+    const name = embedProfileName.value.trim();
+    const scriptUrl = embedScriptUrl.value.trim();
+    if (!name) {
+      setFieldError("createEmbedProfileName", "请填写 Embed 平台名称。");
+      setFeedback("请填写 Embed 平台名称。", true);
+      return;
+    }
+    if (!scriptUrl) {
+      setFieldError("createEmbedScriptUrl", "请填写 embed.js 地址。");
+      setFeedback("请填写 embed.js 地址。", true);
+      return;
+    }
+  
+    const parsedDefaults = parseJsonObjectInput(embedDefaultOptionsJson.value, "默认参数 JSON", "createEmbedDefaultOptionsJson");
+    if (!parsedDefaults.ok) return;
+    const defaultOptions = parsedDefaults.value;
+  
+    const matchExtensions = embedExtensionsText.value
+      .split(",")
+      .map((item) => item.trim().replace(/^\./, "").toLowerCase())
+      .filter(Boolean);
+  
+    savingEmbed.value = true;
+    setFeedback("");
+    try {
+      await createLibraryEmbedProfile({
+        name,
+        scriptUrl,
+        fallbackScriptUrl: embedFallbackScriptUrl.value.trim(),
+        viewerPath: embedViewerPath.value.trim(),
+        constructorName: embedConstructorName.value.trim() || "ElectricFieldApp",
+        assetUrlOptionKey: embedAssetUrlOptionKey.value.trim() || "sceneUrl",
+        matchExtensions,
+        defaultOptions,
+        enabled: embedEnabled.value,
+      });
+      embedProfileName.value = "";
+      embedScriptUrl.value = "";
+      embedFallbackScriptUrl.value = "";
+      embedViewerPath.value = "";
+      embedConstructorName.value = "ElectricFieldApp";
+      embedAssetUrlOptionKey.value = "sceneUrl";
+      embedExtensionsText.value = "";
+      embedDefaultOptionsJson.value = "{}";
+      embedEnabled.value = true;
+      clearFieldErrors("createEmbedProfileName", "createEmbedScriptUrl", "createEmbedDefaultOptionsJson");
+      await reloadEmbedProfiles();
+      setActivePanelTab("embed");
+      setFeedback("Embed 平台已创建。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "invalid_profile_script_url") {
+        setFeedback("embed.js 地址无效。请使用 / 开头或 http(s) 地址。", true);
+        return;
+      }
+      if (e?.data?.error === "invalid_profile_viewer_path") {
+        setFeedback("viewerPath 无效。", true);
+        return;
+      }
+      setFeedback("创建 Embed 平台失败。", true);
+    } finally {
+      savingEmbed.value = false;
+    }
+  }
+  
+  function startEditEmbedProfile(profile: LibraryEmbedProfile) {
+    setActivePanelTab("embed");
+    ensurePanelSectionOpen("embed:edit");
+    editingEmbedProfileId.value = profile.id;
+    embedEditName.value = profile.name || "";
+    embedEditScriptUrl.value = profile.remoteScriptUrl || profile.scriptUrl || "";
+    embedEditFallbackScriptUrl.value = profile.fallbackScriptUrl || "";
+    embedEditViewerPath.value = profile.remoteViewerPath || profile.viewerPath || "";
+    embedEditConstructorName.value = profile.constructorName || "ElectricFieldApp";
+    embedEditAssetUrlOptionKey.value = profile.assetUrlOptionKey || "sceneUrl";
+    embedEditExtensionsText.value = Array.isArray(profile.matchExtensions) ? profile.matchExtensions.join(",") : "";
+    embedEditDefaultOptionsJson.value = JSON.stringify(profile.defaultOptions || {}, null, 2);
+    embedEditEnabled.value = profile.enabled !== false;
+  }
+  
+  async function saveEmbedProfileEdit() {
+    clearFieldErrors("editEmbedProfileName", "editEmbedScriptUrl", "editEmbedDefaultOptionsJson");
+    if (!editingEmbedProfileId.value) return;
+    const name = embedEditName.value.trim();
+    const scriptUrl = embedEditScriptUrl.value.trim();
+    if (!name) {
+      setFieldError("editEmbedProfileName", "请填写 Embed 平台名称。");
+      setFeedback("请填写 Embed 平台名称。", true);
+      return;
+    }
+    if (!scriptUrl) {
+      setFieldError("editEmbedScriptUrl", "请填写 embed.js 地址。");
+      setFeedback("请填写 embed.js 地址。", true);
+      return;
+    }
+  
+    const parsedDefaults = parseJsonObjectInput(embedEditDefaultOptionsJson.value, "默认参数 JSON", "editEmbedDefaultOptionsJson");
+    if (!parsedDefaults.ok) return;
+    const matchExtensions = embedEditExtensionsText.value
+      .split(",")
+      .map((item) => item.trim().replace(/^\./, "").toLowerCase())
+      .filter(Boolean);
+  
+    savingEmbed.value = true;
+    setFeedback("");
+    try {
+      await updateLibraryEmbedProfile(editingEmbedProfileId.value, {
+        name,
+        scriptUrl,
+        fallbackScriptUrl: embedEditFallbackScriptUrl.value.trim(),
+        viewerPath: embedEditViewerPath.value.trim(),
+        constructorName: embedEditConstructorName.value.trim() || "ElectricFieldApp",
+        assetUrlOptionKey: embedEditAssetUrlOptionKey.value.trim() || "sceneUrl",
+        matchExtensions,
+        defaultOptions: parsedDefaults.value,
+        enabled: embedEditEnabled.value,
+      });
+      await reloadEmbedProfiles();
+      setActivePanelTab("embed");
+      setFeedback("Embed 平台已更新。");
+      cancelEmbedProfileEdit();
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "invalid_profile_script_url") {
+        setFeedback("embed.js 地址无效。请使用 / 开头或 http(s) 地址。", true);
+        return;
+      }
+      if (e?.data?.error === "invalid_profile_viewer_path") {
+        setFeedback("viewerPath 无效。", true);
+        return;
+      }
+      setFeedback("更新 Embed 平台失败。", true);
+    } finally {
+      savingEmbed.value = false;
+    }
+  }
+  
+  async function removeEmbedProfile(profileId: string) {
+    if (!window.confirm("确定删除该 Embed 平台吗？")) return;
+    savingEmbed.value = true;
+    setFeedback("");
+    try {
+      await deleteLibraryEmbedProfile(profileId);
+      await reloadEmbedProfiles();
+      setActivePanelTab("embed");
+      setFeedback("Embed 平台已删除。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "embed_profile_in_use") {
+        setFeedback("该 Embed 平台仍被资源引用，无法删除。", true);
+        return;
+      }
+      setFeedback("删除 Embed 平台失败。", true);
+    } finally {
+      savingEmbed.value = false;
+    }
+  }
+  
+  async function syncEmbedProfileEntry(profileId: string) {
+    savingEmbed.value = true;
+    setFeedback("");
+    try {
+      await syncLibraryEmbedProfile(profileId);
+      await reloadEmbedProfiles();
+      setActivePanelTab("embed");
+      setFeedback("Embed 平台已同步到本地。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "embed_profile_sync_failed") {
+        setFeedback("同步失败，请检查远端脚本/Viewer 是否可访问。", true);
+        return;
+      }
+      setFeedback("同步 Embed 平台失败。", true);
+    } finally {
+      savingEmbed.value = false;
+    }
+  }
+  
+  async function renameAssetDisplayName(asset: LibraryAsset) {
+    const current = asset.displayName || asset.fileName || "";
+    const next = window.prompt("请输入新的显示名称（留空则恢复文件名显示）", current);
+    if (next === null) return;
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      await updateLibraryAsset(asset.id, { displayName: next.trim() });
+      await reloadFolders();
+      await reloadFolderAssets();
+      setFeedback("显示名称已更新。");
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "更新显示名称失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function removeAsset(assetId: string) {
+    if (!window.confirm("确定删除该资源吗？")) return;
+    savingAsset.value = true;
+    setFeedback("");
+    try {
+      await deleteLibraryAsset(assetId);
+      await reloadFolders();
+      await reloadFolderAssets();
+      undoAssetIds.value = [assetId];
+      setAssetBatchResult("删除资源", [assetId], []);
+      setFeedback("资源已删除，可点击“撤销最近删除”。");
+    } catch (err) {
+      const e = err as { status?: number };
+      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "删除资源失败。", true);
+    } finally {
+      savingAsset.value = false;
+    }
+  }
+  
+  async function removeFolder(folderId: string) {
+    if (!window.confirm("确定删除该文件夹吗？")) return;
+    savingFolder.value = true;
+    setFeedback("");
+    try {
+      await deleteLibraryFolder(folderId);
+      if (selectedFolderId.value === folderId) selectedFolderId.value = "";
+      await reloadFolders();
+      await reloadFolderAssets();
+      setFeedback("文件夹已删除。");
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) {
+        setFeedback("请先登录管理员账号。", true);
+        return;
+      }
+      if (e?.data?.error === "folder_not_empty") {
+        setFeedback("文件夹非空，需先删除其中资源。", true);
+        return;
+      }
+      setFeedback("删除文件夹失败。", true);
+    } finally {
+      savingFolder.value = false;
+  }
+  }
+  
+  watch(selectedFolderId, () => {
+    syncFolderEditDraft();
+    assetBatchResult.value = null;
+    undoAssetIds.value = [];
+    void reloadFolderAssets().catch(() => {});
+  });
+  
+  watch(filteredFolderAssets, (list) => {
+    const visible = new Set(list.map((asset) => asset.id));
+    selectedAssetIds.value = selectedAssetIds.value.filter((id) => visible.has(id));
+  });
+  
+  watch(assetParserMode, (mode) => {
+    if (mode !== "profile") {
+      assetEmbedProfileId.value = "";
+      assetEmbedOptionsJson.value = "";
+      clearFieldErrors("uploadAssetEmbedProfile", "uploadAssetEmbedOptionsJson");
+      return;
+    }
+    if (!assetEmbedProfileId.value) {
+      assetEmbedProfileId.value = selectableEmbedProfiles.value[0]?.id || "";
+    }
+  });
+  
+  watch(assetEditParserMode, (mode) => {
+    if (mode !== "profile") {
+      assetEditEmbedProfileId.value = "";
+      assetEditEmbedOptionsJson.value = "{}";
+      clearFieldErrors("editAssetEmbedProfile", "editAssetEmbedOptionsJson");
+      return;
+    }
+    if (!assetEditEmbedProfileId.value) {
+      assetEditEmbedProfileId.value = selectableEmbedProfiles.value[0]?.id || "";
+    }
+  });
+  
+  onMounted(async () => {
+    loading.value = true;
+    setFeedback("");
+    try {
+      await reloadTaxonomy().catch(() => {});
+      await reloadEmbedProfiles().catch(() => {});
+      await reloadFolders();
+      await reloadFolderAssets();
+    } catch {
+      setFeedback("加载资源库管理数据失败。", true);
+    } finally {
+      loading.value = false;
+    }
+  });
+
+  return {
+    loading,
+    savingFolder,
+    savingAsset,
+    savingEmbed,
+    saving,
+    feedback,
+    feedbackError,
+    fieldErrors,
+    folders,
+    selectedFolderId,
+    folderAssets,
+    deletedAssets,
+    embedProfiles,
+    categories,
+    groups,
+    folderName,
+    folderCategoryId,
+    createCoverFile,
+    folderEditName,
+    folderEditCategoryId,
+    coverFile,
+    assetFile,
+    assetDisplayName,
+    openMode,
+    assetParserMode,
+    assetEmbedProfileId,
+    assetEmbedOptionsJson,
+    editingAssetId,
+    assetEditDisplayName,
+    assetEditFolderId,
+    assetEditOpenMode,
+    assetEditParserMode,
+    assetEditEmbedProfileId,
+    assetEditEmbedOptionsJson,
+    embedProfileName,
+    embedScriptUrl,
+    embedFallbackScriptUrl,
+    embedViewerPath,
+    embedConstructorName,
+    embedAssetUrlOptionKey,
+    embedExtensionsText,
+    embedDefaultOptionsJson,
+    embedEnabled,
+    editingEmbedProfileId,
+    embedEditName,
+    embedEditScriptUrl,
+    embedEditFallbackScriptUrl,
+    embedEditViewerPath,
+    embedEditConstructorName,
+    embedEditAssetUrlOptionKey,
+    embedEditExtensionsText,
+    embedEditDefaultOptionsJson,
+    embedEditEnabled,
+    activePanelTab,
+    folderSearchQuery,
+    assetSearchQuery,
+    profileSearchQuery,
+    assetModeFilter,
+    assetEmbedProfileFilter,
+    assetSortMode,
+    assetBatchMoveFolderId,
+    selectedAssetIds,
+    assetBatchResult,
+    undoAssetIds,
+    operationLogs,
+    operationLogFilter,
+    folderAssetsLoadSeq,
+    panelSections,
+    selectedFolder,
+    groupedCategoryOptions,
+    selectableEmbedProfiles,
+    editingAsset,
+    selectedFolderAssetCount,
+    filteredFolders,
+    filteredFolderAssets,
+    sortedFilteredFolderAssets,
+    filteredEmbedProfiles,
+    selectedAssetCount,
+    hasSelectedAssets,
+    hasUndoAssets,
+    filteredOperationLogs,
+    allFilteredAssetsSelected,
+    parseJsonObjectInput,
+    syncFolderEditDraft,
+    cancelAssetEdit,
+    clearSelectedAssets,
+    isAssetSelected,
+    toggleAssetSelection,
+    onAssetSelectChange,
+    onSelectAllFilteredAssetsChange,
+    cancelEmbedProfileEdit,
+    setFeedback,
+    setFieldError,
+    clearFieldErrors,
+    getFieldError,
+    setActivePanelTab,
+    isPanelSectionOpen,
+    togglePanelSection,
+    ensurePanelSectionOpen,
+    formatOperationTime,
+    pushOperationLog,
+    clearOperationLogs,
+    getApiErrorCode,
+    setAssetBatchResult,
+    onCreateCoverFileChange,
+    onCoverFileChange,
+    onAssetFileChange,
+    reloadFolders,
+    syncCategorySelection,
+    syncFolderEditCategorySelection,
+    reloadTaxonomy,
+    reloadFolderAssets,
+    reloadEmbedProfiles,
+    createFolderEntry,
+    saveFolderMeta,
+    uploadCover,
+    uploadAssetEntry,
+    switchAssetOpenMode,
+    runAssetBatchOpenMode,
+    runAssetBatchMove,
+    runAssetBatchDelete,
+    runAssetBatchUndo,
+    restoreDeletedAsset,
+    removeDeletedAssetPermanently,
+    startEditAsset,
+    saveAssetEdit,
+    createEmbedProfileEntry,
+    startEditEmbedProfile,
+    saveEmbedProfileEdit,
+    removeEmbedProfile,
+    syncEmbedProfileEntry,
+    renameAssetDisplayName,
+    removeAsset,
+    removeFolder,
+  };
+}
