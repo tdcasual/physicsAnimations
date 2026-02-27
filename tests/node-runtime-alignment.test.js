@@ -38,3 +38,11 @@ test("GitHub Actions setup-node uses Node 24", () => {
     assert.equal(match[1], "24");
   }
 });
+
+test(".nvmrc and .node-version pin local runtime to Node 24", () => {
+  const nvmrc = readUtf8(".nvmrc").trim();
+  assert.equal(nvmrc, "24");
+
+  const nodeVersion = readUtf8(".node-version").trim();
+  assert.equal(nodeVersion, "24");
+});
