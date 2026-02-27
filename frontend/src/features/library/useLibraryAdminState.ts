@@ -2,7 +2,6 @@ import { computed, onMounted, ref, watch } from "vue";
 import { listTaxonomy } from "../admin/adminApi";
 import {
   createLibraryFolder,
-  deleteLibraryAsset,
   deleteLibraryAssetPermanently,
   deleteLibraryFolder,
   getLibraryFolder,
@@ -15,8 +14,9 @@ import {
   uploadLibraryAsset,
   uploadLibraryFolderCover,
 } from "./libraryApi";
-import type { AssetBatchResult, AssetSortMode, CategoryRow, JsonObjectParseResult, GroupRow, LibraryPanelTab } from "./libraryAdminModels";
+import type { AssetSortMode, CategoryRow, JsonObjectParseResult, GroupRow, LibraryPanelTab } from "./libraryAdminModels";
 import { useLibraryAdminFeedback } from "./useLibraryAdminFeedback";
+import { useLibraryAssetSelection } from "./useLibraryAssetSelection";
 import { useLibraryEmbedProfileActions } from "./useLibraryEmbedProfileActions";
 import type { LibraryAsset, LibraryEmbedProfile, LibraryFolder, LibraryOpenMode } from "./types";
 
@@ -99,10 +99,6 @@ export function useLibraryAdminState() {
   const assetModeFilter = ref<"all" | LibraryOpenMode>("all");
   const assetEmbedProfileFilter = ref("all");
   const assetSortMode = ref<AssetSortMode>("updated_desc");
-  const assetBatchMoveFolderId = ref("");
-  const selectedAssetIds = ref<string[]>([]);
-  const assetBatchResult = ref<AssetBatchResult | null>(null);
-  const undoAssetIds = ref<string[]>([]);
   const folderAssetsLoadSeq = ref(0);
   const panelSections = ref<Record<string, boolean>>({
     "folder:meta": true,
@@ -192,14 +188,38 @@ export function useLibraryAdminState() {
       return hay.includes(query);
     });
   });
-  const selectedAssetCount = computed(() => selectedAssetIds.value.length);
-  const hasSelectedAssets = computed(() => selectedAssetIds.value.length > 0);
-  const hasUndoAssets = computed(() => undoAssetIds.value.length > 0);
-  const allFilteredAssetsSelected = computed(() => {
-    if (filteredFolderAssets.value.length === 0) return false;
-    const selected = new Set(selectedAssetIds.value);
-    return filteredFolderAssets.value.every((asset) => selected.has(asset.id));
+
+  const assetSelection = useLibraryAssetSelection({
+    savingAsset,
+    selectedFolderId,
+    filteredFolderAssets,
+    sortedFilteredFolderAssets,
+    reloadFolders,
+    reloadFolderAssets,
+    setFeedback,
+    getApiErrorCode,
   });
+
+  const {
+    selectedAssetIds,
+    assetBatchMoveFolderId,
+    assetBatchResult,
+    undoAssetIds,
+    selectedAssetCount,
+    hasSelectedAssets,
+    hasUndoAssets,
+    allFilteredAssetsSelected,
+    clearSelectedAssets,
+    isAssetSelected,
+    toggleAssetSelection,
+    onAssetSelectChange,
+    onSelectAllFilteredAssetsChange,
+    runAssetBatchOpenMode,
+    runAssetBatchMove,
+    runAssetBatchDelete,
+    runAssetBatchUndo,
+    removeAsset,
+  } = assetSelection;
   
   function parseJsonObjectInput(
     raw: string,
@@ -243,37 +263,6 @@ export function useLibraryAdminState() {
     assetEditEmbedProfileId.value = "";
     assetEditEmbedOptionsJson.value = "{}";
     clearFieldErrors("editAssetFolderId", "editAssetEmbedProfile", "editAssetEmbedOptionsJson");
-  }
-  
-  function clearSelectedAssets() {
-    selectedAssetIds.value = [];
-    assetBatchMoveFolderId.value = "";
-  }
-  
-  function isAssetSelected(assetId: string) {
-    return selectedAssetIds.value.includes(assetId);
-  }
-  
-  function toggleAssetSelection(assetId: string, checked: boolean) {
-    const current = new Set(selectedAssetIds.value);
-    if (checked) current.add(assetId);
-    else current.delete(assetId);
-    selectedAssetIds.value = Array.from(current);
-  }
-  
-  function onAssetSelectChange(assetId: string, event: Event) {
-    const target = event.target as HTMLInputElement | null;
-    toggleAssetSelection(assetId, !!target?.checked);
-  }
-  
-  function onSelectAllFilteredAssetsChange(event: Event) {
-    const target = event.target as HTMLInputElement | null;
-    const checked = !!target?.checked;
-    if (!checked) {
-      clearSelectedAssets();
-      return;
-    }
-    selectedAssetIds.value = sortedFilteredFolderAssets.value.map((asset) => asset.id);
   }
   
   function setActivePanelTab(tab: LibraryPanelTab) {
@@ -335,14 +324,6 @@ export function useLibraryAdminState() {
     ensurePanelSectionOpen,
     parseJsonObjectInput,
   });
-  
-  function setAssetBatchResult(actionLabel: string, successIds: string[], failed: Array<{ id: string; reason: string }>) {
-    assetBatchResult.value = {
-      actionLabel,
-      successIds,
-      failed,
-    };
-  }
   
   function onCreateCoverFileChange(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -644,168 +625,6 @@ export function useLibraryAdminState() {
     }
   }
   
-  async function runAssetBatchOpenMode(mode: LibraryOpenMode) {
-    if (selectedAssetIds.value.length === 0) {
-      setFeedback("请先选择要批量操作的资源。", true);
-      return;
-    }
-    const targetIds = [...selectedAssetIds.value];
-    savingAsset.value = true;
-    setFeedback("");
-    try {
-      const successIds: string[] = [];
-      const failed: Array<{ id: string; reason: string }> = [];
-      for (const assetId of targetIds) {
-        try {
-          await updateLibraryAsset(assetId, { openMode: mode });
-          successIds.push(assetId);
-        } catch (err) {
-          failed.push({
-            id: assetId,
-            reason: getApiErrorCode(err),
-          });
-        }
-      }
-      await reloadFolders();
-      await reloadFolderAssets();
-      clearSelectedAssets();
-      setAssetBatchResult(mode === "embed" ? "批量设为演示" : "批量设为下载", successIds, failed);
-      if (failed.length > 0) {
-        setFeedback(`批量操作完成：成功 ${successIds.length}，失败 ${failed.length}。`, true);
-        return;
-      }
-      setFeedback(mode === "embed" ? `已批量设为演示（${successIds.length}）。` : `已批量设为下载（${successIds.length}）。`);
-    } catch (err) {
-      const e = err as { status?: number };
-      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "批量切换失败。", true);
-    } finally {
-      savingAsset.value = false;
-    }
-  }
-  
-  async function runAssetBatchMove() {
-    if (selectedAssetIds.value.length === 0) {
-      setFeedback("请先选择要批量移动的资源。", true);
-      return;
-    }
-    if (!assetBatchMoveFolderId.value) {
-      setFeedback("请选择目标文件夹。", true);
-      return;
-    }
-    const targetIds = [...selectedAssetIds.value];
-    savingAsset.value = true;
-    setFeedback("");
-    try {
-      const successIds: string[] = [];
-      const failed: Array<{ id: string; reason: string }> = [];
-      for (const assetId of targetIds) {
-        try {
-          await updateLibraryAsset(assetId, { folderId: assetBatchMoveFolderId.value });
-          successIds.push(assetId);
-        } catch (err) {
-          failed.push({
-            id: assetId,
-            reason: getApiErrorCode(err),
-          });
-        }
-      }
-      await reloadFolders();
-      await reloadFolderAssets();
-      clearSelectedAssets();
-      setAssetBatchResult("批量移动", successIds, failed);
-      if (failed.length > 0) {
-        setFeedback(`批量移动完成：成功 ${successIds.length}，失败 ${failed.length}。`, true);
-        return;
-      }
-      setFeedback(`资源已批量移动（${successIds.length}）。`);
-    } catch (err) {
-      const e = err as { status?: number };
-      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "批量移动失败。", true);
-    } finally {
-      savingAsset.value = false;
-    }
-  }
-  
-  async function runAssetBatchDelete() {
-    if (selectedAssetIds.value.length === 0) {
-      setFeedback("请先选择要删除的资源。", true);
-      return;
-    }
-    if (!window.confirm(`确定删除选中的 ${selectedAssetIds.value.length} 个资源吗？`)) return;
-    const targetIds = [...selectedAssetIds.value];
-    savingAsset.value = true;
-    setFeedback("");
-    try {
-      const successIds: string[] = [];
-      const failed: Array<{ id: string; reason: string }> = [];
-      for (const assetId of targetIds) {
-        try {
-          await deleteLibraryAsset(assetId);
-          successIds.push(assetId);
-        } catch (err) {
-          failed.push({
-            id: assetId,
-            reason: getApiErrorCode(err),
-          });
-        }
-      }
-      await reloadFolders();
-      await reloadFolderAssets();
-      clearSelectedAssets();
-      undoAssetIds.value = successIds;
-      setAssetBatchResult("批量删除", successIds, failed);
-      if (failed.length > 0) {
-        setFeedback(`批量删除完成：成功 ${successIds.length}，失败 ${failed.length}。`, true);
-        return;
-      }
-      setFeedback(`批量删除完成：成功 ${successIds.length}。可点击“撤销最近删除”。`);
-    } catch (err) {
-      const e = err as { status?: number };
-      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "批量删除失败。", true);
-    } finally {
-      savingAsset.value = false;
-    }
-  }
-  
-  async function runAssetBatchUndo() {
-    if (undoAssetIds.value.length === 0) {
-      setFeedback("当前没有可撤销的删除。", true);
-      return;
-    }
-    const targetIds = [...undoAssetIds.value];
-    savingAsset.value = true;
-    setFeedback("");
-    try {
-      const successIds: string[] = [];
-      const failed: Array<{ id: string; reason: string }> = [];
-      for (const assetId of targetIds) {
-        try {
-          await restoreLibraryAsset(assetId);
-          successIds.push(assetId);
-        } catch (err) {
-          failed.push({
-            id: assetId,
-            reason: getApiErrorCode(err),
-          });
-        }
-      }
-      await reloadFolders();
-      await reloadFolderAssets();
-      undoAssetIds.value = failed.map((item) => item.id);
-      setAssetBatchResult("撤销删除", successIds, failed);
-      if (failed.length > 0) {
-        setFeedback(`撤销完成：恢复 ${successIds.length}，失败 ${failed.length}。`, true);
-        return;
-      }
-      setFeedback(`撤销完成：已恢复 ${successIds.length} 个资源。`);
-    } catch (err) {
-      const e = err as { status?: number };
-      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "撤销删除失败。", true);
-    } finally {
-      savingAsset.value = false;
-    }
-  }
-  
   async function restoreDeletedAsset(assetId: string) {
     savingAsset.value = true;
     setFeedback("");
@@ -946,25 +765,6 @@ export function useLibraryAdminState() {
     }
   }
   
-  async function removeAsset(assetId: string) {
-    if (!window.confirm("确定删除该资源吗？")) return;
-    savingAsset.value = true;
-    setFeedback("");
-    try {
-      await deleteLibraryAsset(assetId);
-      await reloadFolders();
-      await reloadFolderAssets();
-      undoAssetIds.value = [assetId];
-      setAssetBatchResult("删除资源", [assetId], []);
-      setFeedback("资源已删除，可点击“撤销最近删除”。");
-    } catch (err) {
-      const e = err as { status?: number };
-      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "删除资源失败。", true);
-    } finally {
-      savingAsset.value = false;
-    }
-  }
-  
   async function removeFolder(folderId: string) {
     if (!window.confirm("确定删除该文件夹吗？")) return;
     savingFolder.value = true;
@@ -993,14 +793,7 @@ export function useLibraryAdminState() {
   
   watch(selectedFolderId, () => {
     syncFolderEditDraft();
-    assetBatchResult.value = null;
-    undoAssetIds.value = [];
     void reloadFolderAssets().catch(() => {});
-  });
-  
-  watch(filteredFolderAssets, (list) => {
-    const visible = new Set(list.map((asset) => asset.id));
-    selectedAssetIds.value = selectedAssetIds.value.filter((id) => visible.has(id));
   });
   
   watch(assetParserMode, (mode) => {
@@ -1146,7 +939,6 @@ export function useLibraryAdminState() {
     pushOperationLog,
     clearOperationLogs,
     getApiErrorCode,
-    setAssetBatchResult,
     onCreateCoverFileChange,
     onCoverFileChange,
     onAssetFileChange,
