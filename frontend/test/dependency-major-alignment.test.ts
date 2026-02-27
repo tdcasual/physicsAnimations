@@ -10,6 +10,7 @@ describe("frontend major dependency alignment", () => {
     const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")) as {
       dependencies?: Record<string, string>;
       devDependencies?: Record<string, string>;
+      overrides?: Record<string, string>;
     };
 
     expect(pkg.dependencies?.pinia).toBe("^3.0.4");
@@ -18,5 +19,6 @@ describe("frontend major dependency alignment", () => {
     expect(pkg.devDependencies?.vitest).toBe("^4.0.18");
     expect(pkg.devDependencies?.["@vitejs/plugin-vue"]).toBe("^6.0.4");
     expect(pkg.devDependencies?.jsdom).toBe("^28.0.0");
+    expect(pkg.overrides?.rollup).toBe("^4.59.0");
   });
 });
