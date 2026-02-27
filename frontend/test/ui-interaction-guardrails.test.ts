@@ -17,13 +17,14 @@ describe("ui interaction guardrails", () => {
   });
 
   it("prevents stale list request results from overriding newer queries", () => {
-    const contentSource = readFile("src/views/admin/AdminContentView.vue");
-    const uploadsSource = readFile("src/views/admin/AdminUploadsView.vue");
+    const contentSource = readFile("src/features/admin/content/useContentAdmin.ts");
+    const uploadsSource = readFile("src/features/admin/uploads/useUploadAdmin.ts");
 
     for (const source of [contentSource, uploadsSource]) {
       expect(source).not.toMatch(/if\s*\(loading\.value\)\s*return;/);
-      expect(source).toMatch(/latestReloadSeq/);
-      expect(source).toMatch(/if\s*\(requestSeq\s*!==\s*latestReloadSeq\)\s*return;/);
+      expect(source).toMatch(/nextRequestSeq/);
+      expect(source).toMatch(/isLatestRequest/);
+      expect(source).toMatch(/if\s*\(!isLatestRequest\(requestSeq\)\)\s*return;/);
     }
   });
 
@@ -34,7 +35,7 @@ describe("ui interaction guardrails", () => {
   });
 
   it("requires explicit confirmation before uploading risky html", () => {
-    const uploadsSource = readFile("src/views/admin/AdminUploadsView.vue");
+    const uploadsSource = readFile("src/features/admin/uploads/useUploadAdmin.ts");
     expect(uploadsSource).toMatch(/risky_html_requires_confirmation/);
     expect(uploadsSource).toMatch(/window\.confirm\(/);
     expect(uploadsSource).toMatch(/allowRiskyHtml:\s*true/);

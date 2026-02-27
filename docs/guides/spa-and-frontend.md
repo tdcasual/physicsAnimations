@@ -65,3 +65,44 @@ npm run smoke:spa-public
 - `listAdminItems` 统一通过 `parseAdminItemsResponse` 返回稳定结构
 - 非 2xx 响应统一通过 `toApiError` 转为带 `status/code/data` 的错误对象
 - 该改造不改变后端协议，只收敛前端类型与错误处理语义
+
+## Admin 页面模块边界（Refactor 2026-02-27）
+
+### Content / Uploads
+
+- 页面壳层：
+  - `frontend/src/views/admin/AdminContentView.vue`
+  - `frontend/src/views/admin/AdminUploadsView.vue`
+- 状态与动作：
+  - `frontend/src/features/admin/content/useContentAdmin.ts`
+  - `frontend/src/features/admin/uploads/useUploadAdmin.ts`
+- 子面板：
+  - `frontend/src/views/admin/content/*`
+  - `frontend/src/views/admin/uploads/*`
+
+### Library
+
+- 页面壳层：`frontend/src/views/admin/AdminLibraryView.vue`
+- 状态 façade：`frontend/src/features/library/useLibraryAdminState.ts`
+- 列与面板：`frontend/src/views/admin/library/*`
+
+### Taxonomy / System
+
+- 页面壳层：
+  - `frontend/src/views/admin/AdminTaxonomyView.vue`
+  - `frontend/src/views/admin/AdminSystemView.vue`
+- 状态与向导：
+  - `frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts`
+  - `frontend/src/features/admin/system/useSystemWizard.ts`
+- 子面板：
+  - `frontend/src/views/admin/taxonomy/*`
+  - `frontend/src/views/admin/system/*`
+
+## 维护约束
+
+- `frontend/src/views/admin/*.vue` 建议保持在 ~700 LOC 以内。
+- 页面文件只负责编排，业务状态/异步动作优先放到对应 composable。
+- 可复用的表单反馈逻辑优先复用：
+  - `frontend/src/features/admin/composables/useFieldErrors.ts`
+  - `frontend/src/features/admin/composables/useActionFeedback.ts`
+  - `frontend/src/features/admin/composables/usePagedAdminList.ts`

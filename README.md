@@ -161,6 +161,24 @@ docker compose --profile maintenance run --rm ggb-updater
 - `server/`：后端 API 与存储逻辑
 - `scripts/`：构建目录、截图与工具脚本
 
+## 维护边界（代码拆分后）
+
+- 前端 admin 页面采用“壳层 + composable + panel”分层：
+  - 壳层：`frontend/src/views/admin/*.vue`
+  - 状态/动作：`frontend/src/features/admin/**` 或 `frontend/src/features/library/**`
+  - 子面板：`frontend/src/views/admin/{content,uploads,library,taxonomy,system}/`
+- 后端 library 服务采用“facade + domain service”：
+  - facade：`server/services/library/libraryService.js`
+  - domain：`assetsService` / `foldersService` / `embedProfilesService` / `viewerRenderService`
+- state-db 采用“入口 facade + storeFactory + sqliteMirror + mirrorHelpers”分层：
+  - 入口：`server/lib/stateDb.js`
+  - 组装：`server/lib/stateDb/storeFactory.js`
+  - 引擎：`server/lib/stateDb/sqliteMirror.js`
+  - 共享 helper：`server/lib/stateDb/mirrorHelpers.js`
+- 文件体积守则（建议）：
+  - `frontend/src/views/admin/*.vue` 不超过约 700 LOC
+  - `server/services/library/*.js` 不超过约 500 LOC
+
 ## 许可
 
 [AGPL-3.0](LICENSE)

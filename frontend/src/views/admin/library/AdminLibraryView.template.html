@@ -1,0 +1,620 @@
+
+  <section class="admin-library-view">
+    <header class="library-header">
+      <div>
+        <h2>资源库管理</h2>
+        <div class="library-subtitle">面向课堂演示的文件夹、资源与 Embed 平台统一管理</div>
+      </div>
+      <div class="library-stats">
+        <div class="stat-chip">文件夹 {{ folders.length }}</div>
+        <div class="stat-chip">资源 {{ selectedFolderAssetCount }}</div>
+        <div class="stat-chip">平台 {{ embedProfiles.length }}</div>
+      </div>
+    </header>
+
+    <div class="library-workbench library-grid">
+      <LibraryFolderColumn>
+        <div class="column-head">
+          <h3>文件夹</h3>
+          <div class="asset-meta">按分类与关键词定位课堂素材</div>
+        </div>
+        <label class="field">
+          <span>文件夹搜索</span>
+          <input v-model="folderSearchQuery" class="field-input folder-search-input" type="text" placeholder="名称 / 分类 / ID" />
+        </label>
+        <div class="folder-list">
+          <article
+            v-for="folder in filteredFolders"
+            :key="folder.id"
+            class="folder-item"
+            :class="{ active: selectedFolderId === folder.id }"
+          >
+            <button type="button" class="folder-pick" @click="selectedFolderId = folder.id">
+              <div class="folder-name">{{ folder.name || folder.id }}</div>
+              <div class="folder-meta">{{ folder.categoryId }} · {{ folder.assetCount || 0 }} 个资源</div>
+            </button>
+            <button
+              type="button"
+              class="btn btn-ghost"
+              :disabled="savingFolder"
+              @click="
+                selectedFolderId = folder.id;
+                setActivePanelTab('folder');
+              "
+            >
+              编辑
+            </button>
+            <button type="button" class="btn btn-ghost" :disabled="savingFolder" @click="removeFolder(folder.id)">删除</button>
+          </article>
+          <div v-if="!loading && filteredFolders.length === 0" class="empty">暂无匹配文件夹。</div>
+        </div>
+
+        <div class="column-divider" />
+
+        <h3>新建文件夹</h3>
+        <label class="field" :class="{ 'has-error': getFieldError('createFolderName') }">
+          <span>名称</span>
+          <input v-model="folderName" class="field-input" type="text" />
+          <div v-if="getFieldError('createFolderName')" class="field-error-text">{{ getFieldError("createFolderName") }}</div>
+        </label>
+        <label class="field">
+          <span>分类</span>
+          <select v-model="folderCategoryId" class="field-input">
+            <option v-for="option in groupedCategoryOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <label class="field">
+          <span>创建时封面（可选）</span>
+          <input id="library-create-cover-file" class="field-input" type="file" accept="image/*" @change="onCreateCoverFileChange" />
+        </label>
+        <div class="admin-actions">
+          <button type="button" class="btn btn-primary" :disabled="savingFolder" @click="createFolderEntry">创建文件夹</button>
+        </div>
+      </LibraryFolderColumn>
+
+      <LibraryAssetColumn>
+        <div class="column-head">
+          <h3>资源列表</h3>
+          <div class="selected-folder">{{ selectedFolder?.name || "未选择文件夹" }}</div>
+        </div>
+        <label class="field">
+          <span>资源搜索</span>
+          <input
+            v-model="assetSearchQuery"
+            class="field-input asset-search-input"
+            type="text"
+            :disabled="!selectedFolderId"
+            placeholder="显示名 / 源文件名 / 平台"
+          />
+        </label>
+        <div class="asset-filter-row">
+          <label class="field">
+            <span>打开方式筛选</span>
+            <select v-model="assetModeFilter" class="field-input asset-mode-filter">
+              <option value="all">全部</option>
+              <option value="embed">演示</option>
+              <option value="download">仅下载</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Embed 平台筛选</span>
+            <select v-model="assetEmbedProfileFilter" class="field-input asset-profile-filter">
+              <option value="all">全部</option>
+              <option value="none">仅自动适配</option>
+              <option v-for="profile in embedProfiles" :key="profile.id" :value="profile.id">
+                {{ profile.name || profile.id }}
+              </option>
+            </select>
+          </label>
+          <label class="field">
+            <span>排序</span>
+            <select v-model="assetSortMode" class="field-input asset-sort-select">
+              <option value="updated_desc">更新时间（新到旧）</option>
+              <option value="updated_asc">更新时间（旧到新）</option>
+              <option value="name_asc">名称（A-Z）</option>
+              <option value="name_desc">名称（Z-A）</option>
+            </select>
+          </label>
+        </div>
+        <div v-if="selectedFolderId" class="asset-batch-toolbar">
+          <label class="batch-select-all">
+            <input
+              type="checkbox"
+              :checked="allFilteredAssetsSelected"
+              :disabled="sortedFilteredFolderAssets.length === 0 || saving"
+              @change="onSelectAllFilteredAssetsChange"
+            />
+            全选当前筛选
+          </label>
+          <div class="asset-meta">已选 {{ selectedAssetCount }}</div>
+          <select v-model="assetBatchMoveFolderId" class="field-input batch-move-folder" :disabled="savingAsset || !hasSelectedAssets">
+            <option value="">移动到...</option>
+            <option v-for="folder in folders" :key="folder.id" :value="folder.id">
+              {{ folder.name || folder.id }}
+            </option>
+          </select>
+          <button type="button" class="btn btn-ghost" :disabled="savingAsset || !hasSelectedAssets || !assetBatchMoveFolderId" @click="runAssetBatchMove">
+            批量移动
+          </button>
+          <button type="button" class="btn btn-ghost" :disabled="savingAsset || !hasSelectedAssets" @click="runAssetBatchOpenMode('embed')">
+            批量设为演示
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost"
+            :disabled="savingAsset || !hasSelectedAssets"
+            @click="runAssetBatchOpenMode('download')"
+          >
+            批量设为下载
+          </button>
+          <button type="button" class="btn btn-ghost" :disabled="savingAsset || !hasSelectedAssets" @click="runAssetBatchDelete">
+            批量删除
+          </button>
+          <button type="button" class="btn btn-ghost" :disabled="savingAsset || !hasUndoAssets" @click="runAssetBatchUndo">
+            撤销最近删除
+          </button>
+        </div>
+        <div v-if="assetBatchResult" class="asset-batch-result">
+          <div class="asset-meta">
+            {{ assetBatchResult.actionLabel }}：成功 {{ assetBatchResult.successIds.length }}，失败 {{ assetBatchResult.failed.length }}
+          </div>
+          <div v-if="assetBatchResult.failed.length > 0" class="asset-meta">
+            失败项：{{ assetBatchResult.failed.map((item) => `${item.id}(${item.reason})`).join("，") }}
+          </div>
+        </div>
+
+        <div class="asset-list-head">
+          <div>选择</div>
+          <div>资源信息</div>
+          <div>操作</div>
+        </div>
+        <div class="asset-list">
+          <article
+            v-for="asset in sortedFilteredFolderAssets"
+            :key="asset.id"
+            class="asset-item"
+            :class="{ selected: isAssetSelected(asset.id) }"
+          >
+            <label class="asset-select-wrap">
+              <input
+                class="asset-select-checkbox"
+                type="checkbox"
+                :checked="isAssetSelected(asset.id)"
+                :disabled="savingAsset"
+                @change="onAssetSelectChange(asset.id, $event)"
+              />
+            </label>
+            <div class="asset-main">
+              <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
+              <div class="asset-meta">源文件：{{ asset.fileName || asset.id }}</div>
+              <div class="asset-meta">{{ asset.openMode === "embed" ? "演示" : "仅下载" }}</div>
+              <div v-if="asset.embedProfileId" class="asset-meta">Embed 平台：{{ asset.embedProfileId }}</div>
+            </div>
+            <div class="asset-actions-inline">
+              <button type="button" class="btn btn-ghost" :disabled="savingAsset" @click="startEditAsset(asset)">编辑</button>
+              <button
+                type="button"
+                class="btn btn-ghost"
+                :disabled="savingAsset"
+                @click="switchAssetOpenMode(asset, asset.openMode === 'embed' ? 'download' : 'embed')"
+              >
+                {{ asset.openMode === "embed" ? "设为仅下载" : "设为演示" }}
+              </button>
+              <button type="button" class="btn btn-ghost" :disabled="savingAsset" @click="renameAssetDisplayName(asset)">重命名显示名</button>
+              <button type="button" class="btn btn-ghost" :disabled="savingAsset" @click="removeAsset(asset.id)">删除</button>
+            </div>
+          </article>
+          <div v-if="selectedFolderId && sortedFilteredFolderAssets.length === 0" class="empty">该文件夹暂无匹配资源。</div>
+          <div v-if="!selectedFolderId" class="empty">先在左侧选择一个文件夹。</div>
+        </div>
+        <div v-if="selectedFolderId" class="deleted-assets-list">
+          <div class="asset-meta">已删除资源（可恢复）</div>
+          <article v-for="asset in deletedAssets" :key="asset.id" class="asset-item">
+            <div class="asset-main">
+              <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
+              <div class="asset-meta">源文件：{{ asset.fileName || asset.id }}</div>
+              <div class="asset-meta">{{ asset.deletedAt ? `删除时间：${asset.deletedAt}` : "已删除" }}</div>
+            </div>
+            <div class="asset-actions-inline">
+              <button type="button" class="btn btn-ghost" :disabled="savingAsset" @click="restoreDeletedAsset(asset.id)">恢复</button>
+              <button type="button" class="btn btn-danger" :disabled="savingAsset" @click="removeDeletedAssetPermanently(asset)">永久删除</button>
+            </div>
+          </article>
+          <div v-if="deletedAssets.length === 0" class="empty">当前文件夹暂无已删除资源。</div>
+        </div>
+      </LibraryAssetColumn>
+
+      <LibraryInspectorColumn>
+        <div class="library-panel-tabs">
+          <button type="button" class="panel-tab" :class="{ active: activePanelTab === 'folder' }" @click="setActivePanelTab('folder')">
+            文件夹设置
+          </button>
+          <button type="button" class="panel-tab" :class="{ active: activePanelTab === 'asset' }" @click="setActivePanelTab('asset')">
+            资源上传/编辑
+          </button>
+          <button type="button" class="panel-tab" :class="{ active: activePanelTab === 'embed' }" @click="setActivePanelTab('embed')">
+            Embed 平台管理
+          </button>
+        </div>
+
+        <FolderPanel v-if="activePanelTab === 'folder'">
+          <h3>文件夹操作</h3>
+
+          <div class="panel-section">
+            <button type="button" class="panel-section-toggle" @click="togglePanelSection('folder:meta')">
+              <span>文件夹信息</span>
+              <span class="asset-meta">{{ isPanelSectionOpen("folder:meta") ? "收起" : "展开" }}</span>
+            </button>
+            <div v-if="isPanelSectionOpen('folder:meta')" class="panel-section-body">
+              <div class="field">
+                <span>当前文件夹</span>
+                <div class="selected-folder">{{ selectedFolder?.name || "未选择" }}</div>
+              </div>
+              <label class="field" :class="{ 'has-error': getFieldError('editFolderName') }">
+                <span>名称</span>
+                <input v-model="folderEditName" class="field-input" type="text" :disabled="!selectedFolderId" />
+                <div v-if="getFieldError('editFolderName')" class="field-error-text">{{ getFieldError("editFolderName") }}</div>
+              </label>
+              <label class="field">
+                <span>分类</span>
+                <select v-model="folderEditCategoryId" class="field-input" :disabled="!selectedFolderId">
+                  <option v-for="option in groupedCategoryOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </option>
+                </select>
+              </label>
+              <div class="admin-actions">
+                <button type="button" class="btn btn-ghost" :disabled="savingFolder || !selectedFolderId" @click="saveFolderMeta">
+                  保存文件夹信息
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <button type="button" class="panel-section-toggle" @click="togglePanelSection('folder:cover')">
+              <span>封面设置</span>
+              <span class="asset-meta">{{ isPanelSectionOpen("folder:cover") ? "收起" : "展开" }}</span>
+            </button>
+            <div v-if="isPanelSectionOpen('folder:cover')" class="panel-section-body">
+              <label class="field">
+                <span>更改封面</span>
+                <input id="library-cover-file" class="field-input" type="file" accept="image/*" @change="onCoverFileChange" />
+              </label>
+              <div class="admin-actions">
+                <button type="button" class="btn btn-ghost" :disabled="savingFolder || !selectedFolderId" @click="uploadCover">上传封面</button>
+              </div>
+            </div>
+          </div>
+        </FolderPanel>
+
+        <AssetPanel v-else-if="activePanelTab === 'asset'">
+          <h3>资源上传与编辑</h3>
+
+          <div class="panel-section">
+            <button type="button" class="panel-section-toggle" @click="togglePanelSection('asset:upload')">
+              <span>上传资源</span>
+              <span class="asset-meta">{{ isPanelSectionOpen("asset:upload") ? "收起" : "展开" }}</span>
+            </button>
+            <div v-if="isPanelSectionOpen('asset:upload')" class="panel-section-body">
+              <label class="field" :class="{ 'has-error': getFieldError('uploadAssetFile') }">
+                <span>资源文件</span>
+                <input
+                  id="library-asset-file"
+                  class="field-input"
+                  type="file"
+                  accept=".ggb,.html,.htm,.json,.zip,application/vnd.geogebra.file,text/html,application/json,application/zip"
+                  @change="onAssetFileChange"
+                />
+                <div v-if="getFieldError('uploadAssetFile')" class="field-error-text">{{ getFieldError("uploadAssetFile") }}</div>
+              </label>
+              <label class="field">
+                <span>资源显示名称（可选）</span>
+                <input v-model="assetDisplayName" class="field-input" type="text" placeholder="例如：力学-抛体运动演示" />
+              </label>
+              <label class="field">
+                <span>解析方式</span>
+                <select v-model="assetParserMode" class="field-input">
+                  <option value="auto">自动识别（.ggb / PhET HTML）</option>
+                  <option value="profile">指定 Embed 平台</option>
+                </select>
+              </label>
+              <label v-if="assetParserMode === 'profile'" class="field" :class="{ 'has-error': getFieldError('uploadAssetEmbedProfile') }">
+                <span>Embed 平台</span>
+                <select v-model="assetEmbedProfileId" class="field-input">
+                  <option v-for="profile in selectableEmbedProfiles" :key="profile.id" :value="profile.id">
+                    {{ profile.name }} ({{ profile.id }})
+                  </option>
+                </select>
+                <div v-if="getFieldError('uploadAssetEmbedProfile')" class="field-error-text">
+                  {{ getFieldError("uploadAssetEmbedProfile") }}
+                </div>
+              </label>
+              <label v-if="assetParserMode === 'profile'" class="field" :class="{ 'has-error': getFieldError('uploadAssetEmbedOptionsJson') }">
+                <span>Embed 参数 JSON（可选）</span>
+                <textarea
+                  v-model="assetEmbedOptionsJson"
+                  class="field-input"
+                  rows="4"
+                  placeholder='例如：{"mode":"view","autoplay":true}'
+                />
+                <div v-if="getFieldError('uploadAssetEmbedOptionsJson')" class="field-error-text">
+                  {{ getFieldError("uploadAssetEmbedOptionsJson") }}
+                </div>
+              </label>
+              <label class="field">
+                <span>打开方式</span>
+                <select v-model="openMode" class="field-input">
+                  <option value="embed">演示（默认）</option>
+                  <option value="download">仅下载原文件</option>
+                </select>
+              </label>
+              <div class="admin-actions">
+                <button type="button" class="btn btn-primary" :disabled="savingAsset || !selectedFolderId" @click="uploadAssetEntry">
+                  上传资源
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <button type="button" class="panel-section-toggle" @click="togglePanelSection('asset:edit')">
+              <span>编辑资源</span>
+              <span class="asset-meta">{{ isPanelSectionOpen("asset:edit") ? "收起" : "展开" }}</span>
+            </button>
+            <div v-if="isPanelSectionOpen('asset:edit')" class="panel-section-body">
+              <div v-if="editingAssetId" class="editor-panel">
+                <div class="asset-meta" v-if="editingAsset">资源 ID：{{ editingAsset.id }}</div>
+                <label class="field">
+                  <span>显示名称</span>
+                  <input v-model="assetEditDisplayName" class="field-input" type="text" placeholder="留空则显示源文件名" />
+                </label>
+                <label class="field" :class="{ 'has-error': getFieldError('editAssetFolderId') }">
+                  <span>所属文件夹</span>
+                  <select v-model="assetEditFolderId" class="field-input">
+                    <option v-for="folder in folders" :key="folder.id" :value="folder.id">
+                      {{ folder.name || folder.id }}
+                    </option>
+                  </select>
+                  <div v-if="getFieldError('editAssetFolderId')" class="field-error-text">{{ getFieldError("editAssetFolderId") }}</div>
+                </label>
+                <label class="field">
+                  <span>解析方式</span>
+                  <select v-model="assetEditParserMode" class="field-input">
+                    <option value="auto">自动识别</option>
+                    <option value="profile">指定 Embed 平台</option>
+                  </select>
+                </label>
+                <label v-if="assetEditParserMode === 'profile'" class="field" :class="{ 'has-error': getFieldError('editAssetEmbedProfile') }">
+                  <span>Embed 平台</span>
+                  <select v-model="assetEditEmbedProfileId" class="field-input">
+                    <option v-for="profile in selectableEmbedProfiles" :key="profile.id" :value="profile.id">
+                      {{ profile.name }} ({{ profile.id }})
+                    </option>
+                  </select>
+                  <div v-if="getFieldError('editAssetEmbedProfile')" class="field-error-text">
+                    {{ getFieldError("editAssetEmbedProfile") }}
+                  </div>
+                </label>
+                <label v-if="assetEditParserMode === 'profile'" class="field" :class="{ 'has-error': getFieldError('editAssetEmbedOptionsJson') }">
+                  <span>Embed 参数 JSON</span>
+                  <textarea
+                    v-model="assetEditEmbedOptionsJson"
+                    class="field-input"
+                    rows="4"
+                    placeholder='例如：{"mode":"view","autoplay":true}'
+                  />
+                  <div v-if="getFieldError('editAssetEmbedOptionsJson')" class="field-error-text">
+                    {{ getFieldError("editAssetEmbedOptionsJson") }}
+                  </div>
+                </label>
+                <label class="field">
+                  <span>打开方式</span>
+                  <select v-model="assetEditOpenMode" class="field-input">
+                    <option value="embed">演示</option>
+                    <option value="download">仅下载</option>
+                  </select>
+                </label>
+                <div class="asset-actions-inline">
+                  <button type="button" class="btn btn-primary" :disabled="savingAsset" @click="saveAssetEdit">保存资源</button>
+                  <button type="button" class="btn btn-ghost" :disabled="savingAsset" @click="cancelAssetEdit">取消</button>
+                </div>
+              </div>
+              <div v-else class="empty">在中间资源列表点击“编辑”后，可在此修改资源参数。</div>
+            </div>
+          </div>
+        </AssetPanel>
+
+        <EmbedPanel v-else>
+          <h3>Embed 平台管理</h3>
+          <div class="panel-section">
+            <button type="button" class="panel-section-toggle" @click="togglePanelSection('embed:create')">
+              <span>新增平台</span>
+              <span class="asset-meta">{{ isPanelSectionOpen("embed:create") ? "收起" : "展开" }}</span>
+            </button>
+            <div v-if="isPanelSectionOpen('embed:create')" class="panel-section-body">
+              <label class="field" :class="{ 'has-error': getFieldError('createEmbedProfileName') }">
+                <span>平台名称</span>
+                <input v-model="embedProfileName" class="field-input" type="text" placeholder="例如：电场仿真" />
+                <div v-if="getFieldError('createEmbedProfileName')" class="field-error-text">{{ getFieldError("createEmbedProfileName") }}</div>
+              </label>
+              <label class="field" :class="{ 'has-error': getFieldError('createEmbedScriptUrl') }">
+                <span>embed.js 地址</span>
+                <input
+                  v-model="embedScriptUrl"
+                  class="field-input"
+                  type="text"
+                  placeholder="例如：https://field.infinitas.fun/embed/embed.js"
+                />
+                <div v-if="getFieldError('createEmbedScriptUrl')" class="field-error-text">{{ getFieldError("createEmbedScriptUrl") }}</div>
+              </label>
+              <label class="field">
+                <span>备用脚本地址（可选）</span>
+                <input v-model="embedFallbackScriptUrl" class="field-input" type="text" placeholder="可选备用脚本 URL" />
+              </label>
+              <label class="field">
+                <span>viewerPath（可选）</span>
+                <input v-model="embedViewerPath" class="field-input" type="text" placeholder="为空则自动推导 viewer.html" />
+              </label>
+              <label class="field">
+                <span>构造器名称</span>
+                <input v-model="embedConstructorName" class="field-input" type="text" placeholder="ElectricFieldApp" />
+              </label>
+              <label class="field">
+                <span>资源 URL 参数键</span>
+                <input v-model="embedAssetUrlOptionKey" class="field-input" type="text" placeholder="sceneUrl" />
+              </label>
+              <label class="field">
+                <span>允许扩展名（逗号分隔，可空）</span>
+                <input v-model="embedExtensionsText" class="field-input" type="text" placeholder="json,zip,efield" />
+              </label>
+              <label class="field" :class="{ 'has-error': getFieldError('createEmbedDefaultOptionsJson') }">
+                <span>默认参数 JSON</span>
+                <textarea v-model="embedDefaultOptionsJson" class="field-input" rows="4" placeholder='例如：{"mode":"view"}' />
+                <div v-if="getFieldError('createEmbedDefaultOptionsJson')" class="field-error-text">
+                  {{ getFieldError("createEmbedDefaultOptionsJson") }}
+                </div>
+              </label>
+              <label class="field">
+                <span>
+                  <input v-model="embedEnabled" type="checkbox" />
+                  启用该平台
+                </span>
+              </label>
+              <div class="admin-actions">
+                <button type="button" class="btn btn-primary" :disabled="savingEmbed" @click="createEmbedProfileEntry">新增 Embed 平台</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <button type="button" class="panel-section-toggle" @click="togglePanelSection('embed:list')">
+              <span>平台列表</span>
+              <span class="asset-meta">{{ isPanelSectionOpen("embed:list") ? "收起" : "展开" }}</span>
+            </button>
+            <div v-if="isPanelSectionOpen('embed:list')" class="panel-section-body">
+              <label class="field">
+                <span>平台搜索</span>
+                <input
+                  v-model="profileSearchQuery"
+                  class="field-input profile-search-input"
+                  type="text"
+                  placeholder="名称 / ID / 脚本地址"
+                />
+              </label>
+              <div class="asset-list">
+                <article v-for="profile in filteredEmbedProfiles" :key="profile.id" class="asset-item">
+                  <div class="asset-main">
+                    <div class="asset-name">{{ profile.name || profile.id }}</div>
+                    <div class="asset-meta">{{ profile.id }}</div>
+                    <div class="asset-meta">远端脚本：{{ profile.remoteScriptUrl || profile.scriptUrl }}</div>
+                    <div class="asset-meta">当前脚本：{{ profile.scriptUrl }}</div>
+                    <div class="asset-meta">同步状态：{{ profile.syncStatus }} {{ profile.syncMessage ? `(${profile.syncMessage})` : "" }}</div>
+                    <div class="asset-meta">{{ profile.lastSyncAt ? `上次同步：${profile.lastSyncAt}` : "尚未同步" }}</div>
+                    <div class="asset-meta">{{ profile.enabled === false ? "禁用" : "启用" }}</div>
+                  </div>
+                  <div class="asset-actions-inline">
+                    <button type="button" class="btn btn-ghost" :disabled="savingEmbed" @click="startEditEmbedProfile(profile)">编辑</button>
+                    <button type="button" class="btn btn-ghost" :disabled="savingEmbed" @click="syncEmbedProfileEntry(profile.id)">手动更新</button>
+                    <button type="button" class="btn btn-ghost" :disabled="savingEmbed" @click="removeEmbedProfile(profile.id)">删除</button>
+                  </div>
+                </article>
+                <div v-if="!loading && filteredEmbedProfiles.length === 0" class="empty">暂无匹配 Embed 平台。</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <button type="button" class="panel-section-toggle" @click="togglePanelSection('embed:edit')">
+              <span>编辑平台</span>
+              <span class="asset-meta">{{ isPanelSectionOpen("embed:edit") ? "收起" : "展开" }}</span>
+            </button>
+            <div v-if="isPanelSectionOpen('embed:edit')" class="panel-section-body">
+              <div v-if="editingEmbedProfileId" class="editor-panel">
+                <div class="asset-meta">平台 ID：{{ editingEmbedProfileId }}</div>
+                <label class="field" :class="{ 'has-error': getFieldError('editEmbedProfileName') }">
+                  <span>平台名称</span>
+                  <input v-model="embedEditName" class="field-input" type="text" />
+                  <div v-if="getFieldError('editEmbedProfileName')" class="field-error-text">{{ getFieldError("editEmbedProfileName") }}</div>
+                </label>
+                <label class="field" :class="{ 'has-error': getFieldError('editEmbedScriptUrl') }">
+                  <span>embed.js 地址</span>
+                  <input v-model="embedEditScriptUrl" class="field-input" type="text" />
+                  <div v-if="getFieldError('editEmbedScriptUrl')" class="field-error-text">{{ getFieldError("editEmbedScriptUrl") }}</div>
+                </label>
+                <label class="field">
+                  <span>备用脚本地址（可选）</span>
+                  <input v-model="embedEditFallbackScriptUrl" class="field-input" type="text" />
+                </label>
+                <label class="field">
+                  <span>viewerPath</span>
+                  <input v-model="embedEditViewerPath" class="field-input" type="text" />
+                </label>
+                <label class="field">
+                  <span>构造器名称</span>
+                  <input v-model="embedEditConstructorName" class="field-input" type="text" />
+                </label>
+                <label class="field">
+                  <span>资源 URL 参数键</span>
+                  <input v-model="embedEditAssetUrlOptionKey" class="field-input" type="text" />
+                </label>
+                <label class="field">
+                  <span>允许扩展名（逗号分隔）</span>
+                  <input v-model="embedEditExtensionsText" class="field-input" type="text" />
+                </label>
+                <label class="field" :class="{ 'has-error': getFieldError('editEmbedDefaultOptionsJson') }">
+                  <span>默认参数 JSON</span>
+                  <textarea v-model="embedEditDefaultOptionsJson" class="field-input" rows="4" />
+                  <div v-if="getFieldError('editEmbedDefaultOptionsJson')" class="field-error-text">
+                    {{ getFieldError("editEmbedDefaultOptionsJson") }}
+                  </div>
+                </label>
+                <label class="field">
+                  <span>
+                    <input v-model="embedEditEnabled" type="checkbox" />
+                    启用该平台
+                  </span>
+                </label>
+                <div class="asset-actions-inline">
+                  <button type="button" class="btn btn-primary" :disabled="savingEmbed" @click="saveEmbedProfileEdit">保存平台</button>
+                  <button type="button" class="btn btn-ghost" :disabled="savingEmbed" @click="cancelEmbedProfileEdit">取消</button>
+                </div>
+              </div>
+              <div v-else class="empty">在平台列表点击“编辑”后，可在此修改平台配置。</div>
+            </div>
+          </div>
+        </EmbedPanel>
+
+        <OperationLogPanel>
+          <button type="button" class="panel-section-toggle" @click="togglePanelSection('recent:log')">
+            <span>最近操作记录</span>
+            <span class="asset-meta">{{ isPanelSectionOpen("recent:log") ? "收起" : "展开" }}</span>
+          </button>
+          <div v-if="isPanelSectionOpen('recent:log')" class="recent-action-list">
+            <div class="recent-action-tools">
+              <select v-model="operationLogFilter" class="field-input operation-log-filter">
+                <option value="all">全部</option>
+                <option value="success">成功</option>
+                <option value="error">失败</option>
+                <option value="info">信息</option>
+              </select>
+              <button type="button" class="btn btn-ghost" :disabled="operationLogs.length === 0" @click="clearOperationLogs">
+                清空记录
+              </button>
+            </div>
+            <article v-for="item in filteredOperationLogs" :key="item.id" class="recent-action-item" :class="item.level">
+              <div class="asset-meta">{{ item.message }}</div>
+              <div class="asset-meta">{{ formatOperationTime(item.at) }}</div>
+            </article>
+            <div v-if="operationLogs.length === 0" class="empty">暂无操作记录。</div>
+            <div v-else-if="filteredOperationLogs.length === 0" class="empty">当前筛选条件下暂无记录。</div>
+          </div>
+        </OperationLogPanel>
+      </LibraryInspectorColumn>
+    </div>
+
+    <div v-if="feedback" class="admin-feedback" :class="{ error: feedbackError, success: !feedbackError }">{{ feedback }}</div>
+  </section>
+

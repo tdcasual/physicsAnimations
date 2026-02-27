@@ -6,86 +6,154 @@ function read(relPath: string): string {
   return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
 }
 
+function readLibrarySources() {
+  const view = read("src/views/admin/AdminLibraryView.vue");
+  const template = read("src/views/admin/library/AdminLibraryView.template.html");
+  const style = read("src/views/admin/library/AdminLibraryView.css");
+  const state = read("src/features/library/useLibraryAdminState.ts");
+  const folderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
+  const assetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
+  const inspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
+  const folderPanel = read("src/views/admin/library/panels/FolderPanel.vue");
+  const assetPanel = read("src/views/admin/library/panels/AssetPanel.vue");
+  const embedPanel = read("src/views/admin/library/panels/EmbedPanel.vue");
+  const operationLogPanel = read("src/views/admin/library/panels/OperationLogPanel.vue");
+  return {
+    view,
+    template,
+    style,
+    state,
+    folderColumn,
+    assetColumn,
+    inspectorColumn,
+    folderPanel,
+    assetPanel,
+    embedPanel,
+    operationLogPanel,
+    combined: [
+      view,
+      template,
+      style,
+      state,
+      folderColumn,
+      assetColumn,
+      inspectorColumn,
+      folderPanel,
+      assetPanel,
+      embedPanel,
+      operationLogPanel,
+    ].join("\n"),
+  };
+}
+
 describe("admin library layout", () => {
   it("uses a three-column workbench with panel tabs and scoped search", () => {
-    const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/library-workbench/);
-    expect(source).not.toMatch(/library-quick-actions/);
-    expect(source).toMatch(/library-column-left/);
-    expect(source).toMatch(/library-column-middle/);
-    expect(source).toMatch(/library-column-right/);
-    expect(source).toMatch(/library-panel-tabs/);
-    expect(source).toMatch(/panel-section-toggle/);
-    expect(source).toMatch(/togglePanelSection/);
-    expect(source).toMatch(/folder-search-input/);
-    expect(source).toMatch(/asset-search-input/);
-    expect(source).toMatch(/profile-search-input/);
+    const { template, combined } = readLibrarySources();
+    expect(template).toMatch(/library-workbench/);
+    expect(template).not.toMatch(/library-quick-actions/);
+    expect(combined).toMatch(/library-column-left/);
+    expect(combined).toMatch(/library-column-middle/);
+    expect(combined).toMatch(/library-column-right/);
+    expect(template).toMatch(/library-panel-tabs/);
+    expect(template).toMatch(/panel-section-toggle/);
+    expect(combined).toMatch(/togglePanelSection/);
+    expect(template).toMatch(/folder-search-input/);
+    expect(template).toMatch(/asset-search-input/);
+    expect(template).toMatch(/profile-search-input/);
+  });
+
+  it("composes workbench columns via dedicated column components", () => {
+    const { view, template, folderColumn, assetColumn, inspectorColumn, folderPanel, assetPanel, embedPanel, operationLogPanel } =
+      readLibrarySources();
+
+    expect(view).toMatch(/import LibraryFolderColumn/);
+    expect(view).toMatch(/import LibraryAssetColumn/);
+    expect(view).toMatch(/import LibraryInspectorColumn/);
+    expect(template).toMatch(/<LibraryFolderColumn>/);
+    expect(template).toMatch(/<LibraryAssetColumn>/);
+    expect(template).toMatch(/<LibraryInspectorColumn>/);
+    expect(view).toMatch(/import FolderPanel/);
+    expect(view).toMatch(/import AssetPanel/);
+    expect(view).toMatch(/import EmbedPanel/);
+    expect(view).toMatch(/import OperationLogPanel/);
+    expect(template).toMatch(/<FolderPanel/);
+    expect(template).toMatch(/<AssetPanel/);
+    expect(template).toMatch(/<EmbedPanel/);
+    expect(template).toMatch(/<OperationLogPanel>/);
+
+    expect(folderColumn).toMatch(/library-column-left/);
+    expect(assetColumn).toMatch(/library-column-middle/);
+    expect(inspectorColumn).toMatch(/library-column-right/);
+    expect(folderPanel).toMatch(/panel-content/);
+    expect(assetPanel).toMatch(/panel-content/);
+    expect(embedPanel).toMatch(/panel-content/);
+    expect(operationLogPanel).toMatch(/recent-action-log/);
   });
 
   it("provides batch actions and advanced filters for asset management", () => {
-    const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/asset-mode-filter/);
-    expect(source).toMatch(/asset-profile-filter/);
-    expect(source).toMatch(/asset-sort-select/);
-    expect(source).toMatch(/asset-list-head/);
-    expect(source).toMatch(/asset-batch-toolbar/);
-    expect(source).toMatch(/asset-batch-result/);
-    expect(source).toMatch(/runAssetBatchUndo/);
-    expect(source).toMatch(/deleted-assets-list/);
-    expect(source).toMatch(/restoreDeletedAsset/);
-    expect(source).toMatch(/removeDeletedAssetPermanently/);
-    expect(source).toMatch(/deleteLibraryAssetPermanently/);
-    expect(source).toMatch(/永久删除/);
-    expect(source).toMatch(/不可恢复/);
-    expect(source).toMatch(/recent-action-log/);
-    expect(source).toMatch(/recent-action-item/);
-    expect(source).toMatch(/operationLogs/);
-    expect(source).toMatch(/operation-log-filter/);
-    expect(source).toMatch(/clearOperationLogs/);
-    expect(source).toMatch(/filteredOperationLogs/);
-    expect(source).toMatch(/asset-select-checkbox/);
-    expect(source).toMatch(/runAssetBatchOpenMode/);
-    expect(source).toMatch(/runAssetBatchDelete/);
-    expect(source).toMatch(/runAssetBatchMove/);
+    const { template, combined } = readLibrarySources();
+    expect(template).toMatch(/asset-mode-filter/);
+    expect(template).toMatch(/asset-profile-filter/);
+    expect(template).toMatch(/asset-sort-select/);
+    expect(template).toMatch(/asset-list-head/);
+    expect(template).toMatch(/asset-batch-toolbar/);
+    expect(template).toMatch(/asset-batch-result/);
+    expect(combined).toMatch(/runAssetBatchUndo/);
+    expect(template).toMatch(/deleted-assets-list/);
+    expect(combined).toMatch(/restoreDeletedAsset/);
+    expect(combined).toMatch(/removeDeletedAssetPermanently/);
+    expect(combined).toMatch(/deleteLibraryAssetPermanently/);
+    expect(template).toMatch(/永久删除/);
+    expect(combined).toMatch(/不可恢复/);
+    expect(combined).toMatch(/recent-action-log/);
+    expect(combined).toMatch(/recent-action-item/);
+    expect(combined).toMatch(/operationLogs/);
+    expect(template).toMatch(/operation-log-filter/);
+    expect(combined).toMatch(/clearOperationLogs/);
+    expect(combined).toMatch(/filteredOperationLogs/);
+    expect(template).toMatch(/asset-select-checkbox/);
+    expect(combined).toMatch(/runAssetBatchOpenMode/);
+    expect(combined).toMatch(/runAssetBatchDelete/);
+    expect(combined).toMatch(/runAssetBatchMove/);
   });
 
   it("routes panel switching through setActivePanelTab to keep sections expanded", () => {
-    const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/function setActivePanelTab/);
-    const directAssignments = source.match(/activePanelTab\.value\s*=/g) ?? [];
+    const { state } = readLibrarySources();
+    expect(state).toMatch(/function setActivePanelTab/);
+    const directAssignments = state.match(/activePanelTab\.value\s*=/g) ?? [];
     expect(directAssignments.length).toBe(1);
   });
 
   it("guards folder asset reload against race conditions and unhandled errors", () => {
-    const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/folderAssetsLoadSeq/);
-    expect(source).toMatch(/const requestId = folderAssetsLoadSeq\.value \+ 1/);
-    expect(source).toMatch(/requestId !== folderAssetsLoadSeq\.value \|\| selectedFolderId\.value !== folderId/);
-    expect(source).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/);
-    expect(source).toMatch(/加载文件夹资源失败/);
+    const { state } = readLibrarySources();
+    expect(state).toMatch(/folderAssetsLoadSeq/);
+    expect(state).toMatch(/const requestId = folderAssetsLoadSeq\.value \+ 1/);
+    expect(state).toMatch(/requestId !== folderAssetsLoadSeq\.value \|\| selectedFolderId\.value !== folderId/);
+    expect(state).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/);
+    expect(state).toMatch(/加载文件夹资源失败/);
   });
 
   it("splits saving state by domain to avoid full-page lock", () => {
-    const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/const savingFolder = ref\(false\)/);
-    expect(source).toMatch(/const savingAsset = ref\(false\)/);
-    expect(source).toMatch(/const savingEmbed = ref\(false\)/);
-    expect(source).toMatch(/const saving = computed\(\(\) => savingFolder\.value \|\| savingAsset\.value \|\| savingEmbed\.value\)/);
-    expect(source).not.toMatch(/saving\.value\s*=/);
+    const { state } = readLibrarySources();
+    expect(state).toMatch(/const savingFolder = ref\(false\)/);
+    expect(state).toMatch(/const savingAsset = ref\(false\)/);
+    expect(state).toMatch(/const savingEmbed = ref\(false\)/);
+    expect(state).toMatch(/const saving = computed\(\(\) => savingFolder\.value \|\| savingAsset\.value \|\| savingEmbed\.value\)/);
+    expect(state).not.toMatch(/saving\.value\s*=/);
   });
 
   it("renders inline field validation for key library admin forms", () => {
-    const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
-    expect(source).toMatch(/function setFieldError/);
-    expect(source).toMatch(/function clearFieldErrors/);
-    expect(source).toMatch(/function getFieldError/);
-    expect(source).toMatch(/field-error-text/);
-    expect(source).toMatch(/has-error/);
-    expect(source).toMatch(/getFieldError\("createFolderName"\)/);
-    expect(source).toMatch(/getFieldError\("uploadAssetFile"\)/);
-    expect(source).toMatch(/getFieldError\("uploadAssetEmbedProfile"\)/);
-    expect(source).toMatch(/getFieldError\("createEmbedProfileName"\)/);
-    expect(source).toMatch(/getFieldError\("createEmbedScriptUrl"\)/);
+    const { template, state } = readLibrarySources();
+    expect(state).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
+    expect(state).toMatch(/function setFieldError/);
+    expect(state).toMatch(/function clearFieldErrors/);
+    expect(state).toMatch(/function getFieldError/);
+    expect(template).toMatch(/field-error-text/);
+    expect(template).toMatch(/has-error/);
+    expect(template).toMatch(/getFieldError\("createFolderName"\)/);
+    expect(template).toMatch(/getFieldError\("uploadAssetFile"\)/);
+    expect(template).toMatch(/getFieldError\("uploadAssetEmbedProfile"\)/);
+    expect(template).toMatch(/getFieldError\("createEmbedProfileName"\)/);
+    expect(template).toMatch(/getFieldError\("createEmbedScriptUrl"\)/);
   });
 });

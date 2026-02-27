@@ -7,11 +7,19 @@ function read(relPath: string): string {
 }
 
 describe("admin system disable reason hints", () => {
-  it("exposes save/continue disabled hints in step 3", () => {
-    const source = read("src/views/admin/AdminSystemView.vue");
-    expect(source).toMatch(/const\s+saveDisabledHint\s*=\s*computed\(/);
-    expect(source).toMatch(/const\s+continueDisabledHint\s*=\s*computed\(/);
-    expect(source).toMatch(/class="[^"]*save-disabled-hint/);
-    expect(source).toMatch(/class="[^"]*continue-disabled-hint/);
+  it("routes step-3 disable hints through split wizard composable and steps panel", () => {
+    const view = read("src/views/admin/AdminSystemView.vue");
+    const state = read("src/features/admin/system/useSystemWizard.ts");
+    const steps = read("src/views/admin/system/SystemWizardSteps.vue");
+
+    expect(view).toMatch(/import\s+\{\s*useSystemWizard\s*\}/);
+    expect(view).toMatch(/import\s+SystemWizardSteps/);
+    expect(view).toMatch(/const\s+system\s*=\s*useSystemWizard\(/);
+
+    expect(state).toMatch(/const\s+saveDisabledHint\s*=\s*computed\(/);
+    expect(state).toMatch(/const\s+continueDisabledHint\s*=\s*computed\(/);
+
+    expect(steps).toMatch(/class="[^"]*save-disabled-hint/);
+    expect(steps).toMatch(/class="[^"]*continue-disabled-hint/);
   });
 });
