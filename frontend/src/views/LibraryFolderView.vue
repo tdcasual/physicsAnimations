@@ -84,7 +84,7 @@ watch(
       <article v-for="asset in assets" :key="asset.id" class="asset-card">
         <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
         <div class="asset-meta">
-          {{ asset.adapterKey || "asset" }} · {{ asset.openMode === "embed" ? "容器页" : "原文件" }}
+          {{ asset.adapterKey || "asset" }} · {{ asset.openMode === "embed" ? "演示" : "仅下载" }}
         </div>
         <div class="asset-actions">
           <a
@@ -103,7 +103,7 @@ watch(
             target="_blank"
             rel="noreferrer"
           >
-            打开原文件
+            打开文件
           </a>
           <a class="btn btn-ghost" :href="downloadAssetHref(asset)" download>下载源文件</a>
         </div>

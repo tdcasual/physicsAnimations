@@ -617,21 +617,6 @@ h4 {
   gap: 10px;
 }
 
-.field {
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.field-input {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px 10px;
-}
-
 .checkbox {
   display: flex;
   align-items: center;
@@ -651,29 +636,9 @@ h4 {
   gap: 8px;
 }
 
-.btn {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: var(--surface);
-  color: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
 .btn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-.btn-ghost {
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
 }
 
 .sync-box {

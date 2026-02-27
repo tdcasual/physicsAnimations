@@ -141,40 +141,9 @@ h2 {
   font-size: 14px;
 }
 
-.field {
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.field-input {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px 10px;
-}
-
 .actions {
   display: flex;
   justify-content: flex-end;
-}
-
-.btn {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: var(--surface);
-  color: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
 }
 
 .error-text {

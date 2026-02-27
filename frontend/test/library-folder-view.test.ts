@@ -11,7 +11,8 @@ describe("library folder view", () => {
     const source = read("src/views/LibraryFolderView.vue");
     expect(source).toMatch(/openMode\s*===\s*'embed'/);
     expect(source).toMatch(/打开演示/);
-    expect(source).toMatch(/打开原文件/);
+    expect(source).toMatch(/打开文件/);
+    expect(source).toMatch(/仅下载/);
     expect(source).toMatch(/target="_blank"/);
     expect(source).toMatch(/asset\.displayName\s*\|\|\s*asset\.fileName/);
   });

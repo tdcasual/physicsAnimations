@@ -19,7 +19,7 @@ describe("catalog link selection", () => {
     expect(getCatalogItemHref(item)).toBe("https://example.com/link-1");
   });
 
-  it("keeps viewer href for non-link items", () => {
+  it("opens original page by default for html-like items", () => {
     const item: CatalogItem = {
       id: "builtin-1",
       type: "builtin",
@@ -32,7 +32,7 @@ describe("catalog link selection", () => {
       order: 0,
     };
 
-    expect(getCatalogItemHref(item)).toBe("/viewer/builtin-1");
+    expect(getCatalogItemHref(item)).toBe("/animations/builtin-1.html");
   });
 
   it("normalizes empty value to placeholder", () => {

@@ -52,6 +52,9 @@ npm run dev:frontend
 npm run build:frontend
 npm run test:frontend
 
+# 发布前质量闸门（测试 + 构建 + smoke）
+npm run qa:release
+
 # 更新 GeoGebra 自托管包（资源库 embed）
 npm run update:geogebra-bundle
 ```
@@ -146,6 +149,8 @@ docker compose --profile maintenance run --rm ggb-updater
 - [API 说明（公开接口 / 管理接口）](docs/guides/api.md)
 - [前端 SPA 与路由行为](docs/guides/spa-and-frontend.md)
 - [安全说明与上线建议](docs/guides/security.md)
+- [发布运维 Runbook](docs/guides/ops-release-runbook.md)
+- [资源库事故处置 Runbook](docs/guides/ops-library-incident-runbook.md)
 
 ## 目录结构（简版）
 

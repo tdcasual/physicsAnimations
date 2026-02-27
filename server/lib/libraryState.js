@@ -1,5 +1,6 @@
 const LIBRARY_FOLDERS_KEY = "library/folders.json";
 const LIBRARY_ASSETS_KEY = "library/assets.json";
+const LIBRARY_EMBED_PROFILES_KEY = "library/embed-profiles.json";
 const LIBRARY_STATE_VERSION = 1;
 
 const stateLocks = new Map();
@@ -12,6 +13,67 @@ function toInt(value, fallback = 0) {
 
 function toText(value, fallback = "") {
   return typeof value === "string" ? value : fallback;
+}
+
+function toBool(value, fallback = false) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const text = toText(value).trim().toLowerCase();
+  if (!text) return fallback;
+  if (text === "1" || text === "true" || text === "yes" || text === "on") return true;
+  if (text === "0" || text === "false" || text === "no" || text === "off") return false;
+  return fallback;
+}
+
+function sanitizeJsonValue(value, depth = 0) {
+  if (depth > 12) return undefined;
+  if (value === null) return null;
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value === "boolean") return value;
+  if (Array.isArray(value)) {
+    const out = [];
+    for (const item of value) {
+      const sanitized = sanitizeJsonValue(item, depth + 1);
+      if (sanitized !== undefined) out.push(sanitized);
+    }
+    return out;
+  }
+  if (!value || typeof value !== "object") return undefined;
+  const out = {};
+  for (const [rawKey, item] of Object.entries(value)) {
+    const key = toText(rawKey).trim();
+    if (!key) continue;
+    const sanitized = sanitizeJsonValue(item, depth + 1);
+    if (sanitized !== undefined) out[key] = sanitized;
+  }
+  return out;
+}
+
+function sanitizeJsonObject(value) {
+  const out = sanitizeJsonValue(value);
+  if (!out || typeof out !== "object" || Array.isArray(out)) return {};
+  return out;
+}
+
+function normalizeExtensionList(value) {
+  const source = Array.isArray(value)
+    ? value
+    : String(value || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+  const out = [];
+  for (const item of source) {
+    const ext = toText(item)
+      .trim()
+      .replace(/^\./, "")
+      .toLowerCase();
+    if (!ext) continue;
+    if (!/^[a-z0-9_-]{1,24}$/i.test(ext)) continue;
+    if (!out.includes(ext)) out.push(ext);
+  }
+  return out;
 }
 
 async function withStateLock(key, fn) {
@@ -60,6 +122,7 @@ function sanitizeAssetEntry(value) {
 
   const openMode = toText(value.openMode).trim() === "embed" ? "embed" : "download";
   const status = toText(value.status).trim() === "failed" ? "failed" : "ready";
+  const deleted = toBool(value.deleted, false);
 
   return {
     id,
@@ -71,7 +134,38 @@ function sanitizeAssetEntry(value) {
     fileSize: Math.max(0, toInt(value.fileSize, 0)),
     openMode,
     generatedEntryPath: toText(value.generatedEntryPath),
+    embedProfileId: toText(value.embedProfileId),
+    embedOptions: sanitizeJsonObject(value.embedOptions),
     status,
+    deleted,
+    deletedAt: deleted ? toText(value.deletedAt) : "",
+    createdAt: toText(value.createdAt),
+    updatedAt: toText(value.updatedAt),
+  };
+}
+
+function sanitizeEmbedProfileEntry(value) {
+  if (!value || typeof value !== "object") return null;
+  const id = toText(value.id).trim();
+  if (!id) return null;
+
+  return {
+    id,
+    name: toText(value.name),
+    scriptUrl: toText(value.scriptUrl).trim(),
+    fallbackScriptUrl: toText(value.fallbackScriptUrl).trim(),
+    viewerPath: toText(value.viewerPath).trim(),
+    remoteScriptUrl: toText(value.remoteScriptUrl).trim() || toText(value.scriptUrl).trim(),
+    remoteViewerPath: toText(value.remoteViewerPath).trim() || toText(value.viewerPath).trim(),
+    syncMode: toText(value.syncMode, "local_mirror").trim() || "local_mirror",
+    syncStatus: toText(value.syncStatus, "pending").trim() || "pending",
+    syncMessage: toText(value.syncMessage),
+    lastSyncAt: toText(value.lastSyncAt),
+    constructorName: toText(value.constructorName, "ElectricFieldApp").trim() || "ElectricFieldApp",
+    assetUrlOptionKey: toText(value.assetUrlOptionKey, "sceneUrl").trim() || "sceneUrl",
+    matchExtensions: normalizeExtensionList(value.matchExtensions),
+    defaultOptions: sanitizeJsonObject(value.defaultOptions),
+    enabled: toBool(value.enabled, true),
     createdAt: toText(value.createdAt),
     updatedAt: toText(value.updatedAt),
   };
@@ -101,6 +195,19 @@ function normalizeAssetsPayload(raw) {
     if (asset) assets.push(asset);
   }
   return { version: LIBRARY_STATE_VERSION, assets };
+}
+
+function normalizeEmbedProfilesPayload(raw) {
+  if (!raw || typeof raw !== "object") {
+    return { version: LIBRARY_STATE_VERSION, profiles: [] };
+  }
+  const source = Array.isArray(raw.profiles) ? raw.profiles : [];
+  const profiles = [];
+  for (const item of source) {
+    const profile = sanitizeEmbedProfileEntry(item);
+    if (profile) profiles.push(profile);
+  }
+  return { version: LIBRARY_STATE_VERSION, profiles };
 }
 
 async function loadLibraryFoldersState({ store }) {
@@ -161,13 +268,46 @@ async function mutateLibraryAssetsState({ store }, mutator) {
   });
 }
 
+async function loadLibraryEmbedProfilesState({ store }) {
+  const raw = await store.readBuffer(LIBRARY_EMBED_PROFILES_KEY);
+  if (!raw) return { version: LIBRARY_STATE_VERSION, profiles: [] };
+
+  let parsed = null;
+  try {
+    parsed = JSON.parse(raw.toString("utf8"));
+  } catch {
+    return { version: LIBRARY_STATE_VERSION, profiles: [] };
+  }
+
+  return normalizeEmbedProfilesPayload(parsed);
+}
+
+async function saveLibraryEmbedProfilesState({ store, state }) {
+  const normalized = normalizeEmbedProfilesPayload(state);
+  const json = Buffer.from(`${JSON.stringify(normalized, null, 2)}\n`, "utf8");
+  await store.writeBuffer(LIBRARY_EMBED_PROFILES_KEY, json, { contentType: "application/json; charset=utf-8" });
+}
+
+async function mutateLibraryEmbedProfilesState({ store }, mutator) {
+  return withStateLock(LIBRARY_EMBED_PROFILES_KEY, async () => {
+    const state = await loadLibraryEmbedProfilesState({ store });
+    const result = await mutator(state);
+    await saveLibraryEmbedProfilesState({ store, state });
+    return result;
+  });
+}
+
 module.exports = {
   LIBRARY_FOLDERS_KEY,
   LIBRARY_ASSETS_KEY,
+  LIBRARY_EMBED_PROFILES_KEY,
   loadLibraryFoldersState,
   saveLibraryFoldersState,
   mutateLibraryFoldersState,
   loadLibraryAssetsState,
   saveLibraryAssetsState,
   mutateLibraryAssetsState,
+  loadLibraryEmbedProfilesState,
+  saveLibraryEmbedProfilesState,
+  mutateLibraryEmbedProfilesState,
 };

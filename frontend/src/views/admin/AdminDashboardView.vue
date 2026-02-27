@@ -107,20 +107,6 @@ h2 {
   font-weight: 700;
 }
 
-.btn {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: var(--surface);
-  color: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.btn-ghost {
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-}
-
 .empty {
   border: 1px dashed var(--border);
   border-radius: 8px;

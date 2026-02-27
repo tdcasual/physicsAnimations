@@ -9,14 +9,15 @@ function read(relPath: string): string {
 describe("admin library upload", () => {
   it("accepts both ggb and PhET html files", () => {
     const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/accept="\.ggb,\.html,\.htm,application\/vnd\.geogebra\.file,text\/html"/);
-    expect(source).toMatch(/\.ggb \/ PhET HTML/);
+    expect(source).toMatch(/accept="\.ggb,\.html,\.htm,\.json,\.zip,application\/vnd\.geogebra\.file,text\/html,application\/json,application\/zip"/);
+    expect(source).toMatch(/自动识别（\.ggb \/ PhET HTML）/);
   });
 
-  it("defaults upload mode to opening source page", () => {
+  it("defaults upload mode to embed demo mode", () => {
     const source = read("src/views/admin/AdminLibraryView.vue");
-    expect(source).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("download"\)/);
-    expect(source).toMatch(/<option value="download">打开原文件（默认）<\/option>/);
+    expect(source).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/);
+    expect(source).toMatch(/<option value="embed">演示（默认）<\/option>/);
+    expect(source).toMatch(/<option value="download">仅下载原文件<\/option>/);
   });
 
   it("uses taxonomy dropdown for folder category selection", () => {
@@ -40,5 +41,47 @@ describe("admin library upload", () => {
     expect(source).toMatch(/displayName:\s*assetDisplayName\.value/);
     expect(source).toMatch(/updateLibraryAsset/);
     expect(source).toMatch(/重命名显示名/);
+  });
+
+  it("supports switching existing asset open mode", () => {
+    const source = read("src/views/admin/AdminLibraryView.vue");
+    expect(source).toMatch(/switchAssetOpenMode/);
+    expect(source).toMatch(/openMode:\s*mode/);
+    expect(source).toMatch(/设为演示/);
+    expect(source).toMatch(/设为仅下载/);
+  });
+
+  it("supports custom embed profile upload mode with json options", () => {
+    const source = read("src/views/admin/AdminLibraryView.vue");
+    expect(source).toMatch(/assetParserMode/);
+    expect(source).toMatch(/assetEmbedProfileId/);
+    expect(source).toMatch(/assetEmbedOptionsJson/);
+    expect(source).toMatch(/Embed 参数 JSON/);
+    expect(source).toMatch(/embedProfileId:\s*assetParserMode\.value === "profile"/);
+    expect(source).toMatch(/embedOptionsJson:\s*assetParserMode\.value === "profile"/);
+  });
+
+  it("supports embed profile management inputs and actions", () => {
+    const source = read("src/views/admin/AdminLibraryView.vue");
+    expect(source).toMatch(/Embed 平台管理/);
+    expect(source).toMatch(/createLibraryEmbedProfile/);
+    expect(source).toMatch(/listLibraryEmbedProfiles/);
+    expect(source).toMatch(/deleteLibraryEmbedProfile/);
+    expect(source).toMatch(/syncLibraryEmbedProfile/);
+    expect(source).toMatch(/createEmbedProfileEntry/);
+    expect(source).toMatch(/removeEmbedProfile/);
+    expect(source).toMatch(/syncEmbedProfileEntry/);
+    expect(source).toMatch(/手动更新/);
+  });
+
+  it("supports secondary edit flows for folder, asset, and embed profile", () => {
+    const source = read("src/views/admin/AdminLibraryView.vue");
+    expect(source).toMatch(/updateLibraryFolder/);
+    expect(source).toMatch(/updateLibraryEmbedProfile/);
+    expect(source).toMatch(/saveFolderMeta/);
+    expect(source).toMatch(/startEditAsset/);
+    expect(source).toMatch(/saveAssetEdit/);
+    expect(source).toMatch(/startEditEmbedProfile/);
+    expect(source).toMatch(/saveEmbedProfileEdit/);
   });
 });

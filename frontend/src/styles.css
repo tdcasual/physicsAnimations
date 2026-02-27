@@ -117,6 +117,12 @@ a {
   color: #ffffff;
 }
 
+.btn-danger {
+  border-color: color-mix(in srgb, var(--danger) 52%, var(--border));
+  background: color-mix(in srgb, var(--danger) 16%, var(--surface));
+  color: color-mix(in srgb, var(--danger) 82%, var(--text));
+}
+
 .app-main {
   width: min(var(--content-max-width), calc(100% - 28px));
   margin: 16px auto 24px;
@@ -215,6 +221,15 @@ a {
   background: var(--surface);
   color: var(--text);
   padding: 9px 10px;
+}
+
+.field.has-error :is(.field-input) {
+  border-color: var(--danger);
+}
+
+.field-error-text {
+  color: var(--danger);
+  font-size: calc(12px * var(--ui-scale));
 }
 
 .error {

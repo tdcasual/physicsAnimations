@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { normalizePublicUrl } from "../../features/catalog/catalogLink";
 import {
   type AdminItemRow,
   createLinkItem,
@@ -28,6 +29,7 @@ const saving = ref(false);
 const errorText = ref("");
 const actionFeedback = ref("");
 const actionFeedbackError = ref(false);
+const fieldErrors = ref<Record<string, string>>({});
 
 const items = ref<AdminItem[]>([]);
 const total = ref(0);
@@ -68,9 +70,35 @@ function viewerHref(id: string): string {
   return `${base.replace(/\/+$/, "/")}viewer/${encodeURIComponent(id)}`;
 }
 
+function previewHref(item: AdminItem): string {
+  return normalizePublicUrl(item.src || viewerHref(item.id));
+}
+
 function setActionFeedback(text: string, isError = false) {
   actionFeedback.value = text;
   actionFeedbackError.value = isError;
+}
+
+function setFieldError(key: string, message: string) {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [key]: message,
+  };
+}
+
+function clearFieldErrors(key?: string) {
+  if (!key) {
+    fieldErrors.value = {};
+    return;
+  }
+  if (!(key in fieldErrors.value)) return;
+  const next = { ...fieldErrors.value };
+  delete next[key];
+  fieldErrors.value = next;
+}
+
+function getFieldError(key: string): string {
+  return fieldErrors.value[key] || "";
 }
 
 function resetEdit() {
@@ -145,16 +173,18 @@ async function reloadItems(params: { reset: boolean } = { reset: true }) {
 }
 
 async function submitLink() {
-  if (!linkUrl.value.trim()) {
-    setActionFeedback("请先填写链接地址。", true);
+  const normalizedUrl = linkUrl.value.trim();
+  if (!normalizedUrl) {
+    setFieldError("createLinkUrl", "请先填写链接地址。");
     return;
   }
+  clearFieldErrors("createLinkUrl");
 
   saving.value = true;
   setActionFeedback("");
   try {
     await createLinkItem({
-      url: linkUrl.value.trim(),
+      url: normalizedUrl,
       categoryId: linkCategoryId.value,
       title: linkTitle.value.trim(),
       description: linkDescription.value.trim(),
@@ -162,6 +192,7 @@ async function submitLink() {
     linkUrl.value = "";
     linkTitle.value = "";
     linkDescription.value = "";
+    clearFieldErrors("createLinkUrl");
     await reloadItems({ reset: true });
     setActionFeedback("链接已添加。", false);
   } catch (err) {
@@ -264,9 +295,16 @@ onBeforeUnmount(() => {
           </label>
         </div>
 
-        <label class="field">
+        <label class="field" :class="{ 'has-error': getFieldError('createLinkUrl') }">
           <span>链接</span>
-          <input v-model="linkUrl" class="field-input" type="url" placeholder="https://example.com" />
+          <input
+            v-model="linkUrl"
+            class="field-input"
+            type="url"
+            placeholder="https://example.com"
+            @input="clearFieldErrors('createLinkUrl')"
+          />
+          <div v-if="getFieldError('createLinkUrl')" class="field-error-text">{{ getFieldError("createLinkUrl") }}</div>
         </label>
 
         <label class="field">
@@ -310,7 +348,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="item-actions">
-              <a class="btn btn-ghost" :href="viewerHref(item.id)" target="_blank" rel="noreferrer">预览</a>
+              <a class="btn btn-ghost" :href="previewHref(item)" target="_blank" rel="noreferrer">预览</a>
               <button
                 v-if="item.deleted"
                 type="button"
@@ -460,21 +498,6 @@ h3 {
   font-size: 16px;
 }
 
-.field {
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.field-input {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px 10px;
-}
-
 .field-textarea {
   min-height: 72px;
   resize: vertical;
@@ -581,32 +604,6 @@ h3 {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-}
-
-.btn {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: var(--surface);
-  color: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-}
-
-.btn-ghost {
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-}
-
-.btn-danger {
-  background: color-mix(in srgb, var(--danger) 20%, var(--surface));
-  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
 }
 
 .error-text {

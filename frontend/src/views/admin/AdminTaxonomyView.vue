@@ -968,21 +968,6 @@ h3 {
   grid-column: 1 / -1;
 }
 
-.field {
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.field-input {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px 10px;
-}
-
 .checkbox {
   display: inline-flex;
   align-items: center;
@@ -1018,34 +1003,9 @@ h3 {
   margin-top: 2px;
 }
 
-.btn {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: var(--surface);
-  color: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
 .btn-xs {
   font-size: 12px;
   padding: 4px 8px;
-}
-
-.btn-ghost {
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-}
-
-.btn-danger {
-  background: color-mix(in srgb, var(--danger) 20%, var(--surface));
-  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
 }
 
 .empty,

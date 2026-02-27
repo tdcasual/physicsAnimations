@@ -19,26 +19,33 @@ test("libraryState exposes folders and assets helpers", async () => {
 
   assert.equal(typeof mod.LIBRARY_FOLDERS_KEY, "string");
   assert.equal(typeof mod.LIBRARY_ASSETS_KEY, "string");
+  assert.equal(typeof mod.LIBRARY_EMBED_PROFILES_KEY, "string");
   assert.equal(typeof mod.loadLibraryFoldersState, "function");
   assert.equal(typeof mod.saveLibraryFoldersState, "function");
   assert.equal(typeof mod.mutateLibraryFoldersState, "function");
   assert.equal(typeof mod.loadLibraryAssetsState, "function");
   assert.equal(typeof mod.saveLibraryAssetsState, "function");
   assert.equal(typeof mod.mutateLibraryAssetsState, "function");
+  assert.equal(typeof mod.loadLibraryEmbedProfilesState, "function");
+  assert.equal(typeof mod.saveLibraryEmbedProfilesState, "function");
+  assert.equal(typeof mod.mutateLibraryEmbedProfilesState, "function");
 });
 
 test("libraryState loads empty defaults when files are missing", async () => {
   const {
     loadLibraryFoldersState,
     loadLibraryAssetsState,
+    loadLibraryEmbedProfilesState,
   } = require("../server/lib/libraryState");
   const store = createMemoryStore();
 
   const folders = await loadLibraryFoldersState({ store });
   const assets = await loadLibraryAssetsState({ store });
+  const profiles = await loadLibraryEmbedProfilesState({ store });
 
   assert.deepEqual(folders, { version: 1, folders: [] });
   assert.deepEqual(assets, { version: 1, assets: [] });
+  assert.deepEqual(profiles, { version: 1, profiles: [] });
 });
 
 test("libraryState saves and reloads sanitized folders/assets payload", async () => {
@@ -47,6 +54,8 @@ test("libraryState saves and reloads sanitized folders/assets payload", async ()
     saveLibraryFoldersState,
     loadLibraryAssetsState,
     saveLibraryAssetsState,
+    loadLibraryEmbedProfilesState,
+    saveLibraryEmbedProfilesState,
   } = require("../server/lib/libraryState");
   const store = createMemoryStore();
 
@@ -74,7 +83,28 @@ test("libraryState saves and reloads sanitized folders/assets payload", async ()
           fileSize: 123,
           openMode: "embed",
           generatedEntryPath: "content/library/assets/a1/viewer/index.html",
+          embedProfileId: "ep_1",
+          embedOptions: { mode: "view" },
           status: "ready",
+        },
+        { id: "" },
+      ],
+    },
+  });
+  await saveLibraryEmbedProfilesState({
+    store,
+    state: {
+      profiles: [
+        {
+          id: "ep_1",
+          name: "电场",
+          scriptUrl: "https://field.infinitas.fun/embed/embed.js",
+          viewerPath: "https://field.infinitas.fun/embed/viewer.html",
+          constructorName: "ElectricFieldApp",
+          assetUrlOptionKey: "sceneUrl",
+          matchExtensions: ["json"],
+          defaultOptions: { mode: "view" },
+          enabled: true,
         },
         { id: "" },
       ],
@@ -83,6 +113,7 @@ test("libraryState saves and reloads sanitized folders/assets payload", async ()
 
   const folders = await loadLibraryFoldersState({ store });
   const assets = await loadLibraryAssetsState({ store });
+  const profiles = await loadLibraryEmbedProfilesState({ store });
 
   assert.equal(folders.version, 1);
   assert.equal(folders.folders.length, 1);
@@ -91,6 +122,11 @@ test("libraryState saves and reloads sanitized folders/assets payload", async ()
   assert.equal(assets.assets.length, 1);
   assert.equal(assets.assets[0].id, "a1");
   assert.equal(assets.assets[0].displayName, "演示名称");
+  assert.equal(assets.assets[0].embedProfileId, "ep_1");
+  assert.deepEqual(assets.assets[0].embedOptions, { mode: "view" });
+  assert.equal(profiles.version, 1);
+  assert.equal(profiles.profiles.length, 1);
+  assert.equal(profiles.profiles[0].id, "ep_1");
 });
 
 test("libraryState mutate helpers persist updates", async () => {
@@ -99,6 +135,8 @@ test("libraryState mutate helpers persist updates", async () => {
     mutateLibraryFoldersState,
     loadLibraryAssetsState,
     mutateLibraryAssetsState,
+    loadLibraryEmbedProfilesState,
+    mutateLibraryEmbedProfilesState,
   } = require("../server/lib/libraryState");
   const store = createMemoryStore();
 
@@ -108,12 +146,18 @@ test("libraryState mutate helpers persist updates", async () => {
   await mutateLibraryAssetsState({ store }, (state) => {
     state.assets.push({ id: "a1", folderId: "f1", adapterKey: "geogebra", fileName: "demo.ggb" });
   });
+  await mutateLibraryEmbedProfilesState({ store }, (state) => {
+    state.profiles.push({ id: "ep_1", name: "Embed" });
+  });
 
   const folders = await loadLibraryFoldersState({ store });
   const assets = await loadLibraryAssetsState({ store });
+  const profiles = await loadLibraryEmbedProfilesState({ store });
 
   assert.equal(folders.folders.length, 1);
   assert.equal(folders.folders[0].id, "f1");
   assert.equal(assets.assets.length, 1);
   assert.equal(assets.assets[0].id, "a1");
+  assert.equal(profiles.profiles.length, 1);
+  assert.equal(profiles.profiles[0].id, "ep_1");
 });

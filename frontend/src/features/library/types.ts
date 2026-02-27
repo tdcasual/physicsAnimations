@@ -25,7 +25,32 @@ export interface LibraryAsset {
   fileSize: number;
   openMode: LibraryOpenMode;
   generatedEntryPath: string;
+  embedProfileId: string;
+  embedOptions: Record<string, unknown>;
   status: LibraryAssetStatus;
+  deleted: boolean;
+  deletedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface LibraryEmbedProfile {
+  id: string;
+  name: string;
+  scriptUrl: string;
+  fallbackScriptUrl: string;
+  viewerPath: string;
+  remoteScriptUrl: string;
+  remoteViewerPath: string;
+  syncMode: string;
+  syncStatus: string;
+  syncMessage: string;
+  lastSyncAt: string;
+  constructorName: string;
+  assetUrlOptionKey: string;
+  matchExtensions: string[];
+  defaultOptions: Record<string, unknown>;
+  enabled: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

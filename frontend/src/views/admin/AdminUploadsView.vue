@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { normalizePublicUrl } from "../../features/catalog/catalogLink";
 import {
   type AdminItemRow,
   deleteAdminItem,
@@ -27,6 +28,7 @@ const saving = ref(false);
 const errorText = ref("");
 const actionFeedback = ref("");
 const actionFeedbackError = ref(false);
+const fieldErrors = ref<Record<string, string>>({});
 
 const items = ref<AdminItem[]>([]);
 const total = ref(0);
@@ -66,9 +68,35 @@ function viewerHref(id: string): string {
   return `${base.replace(/\/+$/, "/")}viewer/${encodeURIComponent(id)}`;
 }
 
+function previewHref(item: AdminItem): string {
+  return normalizePublicUrl(item.src || viewerHref(item.id));
+}
+
 function setActionFeedback(text: string, isError = false) {
   actionFeedback.value = text;
   actionFeedbackError.value = isError;
+}
+
+function setFieldError(key: string, message: string) {
+  fieldErrors.value = {
+    ...fieldErrors.value,
+    [key]: message,
+  };
+}
+
+function clearFieldErrors(key?: string) {
+  if (!key) {
+    fieldErrors.value = {};
+    return;
+  }
+  if (!(key in fieldErrors.value)) return;
+  const next = { ...fieldErrors.value };
+  delete next[key];
+  fieldErrors.value = next;
+}
+
+function getFieldError(key: string): string {
+  return fieldErrors.value[key] || "";
 }
 
 function buildRiskConfirmMessage(details: any): string {
@@ -93,6 +121,9 @@ function buildRiskConfirmMessage(details: any): string {
 function onSelectFile(event: Event) {
   const target = event.target as HTMLInputElement;
   file.value = target.files?.[0] || null;
+  if (file.value) {
+    clearFieldErrors("uploadFile");
+  }
 }
 
 function resetEdit() {
@@ -167,9 +198,10 @@ async function reloadUploads(params: { reset: boolean } = { reset: true }) {
 
 async function submitUpload() {
   if (!file.value) {
-    setActionFeedback("请选择 HTML 或 ZIP 文件。", true);
+    setFieldError("uploadFile", "请选择 HTML 或 ZIP 文件。");
     return;
   }
+  clearFieldErrors("uploadFile");
   saving.value = true;
   setActionFeedback("");
 
@@ -204,6 +236,7 @@ async function submitUpload() {
     file.value = null;
     title.value = "";
     description.value = "";
+    clearFieldErrors("uploadFile");
     const input = document.querySelector<HTMLInputElement>("#upload-file-input");
     if (input) input.value = "";
     await reloadUploads({ reset: true });
@@ -215,10 +248,12 @@ async function submitUpload() {
       return;
     }
     if (e?.data?.error === "missing_file") {
+      setFieldError("uploadFile", "请选择 HTML 或 ZIP 文件。");
       setActionFeedback("请选择 HTML 或 ZIP 文件。", true);
       return;
     }
     if (e?.data?.error === "invalid_file_type") {
+      setFieldError("uploadFile", "仅支持上传 HTML 或 ZIP。");
       setActionFeedback("仅支持上传 HTML 或 ZIP。", true);
       return;
     }
@@ -305,7 +340,7 @@ onBeforeUnmount(() => {
             </select>
           </label>
 
-          <label class="field">
+          <label class="field" :class="{ 'has-error': getFieldError('uploadFile') }">
             <span>文件（HTML / ZIP）</span>
             <input
               id="upload-file-input"
@@ -314,6 +349,7 @@ onBeforeUnmount(() => {
               accept=".html,.htm,.zip,text/html,application/zip"
               @change="onSelectFile"
             />
+            <div v-if="getFieldError('uploadFile')" class="field-error-text">{{ getFieldError("uploadFile") }}</div>
           </label>
         </div>
 
@@ -357,7 +393,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div class="item-actions">
-              <a class="btn btn-ghost" :href="viewerHref(item.id)" target="_blank" rel="noreferrer">预览</a>
+              <a class="btn btn-ghost" :href="previewHref(item)" target="_blank" rel="noreferrer">预览</a>
               <button type="button" class="btn btn-ghost" @click="beginEdit(item)">
                 {{ editingId === item.id ? "已选中" : "编辑" }}
               </button>
@@ -490,21 +526,6 @@ h3 {
   font-size: 16px;
 }
 
-.field {
-  display: grid;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.field-input {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px 10px;
-}
-
 .field-textarea {
   min-height: 72px;
   resize: vertical;
@@ -603,32 +624,6 @@ h3 {
 
 .action-feedback.success {
   color: #15803d;
-}
-
-.btn {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: var(--surface);
-  color: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.btn-ghost {
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
-  color: #fff;
-  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-}
-
-.btn-danger {
-  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
-  color: color-mix(in srgb, var(--danger) 75%, var(--text));
 }
 
 .checkbox {

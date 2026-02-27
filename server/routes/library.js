@@ -41,7 +41,37 @@ function createLibraryRouter({ authConfig, store }) {
     coverType: z.enum(["blank", "image"]).optional().default("blank"),
   });
   const updateAssetSchema = z.object({
-    displayName: z.string().max(128).optional().default(""),
+    displayName: z.string().max(128).optional(),
+    openMode: z.enum(["embed", "download"]).optional(),
+    folderId: z.string().optional(),
+    embedProfileId: z.string().optional(),
+    embedOptions: z.any().optional(),
+  });
+  const updateFolderSchema = z.object({
+    name: z.string().min(1).max(128).optional(),
+    categoryId: z.string().optional(),
+  });
+  const createEmbedProfileSchema = z.object({
+    name: z.string().min(1).max(128),
+    scriptUrl: z.string().min(1).max(2048),
+    fallbackScriptUrl: z.string().max(2048).optional().default(""),
+    viewerPath: z.string().max(2048).optional().default(""),
+    constructorName: z.string().max(128).optional().default("ElectricFieldApp"),
+    assetUrlOptionKey: z.string().max(128).optional().default("sceneUrl"),
+    matchExtensions: z.array(z.string().max(24)).optional().default([]),
+    defaultOptions: z.any().optional().default({}),
+    enabled: z.boolean().optional().default(true),
+  });
+  const updateEmbedProfileSchema = z.object({
+    name: z.string().min(1).max(128).optional(),
+    scriptUrl: z.string().min(1).max(2048).optional(),
+    fallbackScriptUrl: z.string().max(2048).optional(),
+    viewerPath: z.string().max(2048).optional(),
+    constructorName: z.string().max(128).optional(),
+    assetUrlOptionKey: z.string().max(128).optional(),
+    matchExtensions: z.array(z.string().max(24)).optional(),
+    defaultOptions: z.any().optional(),
+    enabled: z.boolean().optional(),
   });
 
   function sendServiceResult(res, result, okBody) {
@@ -53,6 +83,20 @@ function createLibraryRouter({ authConfig, store }) {
     return false;
   }
 
+  function parseEmbedOptionsJson(rawValue) {
+    const raw = String(rawValue || "").trim();
+    if (!raw) return { ok: true, value: {} };
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+        return { ok: false, error: "invalid_embed_options_json" };
+      }
+      return { ok: true, value: parsed };
+    } catch {
+      return { ok: false, error: "invalid_embed_options_json" };
+    }
+  }
+
   router.get(
     "/library/catalog",
     asyncHandler(async (_req, res) => {
@@ -62,9 +106,18 @@ function createLibraryRouter({ authConfig, store }) {
   );
 
   router.get(
+    "/library/embed-profiles",
+    authRequired,
+    asyncHandler(async (_req, res) => {
+      const profiles = await service.listEmbedProfiles();
+      res.json({ profiles });
+    }),
+  );
+
+  router.get(
     "/library/folders",
     asyncHandler(async (_req, res) => {
-      const folders = await service.listFolders();
+      const folders = await service.getCatalogSummary();
       res.json({ folders });
     }),
   );
@@ -73,7 +126,7 @@ function createLibraryRouter({ authConfig, store }) {
     "/library/folders/:id",
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
-      const folder = await service.getFolderById({ folderId: id });
+      const folder = await service.getFolderById({ folderId: id, withAssetCount: true });
       if (!folder) {
         res.status(404).json({ error: "folder_not_found" });
         return;
@@ -97,11 +150,43 @@ function createLibraryRouter({ authConfig, store }) {
   );
 
   router.get(
+    "/library/deleted-assets",
+    authRequired,
+    asyncHandler(async (req, res) => {
+      const folderId = String(req.query?.folderId || "").trim();
+      const assets = await service.listDeletedAssets({ folderId: folderId || undefined });
+      res.json({ assets });
+    }),
+  );
+
+  router.get(
     "/library/assets/:id",
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
       const result = await service.getAssetOpenInfo({ assetId: id });
       if (sendServiceResult(res, result, (value) => value)) return;
+    }),
+  );
+
+  router.post(
+    "/library/embed-profiles",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const body = parseWithSchema(createEmbedProfileSchema, req.body);
+      const result = await service.createEmbedProfile(body);
+      if (sendServiceResult(res, result, (value) => ({ ok: true, profile: value.profile }))) return;
+    }),
+  );
+
+  router.post(
+    "/library/embed-profiles/:id/sync",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const result = await service.syncEmbedProfile({ profileId: id });
+      if (sendServiceResult(res, result, (value) => ({ ok: true, profile: value.profile }))) return;
     }),
   );
 
@@ -148,14 +233,37 @@ function createLibraryRouter({ authConfig, store }) {
         res.status(400).json({ error: "missing_file" });
         return;
       }
+      const parsedEmbedOptions = parseEmbedOptionsJson(req.body?.embedOptionsJson);
+      if (!parsedEmbedOptions.ok) {
+        res.status(400).json({ error: parsedEmbedOptions.error });
+        return;
+      }
       const result = await service.uploadAsset({
         folderId: id,
         fileBuffer: req.file.buffer,
         originalName: req.file.originalname,
         openMode: req.body?.openMode,
         displayName: req.body?.displayName,
+        embedProfileId: req.body?.embedProfileId,
+        embedOptions: parsedEmbedOptions.value,
       });
       if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
+    }),
+  );
+
+  router.put(
+    "/library/folders/:id",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const body = parseWithSchema(updateFolderSchema, req.body);
+      const result = await service.updateFolder({
+        folderId: id,
+        name: body.name,
+        categoryId: body.categoryId,
+      });
+      if (sendServiceResult(res, result, (value) => ({ ok: true, folder: value.folder }))) return;
     }),
   );
 
@@ -169,8 +277,38 @@ function createLibraryRouter({ authConfig, store }) {
       const result = await service.updateAsset({
         assetId: id,
         displayName: body.displayName,
+        openMode: body.openMode,
+        folderId: body.folderId,
+        embedProfileId: body.embedProfileId,
+        embedOptions: body.embedOptions,
       });
       if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
+    }),
+  );
+
+  router.delete(
+    "/library/embed-profiles/:id",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const result = await service.deleteEmbedProfile({ profileId: id });
+      if (sendServiceResult(res, result, () => ({ ok: true }))) return;
+    }),
+  );
+
+  router.put(
+    "/library/embed-profiles/:id",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const body = parseWithSchema(updateEmbedProfileSchema, req.body);
+      const result = await service.updateEmbedProfile({
+        profileId: id,
+        ...body,
+      });
+      if (sendServiceResult(res, result, (value) => ({ ok: true, profile: value.profile }))) return;
     }),
   );
 
@@ -193,6 +331,28 @@ function createLibraryRouter({ authConfig, store }) {
       const id = parseWithSchema(idSchema, req.params.id);
       const result = await service.deleteAsset({ assetId: id });
       if (sendServiceResult(res, result, () => ({ ok: true }))) return;
+    }),
+  );
+
+  router.delete(
+    "/library/assets/:id/permanent",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const result = await service.deleteAssetPermanently({ assetId: id });
+      if (sendServiceResult(res, result, () => ({ ok: true }))) return;
+    }),
+  );
+
+  router.post(
+    "/library/assets/:id/restore",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const result = await service.restoreAsset({ assetId: id });
+      if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
     }),
   );
 
