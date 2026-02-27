@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const logger = require("../server/lib/logger");
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -31,11 +32,10 @@ function main() {
     run("dpkg-deb", ["-x", debPath, rootfsDir]);
   }
 
-  console.log(`[playwright-deps] extracted to ${rootfsDir}`);
-  console.log(
-    `[playwright-deps] libs at ${path.join(rootfsDir, "usr", "lib", "x86_64-linux-gnu")}`,
-  );
+  logger.info("playwright_deps_extracted", { rootfsDir });
+  logger.info("playwright_deps_libs_path", {
+    libsPath: path.join(rootfsDir, "usr", "lib", "x86_64-linux-gnu"),
+  });
 }
 
 main();
-

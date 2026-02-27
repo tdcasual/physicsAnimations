@@ -1,5 +1,49 @@
 const { getRequestId } = require("./requestContext");
 
+const LEVEL_PRIORITY = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40,
+};
+
+const SENSITIVE_KEY_RE = /(password|token|secret|authorization|cookie|api[_-]?key|jwt)/i;
+
+function resolveLogLevel(rawLevel) {
+  const normalized = String(rawLevel || "").trim().toLowerCase();
+  if (normalized in LEVEL_PRIORITY) return normalized;
+  return "info";
+}
+
+let currentLogLevel = resolveLogLevel(process.env.LOG_LEVEL);
+
+function shouldWrite(level) {
+  return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[currentLogLevel];
+}
+
+function redactValue(value, key = "", seen = new WeakSet()) {
+  if (SENSITIVE_KEY_RE.test(String(key || ""))) return "[REDACTED]";
+  if (value === null || value === undefined) return value;
+  if (typeof value !== "object") return value;
+
+  if (value instanceof Error) {
+    return redactValue(toErrorObject(value), key, seen);
+  }
+
+  if (seen.has(value)) return "[Circular]";
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => redactValue(item, "", seen));
+  }
+
+  const out = {};
+  for (const [entryKey, entryValue] of Object.entries(value)) {
+    out[entryKey] = redactValue(entryValue, entryKey, seen);
+  }
+  return out;
+}
+
 function toErrorObject(err) {
   if (!err) return null;
   const out = {
@@ -20,15 +64,17 @@ function normalizeMeta(meta) {
   for (const [key, value] of Object.entries(meta)) {
     if (value === undefined) continue;
     if (value instanceof Error) {
-      out[key] = toErrorObject(value);
+      out[key] = redactValue(toErrorObject(value), key);
       continue;
     }
-    out[key] = value;
+    out[key] = redactValue(value, key);
   }
   return out;
 }
 
 function write(level, msg, meta = {}) {
+  if (!shouldWrite(level)) return;
+
   const entry = {
     ts: new Date().toISOString(),
     level,
@@ -54,6 +100,10 @@ function info(msg, meta) {
   write("info", msg, meta);
 }
 
+function debug(msg, meta) {
+  write("debug", msg, meta);
+}
+
 function warn(msg, meta) {
   write("warn", msg, meta);
 }
@@ -70,9 +120,22 @@ function error(msg, err, meta = {}) {
   write("error", msg, meta);
 }
 
+function setLogLevel(level) {
+  currentLogLevel = resolveLogLevel(level);
+}
+
+function getLogLevel() {
+  return currentLogLevel;
+}
+
 module.exports = {
+  debug,
   info,
   warn,
   error,
+  setLogLevel,
+  getLogLevel,
+  resolveLogLevel,
+  redactValue,
   toErrorObject,
 };

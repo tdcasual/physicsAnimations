@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { createContentStore } = require("../server/lib/contentStore");
+const logger = require("../server/lib/logger");
 
 function walkFiles(dir) {
   const out = [];
@@ -55,15 +56,16 @@ async function main() {
   const store = createContentStore({ rootDir });
 
   if (store.mode !== "webdav" && store.mode !== "hybrid") {
-    console.error("[backup_to_webdav] WebDAV is not configured.");
-    console.error("[backup_to_webdav] Set WEBDAV_URL (+ optional WEBDAV_BASE_PATH/WEBDAV_USERNAME/WEBDAV_PASSWORD).");
+    logger.error("backup_webdav_not_configured", null, {
+      hint: "Set WEBDAV_URL (+ optional WEBDAV_BASE_PATH/WEBDAV_USERNAME/WEBDAV_PASSWORD).",
+    });
     process.exit(1);
   }
 
   const contentDir = path.join(rootDir, "content");
   const files = walkFiles(contentDir);
   if (!files.length) {
-    console.log("[backup_to_webdav] Nothing to backup (content/ is empty).");
+    logger.info("backup_webdav_empty_content");
     return;
   }
 
@@ -72,13 +74,13 @@ async function main() {
     const buf = fs.readFileSync(filePath);
     const contentType = guessContentType(filePath);
     await store.writeBuffer(key, buf, { contentType });
-    console.log(`[backup_to_webdav] Uploaded ${key}`);
+    logger.info("backup_webdav_uploaded", { key });
   }
 
-  console.log("[backup_to_webdav] Done.");
+  logger.info("backup_webdav_done", { files: files.length });
 }
 
 main().catch((err) => {
-  console.error(err);
+  logger.error("backup_webdav_failed", err);
   process.exit(1);
 });

@@ -6,6 +6,7 @@ const { spawn } = require("child_process");
 
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
+const logger = require("../server/lib/logger");
 
 async function findOpenPort() {
   return new Promise((resolve, reject) => {
@@ -253,12 +254,14 @@ async function run() {
       throw new Error(parts.join("\n"));
     }
 
-    console.log(`[smoke-write] PASS ${baseUrl}`);
-    console.log(`[smoke-write] screenshot: ${screenshotPath}`);
-    console.log(`[smoke-write] server log: ${logPath}`);
+    logger.info("smoke_admin_write_pass", {
+      baseUrl,
+      screenshotPath,
+      logPath,
+    });
   } finally {
     await cleanupCreatedItem({ baseUrl, token: authToken, id: createdId }).catch((error) => {
-      console.error(`[smoke-write] cleanup failed: ${error?.message || String(error)}`);
+      logger.error("smoke_admin_write_cleanup_failed", error, { itemId: createdId || null });
       process.exitCode = 1;
     });
     await stopServer(server);
@@ -266,7 +269,6 @@ async function run() {
 }
 
 run().catch((err) => {
-  console.error("[smoke-write] FAIL");
-  console.error(err?.stack || err?.message || String(err));
+  logger.error("smoke_admin_write_failed", err);
   process.exitCode = 1;
 });

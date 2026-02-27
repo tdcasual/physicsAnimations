@@ -6,6 +6,7 @@ const { spawn } = require("child_process");
 
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
+const logger = require("../server/lib/logger");
 
 async function findOpenPort() {
   return new Promise((resolve, reject) => {
@@ -363,13 +364,15 @@ async function run() {
       throw new Error(parts.join("\n"));
     }
 
-    console.log(`[smoke-public] PASS ${baseUrl}`);
-    console.log(`[smoke-public] catalog screenshot: ${screenshotCatalogPath}`);
-    console.log(`[smoke-public] viewer screenshot: ${screenshotViewerPath}`);
-    console.log(`[smoke-public] server log: ${logPath}`);
+    logger.info("smoke_public_pass", {
+      baseUrl,
+      screenshotCatalogPath,
+      screenshotViewerPath,
+      logPath,
+    });
   } finally {
     await cleanupCreatedItem({ baseUrl, token: authToken, id: createdId }).catch((error) => {
-      console.error(`[smoke-public] cleanup failed: ${error?.message || String(error)}`);
+      logger.error("smoke_public_cleanup_failed", error, { itemId: createdId || null });
       process.exitCode = 1;
     });
     await stopServer(server);
@@ -377,7 +380,6 @@ async function run() {
 }
 
 run().catch((err) => {
-  console.error("[smoke-public] FAIL");
-  console.error(err?.stack || err?.message || String(err));
+  logger.error("smoke_public_failed", err);
   process.exitCode = 1;
 });

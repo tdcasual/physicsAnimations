@@ -6,6 +6,7 @@ const { spawn } = require("child_process");
 
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
+const logger = require("../server/lib/logger");
 
 async function findOpenPort() {
   return new Promise((resolve, reject) => {
@@ -155,16 +156,17 @@ async function run() {
       throw new Error(parts.join("\n"));
     }
 
-    console.log(`[smoke] PASS ${baseUrl}`);
-    console.log(`[smoke] screenshot: ${screenshotPath}`);
-    console.log(`[smoke] server log: ${logPath}`);
+    logger.info("smoke_admin_pass", {
+      baseUrl,
+      screenshotPath,
+      logPath,
+    });
   } finally {
     await stopServer(server);
   }
 }
 
 run().catch((err) => {
-  console.error("[smoke] FAIL");
-  console.error(err?.stack || err?.message || String(err));
+  logger.error("smoke_admin_failed", err);
   process.exitCode = 1;
 });

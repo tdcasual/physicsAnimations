@@ -5,6 +5,7 @@ const { pathToFileURL } = require("url");
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const { shouldAllowRequestUrl } = require("../server/lib/ssrf");
+const logger = require("../server/lib/logger");
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -22,7 +23,9 @@ async function main() {
   const animationsJsonPath = path.join(rootDir, "animations.json");
 
   if (!fs.existsSync(animationsJsonPath)) {
-    console.error("Missing animations.json, run `npm run update-list` first.");
+    logger.error("thumbnails_missing_animations_json", null, {
+      hint: "run `npm run update-list` first",
+    });
     process.exit(1);
   }
 
@@ -105,10 +108,14 @@ async function main() {
     await browser.close();
   }
 
-  console.log(`[thumbnails] created=${created} skipped=${skipped} failed=${failed}`);
+  logger.info("thumbnails_generation_completed", {
+    created,
+    skipped,
+    failed,
+  });
 }
 
 main().catch((err) => {
-  console.error(err);
+  logger.error("thumbnails_generation_failed", err);
   process.exit(1);
 });
