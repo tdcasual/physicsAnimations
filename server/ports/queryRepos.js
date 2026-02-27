@@ -31,38 +31,36 @@ function createNoopTaxonomyQueryRepo() {
 
 function createQueryReposFromStore({ store }) {
   const sql = store?.stateDbQuery || {};
-  const noopItems = createNoopItemsQueryRepo();
-  const noopTaxonomy = createNoopTaxonomyQueryRepo();
 
   return {
     itemsQueryRepo: {
-      queryItems: typeof sql.queryItems === "function" ? (options) => sql.queryItems(options) : noopItems.queryItems,
+      queryItems: typeof sql.queryItems === "function" ? (options) => sql.queryItems(options) : undefined,
       queryDynamicItems:
         typeof sql.queryDynamicItems === "function"
           ? (options) => sql.queryDynamicItems(options)
-          : noopItems.queryDynamicItems,
+          : undefined,
       queryBuiltinItems:
         typeof sql.queryBuiltinItems === "function"
           ? (options) => sql.queryBuiltinItems(options)
-          : noopItems.queryBuiltinItems,
+          : undefined,
       queryDynamicItemById:
         typeof sql.queryDynamicItemById === "function"
           ? (options) => sql.queryDynamicItemById(options)
-          : noopItems.queryDynamicItemById,
+          : undefined,
       queryBuiltinItemById:
         typeof sql.queryBuiltinItemById === "function"
           ? (options) => sql.queryBuiltinItemById(options)
-          : noopItems.queryBuiltinItemById,
+          : undefined,
     },
     taxonomyQueryRepo: {
       queryDynamicCategoryCounts:
         typeof sql.queryDynamicCategoryCounts === "function"
           ? (options) => sql.queryDynamicCategoryCounts(options)
-          : noopTaxonomy.queryDynamicCategoryCounts,
+          : undefined,
       queryDynamicItemsForCatalog:
         typeof sql.queryDynamicItemsForCatalog === "function"
           ? (options) => sql.queryDynamicItemsForCatalog(options)
-          : noopTaxonomy.queryDynamicItemsForCatalog,
+          : undefined,
     },
   };
 }
