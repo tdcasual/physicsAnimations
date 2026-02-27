@@ -1,53 +1,24 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { listTaxonomy } from "../admin/adminApi";
 import {
-  createLibraryEmbedProfile,
   createLibraryFolder,
   deleteLibraryAsset,
   deleteLibraryAssetPermanently,
-  deleteLibraryEmbedProfile,
   deleteLibraryFolder,
   getLibraryFolder,
   listLibraryDeletedAssets,
-  listLibraryEmbedProfiles,
   listLibraryFolderAssets,
   listLibraryFolders,
   restoreLibraryAsset,
-  syncLibraryEmbedProfile,
   updateLibraryAsset,
-  updateLibraryEmbedProfile,
   updateLibraryFolder,
   uploadLibraryAsset,
   uploadLibraryFolderCover,
 } from "./libraryApi";
+import type { AssetBatchResult, AssetSortMode, CategoryRow, JsonObjectParseResult, GroupRow, LibraryPanelTab } from "./libraryAdminModels";
+import { useLibraryAdminFeedback } from "./useLibraryAdminFeedback";
+import { useLibraryEmbedProfileActions } from "./useLibraryEmbedProfileActions";
 import type { LibraryAsset, LibraryEmbedProfile, LibraryFolder, LibraryOpenMode } from "./types";
-
-interface CategoryRow {
-  id: string;
-  groupId: string;
-  title: string;
-}
-
-interface GroupRow {
-  id: string;
-  title: string;
-}
-
-type LibraryPanelTab = "folder" | "asset" | "embed";
-type AssetSortMode = "updated_desc" | "updated_asc" | "name_asc" | "name_desc";
-
-interface AssetBatchResult {
-  actionLabel: string;
-  successIds: string[];
-  failed: Array<{ id: string; reason: string }>;
-}
-
-interface OperationLogEntry {
-  id: string;
-  message: string;
-  level: "success" | "error" | "info";
-  at: string;
-}
 
 
 export function useLibraryAdminState() {
@@ -56,9 +27,22 @@ export function useLibraryAdminState() {
   const savingAsset = ref(false);
   const savingEmbed = ref(false);
   const saving = computed(() => savingFolder.value || savingAsset.value || savingEmbed.value);
-  const feedback = ref("");
-  const feedbackError = ref(false);
-  const fieldErrors = ref<Record<string, string>>({});
+  const {
+    feedback,
+    feedbackError,
+    fieldErrors,
+    operationLogs,
+    operationLogFilter,
+    filteredOperationLogs,
+    setFeedback,
+    setFieldError,
+    clearFieldErrors,
+    getFieldError,
+    formatOperationTime,
+    pushOperationLog,
+    clearOperationLogs,
+    getApiErrorCode,
+  } = useLibraryAdminFeedback();
   
   const folders = ref<LibraryFolder[]>([]);
   const selectedFolderId = ref("");
@@ -119,8 +103,6 @@ export function useLibraryAdminState() {
   const selectedAssetIds = ref<string[]>([]);
   const assetBatchResult = ref<AssetBatchResult | null>(null);
   const undoAssetIds = ref<string[]>([]);
-  const operationLogs = ref<OperationLogEntry[]>([]);
-  const operationLogFilter = ref<"all" | "success" | "error" | "info">("all");
   const folderAssetsLoadSeq = ref(0);
   const panelSections = ref<Record<string, boolean>>({
     "folder:meta": true,
@@ -213,10 +195,6 @@ export function useLibraryAdminState() {
   const selectedAssetCount = computed(() => selectedAssetIds.value.length);
   const hasSelectedAssets = computed(() => selectedAssetIds.value.length > 0);
   const hasUndoAssets = computed(() => undoAssetIds.value.length > 0);
-  const filteredOperationLogs = computed(() => {
-    if (operationLogFilter.value === "all") return operationLogs.value;
-    return operationLogs.value.filter((item) => item.level === operationLogFilter.value);
-  });
   const allFilteredAssetsSelected = computed(() => {
     if (filteredFolderAssets.value.length === 0) return false;
     const selected = new Set(selectedAssetIds.value);
@@ -227,7 +205,7 @@ export function useLibraryAdminState() {
     raw: string,
     fieldLabel: string,
     fieldKey = "",
-  ): { ok: true; value: Record<string, unknown> } | { ok: false } {
+  ): JsonObjectParseResult {
     const text = String(raw || "").trim();
     if (!text) return { ok: true, value: {} };
     try {
@@ -298,52 +276,6 @@ export function useLibraryAdminState() {
     selectedAssetIds.value = sortedFilteredFolderAssets.value.map((asset) => asset.id);
   }
   
-  function cancelEmbedProfileEdit() {
-    editingEmbedProfileId.value = "";
-    embedEditName.value = "";
-    embedEditScriptUrl.value = "";
-    embedEditFallbackScriptUrl.value = "";
-    embedEditViewerPath.value = "";
-    embedEditConstructorName.value = "ElectricFieldApp";
-    embedEditAssetUrlOptionKey.value = "sceneUrl";
-    embedEditExtensionsText.value = "";
-    embedEditDefaultOptionsJson.value = "{}";
-    embedEditEnabled.value = true;
-    clearFieldErrors("editEmbedProfileName", "editEmbedScriptUrl", "editEmbedDefaultOptionsJson");
-  }
-  
-  function setFeedback(text: string, isError = false) {
-    feedback.value = text;
-    feedbackError.value = isError;
-    const clean = String(text || "").trim();
-    if (clean) {
-      pushOperationLog(clean, isError ? "error" : "success");
-    }
-  }
-  
-  function setFieldError(fieldKey: string, text: string) {
-    const key = String(fieldKey || "").trim();
-    if (!key) return;
-    fieldErrors.value = {
-      ...fieldErrors.value,
-      [key]: String(text || "").trim(),
-    };
-  }
-  
-  function clearFieldErrors(...fieldKeys: string[]) {
-    if (fieldKeys.length === 0) {
-      fieldErrors.value = {};
-      return;
-    }
-    const next = { ...fieldErrors.value };
-    for (const key of fieldKeys) delete next[key];
-    fieldErrors.value = next;
-  }
-  
-  function getFieldError(fieldKey: string) {
-    return String(fieldErrors.value[String(fieldKey || "").trim()] || "");
-  }
-  
   function setActivePanelTab(tab: LibraryPanelTab) {
     activePanelTab.value = tab;
     if (tab === "folder") ensurePanelSectionOpen("folder:meta");
@@ -362,35 +294,47 @@ export function useLibraryAdminState() {
   function ensurePanelSectionOpen(key: string) {
     panelSections.value[key] = true;
   }
-  
-  function formatOperationTime(value: string) {
-    const date = new Date(String(value || ""));
-    const time = date.getTime();
-    if (!Number.isFinite(time)) return String(value || "");
-    return date.toLocaleString("zh-CN", { hour12: false });
-  }
-  
-  function pushOperationLog(message: string, level: "success" | "error" | "info" = "info") {
-    const entry: OperationLogEntry = {
-      id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      message: String(message || "").trim(),
-      level,
-      at: new Date().toISOString(),
-    };
-    if (!entry.message) return;
-    operationLogs.value = [entry, ...operationLogs.value].slice(0, 18);
-  }
-  
-  function clearOperationLogs() {
-    operationLogs.value = [];
-  }
-  
-  function getApiErrorCode(err: unknown): string {
-    const e = err as { data?: any; message?: string };
-    if (typeof e?.data?.error === "string" && e.data.error) return e.data.error;
-    if (typeof e?.message === "string" && e.message) return e.message;
-    return "unknown_error";
-  }
+
+  const {
+    cancelEmbedProfileEdit,
+    reloadEmbedProfiles,
+    createEmbedProfileEntry,
+    startEditEmbedProfile,
+    saveEmbedProfileEdit,
+    removeEmbedProfile,
+    syncEmbedProfileEntry,
+  } = useLibraryEmbedProfileActions({
+    savingEmbed,
+    embedProfiles,
+    assetEmbedProfileId,
+    assetEditParserMode,
+    assetEditEmbedProfileId,
+    embedProfileName,
+    embedScriptUrl,
+    embedFallbackScriptUrl,
+    embedViewerPath,
+    embedConstructorName,
+    embedAssetUrlOptionKey,
+    embedExtensionsText,
+    embedDefaultOptionsJson,
+    embedEnabled,
+    editingEmbedProfileId,
+    embedEditName,
+    embedEditScriptUrl,
+    embedEditFallbackScriptUrl,
+    embedEditViewerPath,
+    embedEditConstructorName,
+    embedEditAssetUrlOptionKey,
+    embedEditExtensionsText,
+    embedEditDefaultOptionsJson,
+    embedEditEnabled,
+    setFeedback,
+    setFieldError,
+    clearFieldErrors,
+    setActivePanelTab,
+    ensurePanelSectionOpen,
+    parseJsonObjectInput,
+  });
   
   function setAssetBatchResult(actionLabel: string, successIds: string[], failed: Array<{ id: string; reason: string }>) {
     assetBatchResult.value = {
@@ -490,23 +434,6 @@ export function useLibraryAdminState() {
       syncFolderEditDraft();
       const e = err as { status?: number };
       setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "加载文件夹资源失败。", true);
-    }
-  }
-  
-  async function reloadEmbedProfiles() {
-    const list = await listLibraryEmbedProfiles();
-    embedProfiles.value = list;
-    if (!assetEmbedProfileId.value || !list.some((profile) => profile.id === assetEmbedProfileId.value && profile.enabled !== false)) {
-      assetEmbedProfileId.value = list.find((profile) => profile.enabled !== false)?.id || "";
-    }
-    if (
-      assetEditParserMode.value === "profile" &&
-      (!assetEditEmbedProfileId.value || !list.some((profile) => profile.id === assetEditEmbedProfileId.value && profile.enabled !== false))
-    ) {
-      assetEditEmbedProfileId.value = list.find((profile) => profile.enabled !== false)?.id || "";
-    }
-    if (editingEmbedProfileId.value && !list.some((profile) => profile.id === editingEmbedProfileId.value)) {
-      cancelEmbedProfileEdit();
     }
   }
   
@@ -997,202 +924,6 @@ export function useLibraryAdminState() {
       setFeedback("更新资源失败。", true);
     } finally {
       savingAsset.value = false;
-    }
-  }
-  
-  async function createEmbedProfileEntry() {
-    clearFieldErrors("createEmbedProfileName", "createEmbedScriptUrl", "createEmbedDefaultOptionsJson");
-    const name = embedProfileName.value.trim();
-    const scriptUrl = embedScriptUrl.value.trim();
-    if (!name) {
-      setFieldError("createEmbedProfileName", "请填写 Embed 平台名称。");
-      setFeedback("请填写 Embed 平台名称。", true);
-      return;
-    }
-    if (!scriptUrl) {
-      setFieldError("createEmbedScriptUrl", "请填写 embed.js 地址。");
-      setFeedback("请填写 embed.js 地址。", true);
-      return;
-    }
-  
-    const parsedDefaults = parseJsonObjectInput(embedDefaultOptionsJson.value, "默认参数 JSON", "createEmbedDefaultOptionsJson");
-    if (!parsedDefaults.ok) return;
-    const defaultOptions = parsedDefaults.value;
-  
-    const matchExtensions = embedExtensionsText.value
-      .split(",")
-      .map((item) => item.trim().replace(/^\./, "").toLowerCase())
-      .filter(Boolean);
-  
-    savingEmbed.value = true;
-    setFeedback("");
-    try {
-      await createLibraryEmbedProfile({
-        name,
-        scriptUrl,
-        fallbackScriptUrl: embedFallbackScriptUrl.value.trim(),
-        viewerPath: embedViewerPath.value.trim(),
-        constructorName: embedConstructorName.value.trim() || "ElectricFieldApp",
-        assetUrlOptionKey: embedAssetUrlOptionKey.value.trim() || "sceneUrl",
-        matchExtensions,
-        defaultOptions,
-        enabled: embedEnabled.value,
-      });
-      embedProfileName.value = "";
-      embedScriptUrl.value = "";
-      embedFallbackScriptUrl.value = "";
-      embedViewerPath.value = "";
-      embedConstructorName.value = "ElectricFieldApp";
-      embedAssetUrlOptionKey.value = "sceneUrl";
-      embedExtensionsText.value = "";
-      embedDefaultOptionsJson.value = "{}";
-      embedEnabled.value = true;
-      clearFieldErrors("createEmbedProfileName", "createEmbedScriptUrl", "createEmbedDefaultOptionsJson");
-      await reloadEmbedProfiles();
-      setActivePanelTab("embed");
-      setFeedback("Embed 平台已创建。");
-    } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.status === 401) {
-        setFeedback("请先登录管理员账号。", true);
-        return;
-      }
-      if (e?.data?.error === "invalid_profile_script_url") {
-        setFeedback("embed.js 地址无效。请使用 / 开头或 http(s) 地址。", true);
-        return;
-      }
-      if (e?.data?.error === "invalid_profile_viewer_path") {
-        setFeedback("viewerPath 无效。", true);
-        return;
-      }
-      setFeedback("创建 Embed 平台失败。", true);
-    } finally {
-      savingEmbed.value = false;
-    }
-  }
-  
-  function startEditEmbedProfile(profile: LibraryEmbedProfile) {
-    setActivePanelTab("embed");
-    ensurePanelSectionOpen("embed:edit");
-    editingEmbedProfileId.value = profile.id;
-    embedEditName.value = profile.name || "";
-    embedEditScriptUrl.value = profile.remoteScriptUrl || profile.scriptUrl || "";
-    embedEditFallbackScriptUrl.value = profile.fallbackScriptUrl || "";
-    embedEditViewerPath.value = profile.remoteViewerPath || profile.viewerPath || "";
-    embedEditConstructorName.value = profile.constructorName || "ElectricFieldApp";
-    embedEditAssetUrlOptionKey.value = profile.assetUrlOptionKey || "sceneUrl";
-    embedEditExtensionsText.value = Array.isArray(profile.matchExtensions) ? profile.matchExtensions.join(",") : "";
-    embedEditDefaultOptionsJson.value = JSON.stringify(profile.defaultOptions || {}, null, 2);
-    embedEditEnabled.value = profile.enabled !== false;
-  }
-  
-  async function saveEmbedProfileEdit() {
-    clearFieldErrors("editEmbedProfileName", "editEmbedScriptUrl", "editEmbedDefaultOptionsJson");
-    if (!editingEmbedProfileId.value) return;
-    const name = embedEditName.value.trim();
-    const scriptUrl = embedEditScriptUrl.value.trim();
-    if (!name) {
-      setFieldError("editEmbedProfileName", "请填写 Embed 平台名称。");
-      setFeedback("请填写 Embed 平台名称。", true);
-      return;
-    }
-    if (!scriptUrl) {
-      setFieldError("editEmbedScriptUrl", "请填写 embed.js 地址。");
-      setFeedback("请填写 embed.js 地址。", true);
-      return;
-    }
-  
-    const parsedDefaults = parseJsonObjectInput(embedEditDefaultOptionsJson.value, "默认参数 JSON", "editEmbedDefaultOptionsJson");
-    if (!parsedDefaults.ok) return;
-    const matchExtensions = embedEditExtensionsText.value
-      .split(",")
-      .map((item) => item.trim().replace(/^\./, "").toLowerCase())
-      .filter(Boolean);
-  
-    savingEmbed.value = true;
-    setFeedback("");
-    try {
-      await updateLibraryEmbedProfile(editingEmbedProfileId.value, {
-        name,
-        scriptUrl,
-        fallbackScriptUrl: embedEditFallbackScriptUrl.value.trim(),
-        viewerPath: embedEditViewerPath.value.trim(),
-        constructorName: embedEditConstructorName.value.trim() || "ElectricFieldApp",
-        assetUrlOptionKey: embedEditAssetUrlOptionKey.value.trim() || "sceneUrl",
-        matchExtensions,
-        defaultOptions: parsedDefaults.value,
-        enabled: embedEditEnabled.value,
-      });
-      await reloadEmbedProfiles();
-      setActivePanelTab("embed");
-      setFeedback("Embed 平台已更新。");
-      cancelEmbedProfileEdit();
-    } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.status === 401) {
-        setFeedback("请先登录管理员账号。", true);
-        return;
-      }
-      if (e?.data?.error === "invalid_profile_script_url") {
-        setFeedback("embed.js 地址无效。请使用 / 开头或 http(s) 地址。", true);
-        return;
-      }
-      if (e?.data?.error === "invalid_profile_viewer_path") {
-        setFeedback("viewerPath 无效。", true);
-        return;
-      }
-      setFeedback("更新 Embed 平台失败。", true);
-    } finally {
-      savingEmbed.value = false;
-    }
-  }
-  
-  async function removeEmbedProfile(profileId: string) {
-    if (!window.confirm("确定删除该 Embed 平台吗？")) return;
-    savingEmbed.value = true;
-    setFeedback("");
-    try {
-      await deleteLibraryEmbedProfile(profileId);
-      await reloadEmbedProfiles();
-      setActivePanelTab("embed");
-      setFeedback("Embed 平台已删除。");
-    } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.status === 401) {
-        setFeedback("请先登录管理员账号。", true);
-        return;
-      }
-      if (e?.data?.error === "embed_profile_in_use") {
-        setFeedback("该 Embed 平台仍被资源引用，无法删除。", true);
-        return;
-      }
-      setFeedback("删除 Embed 平台失败。", true);
-    } finally {
-      savingEmbed.value = false;
-    }
-  }
-  
-  async function syncEmbedProfileEntry(profileId: string) {
-    savingEmbed.value = true;
-    setFeedback("");
-    try {
-      await syncLibraryEmbedProfile(profileId);
-      await reloadEmbedProfiles();
-      setActivePanelTab("embed");
-      setFeedback("Embed 平台已同步到本地。");
-    } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.status === 401) {
-        setFeedback("请先登录管理员账号。", true);
-        return;
-      }
-      if (e?.data?.error === "embed_profile_sync_failed") {
-        setFeedback("同步失败，请检查远端脚本/Viewer 是否可访问。", true);
-        return;
-      }
-      setFeedback("同步 Embed 平台失败。", true);
-    } finally {
-      savingEmbed.value = false;
     }
   }
   

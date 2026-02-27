@@ -11,12 +11,16 @@ function readLibrarySources() {
   const template = read("src/views/admin/library/AdminLibraryView.template.html");
   const style = read("src/views/admin/library/AdminLibraryView.css");
   const state = read("src/features/library/useLibraryAdminState.ts");
+  const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
+  const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   return {
     view,
     template,
     style,
     state,
-    combined: `${view}\n${template}\n${style}\n${state}`,
+    feedback,
+    embedActions,
+    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}`,
   };
 }
 

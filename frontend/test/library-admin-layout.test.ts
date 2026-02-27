@@ -11,6 +11,8 @@ function readLibrarySources() {
   const template = read("src/views/admin/library/AdminLibraryView.template.html");
   const style = read("src/views/admin/library/AdminLibraryView.css");
   const state = read("src/features/library/useLibraryAdminState.ts");
+  const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
+  const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   const folderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
   const assetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
   const inspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
@@ -23,6 +25,8 @@ function readLibrarySources() {
     template,
     style,
     state,
+    feedback,
+    embedActions,
     folderColumn,
     assetColumn,
     inspectorColumn,
@@ -35,6 +39,8 @@ function readLibrarySources() {
       template,
       style,
       state,
+      feedback,
+      embedActions,
       folderColumn,
       assetColumn,
       inspectorColumn,
@@ -143,11 +149,12 @@ describe("admin library layout", () => {
   });
 
   it("renders inline field validation for key library admin forms", () => {
-    const { template, state } = readLibrarySources();
-    expect(state).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
-    expect(state).toMatch(/function setFieldError/);
-    expect(state).toMatch(/function clearFieldErrors/);
-    expect(state).toMatch(/function getFieldError/);
+    const { template, state, feedback } = readLibrarySources();
+    expect(state).toMatch(/useLibraryAdminFeedback/);
+    expect(feedback).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
+    expect(feedback).toMatch(/function setFieldError/);
+    expect(feedback).toMatch(/function clearFieldErrors/);
+    expect(feedback).toMatch(/function getFieldError/);
     expect(template).toMatch(/field-error-text/);
     expect(template).toMatch(/has-error/);
     expect(template).toMatch(/getFieldError\("createFolderName"\)/);
