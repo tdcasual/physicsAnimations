@@ -127,12 +127,19 @@ function createCatalogStoreWithoutDynamicItems(store) {
   };
 }
 
-async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomyQueryRepo }) {
-  const repo =
-    taxonomyQueryRepo ||
-    {
-      queryDynamicCategoryCounts: (options) => store.stateDbQuery.queryDynamicCategoryCounts(options),
-    };
+async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomyQueryRepo } = {}) {
+  const queryDynamicCategoryCounts =
+    (typeof taxonomyQueryRepo?.queryDynamicCategoryCounts === "function"
+      ? taxonomyQueryRepo.queryDynamicCategoryCounts.bind(taxonomyQueryRepo)
+      : null) ||
+    (typeof store?.stateDbQuery?.queryDynamicCategoryCounts === "function"
+      ? store.stateDbQuery.queryDynamicCategoryCounts.bind(store.stateDbQuery)
+      : null);
+
+  if (!queryDynamicCategoryCounts) {
+    throw new TypeError("buildCategoriesPayloadWithSql requires queryDynamicCategoryCounts");
+  }
+
   const [baseCatalog, categoryState, dynamicResult] = await Promise.all([
     loadCatalog({
       rootDir,
@@ -143,7 +150,7 @@ async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomy
       includeConfigCategories: isAdmin,
     }),
     loadCategoriesState({ store }),
-    repo.queryDynamicCategoryCounts({ isAdmin }),
+    queryDynamicCategoryCounts({ isAdmin }),
   ]);
 
   const dynamicCountMap = normalizeDynamicCountMap(dynamicResult?.byCategory);

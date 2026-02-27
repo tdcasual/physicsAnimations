@@ -203,6 +203,41 @@ test("group and category CRUD works", async () => {
   }
 });
 
+test("group/category update should return not_found when target does not exist", async () => {
+  const rootDir = makeTempRoot({ animationsJson: {} });
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const updateGroupRes = await fetch(`${baseUrl}/api/groups/not-exists`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ hidden: true }),
+    });
+    assert.equal(updateGroupRes.status, 404);
+    assert.equal((await updateGroupRes.json()).error, "not_found");
+
+    const updateCategoryRes = await fetch(`${baseUrl}/api/categories/not-exists`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ hidden: true }),
+    });
+    assert.equal(updateCategoryRes.status, 404);
+    assert.equal((await updateCategoryRes.json()).error, "not_found");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("legacy categories.json v1 is ignored and defaults are used", async () => {
   const rootDir = makeTempRoot({
     animationsJson: {

@@ -116,7 +116,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
       try {
         const updated = await mutateCategoriesState({ store }, (state) => {
           if (!state.groups) state.groups = {};
-          if (!state.groups[id]) state.groups[id] = { id, title: "", order: 0, hidden: false };
+          if (!state.groups[id]) return noSave({ __kind: "not_found" });
 
           if (body.title !== undefined) state.groups[id].title = body.title.trim();
           if (body.order !== undefined) state.groups[id].order = body.order;
@@ -125,6 +125,11 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
 
           return state.groups[id];
         });
+
+        if (updated?.__kind === "not_found") {
+          res.status(404).json({ error: "not_found" });
+          return;
+        }
 
         res.json({ ok: true, group: updated });
       } catch (err) {

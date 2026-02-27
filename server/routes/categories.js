@@ -149,7 +149,7 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
       try {
         const updated = await mutateCategoriesState({ store }, (state) => {
           if (!state.categories[id]) {
-            state.categories[id] = { id, groupId: DEFAULT_GROUP_ID, title: "", order: 0, hidden: false };
+            return noSave({ __kind: "not_found" });
           }
 
           if (body.groupId !== undefined) {
@@ -167,6 +167,11 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
 
           return state.categories[id];
         });
+
+        if (updated?.__kind === "not_found") {
+          res.status(404).json({ error: "not_found" });
+          return;
+        }
 
         if (updated?.__kind === "unknown_group") {
           res.status(400).json({ error: "unknown_group" });
