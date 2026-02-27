@@ -31,6 +31,32 @@ export interface CatalogViewState {
   hasAnyItems: boolean;
 }
 
+export interface CategoryScopedFolder {
+  categoryId: string;
+  name?: string;
+}
+
+export interface FolderFilterInput<T extends CategoryScopedFolder> {
+  folders: T[];
+  activeCategoryId: string;
+  activeGroupCategoryIds: ReadonlySet<string>;
+  query: string;
+}
+
+export function filterFoldersByCatalogContext<T extends CategoryScopedFolder>(
+  input: FolderFilterInput<T>,
+): T[] {
+  const q = safeText(input.query).trim().toLowerCase();
+  return (input.folders || []).filter((folder) => {
+    const categoryId = safeText(folder.categoryId);
+    if (!input.activeGroupCategoryIds.has(categoryId)) return false;
+    if (input.activeCategoryId !== "all" && categoryId !== input.activeCategoryId) return false;
+    if (!q) return true;
+    const hay = `${safeText(folder.name)}\n${categoryId}`.toLowerCase();
+    return hay.includes(q);
+  });
+}
+
 export function computeCatalogView(input: CatalogViewInput): CatalogViewState {
   const groups = sortByOrderAndTitle(Object.values(input.catalog?.groups || {}));
   const fallbackGroupId = groups[0]?.id || DEFAULT_GROUP_ID;

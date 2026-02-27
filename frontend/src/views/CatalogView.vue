@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { loadCatalogData } from "../features/catalog/catalogService";
 import { getCatalogItemHref, normalizePublicUrl } from "../features/catalog/catalogLink";
-import { computeCatalogView } from "../features/catalog/catalogState";
+import { computeCatalogView, filterFoldersByCatalogContext } from "../features/catalog/catalogState";
 import type { CatalogData, CatalogItem } from "../features/catalog/types";
 import { listLibraryCatalog } from "../features/library/libraryApi";
 import type { LibraryFolder } from "../features/library/types";
@@ -61,13 +61,12 @@ const overflowGroups = computed(() => view.value.groups.slice(MAX_GROUP_TABS));
 const directCategories = computed(() => view.value.categories.slice(0, MAX_CATEGORY_TABS));
 const overflowCategories = computed(() => view.value.categories.slice(MAX_CATEGORY_TABS));
 const filteredLibraryFolders = computed(() => {
-  const q = query.value.trim().toLowerCase();
-  const activeCategoryId = view.value.activeCategoryId;
-  return libraryFolders.value.filter((folder) => {
-    if (activeCategoryId !== "all" && folder.categoryId !== activeCategoryId) return false;
-    if (!q) return true;
-    const hay = `${folder.name || ""}\n${folder.categoryId || ""}`.toLowerCase();
-    return hay.includes(q);
+  const activeGroupCategoryIds = new Set(view.value.categories.map((category) => category.id));
+  return filterFoldersByCatalogContext({
+    folders: libraryFolders.value,
+    activeCategoryId: view.value.activeCategoryId,
+    activeGroupCategoryIds,
+    query: query.value,
   });
 });
 
