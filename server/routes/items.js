@@ -28,7 +28,7 @@ const {
   createScreenshotService,
 } = require("../services/items/screenshotService");
 
-function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
+function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }) {
   const router = express.Router();
   const authRequired = requireAuth({ authConfig });
   const authOptional = optionalAuth({ authConfig });
@@ -46,6 +46,7 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue }) {
 
   const readService = createItemsReadService({
     store,
+    itemsQueryRepo: queryRepos?.itemsQueryRepo,
     deps: {
       loadItemsState,
       loadBuiltinItems,

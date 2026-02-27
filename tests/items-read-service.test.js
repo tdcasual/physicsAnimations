@@ -83,3 +83,51 @@ test("listItems prefers merged SQL query when available", async () => {
   assert.equal(out.items[0].id, "merged_1");
 });
 
+test("listItems uses injected itemsQueryRepo before touching in-memory loaders", async () => {
+  const { createItemsReadService } = require("../server/services/items/readService");
+
+  const service = createItemsReadService({
+    store: {},
+    itemsQueryRepo: {
+      async queryItems() {
+        return {
+          total: 1,
+          items: [
+            {
+              id: "repo_1",
+              type: "link",
+              categoryId: "other",
+              title: "Repo Item",
+              description: "",
+              url: "",
+              thumbnail: "",
+              order: 0,
+              published: true,
+              hidden: false,
+              createdAt: "",
+              updatedAt: "",
+            },
+          ],
+        };
+      },
+    },
+    deps: {
+      loadItemsState: async () => {
+        throw new Error("loadItemsState should not be called");
+      },
+      loadBuiltinItems: async () => {
+        throw new Error("loadBuiltinItems should not be called");
+      },
+      toApiItem: (item) => item,
+      safeText: (value) => String(value || ""),
+    },
+  });
+
+  const out = await service.listItems({
+    isAdmin: false,
+    query: { page: 1, pageSize: 20, q: "", categoryId: "", type: "" },
+  });
+
+  assert.equal(out.total, 1);
+  assert.equal(out.items[0].id, "repo_1");
+});

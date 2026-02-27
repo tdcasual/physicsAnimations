@@ -1,6 +1,6 @@
 const logger = require("../../lib/logger");
 
-function createItemsReadService({ store, deps }) {
+function createItemsReadService({ store, itemsQueryRepo, deps }) {
   const {
     loadItemsState,
     loadBuiltinItems,
@@ -8,23 +8,42 @@ function createItemsReadService({ store, deps }) {
     toApiItem,
     safeText,
   } = deps;
+  const repo =
+    itemsQueryRepo ||
+    {
+      queryItems:
+        typeof store?.stateDbQuery?.queryItems === "function" ? (options) => store.stateDbQuery.queryItems(options) : null,
+      queryDynamicItems:
+        typeof store?.stateDbQuery?.queryDynamicItems === "function"
+          ? (options) => store.stateDbQuery.queryDynamicItems(options)
+          : null,
+      queryBuiltinItems:
+        typeof store?.stateDbQuery?.queryBuiltinItems === "function"
+          ? (options) => store.stateDbQuery.queryBuiltinItems(options)
+          : null,
+      queryDynamicItemById:
+        typeof store?.stateDbQuery?.queryDynamicItemById === "function"
+          ? (options) => store.stateDbQuery.queryDynamicItemById(options)
+          : null,
+      queryBuiltinItemById:
+        typeof store?.stateDbQuery?.queryBuiltinItemById === "function"
+          ? (options) => store.stateDbQuery.queryBuiltinItemById(options)
+          : null,
+    };
 
   async function listItems({ isAdmin, query }) {
     const q = (query.q || "").trim().toLowerCase();
     const categoryId = (query.categoryId || "").trim();
     const type = (query.type || "").trim();
-    const supportsSqlMergedQuery =
-      typeof store?.stateDbQuery?.queryItems === "function";
-    const supportsSqlDynamicQuery =
-      typeof store?.stateDbQuery?.queryDynamicItems === "function";
-    const supportsSqlBuiltinQuery =
-      typeof store?.stateDbQuery?.queryBuiltinItems === "function";
+    const supportsSqlMergedQuery = typeof repo?.queryItems === "function";
+    const supportsSqlDynamicQuery = typeof repo?.queryDynamicItems === "function";
+    const supportsSqlBuiltinQuery = typeof repo?.queryBuiltinItems === "function";
 
     const offset = (query.page - 1) * query.pageSize;
 
     if (supportsSqlMergedQuery) {
       try {
-        const sqlMerged = await store.stateDbQuery.queryItems({
+        const sqlMerged = await repo.queryItems({
           isAdmin,
           includeDeleted: isAdmin,
           q,
@@ -57,7 +76,7 @@ function createItemsReadService({ store, deps }) {
 
     if (supportsSqlDynamicQuery) {
       try {
-        const sqlDynamic = await store.stateDbQuery.queryDynamicItems({
+        const sqlDynamic = await repo.queryDynamicItems({
           isAdmin,
           q,
           categoryId,
@@ -105,7 +124,7 @@ function createItemsReadService({ store, deps }) {
       const builtinOffset = Math.max(0, offset - dynamicTotal);
 
       try {
-        const sqlBuiltin = await store.stateDbQuery.queryBuiltinItems({
+        const sqlBuiltin = await repo.queryBuiltinItems({
           isAdmin,
           includeDeleted: isAdmin,
           q,
@@ -179,14 +198,12 @@ function createItemsReadService({ store, deps }) {
   }
 
   async function getItemById({ id, isAdmin }) {
-    const supportsSqlDynamicItemLookup =
-      typeof store?.stateDbQuery?.queryDynamicItemById === "function";
-    const supportsSqlBuiltinItemLookup =
-      typeof store?.stateDbQuery?.queryBuiltinItemById === "function";
+    const supportsSqlDynamicItemLookup = typeof repo?.queryDynamicItemById === "function";
+    const supportsSqlBuiltinItemLookup = typeof repo?.queryBuiltinItemById === "function";
 
     if (supportsSqlDynamicItemLookup) {
       try {
-        const sqlItem = await store.stateDbQuery.queryDynamicItemById({ id, isAdmin });
+        const sqlItem = await repo.queryDynamicItemById({ id, isAdmin });
         if (sqlItem) return toApiItem(sqlItem);
       } catch (sqlErr) {
         logger.warn("items_sql_dynamic_item_lookup_failed", {
@@ -205,7 +222,7 @@ function createItemsReadService({ store, deps }) {
 
     if (supportsSqlBuiltinItemLookup) {
       try {
-        const sqlBuiltin = await store.stateDbQuery.queryBuiltinItemById({
+        const sqlBuiltin = await repo.queryBuiltinItemById({
           id,
           isAdmin,
           includeDeleted: isAdmin,
