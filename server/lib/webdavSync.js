@@ -342,30 +342,6 @@ async function scanRemoteUploads({ webdav, existingIds }) {
   return imported;
 }
 
-async function syncLocalToWebdav({ rootDir, webdavConfig }) {
-  const contentDir = path.join(rootDir, "content");
-  const store = createWebdavStore(webdavConfig);
-
-  const files = walkFiles(contentDir);
-  let uploaded = 0;
-  let skipped = 0;
-  const skipKeys = new Set([ITEMS_STATE_KEY, CATEGORIES_STATE_KEY, BUILTIN_ITEMS_STATE_KEY, ITEM_TOMBSTONES_KEY]);
-
-  for (const filePath of files) {
-    const rel = path.relative(contentDir, filePath).split(path.sep).join("/");
-    if (!rel || skipKeys.has(rel) || shouldSkip(rel)) {
-      skipped += 1;
-      continue;
-    }
-    const buf = fs.readFileSync(filePath);
-    const contentType = guessContentType(filePath);
-    await store.writeBuffer(rel, buf, { contentType });
-    uploaded += 1;
-  }
-
-  return { uploaded, skipped };
-}
-
 async function syncWithWebdav({
   rootDir,
   webdavConfig,
@@ -467,6 +443,5 @@ async function syncWithWebdav({
 }
 
 module.exports = {
-  syncLocalToWebdav,
   syncWithWebdav,
 };

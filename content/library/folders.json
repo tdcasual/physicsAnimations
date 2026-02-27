@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "folders": [
+    {
+      "id": "f_b7aedc47-254a-4105-826b-58ddf9250edc",
+      "name": "test",
+      "categoryId": "other",
+      "coverType": "blank",
+      "coverPath": "",
+      "parentId": null,
+      "order": 0,
+      "createdAt": "2026-02-27T07:11:41.746Z",
+      "updatedAt": "2026-02-27T07:11:41.746Z"
+    }
+  ]
+}

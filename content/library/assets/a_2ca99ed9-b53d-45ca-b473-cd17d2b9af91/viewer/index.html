@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>test.ggb</title>
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #f8fafc; }
+      .ggb-host { width: 100%; height: 100%; }
+      .ggb-error { display: grid; place-content: center; gap: 8px; color: #475569; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-align: center; }
+      .ggb-error a { color: #0f172a; }
+    </style>
+  </head>
+  <body>
+    <div id="ggb-host" class="ggb-host"></div>
+    <script>
+      (function () {
+        var appletConfig = {"appName":"classic","filename":"/content/library/assets/a_2ca99ed9-b53d-45ca-b473-cd17d2b9af91/source/test.ggb","showToolBar":true,"showAlgebraInput":true,"showMenuBar":true,"scaleContainerClass":"ggb-host"};
+        var scriptSources = [{"scriptUrl":"/content/library/vendor/geogebra/current/deployggb.js","html5Codebase":"/content/library/vendor/geogebra/current/web3d/","preflightUrl":"/content/library/vendor/geogebra/current/web3d/web3d.nocache.js"},{"scriptUrl":"https://www.geogebra.org/apps/deployggb.js","html5Codebase":"","preflightUrl":""}];
+        var hostId = "ggb-host";
+        var errorText = "GeoGebra 资源加载失败，请稍后重试或下载原文件。";
+        var assetFileUrl = "/content/library/assets/a_2ca99ed9-b53d-45ca-b473-cd17d2b9af91/source/test.ggb";
+
+        function renderFailure() {
+          var host = document.getElementById(hostId);
+          if (!host) return;
+          host.innerHTML = "";
+          host.className = "ggb-host ggb-error";
+          var text = document.createElement("div");
+          text.textContent = errorText;
+          host.appendChild(text);
+          if (assetFileUrl) {
+            var link = document.createElement("a");
+            link.href = assetFileUrl;
+            link.textContent = "下载 .ggb 文件";
+            link.setAttribute("download", "");
+            host.appendChild(link);
+          }
+        }
+
+        function checkSourceReady(source) {
+          if (!source || !source.preflightUrl || typeof fetch !== "function") return Promise.resolve(true);
+          return fetch(source.preflightUrl, { method: "HEAD", cache: "no-store" })
+            .then(function (res) { return !!(res && res.ok); })
+            .catch(function () { return false; });
+        }
+
+        function loadScriptSource(source) {
+          return new Promise(function (resolve, reject) {
+            if (!source || !source.scriptUrl) {
+              reject(new Error("missing_script_url"));
+              return;
+            }
+            var script = document.createElement("script");
+            script.async = true;
+            script.src = source.scriptUrl;
+            script.onload = function () { resolve(); };
+            script.onerror = function () { reject(new Error("script_load_failed")); };
+            document.head.appendChild(script);
+          });
+        }
+
+        function injectApplet(source) {
+          var applet = new GGBApplet(appletConfig, true);
+          if (source && source.html5Codebase && typeof applet.setHTML5Codebase === "function") {
+            applet.setHTML5Codebase(source.html5Codebase);
+          }
+          applet.inject(hostId);
+        }
+
+        function trySource(index) {
+          if (index >= scriptSources.length) {
+            renderFailure();
+            return;
+          }
+          var source = scriptSources[index];
+          checkSourceReady(source)
+            .then(function (ready) {
+              if (!ready) return Promise.reject(new Error("source_not_ready"));
+              return loadScriptSource(source).then(function () {
+                injectApplet(source);
+              });
+            })
+            .then(function () {})
+            .catch(function () {
+              trySource(index + 1);
+            });
+        }
+
+        window.addEventListener("load", function () {
+          trySource(0);
+        });
+      }());
+    </script>
+  </body>
+</html>

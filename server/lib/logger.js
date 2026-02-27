@@ -15,7 +15,7 @@ function resolveLogLevel(rawLevel) {
   return "info";
 }
 
-let currentLogLevel = resolveLogLevel(process.env.LOG_LEVEL);
+const currentLogLevel = resolveLogLevel(process.env.LOG_LEVEL);
 
 function shouldWrite(level) {
   return LEVEL_PRIORITY[level] >= LEVEL_PRIORITY[currentLogLevel];
@@ -120,21 +120,11 @@ function error(msg, err, meta = {}) {
   write("error", msg, meta);
 }
 
-function setLogLevel(level) {
-  currentLogLevel = resolveLogLevel(level);
-}
-
-function getLogLevel() {
-  return currentLogLevel;
-}
-
 module.exports = {
   debug,
   info,
   warn,
   error,
-  setLogLevel,
-  getLogLevel,
   resolveLogLevel,
   redactValue,
   toErrorObject,

@@ -1,5 +1,3 @@
-const { createError } = require("./errors");
-
 const ITEMS_STATE_KEY = "items.json";
 const CATEGORIES_STATE_KEY = "categories.json";
 const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
@@ -285,10 +283,6 @@ async function mutateBuiltinItemsState({ store }, mutator) {
   });
 }
 
-function assertAdmin(req) {
-  if (req.user?.role !== "admin") throw createError("missing_token", 401);
-}
-
 module.exports = {
   loadItemsState,
   saveItemsState,
@@ -303,5 +297,4 @@ module.exports = {
   saveItemTombstonesState,
   mutateItemTombstonesState,
   noSave,
-  assertAdmin,
 };

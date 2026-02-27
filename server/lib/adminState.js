@@ -2,11 +2,6 @@ const { createError } = require("./errors");
 
 const ADMIN_STATE_KEY = "admin.json";
 const stateLocks = new Map();
-const NO_SAVE = Symbol("admin_state_no_save");
-
-function noSave(value) {
-  return { [NO_SAVE]: true, value };
-}
 
 async function withStateLock(key, fn) {
   const previous = stateLocks.get(key) || Promise.resolve();
@@ -63,19 +58,7 @@ async function saveAdminState({ store, state }) {
   await store.writeBuffer(ADMIN_STATE_KEY, json, { contentType: "application/json; charset=utf-8" });
 }
 
-async function mutateAdminState({ store }, mutator) {
-  return withStateLock(ADMIN_STATE_KEY, async () => {
-    const state = (await loadAdminState({ store })) || {};
-    const result = await mutator(state);
-    if (result && result[NO_SAVE]) return result.value;
-    await saveAdminState({ store, state });
-    return result;
-  });
-}
-
 module.exports = {
   loadAdminState,
   saveAdminState,
-  mutateAdminState,
-  noSave,
 };

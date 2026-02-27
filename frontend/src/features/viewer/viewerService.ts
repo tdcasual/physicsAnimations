@@ -26,11 +26,11 @@ interface ErrorViewerModel {
 
 export type ViewerModel = ReadyViewerModel | ErrorViewerModel;
 
-export function isHttpUrl(url: unknown): boolean {
+function isHttpUrl(url: unknown): boolean {
   return typeof url === "string" && /^https?:\/\//i.test(url);
 }
 
-export function isSafeViewerTarget(raw: unknown): boolean {
+function isSafeViewerTarget(raw: unknown): boolean {
   const target = typeof raw === "string" ? raw.trim() : "";
   if (!target) return false;
   if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
