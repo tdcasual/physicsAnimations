@@ -142,6 +142,9 @@ docker compose --profile maintenance run --rm ggb-updater
 
 ## 文档导航
 
+文档总览入口：
+- [docs/README.md](docs/README.md)
+
 技术细节都拆到了文档里，README 只保留上手信息：
 
 - [部署与升级说明](docs/guides/deployment.md)
