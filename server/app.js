@@ -17,6 +17,7 @@ const { createAuthRouter } = require("./routes/auth");
 const { createGroupsRouter } = require("./routes/groups");
 const { createCategoriesRouter } = require("./routes/categories");
 const { createItemsRouter } = require("./routes/items");
+const { createLibraryRouter } = require("./routes/library");
 const { createSystemRouter } = require("./routes/system");
 
 function parseTrustProxy(value) {
@@ -65,6 +66,7 @@ function guessContentType(filePath) {
     ".mp3": "audio/mpeg",
     ".wasm": "application/wasm",
     ".txt": "text/plain; charset=utf-8",
+    ".ggb": "application/vnd.geogebra.file",
   };
   return map[ext] || "application/octet-stream";
 }
@@ -189,6 +191,7 @@ function createApp({
   app.use("/api", createGroupsRouter({ rootDir, authConfig, store }));
   app.use("/api", createCategoriesRouter({ rootDir, authConfig, store, queryRepos }));
   app.use("/api", createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }));
+  app.use("/api", createLibraryRouter({ authConfig, store }));
 
   const spaDistDir = path.join(rootDir, "frontend", "dist");
   const spaAssetsDir = path.join(spaDistDir, "assets");
@@ -236,6 +239,26 @@ function createApp({
   app.get(/^\/content\/thumbnails\/.*/, async (req, res, next) => {
     try {
       const key = safeContentKey(req.path, "thumbnails");
+      if (!key) {
+        res.status(400).json({ error: "invalid_path" });
+        return;
+      }
+      const stream = await store.createReadStream(key);
+      if (!stream) {
+        res.status(404).send("Not Found");
+        return;
+      }
+      res.setHeader("Content-Type", guessContentType(key));
+      stream.on("error", next);
+      stream.pipe(res);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get(/^\/content\/library\/.*/, async (req, res, next) => {
+    try {
+      const key = safeContentKey(req.path, "library");
       if (!key) {
         res.status(400).json({ error: "invalid_path" });
         return;
