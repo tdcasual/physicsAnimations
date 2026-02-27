@@ -46,13 +46,13 @@
 | `GET` | `/api/tasks/:taskId` | 查询任务状态 |
 | `POST` | `/api/tasks/:taskId/retry` | 重试失败任务 |
 
-### 资源库管理（文件夹 + `.ggb`）
+### 资源库管理（文件夹 + `.ggb` / PhET HTML）
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | `POST` | `/api/library/folders` | 创建文件夹 |
 | `POST` | `/api/library/folders/:id/cover` | 上传文件夹封面图 |
-| `POST` | `/api/library/folders/:id/assets` | 上传资源（当前仅 `.ggb`） |
+| `POST` | `/api/library/folders/:id/assets` | 上传资源（支持 `.ggb` 与 PhET HTML） |
 | `DELETE` | `/api/library/folders/:id` | 删除文件夹（非空返回 `folder_not_empty`） |
 | `DELETE` | `/api/library/assets/:id` | 删除资源 |
 
@@ -82,7 +82,7 @@
 
 - 资源上传接口：`POST /api/library/folders/:id/assets`
 - `multipart/form-data` 字段：
-  - `file`：资源文件（Phase 1 仅支持 `.ggb`）
+  - `file`：资源文件（支持 `.ggb`、`*.phet.html`，或含 PhET 标记的 HTML）
   - `openMode`：`embed` 或 `download`
 - 返回错误码示例：
   - `unsupported_asset_type`

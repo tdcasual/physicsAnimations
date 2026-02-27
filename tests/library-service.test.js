@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const { createAdapterRegistry } = require("../server/services/library/adapters/registry");
 const { createGeogebraAdapter } = require("../server/services/library/adapters/geogebra");
+const { createPhETAdapter } = require("../server/services/library/adapters/phet");
 
 function createMemoryStore() {
   const blobs = new Map();
@@ -29,7 +30,7 @@ function createMemoryStore() {
 }
 
 function createTestAdapterRegistry() {
-  return createAdapterRegistry([createGeogebraAdapter()]);
+  return createAdapterRegistry([createGeogebraAdapter(), createPhETAdapter()]);
 }
 
 test("createLibraryService exposes core folder and asset operations", async () => {
@@ -132,6 +133,35 @@ test("uploadAsset in download mode skips viewer generation", async () => {
   const openInfo = await service.getAssetOpenInfo({ assetId: uploaded.asset.id });
   assert.equal(openInfo.mode, "download");
   assert.match(openInfo.openUrl, /\/content\/library\/assets\/.*\/source\/only-download\.ggb$/);
+});
+
+test("uploadAsset supports PhET html and generates embed wrapper", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const store = createMemoryStore();
+  const service = createLibraryService({
+    store,
+    deps: {
+      adapterRegistry: createTestAdapterRegistry(),
+    },
+  });
+  const folder = await service.createFolder({ name: "PhET", categoryId: "other" });
+  const phetHtml = Buffer.from(
+    "<html><body><iframe src=\"https://phet.colorado.edu/sims/html/projectile-motion/latest/projectile-motion_en.html\"></iframe></body></html>",
+    "utf8",
+  );
+
+  const uploaded = await service.uploadAsset({
+    folderId: folder.id,
+    fileBuffer: phetHtml,
+    originalName: "projectile-motion.phet.html",
+    openMode: "embed",
+  });
+
+  assert.equal(uploaded.ok, true);
+  assert.equal(uploaded.asset.adapterKey, "phet");
+  assert.equal(uploaded.asset.openMode, "embed");
+  assert.match(uploaded.asset.filePath, /projectile-motion\.phet\.html$/);
+  assert.match(uploaded.asset.generatedEntryPath, /\/viewer\/index\.html$/);
 });
 
 test("deleteFolder rejects non-empty folder with folder_not_empty", async () => {

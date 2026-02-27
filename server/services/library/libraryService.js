@@ -142,7 +142,7 @@ function createLibraryService({ store, deps = {} }) {
     if (!mode) return { status: 400, error: "invalid_open_mode" };
 
     const safeName = sanitizeFileName(originalName, "asset.ggb");
-    const adapter = adapterRegistry.findForFile({ fileName: safeName });
+    const adapter = adapterRegistry.findForFile({ fileName: safeName, fileBuffer });
     if (!adapter) return { status: 400, error: "unsupported_asset_type" };
 
     const now = new Date().toISOString();

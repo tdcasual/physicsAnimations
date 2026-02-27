@@ -1,12 +1,14 @@
 const { createAdapterRegistry } = require("./registry");
 const { createGeogebraAdapter } = require("./geogebra");
+const { createPhETAdapter } = require("./phet");
 
 function createDefaultLibraryAdapterRegistry() {
-  return createAdapterRegistry([createGeogebraAdapter()]);
+  return createAdapterRegistry([createGeogebraAdapter(), createPhETAdapter()]);
 }
 
 module.exports = {
   createDefaultLibraryAdapterRegistry,
   createAdapterRegistry,
   createGeogebraAdapter,
+  createPhETAdapter,
 };

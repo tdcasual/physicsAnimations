@@ -139,7 +139,7 @@ async function uploadAssetEntry() {
     return;
   }
   if (!assetFile.value) {
-    setFeedback("请选择 .ggb 文件。", true);
+    setFeedback("请选择 .ggb 或 PhET HTML 文件。", true);
     return;
   }
   saving.value = true;
@@ -163,7 +163,7 @@ async function uploadAssetEntry() {
       return;
     }
     if (e?.data?.error === "unsupported_asset_type") {
-      setFeedback("当前仅支持上传 .ggb 文件。", true);
+      setFeedback("当前仅支持上传 .ggb 或 PhET HTML 文件。", true);
       return;
     }
     setFeedback("资源上传失败。", true);
@@ -280,12 +280,12 @@ onMounted(async () => {
         </div>
 
         <label class="field">
-          <span>.ggb 文件</span>
+          <span>.ggb / PhET HTML</span>
           <input
             id="library-asset-file"
             class="field-input"
             type="file"
-            accept=".ggb,application/vnd.geogebra.file"
+            accept=".ggb,.html,.htm,application/vnd.geogebra.file,text/html"
             @change="onAssetFileChange"
           />
         </label>

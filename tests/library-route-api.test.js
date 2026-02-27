@@ -204,3 +204,48 @@ test("content library route serves uploaded source file", async () => {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("library routes support PhET html upload with embed open info", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+
+  try {
+    const token = await login(baseUrl, authConfig);
+    const createFolder = await fetch(`${baseUrl}/api/library/folders`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: "PhET Folder", categoryId: "other" }),
+    });
+    const folderBody = await createFolder.json();
+
+    const phetHtml = `
+      <html><head><title>PhET</title></head>
+      <body><iframe src="https://phet.colorado.edu/sims/html/projectile-motion/latest/projectile-motion_en.html"></iframe></body>
+      </html>`;
+    const form = new FormData();
+    form.append("file", new Blob([Buffer.from(phetHtml, "utf8")]), "projectile-motion.phet.html");
+    form.append("openMode", "embed");
+    const upload = await fetch(`${baseUrl}/api/library/folders/${encodeURIComponent(folderBody.folder.id)}/assets`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    assert.equal(upload.status, 200);
+    const uploadBody = await upload.json();
+    assert.equal(uploadBody?.asset?.adapterKey, "phet");
+
+    const info = await fetch(`${baseUrl}/api/library/assets/${encodeURIComponent(uploadBody.asset.id)}`);
+    assert.equal(info.status, 200);
+    const infoBody = await info.json();
+    assert.equal(infoBody?.mode, "embed");
+    assert.match(String(infoBody?.openUrl || ""), /\/content\/library\/assets\/.*\/viewer\/index\.html$/);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
