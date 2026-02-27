@@ -14,6 +14,7 @@ function readLibrarySources() {
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
+  const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
   const folderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
   const assetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
   const inspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
@@ -29,6 +30,7 @@ function readLibrarySources() {
     feedback,
     embedActions,
     assetSelection,
+    assetFilters,
     folderColumn,
     assetColumn,
     inspectorColumn,
@@ -44,6 +46,7 @@ function readLibrarySources() {
       feedback,
       embedActions,
       assetSelection,
+      assetFilters,
       folderColumn,
       assetColumn,
       inspectorColumn,
@@ -132,6 +135,15 @@ describe("admin library layout", () => {
     expect(state).not.toMatch(/async function runAssetBatchMove/);
     expect(assetSelection).toMatch(/async function runAssetBatchDelete/);
     expect(assetSelection).toMatch(/async function runAssetBatchMove/);
+  });
+
+  it("moves query/filter/sort logic into the asset filters composable", () => {
+    const { state, assetFilters } = readLibrarySources();
+    expect(state).not.toMatch(/const folderSearchQuery = ref/);
+    expect(state).not.toMatch(/const filteredFolderAssets = computed/);
+    expect(assetFilters).toMatch(/const folderSearchQuery = ref/);
+    expect(assetFilters).toMatch(/const filteredFolderAssets = computed/);
+    expect(assetFilters).toMatch(/const sortedFilteredFolderAssets = computed/);
   });
 
   it("routes panel switching through setActivePanelTab to keep sections expanded", () => {
