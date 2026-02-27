@@ -13,6 +13,7 @@ function readLibrarySources() {
   const state = read("src/features/library/useLibraryAdminState.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
+  const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   return {
     view,
     template,
@@ -20,7 +21,8 @@ function readLibrarySources() {
     state,
     feedback,
     embedActions,
-    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}`,
+    assetSelection,
+    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}\n${assetSelection}`,
   };
 }
 
