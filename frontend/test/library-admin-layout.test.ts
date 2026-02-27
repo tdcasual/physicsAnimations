@@ -13,6 +13,7 @@ function readLibrarySources() {
   const state = read("src/features/library/useLibraryAdminState.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
+  const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   const folderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
   const assetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
   const inspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
@@ -27,6 +28,7 @@ function readLibrarySources() {
     state,
     feedback,
     embedActions,
+    assetSelection,
     folderColumn,
     assetColumn,
     inspectorColumn,
@@ -41,6 +43,7 @@ function readLibrarySources() {
       state,
       feedback,
       embedActions,
+      assetSelection,
       folderColumn,
       assetColumn,
       inspectorColumn,
