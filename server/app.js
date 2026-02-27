@@ -9,6 +9,7 @@ const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
 const { loadSystemState } = require("./lib/systemState");
 const { createStateDbStore } = require("./lib/stateDb");
 const { createTaskQueue } = require("./lib/taskQueue");
+const { createQueryReposFromStore } = require("./ports/queryRepos");
 
 const { errorHandler } = require("./middleware/errorHandler");
 const { requestContextMiddleware } = require("./middleware/requestContext");
@@ -99,6 +100,7 @@ function createApp({
   stateDbPath: overrideStateDbPath,
   stateDbMaxErrors: overrideStateDbMaxErrors,
   taskQueue: overrideTaskQueue,
+  queryRepos: overrideQueryRepos,
 }) {
   const app = express();
   app.disable("x-powered-by");
@@ -135,6 +137,7 @@ function createApp({
     maxErrors: overrideStateDbMaxErrors,
   });
   const store = stateDbWrapped.store;
+  const queryRepos = overrideQueryRepos || createQueryReposFromStore({ store });
 
   app.use(requestContextMiddleware);
   app.use(express.json({ limit: "2mb" }));
@@ -180,8 +183,8 @@ function createApp({
     }),
   );
   app.use("/api", createGroupsRouter({ rootDir, authConfig, store }));
-  app.use("/api", createCategoriesRouter({ rootDir, authConfig, store }));
-  app.use("/api", createItemsRouter({ rootDir, authConfig, store, taskQueue }));
+  app.use("/api", createCategoriesRouter({ rootDir, authConfig, store, queryRepos }));
+  app.use("/api", createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }));
 
   const spaDistDir = path.join(rootDir, "frontend", "dist");
   const spaAssetsDir = path.join(spaDistDir, "assets");
