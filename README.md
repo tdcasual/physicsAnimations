@@ -51,9 +51,60 @@ npm run build-catalog
 npm run dev:frontend
 npm run build:frontend
 npm run test:frontend
+
+# 更新 GeoGebra 自托管包（资源库 embed）
+npm run update:geogebra-bundle
 ```
 
+## GeoGebra 内网自托管（带在线兜底）
+
+资源库 `.ggb` 的容器页默认采用“自托管优先、在线兜底”：
+
+1. 优先加载 `/content/library/vendor/geogebra/current/deployggb.js`
+2. 自托管不可用时，回退到 `https://www.geogebra.org/apps/deployggb.js`
+
+首次部署或定期更新时执行：
+
+```bash
+npm run update:geogebra-bundle
+```
+
+容器部署建议使用更新任务容器（不依赖本机手工）：
+
+```bash
+docker compose --profile maintenance run --rm ggb-updater
+```
+
+该命令会下载官方 Math Apps Bundle，生成稳定路径：
+
+- `/content/library/vendor/geogebra/current/deployggb.js`
+- `/content/library/vendor/geogebra/current/web3d/`
+
+详细可配置项见 [配置项参考（环境变量）](docs/guides/configuration.md) 中 “GeoGebra 自托管（资源库）” 一节。
+
 ## Docker Compose 快速部署
+
+仓库提供了容器模板文件：`docker-compose.example.yml`。
+
+你现有的最小 compose（含 `ADMIN_USERNAME` / `ADMIN_PASSWORD`）仍然兼容，可以继续使用：
+
+```yaml
+services:
+  physics-animations:
+    image: ghcr.io/tdcasual/physicsanimations:latest
+    container_name: physics-animations
+    ports:
+      - "4173:4173"
+    environment:
+      PORT: 4173
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: admin
+    volumes:
+      - ./content:/app/content
+    restart: unless-stopped
+```
+
+如果要启用 GeoGebra 自动更新，只需要在现有文件上增加 `ggb-updater` 服务（见 `docker-compose.example.yml`）。
 
 ```yaml
 services:
@@ -73,6 +124,9 @@ services:
 docker compose pull
 docker compose up -d
 docker logs -f physics-animations
+
+# 手动触发一次 GeoGebra 自托管包更新（可配置成定时任务）
+docker compose --profile maintenance run --rm ggb-updater
 ```
 
 说明：`content` 卷建议始终挂载，这样重建容器后内容不会丢。

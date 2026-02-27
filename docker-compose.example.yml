@@ -1,0 +1,30 @@
+services:
+  physics-animations:
+    image: ghcr.io/tdcasual/physicsanimations:latest
+    container_name: physics-animations
+    ports:
+      - "4173:4173"
+    environment:
+      PORT: 4173
+      LIBRARY_GGB_ENABLE_ONLINE_FALLBACK: "true"
+    volumes:
+      - ./content:/app/content
+    restart: unless-stopped
+
+  ggb-updater:
+    image: ghcr.io/tdcasual/physicsanimations:latest
+    profiles:
+      - maintenance
+    working_dir: /app
+    entrypoint:
+      - /bin/sh
+      - -lc
+      - ./scripts/run_geogebra_updater.sh
+    environment:
+      ROOT_DIR: /app
+      GGB_BUNDLE_URL: https://download.geogebra.org/package/geogebra-math-apps-bundle
+      GGB_RETAIN_RELEASES: "3"
+      GGB_NO_LOCK: "false"
+    volumes:
+      - ./content:/app/content
+    restart: "no"

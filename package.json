@@ -13,6 +13,8 @@
     "install-playwright-deps": "node scripts/install_playwright_deps.js",
     "generate-thumbnails": "node scripts/generate_thumbnails.js",
     "build-catalog": "node scripts/build_catalog.js",
+    "update:geogebra-bundle": "node scripts/update_geogebra_bundle.js",
+    "update:geogebra-bundle:job": "sh ./scripts/run_geogebra_updater.sh",
     "smoke:spa-admin": "node scripts/smoke_spa_admin.js",
     "smoke:spa-admin-write": "node scripts/smoke_spa_admin_writepath.js",
     "smoke:spa-public": "node scripts/smoke_spa_public.js",

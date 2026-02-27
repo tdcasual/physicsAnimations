@@ -64,6 +64,51 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 | --- | --- | --- |
 | `METRICS_PUBLIC` | `false` | 是否匿名访问 `/api/metrics`；设为 `true` 可匿名访问 |
 
+## GeoGebra 自托管（资源库）
+
+> 适用于 `library` 中 `.ggb` 的 `embed` 打开模式。默认会先走内网自托管，再在线兜底。
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `LIBRARY_GGB_SELF_HOST_SCRIPT_URL` | `/content/library/vendor/geogebra/current/deployggb.js` | 自托管 `deployggb.js` 地址 |
+| `LIBRARY_GGB_SELF_HOST_HTML5_CODEBASE_URL` | `/content/library/vendor/geogebra/current/web3d/` | 自托管 `HTML5Codebase`（需以 `/` 结尾） |
+| `LIBRARY_GGB_ENABLE_ONLINE_FALLBACK` | `true` | 自托管失败时是否允许在线兜底 |
+| `LIBRARY_GGB_ONLINE_FALLBACK_SCRIPT_URL` | `https://www.geogebra.org/apps/deployggb.js` | 在线兜底脚本地址 |
+| `LIBRARY_GGB_ONLINE_FALLBACK_HTML5_CODEBASE_URL` | 空 | 在线兜底时可选 codebase（通常留空） |
+
+更新自托管包：
+
+```bash
+npm run update:geogebra-bundle
+```
+
+默认下载官方 `Math Apps Bundle`，并切换 `content/library/vendor/geogebra/current` 到最新 release。
+
+高级参数示例（保留最近 3 个版本、启用 sha256 校验）：
+
+```bash
+node scripts/update_geogebra_bundle.js \
+  --retain 3 \
+  --sha256 <expected_sha256_hex>
+```
+
+## GeoGebra 更新任务（容器作业）
+
+> 仅用于 `ggb-updater` 任务容器，不是主应用服务变量。
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `GGB_BUNDLE_URL` | `https://download.geogebra.org/package/geogebra-math-apps-bundle` | bundle 下载地址（可替换为内网制品源） |
+| `GGB_BUNDLE_VERSION` | 空 | 指定 release 名称，不填则从最终 URL 推断 |
+| `GGB_BUNDLE_SHA256` | 空 | zip 的期望 SHA256（64 位十六进制） |
+| `GGB_RETAIN_RELEASES` | `3` | 更新后保留最近版本数（`0` 表示不清理） |
+| `GGB_BUNDLE_FORCE` | `false` | 是否覆盖同名 release |
+| `GGB_NO_LOCK` | `false` | 是否禁用更新锁 |
+| `GGB_LOCK_FILE` | 空 | 自定义锁文件路径（默认在 vendor 目录下） |
+| `GGB_KEEP_TEMP` | `false` | 是否保留下载/解压临时目录 |
+
+这些变量由 `scripts/run_geogebra_updater.sh` 读取，并转为 `update_geogebra_bundle.js` 参数。
+
 ## 一个生产环境最小配置示例
 
 ```env
