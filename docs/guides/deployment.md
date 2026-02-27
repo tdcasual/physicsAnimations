@@ -13,8 +13,6 @@ services:
       - "4173:4173"
     environment:
       PORT: 4173
-      ADMIN_USERNAME: admin
-      ADMIN_PASSWORD: "admin"
     volumes:
       - ./content:/app/content
     restart: unless-stopped
@@ -24,7 +22,10 @@ services:
 
 ```bash
 docker compose up -d
+docker logs -f physics-animations
 ```
+
+说明：未显式配置管理员凭据时，会在启动日志打印随机生成的账号密码。
 
 ## 无痛升级步骤
 
@@ -52,8 +53,6 @@ docker run -d --name physics-animations \
   -p 4173:4173 \
   -v "$(pwd)/content:/app/content" \
   -e PORT=4173 \
-  -e ADMIN_USERNAME=admin \
-  -e ADMIN_PASSWORD='admin' \
   ghcr.io/tdcasual/physicsanimations:latest
 ```
 

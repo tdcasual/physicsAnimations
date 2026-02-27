@@ -129,6 +129,26 @@ describe("adminApi", () => {
     expect(options?.body).toBeInstanceOf(FormData);
   });
 
+  it("uploadHtmlItem can include risky-html confirmation flag", async () => {
+    sessionStorage.setItem("pa_admin_token", "token-1");
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, id: "u_2" }));
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const file = new File(["<html></html>"], "risky.html", { type: "text/html" });
+    await uploadHtmlItem({
+      file,
+      categoryId: "other",
+      title: "Risky",
+      description: "Desc",
+      allowRiskyHtml: true,
+    });
+
+    const [, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
+    const formData = options?.body as FormData;
+    expect(formData).toBeInstanceOf(FormData);
+    expect(formData.get("allowRiskyHtml")).toBe("true");
+  });
+
   it("group/category CRUD methods use expected routes", async () => {
     sessionStorage.setItem("pa_admin_token", "token-1");
     const fetchMock = vi.fn(async () => jsonResponse({ ok: true }));

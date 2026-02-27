@@ -71,6 +71,25 @@ function setActionFeedback(text: string, isError = false) {
   actionFeedbackError.value = isError;
 }
 
+function buildRiskConfirmMessage(details: any): string {
+  const findings = Array.isArray(details?.findings) ? details.findings : [];
+  if (findings.length === 0) {
+    return "检测到潜在风险内容，确认后继续上传。是否继续？";
+  }
+  const lines = findings.slice(0, 6).map((item: any, index: number) => {
+    const severity = String(item?.severity || "unknown");
+    const message = String(item?.message || "潜在风险");
+    const source = item?.source ? ` (${String(item.source)})` : "";
+    return `${index + 1}. [${severity}] ${message}${source}`;
+  });
+  const truncated = details?.truncated ? "\n...（仅展示部分风险项）" : "";
+  const summary =
+    typeof details?.summary === "string" && details.summary
+      ? details.summary
+      : `检测到 ${findings.length} 项潜在风险特征。`;
+  return `${summary}\n\n${lines.join("\n")}${truncated}\n\n是否仍继续上传？`;
+}
+
 function onSelectFile(event: Event) {
   const target = event.target as HTMLInputElement;
   file.value = target.files?.[0] || null;
@@ -155,12 +174,33 @@ async function submitUpload() {
   setActionFeedback("");
 
   try {
-    await uploadHtmlItem({
+    const basePayload = {
       file: file.value,
       categoryId: categoryId.value,
       title: title.value.trim(),
       description: description.value.trim(),
-    });
+    };
+
+    try {
+      await uploadHtmlItem(basePayload);
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.data?.error !== "risky_html_requires_confirmation") {
+        throw err;
+      }
+
+      const confirmed = window.confirm(buildRiskConfirmMessage(e?.data?.details));
+      if (!confirmed) {
+        setActionFeedback("已取消风险上传。", true);
+        return;
+      }
+
+      await uploadHtmlItem({
+        ...basePayload,
+        allowRiskyHtml: true,
+      });
+    }
+
     file.value = null;
     title.value = "";
     description.value = "";

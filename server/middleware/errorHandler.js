@@ -17,7 +17,12 @@ function errorHandler(err, req, res, _next) {
         : "bad_request";
 
   const payload = { error: code };
-  if ((code === "invalid_input" || code === "storage_readonly") && err?.details) {
+  if (
+    (code === "invalid_input" ||
+      code === "storage_readonly" ||
+      code === "risky_html_requires_confirmation") &&
+    err?.details
+  ) {
     payload.details = err.details;
   }
 

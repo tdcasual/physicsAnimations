@@ -78,12 +78,16 @@ export async function uploadHtmlItem(payload: {
   categoryId: string;
   title: string;
   description: string;
+  allowRiskyHtml?: boolean;
 }): Promise<any> {
   const formData = new FormData();
   formData.append("file", payload.file);
   formData.append("categoryId", payload.categoryId || "other");
   formData.append("title", payload.title || "");
   formData.append("description", payload.description || "");
+  if (payload.allowRiskyHtml === true) {
+    formData.append("allowRiskyHtml", "true");
+  }
 
   return apiFetch("/api/items/upload", {
     method: "POST",

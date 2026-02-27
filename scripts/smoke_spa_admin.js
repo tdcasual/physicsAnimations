@@ -39,11 +39,15 @@ async function waitForHealth(baseUrl, timeoutMs = 20000) {
 
 function startServer(rootDir, port, logPath) {
   const logStream = fs.createWriteStream(logPath, { flags: "w" });
+  const smokeUsername = process.env.SMOKE_ADMIN_USERNAME || "admin";
+  const smokePassword = process.env.SMOKE_ADMIN_PASSWORD || "admin";
   const child = spawn("node", ["server/index.js"], {
     cwd: rootDir,
     env: {
       ...process.env,
       PORT: String(port),
+      ADMIN_USERNAME: process.env.ADMIN_USERNAME || smokeUsername,
+      ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || smokePassword,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

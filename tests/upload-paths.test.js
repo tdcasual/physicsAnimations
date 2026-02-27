@@ -213,3 +213,54 @@ test("zip upload ignores traversal entries and does not escape uploads", async (
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("html upload with risky content requires confirmation and preserves original html when confirmed", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+
+  try {
+    const token = await login(baseUrl, authConfig);
+    const riskyHtml = `<html><head><meta http-equiv="refresh" content="0;url=https://evil.example"></head><body><script>alert("x")</script><button onclick="alert(1)">x</button></body></html>`;
+
+    const firstForm = new FormData();
+    firstForm.append("file", new Blob([riskyHtml]), "risky.html");
+    firstForm.append("categoryId", "other");
+    const firstResponse = await fetch(`${baseUrl}/api/items/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: firstForm,
+    });
+    assert.equal(firstResponse.status, 409);
+    const firstBody = await firstResponse.json();
+    assert.equal(firstBody.error, "risky_html_requires_confirmation");
+    assert.equal(Array.isArray(firstBody?.details?.findings), true);
+    assert.ok(firstBody.details.findings.length > 0);
+
+    const secondForm = new FormData();
+    secondForm.append("file", new Blob([riskyHtml]), "risky.html");
+    secondForm.append("categoryId", "other");
+    secondForm.append("allowRiskyHtml", "true");
+    const secondResponse = await fetch(`${baseUrl}/api/items/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: secondForm,
+    });
+    assert.equal(secondResponse.status, 200);
+    const secondBody = await secondResponse.json();
+    assert.equal(secondBody.ok, true);
+    assert.ok(secondBody.id);
+
+    const storedHtml = fs.readFileSync(
+      path.join(rootDir, "content", "uploads", secondBody.id, "index.html"),
+      "utf8",
+    );
+    assert.equal(storedHtml.includes('<script>alert("x")</script>'), true);
+    assert.equal(storedHtml.includes('onclick="alert(1)"'), true);
+    assert.equal(storedHtml.includes("meta http-equiv=\"refresh\""), true);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

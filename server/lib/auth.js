@@ -7,9 +7,73 @@ const { loadAdminState } = require("./adminState");
 const logger = require("./logger");
 
 const DEFAULT_ADMIN_USERNAME = "admin";
-const DEFAULT_ADMIN_PASSWORD = "admin";
 const JWT_SECRET_FILE = ".jwt_secret";
 let didWarnEphemeralJwtSecret = false;
+let didWarnGeneratedAdminCredentials = false;
+
+function parseOptionalEnvString(name) {
+  const raw = process.env[name];
+  if (typeof raw !== "string") return "";
+  return raw.trim();
+}
+
+function generateRandomCredentialPart(byteLength = 9) {
+  return crypto.randomBytes(byteLength).toString("base64url");
+}
+
+function resolveAdminCredentialDefaults() {
+  const envUsername = parseOptionalEnvString("ADMIN_USERNAME");
+  const envPasswordHash = parseOptionalEnvString("ADMIN_PASSWORD_HASH");
+  const envPassword = process.env.ADMIN_PASSWORD || "";
+
+  if (envPasswordHash) {
+    return {
+      username: envUsername || DEFAULT_ADMIN_USERNAME,
+      passwordHash: envPasswordHash,
+      source: "env_password_hash",
+      generatedPassword: "",
+    };
+  }
+
+  if (envPassword) {
+    return {
+      username: envUsername || DEFAULT_ADMIN_USERNAME,
+      passwordHash: bcrypt.hashSync(envPassword, 10),
+      source: "env_password",
+      generatedPassword: "",
+    };
+  }
+
+  const generatedPassword = generateRandomCredentialPart(12);
+  if (envUsername) {
+    return {
+      username: envUsername,
+      passwordHash: bcrypt.hashSync(generatedPassword, 10),
+      source: "generated_password",
+      generatedPassword,
+    };
+  }
+
+  const generatedUsername = `admin_${crypto.randomBytes(4).toString("hex")}`;
+  return {
+    username: generatedUsername,
+    passwordHash: bcrypt.hashSync(generatedPassword, 10),
+    source: "generated_username_password",
+    generatedPassword,
+  };
+}
+
+function warnGeneratedAdminCredentials({ username, password }) {
+  if (didWarnGeneratedAdminCredentials) return;
+  didWarnGeneratedAdminCredentials = true;
+  // Intentionally plain-text for first bootstrap in self-hosted/Docker setups.
+  console.warn(
+    `[physicsAnimations] Generated admin credentials: username=${username} password=${password}`,
+  );
+  console.warn(
+    "[physicsAnimations] Set ADMIN_USERNAME and ADMIN_PASSWORD/ADMIN_PASSWORD_HASH to override this bootstrap behavior.",
+  );
+}
 
 function loadJwtSecretFromFile(filePath) {
   try {
@@ -45,10 +109,15 @@ function resolveJwtSecretWithSource({ rootDir } = {}) {
 }
 
 function getAuthConfig({ rootDir } = {}) {
-  const adminUsername = process.env.ADMIN_USERNAME || DEFAULT_ADMIN_USERNAME;
-  const adminPasswordHash =
-    process.env.ADMIN_PASSWORD_HASH ||
-    bcrypt.hashSync(process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD, 10);
+  const adminDefaults = resolveAdminCredentialDefaults();
+  const adminUsername = adminDefaults.username;
+  const adminPasswordHash = adminDefaults.passwordHash;
+  if (adminDefaults.generatedPassword) {
+    warnGeneratedAdminCredentials({
+      username: adminUsername,
+      password: adminDefaults.generatedPassword,
+    });
+  }
 
   const { secret: jwtSecret, source: jwtSecretSource } = resolveJwtSecretWithSource({ rootDir });
   if (jwtSecretSource === "memory" && !process.env.JWT_SECRET && !didWarnEphemeralJwtSecret) {
@@ -67,6 +136,7 @@ function getAuthConfig({ rootDir } = {}) {
   return {
     adminUsername,
     adminPasswordHash,
+    adminCredentialsSource: adminDefaults.source,
     jwtSecret,
     jwtSecretSource,
     jwtIssuer,

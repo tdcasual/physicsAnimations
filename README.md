@@ -19,7 +19,7 @@ npm start
 
 打开 `http://localhost:4173`。
 
-默认管理员账号：`admin` / `admin`（建议上线后第一时间修改）。
+未设置管理员环境变量时，系统会在首次启动时随机生成管理员账号密码，并打印到服务日志（Docker 可用 `docker logs <container>` 查看）。
 
 如果你在本机遇到截图依赖缺失，再执行一次：
 
@@ -33,6 +33,7 @@ npm run install-playwright-deps
 - 动画卡片自动缩略图
 - 预览页支持内置资源和外链资源
 - 后台可上传 HTML / ZIP / 外链，支持编辑与删除
+- 上传 HTML 命中风险特征时会先提示确认，再决定是否继续上传
 - 内容目录可持续维护（而不是每次手改静态文件）
 
 ## 常用命令
@@ -61,8 +62,6 @@ services:
       - "4173:4173"
     environment:
       PORT: 4173
-      ADMIN_USERNAME: admin
-      ADMIN_PASSWORD: "admin"
     volumes:
       - ./content:/app/content
     restart: unless-stopped
@@ -71,6 +70,7 @@ services:
 ```bash
 docker compose pull
 docker compose up -d
+docker logs -f physics-animations
 ```
 
 说明：`content` 卷建议始终挂载，这样重建容器后内容不会丢。
@@ -79,7 +79,7 @@ docker compose up -d
 
 - 公共浏览：默认可匿名访问
 - 资源管理：需要管理员登录
-- `/api/metrics`：默认可匿名访问；若你想改成仅登录可见，设置 `METRICS_PUBLIC=false`
+- `/api/metrics`：默认仅登录可见；若你想匿名访问，设置 `METRICS_PUBLIC=true`
 
 ## 文档导航
 
@@ -102,4 +102,4 @@ docker compose up -d
 
 ## 许可
 
-[MIT](LICENSE)
+[AGPL-3.0](LICENSE)

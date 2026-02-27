@@ -129,6 +129,16 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
     deleted: z.boolean().optional(),
   });
 
+  function parseBooleanFlag(value, fallback = false) {
+    if (value === undefined || value === null) return fallback;
+    if (typeof value === "boolean") return value;
+    const raw = String(value).trim().toLowerCase();
+    if (!raw) return fallback;
+    if (["1", "true", "yes", "on"].includes(raw)) return true;
+    if (["0", "false", "no", "off"].includes(raw)) return false;
+    return fallback;
+  }
+
   router.get(
     "/items",
     authOptional,
@@ -161,6 +171,7 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
         const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
         const description =
           typeof req.body?.description === "string" ? req.body.description.trim() : "";
+        const allowRiskyHtml = parseBooleanFlag(req.body?.allowRiskyHtml);
         const originalName =
           typeof req.file.originalname === "string" ? req.file.originalname : "upload.html";
 
@@ -170,6 +181,7 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
           title,
           description,
           categoryId,
+          allowRiskyHtml,
         });
         res.json(created);
         return;
@@ -242,6 +254,7 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
       const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
       const description =
         typeof req.body?.description === "string" ? req.body.description.trim() : "";
+      const allowRiskyHtml = parseBooleanFlag(req.body?.allowRiskyHtml);
 
       if (!req.file?.buffer?.length) {
         res.status(400).json({ error: "missing_file" });
@@ -256,6 +269,7 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
         title,
         description,
         categoryId,
+        allowRiskyHtml,
       });
       res.json(created);
     }),

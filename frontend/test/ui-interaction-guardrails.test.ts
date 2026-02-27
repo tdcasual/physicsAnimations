@@ -32,4 +32,11 @@ describe("ui interaction guardrails", () => {
     expect(source).toMatch(/clearHideScreenshotTimer/);
     expect(source).toMatch(/if\s*\(!screenshotMode\.value\)\s*\{[\s\S]*screenshotVisible\.value\s*=\s*false/);
   });
+
+  it("requires explicit confirmation before uploading risky html", () => {
+    const uploadsSource = readFile("src/views/admin/AdminUploadsView.vue");
+    expect(uploadsSource).toMatch(/risky_html_requires_confirmation/);
+    expect(uploadsSource).toMatch(/window\.confirm\(/);
+    expect(uploadsSource).toMatch(/allowRiskyHtml:\s*true/);
+  });
 });

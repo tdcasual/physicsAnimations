@@ -14,8 +14,8 @@
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `ADMIN_USERNAME` | `admin` | 管理员用户名 |
-| `ADMIN_PASSWORD` | `admin` | 管理员明文密码（启动时会 hash） |
+| `ADMIN_USERNAME` | 未设置 | 不设置时会随机生成用户名（形如 `admin_xxxxxxxx`） |
+| `ADMIN_PASSWORD` | 未设置 | 不设置且未提供 `ADMIN_PASSWORD_HASH` 时会随机生成密码并写入启动日志 |
 | `ADMIN_PASSWORD_HASH` | 未设置 | 若设置，优先于 `ADMIN_PASSWORD` |
 | `JWT_SECRET` | 未设置 | 强烈建议生产环境设置固定值 |
 | `JWT_ISSUER` | `physicsAnimations` | JWT issuer |
@@ -62,7 +62,7 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `METRICS_PUBLIC` | `true` | 是否匿名访问 `/api/metrics`；设为 `false` 则需要登录 |
+| `METRICS_PUBLIC` | `false` | 是否匿名访问 `/api/metrics`；设为 `true` 可匿名访问 |
 
 ## 一个生产环境最小配置示例
 

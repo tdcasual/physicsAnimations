@@ -7,12 +7,12 @@
 - 登录接口：`POST /api/auth/login`
 - 登录成功后携带：`Authorization: Bearer <token>`
 
-## 公开可读接口（默认可匿名）
+## 公开可读接口（默认可匿名，`/api/metrics` 例外）
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | `GET` | `/api/health` | 服务健康状态 |
-| `GET` | `/api/metrics` | 运行指标（若 `METRICS_PUBLIC=false` 则需登录） |
+| `GET` | `/api/metrics` | 运行指标（默认需登录；设 `METRICS_PUBLIC=true` 可匿名） |
 | `GET` | `/api/catalog` | 前台目录（分组/分类/条目） |
 | `GET` | `/api/categories` | 分类与统计（匿名时不含隐藏内容） |
 | `GET` | `/api/groups` | 大类列表（匿名时不含隐藏内容） |
@@ -56,6 +56,12 @@
 
 - `POST /api/items/link`
 - `POST /api/items/upload`
+
+上传风险确认说明：
+
+- 对 HTML/ZIP 上传会执行风险扫描。
+- 若命中风险，接口返回 `409` 与 `error: risky_html_requires_confirmation`，并在 `details.findings` 返回命中项。
+- 管理端确认后，重试上传时在 `multipart/form-data` 中添加 `allowRiskyHtml=true` 即可继续。
 
 ## 后端实现边界（Extensibility Phase 1）
 

@@ -65,7 +65,14 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
     return { ok: true, id, thumbnail };
   }
 
-  async function createUploadItem({ fileBuffer, originalName, title, description, categoryId }) {
+  async function createUploadItem({
+    fileBuffer,
+    originalName,
+    title,
+    description,
+    categoryId,
+    allowRiskyHtml = false,
+  }) {
     const isHtml = /\.(html?|htm)$/i.test(originalName);
     const isZip = isZipUpload(originalName, fileBuffer);
     if (!isHtml && !isZip) {
@@ -98,6 +105,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
           now,
           tmpDir,
           writeUploadBuffer,
+          allowRiskyHtml,
         });
         uploadKind = zipResult.uploadKind;
         entryRelPath = zipResult.entryRelPath;
@@ -110,6 +118,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
           now,
           tmpDir,
           writeUploadBuffer,
+          allowRiskyHtml,
         });
         uploadKind = htmlResult.uploadKind;
         entryRelPath = htmlResult.entryRelPath;

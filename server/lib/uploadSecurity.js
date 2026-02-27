@@ -1,76 +1,79 @@
-function stripTagByName(html, tagName) {
-  const openOrClose = new RegExp(`<\\/?${tagName}\\b[^>]*>`, "gi");
-  return html.replace(openOrClose, "");
-}
+const MAX_FINDINGS = 20;
 
-function stripMetaHttpEquiv(html, httpEquivValue) {
-  const re = new RegExp(
-    `<meta\\b[^>]*http-equiv\\s*=\\s*(['"])${httpEquivValue}\\1[^>]*>`,
-    "gi",
-  );
-  return html.replace(re, "");
-}
+const RISK_RULES = [
+  {
+    code: "script_tag",
+    severity: "high",
+    message: "检测到 <script> 脚本标签",
+    pattern: /<script\b/i,
+  },
+  {
+    code: "event_handler",
+    severity: "medium",
+    message: "检测到内联事件处理器（如 onclick）",
+    pattern: /\son[a-z0-9_-]+\s*=/i,
+  },
+  {
+    code: "javascript_url",
+    severity: "high",
+    message: "检测到 javascript: URL",
+    pattern: /\b(?:href|src|action)\s*=\s*(['"])\s*javascript:/i,
+  },
+  {
+    code: "meta_refresh",
+    severity: "medium",
+    message: "检测到 meta refresh 跳转",
+    pattern: /<meta\b[^>]*http-equiv\s*=\s*(['"])refresh\1/i,
+  },
+  {
+    code: "external_iframe",
+    severity: "medium",
+    message: "检测到 iframe 内嵌内容",
+    pattern: /<iframe\b/i,
+  },
+  {
+    code: "object_embed",
+    severity: "high",
+    message: "检测到 object/embed 可执行嵌入",
+    pattern: /<(?:object|embed)\b/i,
+  },
+];
 
-function stripScriptTagsWithSrc(html) {
-  const re = /<script\b[^>]*\bsrc\s*=\s*(['"]?)[^'">\s]+\1[^>]*>\s*<\/script\s*>/gi;
-  return html.replace(re, "");
-}
+function scanUploadedHtmlRisk(html, { source = "index.html" } = {}) {
+  const raw = typeof html === "string" ? html : "";
+  if (!raw) return [];
 
-function stripScriptTagsWithExternalSrc(html) {
-  const re =
-    /<script\b[^>]*\bsrc\s*=\s*(['"]?)(https?:\/\/|\/\/)[^'">\s]+\1[^>]*>\s*<\/script\s*>/gi;
-  return html.replace(re, "");
-}
-
-function stripExternalLinkTags(html) {
-  const re = /<link\b[^>]*\bhref\s*=\s*(['"])(https?:\/\/|\/\/)[^'"]+\1[^>]*>/gi;
-  return html.replace(re, "");
-}
-
-function escapeHtmlAttribute(value) {
-  return value.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-}
-
-function injectCspMeta(html, csp) {
-  const meta = `<meta http-equiv="Content-Security-Policy" content="${escapeHtmlAttribute(csp)}">`;
-
-  if (/<head\b[^>]*>/i.test(html)) {
-    return html.replace(/<head\b[^>]*>/i, (match) => `${match}\n    ${meta}`);
+  const findings = [];
+  for (const rule of RISK_RULES) {
+    if (!rule.pattern.test(raw)) continue;
+    findings.push({
+      code: rule.code,
+      severity: rule.severity,
+      message: rule.message,
+      source,
+    });
   }
-
-  if (/<html\b[^>]*>/i.test(html)) {
-    return html.replace(/<html\b[^>]*>/i, (match) => `${match}\n<head>\n    ${meta}\n</head>`);
-  }
-
-  return `<!doctype html>\n<head>\n    ${meta}\n</head>\n${html}`;
+  return findings;
 }
 
-function ensureUtf8Meta(html) {
-  let out = typeof html === "string" ? html : "";
-
-  out = out.replace(/<meta\b[^>]*\bcharset\s*=\s*(['"]?)[^'">\s]+\1[^>]*>/gi, "");
-  out = out.replace(
-    /<meta\b[^>]*http-equiv\s*=\s*(['"])content-type\1[^>]*>/gi,
-    "",
-  );
-
-  const meta = `<meta charset="UTF-8">`;
-
-  if (/<head\b[^>]*>/i.test(out)) {
-    return out.replace(/<head\b[^>]*>/i, (match) => `${match}\n    ${meta}`);
-  }
-
-  if (/<html\b[^>]*>/i.test(out)) {
-    return out.replace(/<html\b[^>]*>/i, (match) => `${match}\n<head>\n    ${meta}\n</head>`);
-  }
-
-  return `<!doctype html>\n<head>\n    ${meta}\n</head>\n${out}`;
+function toRiskConfirmationDetails(findings) {
+  const list = Array.isArray(findings) ? findings : [];
+  return {
+    summary: `检测到 ${list.length} 项潜在风险特征，需确认后继续上传。`,
+    findings: list.slice(0, MAX_FINDINGS),
+    truncated: list.length > MAX_FINDINGS,
+  };
 }
 
-function sanitizeUploadedHtml(html, { allowLocalScripts = false } = {}) {
-  return typeof html === "string" ? html : "";
+function createRiskConfirmationError(findings) {
+  const err = new Error("risky_html_requires_confirmation");
+  err.status = 409;
+  err.details = toRiskConfirmationDetails(findings);
+  return err;
 }
 
 module.exports = {
-  sanitizeUploadedHtml,
+  scanUploadedHtmlRisk,
+  toRiskConfirmationDetails,
+  createRiskConfirmationError,
 };

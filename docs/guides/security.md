@@ -10,8 +10,9 @@
 
 2. 上传内容处理
 - 支持单 HTML 与 ZIP 上传
-- 对外部 JS/CSS 依赖进行受控下载与本地改写
-- 仅允许公共 `http(s)` 资源，限制数量与大小
+- 上传内容保持原始 HTML，不做自动清洗或依赖改写
+- 上传前做风险特征扫描（脚本、事件处理器、跳转等）
+- 命中风险时要求管理员显式确认后才允许上传（不自动清洗原始 HTML）
 
 3. SSRF 防护
 - 截图网络请求会阻止访问 localhost/私网段/`.local` 等地址
@@ -26,15 +27,15 @@
 
 ## 上线建议（务实版）
 
-1. 改默认管理员账号
-- 不要继续使用 `admin/admin`
-- 优先配置 `ADMIN_PASSWORD_HASH` 而不是明文密码
+1. 固定管理员凭据
+- 未配置 `ADMIN_USERNAME` / `ADMIN_PASSWORD(_HASH)` 时，系统会随机生成管理员账号密码并打印到启动日志
+- 生产环境建议显式配置 `ADMIN_PASSWORD_HASH`，并在首次登录后立即在账号页轮换密码
 
 2. 配置稳定的 JWT 密钥
 - 生产环境务必设置 `JWT_SECRET`
 
 3. 收紧指标接口
-- 如需限制运行指标暴露，设置 `METRICS_PUBLIC=false`
+- 默认已为仅登录可见；仅在确有需要时才设置 `METRICS_PUBLIC=true`
 
 4. 确保持久化目录可靠
 - Docker/Compose 场景挂载 `content/`

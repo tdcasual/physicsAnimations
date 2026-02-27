@@ -7,6 +7,10 @@ const {
   decodeHtmlBuffer: defaultDecodeHtmlBuffer,
   decodeTextBuffer: defaultDecodeTextBuffer,
 } = require("../../lib/textEncoding");
+const {
+  scanUploadedHtmlRisk: defaultScanUploadedHtmlRisk,
+  createRiskConfirmationError,
+} = require("../../lib/uploadSecurity");
 const { guessContentType, normalizeZipPath } = require("./uploadIngestUtils");
 
 const MAX_FILES = 500;
@@ -54,12 +58,14 @@ async function ingestZipUpload({
   now,
   tmpDir,
   writeUploadBuffer,
+  allowRiskyHtml = false,
   deps = {},
 }) {
   const decodeHtmlBuffer = deps.decodeHtmlBuffer || defaultDecodeHtmlBuffer;
   const decodeTextBuffer = deps.decodeTextBuffer || defaultDecodeTextBuffer;
   const extractHtmlTitleAndDescription =
     deps.extractHtmlTitleAndDescription || defaultExtractHtmlTitleAndDescription;
+  const scanUploadedHtmlRisk = deps.scanUploadedHtmlRisk || defaultScanUploadedHtmlRisk;
 
   const dir = await unzipper.Open.buffer(fileBuffer);
   const files = (dir.files || []).filter((f) => f.type === "File");
@@ -73,6 +79,7 @@ async function ingestZipUpload({
   const extracted = [];
   const htmlCandidates = [];
   const htmlMetaByPath = new Map();
+  const riskFindings = [];
 
   for (const file of files) {
     const rel = normalizeZipPath(file.path);
@@ -111,6 +118,7 @@ async function ingestZipUpload({
       const html = decodeHtmlBuffer(buf);
       const meta = extractHtmlTitleAndDescription(html);
       htmlMetaByPath.set(rel, meta);
+      riskFindings.push(...scanUploadedHtmlRisk(html, { source: rel }));
       outBuf = Buffer.from(html, "utf8");
       contentType = "text/html; charset=utf-8";
       htmlCandidates.push(rel);
@@ -124,6 +132,10 @@ async function ingestZipUpload({
     fs.writeFileSync(localPath, outBuf);
     await writeUploadBuffer(`uploads/${id}/${rel}`, outBuf, { contentType });
     extracted.push(rel);
+  }
+
+  if (riskFindings.length > 0 && !allowRiskyHtml) {
+    throw createRiskConfirmationError(riskFindings);
   }
 
   const indexCandidates = htmlCandidates
