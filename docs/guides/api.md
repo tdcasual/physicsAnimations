@@ -18,6 +18,11 @@
 | `GET` | `/api/groups` | 大类列表（匿名时不含隐藏内容） |
 | `GET` | `/api/items` | 条目列表（匿名时过滤未发布/隐藏） |
 | `GET` | `/api/items/:id` | 条目详情（匿名时仅可见已发布可见条目） |
+| `GET` | `/api/library/catalog` | 资源库目录（文件夹摘要） |
+| `GET` | `/api/library/folders` | 文件夹列表 |
+| `GET` | `/api/library/folders/:id` | 文件夹详情 |
+| `GET` | `/api/library/folders/:id/assets` | 文件夹资源列表 |
+| `GET` | `/api/library/assets/:id` | 资源打开信息（`embed/download`） |
 
 ## 需要管理员登录的接口
 
@@ -41,6 +46,16 @@
 | `GET` | `/api/tasks/:taskId` | 查询任务状态 |
 | `POST` | `/api/tasks/:taskId/retry` | 重试失败任务 |
 
+### 资源库管理（文件夹 + `.ggb`）
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `POST` | `/api/library/folders` | 创建文件夹 |
+| `POST` | `/api/library/folders/:id/cover` | 上传文件夹封面图 |
+| `POST` | `/api/library/folders/:id/assets` | 上传资源（当前仅 `.ggb`） |
+| `DELETE` | `/api/library/folders/:id` | 删除文件夹（非空返回 `folder_not_empty`） |
+| `DELETE` | `/api/library/assets/:id` | 删除资源 |
+
 ### 分类管理
 
 | 方法 | 路径 | 说明 |
@@ -62,6 +77,19 @@
 - 对 HTML/ZIP 上传会执行风险扫描。
 - 若命中风险，接口返回 `409` 与 `error: risky_html_requires_confirmation`，并在 `details.findings` 返回命中项。
 - 管理端确认后，重试上传时在 `multipart/form-data` 中添加 `allowRiskyHtml=true` 即可继续。
+
+资源库上传说明：
+
+- 资源上传接口：`POST /api/library/folders/:id/assets`
+- `multipart/form-data` 字段：
+  - `file`：资源文件（Phase 1 仅支持 `.ggb`）
+  - `openMode`：`embed` 或 `download`
+- 返回错误码示例：
+  - `unsupported_asset_type`
+  - `invalid_open_mode`
+  - `folder_not_found`
+  - `adapter_render_failed`
+  - `folder_not_empty`
 
 ## 后端实现边界（Extensibility Phase 1）
 
