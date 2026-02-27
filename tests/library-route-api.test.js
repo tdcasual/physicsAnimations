@@ -112,6 +112,7 @@ test("library routes support folder create and ggb upload flow", async () => {
     const form = new FormData();
     form.append("file", new Blob([Buffer.from("GGBDATA")]), "demo.ggb");
     form.append("openMode", "embed");
+    form.append("displayName", "斜抛演示");
     const upload = await fetch(`${baseUrl}/api/library/folders/${encodeURIComponent(folderBody.folder.id)}/assets`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -121,13 +122,65 @@ test("library routes support folder create and ggb upload flow", async () => {
     const uploadBody = await upload.json();
     assert.equal(uploadBody?.ok, true);
     assert.ok(uploadBody?.asset?.id);
+    assert.equal(uploadBody?.asset?.displayName, "斜抛演示");
 
     const assetInfo = await fetch(`${baseUrl}/api/library/assets/${encodeURIComponent(uploadBody.asset.id)}`);
     assert.equal(assetInfo.status, 200);
     const infoBody = await assetInfo.json();
     assert.equal(infoBody?.ok, true);
     assert.equal(infoBody?.mode, "embed");
+    assert.equal(infoBody?.asset?.displayName, "斜抛演示");
     assert.match(String(infoBody?.openUrl || ""), /\/content\/library\/assets\/.*\/viewer\/index\.html$/);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("library routes support updating asset displayName", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+
+  try {
+    const token = await login(baseUrl, authConfig);
+    const createFolder = await fetch(`${baseUrl}/api/library/folders`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: "Rename Folder", categoryId: "other" }),
+    });
+    const folderBody = await createFolder.json();
+
+    const form = new FormData();
+    form.append("file", new Blob([Buffer.from("GGBDATA")]), "rename-demo.ggb");
+    form.append("openMode", "download");
+    const upload = await fetch(`${baseUrl}/api/library/folders/${encodeURIComponent(folderBody.folder.id)}/assets`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    const uploadBody = await upload.json();
+
+    const renamed = await fetch(`${baseUrl}/api/library/assets/${encodeURIComponent(uploadBody.asset.id)}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ displayName: "重命名资源标题" }),
+    });
+    assert.equal(renamed.status, 200);
+    const renamedBody = await renamed.json();
+    assert.equal(renamedBody?.ok, true);
+    assert.equal(renamedBody?.asset?.displayName, "重命名资源标题");
+
+    const info = await fetch(`${baseUrl}/api/library/assets/${encodeURIComponent(uploadBody.asset.id)}`);
+    const infoBody = await info.json();
+    assert.equal(infoBody?.asset?.displayName, "重命名资源标题");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createLibraryFolder,
   listLibraryCatalog,
+  updateLibraryAsset,
   uploadLibraryAsset,
 } from "../src/features/library/libraryApi";
 
@@ -69,5 +70,55 @@ describe("libraryApi", () => {
     expect(options?.body).toBeInstanceOf(FormData);
     const formData = options?.body as FormData;
     expect(formData.get("openMode")).toBe("download");
+  });
+
+  it("uploadLibraryAsset defaults openMode to download when omitted", async () => {
+    sessionStorage.setItem("pa_admin_token", "token-lib-1");
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, asset: { id: "a_2" } }));
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const file = new File(["GGBDATA"], "demo.ggb", { type: "application/vnd.geogebra.file" });
+    await uploadLibraryAsset({
+      folderId: "f_1",
+      file,
+      openMode: undefined as any,
+    });
+
+    const [, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
+    expect(options?.body).toBeInstanceOf(FormData);
+    const formData = options?.body as FormData;
+    expect(formData.get("openMode")).toBe("download");
+  });
+
+  it("uploadLibraryAsset sends displayName when provided", async () => {
+    sessionStorage.setItem("pa_admin_token", "token-lib-1");
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, asset: { id: "a_3" } }));
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const file = new File(["GGBDATA"], "demo.ggb", { type: "application/vnd.geogebra.file" });
+    await uploadLibraryAsset({
+      folderId: "f_1",
+      file,
+      openMode: "download",
+      displayName: "自由落体演示",
+    } as any);
+
+    const [, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
+    const formData = options?.body as FormData;
+    expect(formData.get("displayName")).toBe("自由落体演示");
+  });
+
+  it("updateLibraryAsset sends displayName patch", async () => {
+    sessionStorage.setItem("pa_admin_token", "token-lib-1");
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, asset: { id: "a_1" } }));
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    await updateLibraryAsset("a_1", { displayName: "重命名后的标题" });
+
+    const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
+    expect(url).toBe("/api/library/assets/a_1");
+    expect(options?.method).toBe("PUT");
+    const body = JSON.parse(String(options?.body || "{}"));
+    expect(body.displayName).toBe("重命名后的标题");
   });
 });

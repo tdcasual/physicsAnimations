@@ -19,6 +19,7 @@ export interface LibraryAsset {
   id: string;
   folderId: string;
   adapterKey: string;
+  displayName: string;
   fileName: string;
   filePath: string;
   fileSize: number;

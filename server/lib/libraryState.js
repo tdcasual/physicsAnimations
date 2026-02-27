@@ -65,6 +65,7 @@ function sanitizeAssetEntry(value) {
     id,
     folderId: toText(value.folderId),
     adapterKey: toText(value.adapterKey),
+    displayName: toText(value.displayName),
     fileName: toText(value.fileName),
     filePath: toText(value.filePath),
     fileSize: Math.max(0, toInt(value.fileSize, 0)),

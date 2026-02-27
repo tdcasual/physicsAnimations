@@ -84,6 +84,9 @@
 - `multipart/form-data` 字段：
   - `file`：资源文件（支持 `.ggb`、`*.phet.html`，或含 PhET 标记的 HTML）
   - `openMode`：`embed` 或 `download`
+  - `displayName`：可选，资源展示名称（可与文件名不同）
+- 资源重命名接口：`PUT /api/library/assets/:id`
+  - JSON 字段：`displayName`（可空字符串，表示回退为文件名显示）
 - 返回错误码示例：
   - `unsupported_asset_type`
   - `invalid_open_mode`

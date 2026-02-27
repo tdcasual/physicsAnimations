@@ -82,9 +82,9 @@ watch(
 
     <div v-else class="library-assets">
       <article v-for="asset in assets" :key="asset.id" class="asset-card">
-        <div class="asset-name">{{ asset.fileName || asset.id }}</div>
+        <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
         <div class="asset-meta">
-          {{ asset.adapterKey || "asset" }} · {{ asset.openMode === "embed" ? "容器页" : "下载" }}
+          {{ asset.adapterKey || "asset" }} · {{ asset.openMode === "embed" ? "容器页" : "原文件" }}
         </div>
         <div class="asset-actions">
           <a
@@ -100,9 +100,10 @@ watch(
             v-else
             class="btn btn-primary"
             :href="openAssetHref(asset)"
-            download
+            target="_blank"
+            rel="noreferrer"
           >
-            下载文件
+            打开原文件
           </a>
           <a class="btn btn-ghost" :href="downloadAssetHref(asset)" download>下载源文件</a>
         </div>

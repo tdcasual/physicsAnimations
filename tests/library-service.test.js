@@ -43,6 +43,7 @@ test("createLibraryService exposes core folder and asset operations", async () =
   assert.equal(typeof service.uploadAsset, "function");
   assert.equal(typeof service.listFolderAssets, "function");
   assert.equal(typeof service.getAssetOpenInfo, "function");
+  assert.equal(typeof service.updateAsset, "function");
   assert.equal(typeof service.deleteFolder, "function");
   assert.equal(typeof service.deleteAsset, "function");
 });
@@ -117,10 +118,12 @@ test("uploadAsset in download mode skips viewer generation", async () => {
     fileBuffer: Buffer.from("GGBDATA"),
     originalName: "only-download.ggb",
     openMode: "download",
+    displayName: "仅下载演示",
   });
 
   assert.equal(uploaded.ok, true);
   assert.equal(uploaded.asset.openMode, "download");
+  assert.equal(uploaded.asset.displayName, "仅下载演示");
   assert.equal(uploaded.asset.generatedEntryPath, "");
 
   const keys = Array.from(store.blobs.keys());
@@ -132,7 +135,37 @@ test("uploadAsset in download mode skips viewer generation", async () => {
 
   const openInfo = await service.getAssetOpenInfo({ assetId: uploaded.asset.id });
   assert.equal(openInfo.mode, "download");
+  assert.equal(openInfo.asset.displayName, "仅下载演示");
   assert.match(openInfo.openUrl, /\/content\/library\/assets\/.*\/source\/only-download\.ggb$/);
+});
+
+test("updateAsset updates displayName and persists updatedAt", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const service = createLibraryService({
+    store: createMemoryStore(),
+    deps: {
+      adapterRegistry: createTestAdapterRegistry(),
+    },
+  });
+  const folder = await service.createFolder({ name: "GGB", categoryId: "other" });
+  const uploaded = await service.uploadAsset({
+    folderId: folder.id,
+    fileBuffer: Buffer.from("GGBDATA"),
+    originalName: "demo.ggb",
+    openMode: "download",
+  });
+  const beforeUpdatedAt = uploaded.asset.updatedAt;
+
+  const updated = await service.updateAsset({
+    assetId: uploaded.asset.id,
+    displayName: "抛体运动（重命名）",
+  });
+  assert.equal(updated.ok, true);
+  assert.equal(updated.asset.displayName, "抛体运动（重命名）");
+  assert.ok(typeof updated.asset.updatedAt === "string" && updated.asset.updatedAt.length > 0);
+
+  const openInfo = await service.getAssetOpenInfo({ assetId: uploaded.asset.id });
+  assert.equal(openInfo.asset.displayName, "抛体运动（重命名）");
 });
 
 test("uploadAsset supports PhET html and generates embed wrapper", async () => {

@@ -20,6 +20,7 @@ const IMAGE_EXT_BY_MIME = new Map([
 
 function normalizeOpenMode(value) {
   const mode = String(value || "").trim().toLowerCase();
+  if (!mode) return "download";
   if (mode === "embed") return "embed";
   if (mode === "download") return "download";
   return "";
@@ -133,7 +134,7 @@ function createLibraryService({ store, deps = {} }) {
     return all.find((item) => item.id === id) || null;
   }
 
-  async function uploadAsset({ folderId, fileBuffer, originalName, openMode }) {
+  async function uploadAsset({ folderId, fileBuffer, originalName, openMode, displayName }) {
     const folder = await getFolderById({ folderId });
     if (!folder) return { status: 404, error: "folder_not_found" };
     if (!Buffer.isBuffer(fileBuffer) || fileBuffer.length === 0) return { status: 400, error: "missing_file" };
@@ -178,6 +179,7 @@ function createLibraryService({ store, deps = {} }) {
       id: assetId,
       folderId: folder.id,
       adapterKey: adapter.key,
+      displayName: String(displayName || "").trim(),
       fileName: safeName,
       filePath: sourcePublicPath,
       fileSize: fileBuffer.length,
@@ -193,6 +195,25 @@ function createLibraryService({ store, deps = {} }) {
     });
 
     return { ok: true, asset };
+  }
+
+  async function updateAsset({ assetId, displayName }) {
+    const asset = await getAssetById({ assetId });
+    if (!asset) return { status: 404, error: "asset_not_found" };
+
+    const now = new Date().toISOString();
+    const nextDisplayName = String(displayName || "").trim();
+    let updatedAsset = null;
+    await mutateLibraryAssetsState({ store }, (state) => {
+      const target = state.assets.find((item) => item.id === asset.id);
+      if (!target) return;
+      target.displayName = nextDisplayName;
+      target.updatedAt = now;
+      updatedAsset = { ...target };
+    });
+
+    if (!updatedAsset) return { status: 404, error: "asset_not_found" };
+    return { ok: true, asset: updatedAsset };
   }
 
   async function getAssetOpenInfo({ assetId }) {
@@ -275,6 +296,7 @@ function createLibraryService({ store, deps = {} }) {
     listFolderAssets,
     getAssetById,
     getAssetOpenInfo,
+    updateAsset,
     getCatalogSummary,
     deleteFolder,
     deleteAsset,

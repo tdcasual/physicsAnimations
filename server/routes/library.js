@@ -40,6 +40,9 @@ function createLibraryRouter({ authConfig, store }) {
     categoryId: z.string().optional().default("other"),
     coverType: z.enum(["blank", "image"]).optional().default("blank"),
   });
+  const updateAssetSchema = z.object({
+    displayName: z.string().max(128).optional().default(""),
+  });
 
   function sendServiceResult(res, result, okBody) {
     if (result?.error) {
@@ -150,6 +153,22 @@ function createLibraryRouter({ authConfig, store }) {
         fileBuffer: req.file.buffer,
         originalName: req.file.originalname,
         openMode: req.body?.openMode,
+        displayName: req.body?.displayName,
+      });
+      if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
+    }),
+  );
+
+  router.put(
+    "/library/assets/:id",
+    authRequired,
+    rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 }),
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const body = parseWithSchema(updateAssetSchema, req.body);
+      const result = await service.updateAsset({
+        assetId: id,
+        displayName: body.displayName,
       });
       if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
     }),

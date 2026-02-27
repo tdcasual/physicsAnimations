@@ -7,10 +7,12 @@ function read(relPath: string): string {
 }
 
 describe("library folder view", () => {
-  it("contains embed/download action rendering", () => {
+  it("contains embed/open-source action rendering", () => {
     const source = read("src/views/LibraryFolderView.vue");
     expect(source).toMatch(/openMode\s*===\s*'embed'/);
     expect(source).toMatch(/打开演示/);
-    expect(source).toMatch(/下载文件/);
+    expect(source).toMatch(/打开原文件/);
+    expect(source).toMatch(/target="_blank"/);
+    expect(source).toMatch(/asset\.displayName\s*\|\|\s*asset\.fileName/);
   });
 });

@@ -2,6 +2,7 @@
   <section class="admin-layout-view">
     <h1>管理后台</h1>
     <nav class="admin-nav">
+      <RouterLink class="admin-link" to="/">主页面</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/dashboard">概览</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/content">内容</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/uploads">上传</RouterLink>
@@ -39,7 +40,7 @@ h1 {
   text-decoration: none;
   color: inherit;
   background: color-mix(in srgb, var(--surface) 88%, var(--bg));
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .admin-link.active {

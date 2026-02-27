@@ -68,6 +68,7 @@ test("libraryState saves and reloads sanitized folders/assets payload", async ()
           id: "a1",
           folderId: "f1",
           adapterKey: "geogebra",
+          displayName: "演示名称",
           fileName: "demo.ggb",
           filePath: "content/library/assets/a1/source/demo.ggb",
           fileSize: 123,
@@ -89,6 +90,7 @@ test("libraryState saves and reloads sanitized folders/assets payload", async ()
   assert.equal(assets.version, 1);
   assert.equal(assets.assets.length, 1);
   assert.equal(assets.assets[0].id, "a1");
+  assert.equal(assets.assets[0].displayName, "演示名称");
 });
 
 test("libraryState mutate helpers persist updates", async () => {

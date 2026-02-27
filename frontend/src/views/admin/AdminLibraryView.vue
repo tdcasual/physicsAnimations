@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
+import { listTaxonomy } from "../../features/admin/adminApi";
 import {
   createLibraryFolder,
   deleteLibraryAsset,
@@ -7,10 +8,22 @@ import {
   getLibraryFolder,
   listLibraryFolderAssets,
   listLibraryFolders,
+  updateLibraryAsset,
   uploadLibraryAsset,
   uploadLibraryFolderCover,
 } from "../../features/library/libraryApi";
 import type { LibraryAsset, LibraryFolder, LibraryOpenMode } from "../../features/library/types";
+
+interface CategoryRow {
+  id: string;
+  groupId: string;
+  title: string;
+}
+
+interface GroupRow {
+  id: string;
+  title: string;
+}
 
 const loading = ref(false);
 const saving = ref(false);
@@ -20,19 +33,42 @@ const feedbackError = ref(false);
 const folders = ref<LibraryFolder[]>([]);
 const selectedFolderId = ref("");
 const folderAssets = ref<LibraryAsset[]>([]);
+const categories = ref<CategoryRow[]>([]);
+const groups = ref<GroupRow[]>([]);
 
 const folderName = ref("");
 const folderCategoryId = ref("other");
+const createCoverFile = ref<File | null>(null);
 
 const coverFile = ref<File | null>(null);
 const assetFile = ref<File | null>(null);
-const openMode = ref<LibraryOpenMode>("embed");
+const assetDisplayName = ref("");
+const openMode = ref<LibraryOpenMode>("download");
 
 const selectedFolder = computed(() => folders.value.find((folder) => folder.id === selectedFolderId.value) || null);
+const groupedCategoryOptions = computed(() => {
+  const groupsMap = new Map(groups.value.map((group) => [group.id, group.title]));
+  const options = categories.value.map((category) => ({
+    value: category.id,
+    label: `${groupsMap.get(category.groupId) || category.groupId} / ${category.title}`,
+  }));
+  if (options.length === 0) {
+    options.push({
+      value: "other",
+      label: "物理 / 其他",
+    });
+  }
+  return options;
+});
 
 function setFeedback(text: string, isError = false) {
   feedback.value = text;
   feedbackError.value = isError;
+}
+
+function onCreateCoverFileChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  createCoverFile.value = target.files?.[0] || null;
 }
 
 function onCoverFileChange(event: Event) {
@@ -53,6 +89,18 @@ async function reloadFolders() {
   } else if (selectedFolderId.value && !list.some((folder) => folder.id === selectedFolderId.value)) {
     selectedFolderId.value = list[0]?.id || "";
   }
+}
+
+function syncCategorySelection() {
+  if (groupedCategoryOptions.value.some((item) => item.value === folderCategoryId.value)) return;
+  folderCategoryId.value = groupedCategoryOptions.value[0]?.value || "other";
+}
+
+async function reloadTaxonomy() {
+  const data = await listTaxonomy();
+  groups.value = Array.isArray(data?.groups) ? data.groups : [];
+  categories.value = Array.isArray(data?.categories) ? data.categories : [];
+  syncCategorySelection();
 }
 
 async function reloadFolderAssets() {
@@ -78,17 +126,31 @@ async function createFolderEntry() {
   saving.value = true;
   setFeedback("");
   try {
-    await createLibraryFolder({
+    const created = await createLibraryFolder({
       name,
       categoryId: folderCategoryId.value.trim() || "other",
       coverType: "blank",
     });
+    const createdFolderId = String(created?.folder?.id || "");
+    if (createCoverFile.value && createdFolderId) {
+      await uploadLibraryFolderCover({
+        folderId: createdFolderId,
+        file: createCoverFile.value,
+      });
+    }
     folderName.value = "";
+    createCoverFile.value = null;
+    const createCoverInput = document.querySelector<HTMLInputElement>("#library-create-cover-file");
+    if (createCoverInput) createCoverInput.value = "";
     await reloadFolders();
     await reloadFolderAssets();
     setFeedback("文件夹已创建。");
   } catch (err) {
-    const e = err as { status?: number };
+    const e = err as { status?: number; data?: any };
+    if (e?.data?.error === "cover_invalid_type") {
+      setFeedback("封面仅支持图片类型。", true);
+      return;
+    }
     setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "创建文件夹失败。", true);
   } finally {
     saving.value = false;
@@ -149,8 +211,10 @@ async function uploadAssetEntry() {
       folderId: selectedFolderId.value,
       file: assetFile.value,
       openMode: openMode.value,
+      displayName: assetDisplayName.value.trim(),
     });
     assetFile.value = null;
+    assetDisplayName.value = "";
     const input = document.querySelector<HTMLInputElement>("#library-asset-file");
     if (input) input.value = "";
     await reloadFolders();
@@ -167,6 +231,25 @@ async function uploadAssetEntry() {
       return;
     }
     setFeedback("资源上传失败。", true);
+  } finally {
+    saving.value = false;
+  }
+}
+
+async function renameAssetDisplayName(asset: LibraryAsset) {
+  const current = asset.displayName || asset.fileName || "";
+  const next = window.prompt("请输入新的显示名称（留空则恢复文件名显示）", current);
+  if (next === null) return;
+  saving.value = true;
+  setFeedback("");
+  try {
+    await updateLibraryAsset(asset.id, { displayName: next.trim() });
+    await reloadFolders();
+    await reloadFolderAssets();
+    setFeedback("显示名称已更新。");
+  } catch (err) {
+    const e = err as { status?: number };
+    setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "更新显示名称失败。", true);
   } finally {
     saving.value = false;
   }
@@ -223,6 +306,7 @@ onMounted(async () => {
   loading.value = true;
   setFeedback("");
   try {
+    await reloadTaxonomy().catch(() => {});
     await reloadFolders();
     await reloadFolderAssets();
   } catch {
@@ -245,8 +329,22 @@ onMounted(async () => {
           <input v-model="folderName" class="field-input" type="text" />
         </label>
         <label class="field">
-          <span>分类 ID</span>
-          <input v-model="folderCategoryId" class="field-input" type="text" />
+          <span>分类</span>
+          <select v-model="folderCategoryId" class="field-input">
+            <option v-for="option in groupedCategoryOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </label>
+        <label class="field">
+          <span>创建时封面（可选）</span>
+          <input
+            id="library-create-cover-file"
+            class="field-input"
+            type="file"
+            accept="image/*"
+            @change="onCreateCoverFileChange"
+          />
         </label>
         <div class="admin-actions">
           <button type="button" class="btn btn-primary" :disabled="saving" @click="createFolderEntry">创建文件夹</button>
@@ -272,7 +370,7 @@ onMounted(async () => {
         </div>
 
         <label class="field">
-          <span>封面图片</span>
+          <span>更改封面</span>
           <input id="library-cover-file" class="field-input" type="file" accept="image/*" @change="onCoverFileChange" />
         </label>
         <div class="admin-actions">
@@ -290,10 +388,14 @@ onMounted(async () => {
           />
         </label>
         <label class="field">
+          <span>资源显示名称（可选）</span>
+          <input v-model="assetDisplayName" class="field-input" type="text" placeholder="例如：力学-抛体运动演示" />
+        </label>
+        <label class="field">
           <span>打开方式</span>
           <select v-model="openMode" class="field-input">
+            <option value="download">打开原文件（默认）</option>
             <option value="embed">容器页打开</option>
-            <option value="download">仅下载</option>
           </select>
         </label>
         <div class="admin-actions">
@@ -302,11 +404,15 @@ onMounted(async () => {
 
         <div class="asset-list">
           <article v-for="asset in folderAssets" :key="asset.id" class="asset-item">
-            <div>
-              <div class="asset-name">{{ asset.fileName || asset.id }}</div>
-              <div class="asset-meta">{{ asset.openMode === "embed" ? "容器页" : "下载" }}</div>
+            <div class="asset-main">
+              <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
+              <div class="asset-meta">源文件：{{ asset.fileName || asset.id }}</div>
+              <div class="asset-meta">{{ asset.openMode === "embed" ? "容器页" : "原文件" }}</div>
             </div>
-            <button type="button" class="btn btn-ghost" :disabled="saving" @click="removeAsset(asset.id)">删除</button>
+            <div class="asset-actions-inline">
+              <button type="button" class="btn btn-ghost" :disabled="saving" @click="renameAssetDisplayName(asset)">重命名显示名</button>
+              <button type="button" class="btn btn-ghost" :disabled="saving" @click="removeAsset(asset.id)">删除</button>
+            </div>
           </article>
           <div v-if="selectedFolderId && folderAssets.length === 0" class="empty">该文件夹暂无资源。</div>
         </div>
@@ -345,6 +451,18 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+}
+
+.asset-main {
+  display: grid;
+  gap: 2px;
+}
+
+.asset-actions-inline {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .folder-item.active {

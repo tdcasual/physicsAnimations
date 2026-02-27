@@ -76,6 +76,7 @@ function toAsset(value: any) {
     id: String(value?.id || ""),
     folderId: String(value?.folderId || ""),
     adapterKey: String(value?.adapterKey || ""),
+    displayName: String(value?.displayName || ""),
     fileName: String(value?.fileName || ""),
     filePath: String(value?.filePath || ""),
     fileSize: Number(value?.fileSize || 0),
@@ -158,14 +159,29 @@ export async function uploadLibraryAsset(payload: {
   folderId: string;
   file: File;
   openMode: LibraryOpenMode;
+  displayName?: string;
 }): Promise<any> {
   const formData = new FormData();
   formData.append("file", payload.file);
-  formData.append("openMode", payload.openMode || "embed");
+  formData.append("openMode", payload.openMode || "download");
+  formData.append("displayName", String(payload.displayName || "").trim());
 
   return apiFetch(`/api/library/folders/${encodeURIComponent(payload.folderId)}/assets`, {
     method: "POST",
     body: formData,
+  });
+}
+
+export async function updateLibraryAsset(
+  assetId: string,
+  patch: { displayName?: string },
+): Promise<any> {
+  return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      displayName: String(patch?.displayName || ""),
+    }),
   });
 }
 
