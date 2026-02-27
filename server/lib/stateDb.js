@@ -3,6 +3,7 @@ const path = require("path");
 const { Readable } = require("stream");
 const logger = require("./logger");
 const { loadNodeSqlite } = require("./nodeSqlite");
+const { createStateDbCircuitState } = require("./stateDb/circuitState");
 
 const STATE_BLOB_KEYS = new Set([
   "items.json",
@@ -835,7 +836,6 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
     lastSuccessAt: "",
   };
 
-  let consecutiveErrors = 0;
   let dynamicIndexedReady = false;
   let builtinIndexedReady = false;
   let builtinOverridesDirty = true;
@@ -847,42 +847,10 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
     return err;
   }
 
+  const circuitState = createStateDbCircuitState({ info, logger });
+
   function isUsable() {
-    return !info.circuitOpen;
-  }
-
-  function markStateDbSuccess() {
-    if (info.circuitOpen) return;
-    consecutiveErrors = 0;
-    info.consecutiveErrors = 0;
-    info.healthy = true;
-    info.degraded = false;
-    info.lastSuccessAt = new Date().toISOString();
-  }
-
-  function markStateDbFailure(operation, err) {
-    const message = err?.message || String(err || "state_db_failed");
-    info.errorCount += 1;
-    consecutiveErrors += 1;
-    info.consecutiveErrors = consecutiveErrors;
-    info.lastError = `${operation}: ${message}`;
-    info.lastErrorAt = new Date().toISOString();
-
-    if (consecutiveErrors >= info.maxErrors) {
-      info.circuitOpen = true;
-      info.healthy = false;
-      info.degraded = false;
-    } else {
-      info.healthy = false;
-      info.degraded = true;
-    }
-
-    logger.warn("state_db_operation_failed", {
-      operation,
-      message,
-      consecutiveErrors,
-      circuitOpen: info.circuitOpen,
-    });
+    return circuitState.isUsable();
   }
 
   function ensureUsable() {
@@ -893,10 +861,10 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
     ensureUsable();
     try {
       const result = fn();
-      markStateDbSuccess();
+      circuitState.markSuccess();
       return result;
     } catch (err) {
-      markStateDbFailure(operation, err);
+      circuitState.markFailure(operation, err);
       throw err;
     }
   }
