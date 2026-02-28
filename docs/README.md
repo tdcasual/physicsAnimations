@@ -11,6 +11,7 @@
 - 发布运维 Runbook：`docs/guides/ops-release-runbook.md`
 - 资源库事故处置：`docs/guides/ops-library-incident-runbook.md`
 - 维护与扩展 DoD：`docs/guides/maintainability-extensibility-dod.md`
+- 持续改进路线图：`docs/guides/continuous-improvement-roadmap.md`
 
 ## 我是新手
 
@@ -29,6 +30,7 @@
 - `docs/guides/spa-and-frontend.md`（前端路由与模块边界）
 - `docs/guides/api.md`（接口约束与稳定性假设）
 - `docs/guides/maintainability-extensibility-dod.md`（扩展改动完成定义）
+- `docs/guides/continuous-improvement-roadmap.md`（下一轮改进入口）
 
 ## 关键边界（TL;DR）
 

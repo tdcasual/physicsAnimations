@@ -21,9 +21,21 @@
 - 管理类接口要求管理员登录
 - 登录、写入、截图、任务重试均有基础限流
 
-5. 任务可观测
+5. API 响应头安全基线
+- `/api/*` 默认设置 `X-Content-Type-Options: nosniff`
+- `/api/*` 默认设置 `Referrer-Policy: no-referrer`
+- `/api/*` 默认设置 `X-Frame-Options: DENY`
+- `/api/*` 默认设置 `Permissions-Policy: geolocation=(), microphone=(), camera=()`
+
+6. 任务可观测
 - 截图与异步任务支持状态查询和重试
 - 任务状态可持久化，降低重启造成的状态丢失
+
+7. 静态安全门禁
+- `guard:security` 会阻断运行时代码中的高风险模式：
+  - `eval(...)`
+  - `new Function(...)`
+  - 在运行时代码中直接引入 `child_process`
 
 ## 上线建议（务实版）
 

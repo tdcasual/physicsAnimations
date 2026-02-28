@@ -14,5 +14,7 @@ test("ops docs include rollback and recovery sections", () => {
   assert.match(incident, /Embed/i);
   assert.match(incident, /恢复/i);
   assert.match(docsIndex, /maintainability-extensibility-dod/i);
+  assert.match(docsIndex, /continuous-improvement-roadmap/i);
   assert.match(rootReadme, /maintainability-extensibility-dod/i);
+  assert.match(rootReadme, /continuous-improvement-roadmap/i);
 });

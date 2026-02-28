@@ -11,8 +11,11 @@ npm run qa:release
 ```
 
 `qa:release` 会串行执行：
+- 文件体积门禁（`guard:file-size`）
+- 安全模式门禁（`guard:security`）
 - 后端测试
 - 前端测试
+- 前端类型检查
 - 前端构建
 - 公共站点 smoke
 - 管理端 smoke
