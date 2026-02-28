@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../features/auth/useAuthStore";
+import { resolveAdminRedirect } from "../router/redirect";
 
 const router = useRouter();
 const route = useRoute();
@@ -18,12 +19,8 @@ async function submit() {
       username: username.value,
       password: password.value,
     });
-    const redirect = String(route.query.redirect || "").trim();
-    if (redirect) {
-      await router.replace(redirect);
-      return;
-    }
-    await router.replace("/admin/dashboard");
+    const redirect = resolveAdminRedirect(route.query.redirect);
+    await router.replace(redirect);
   } catch (err) {
     const e = err as { status?: number; data?: any };
     if (e?.status === 401) {

@@ -20,4 +20,11 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/v-if=\"!auth\.loggedIn && !isLoginRoute\"/);
     expect(source).toMatch(/await router\.replace\(\"\/admin\/dashboard\"\)/);
   });
+
+  it("sanitizes login redirect query to admin paths before navigating", () => {
+    const source = read("src/views/LoginView.vue");
+    expect(source).toMatch(/resolveAdminRedirect/);
+    expect(source).toMatch(/const redirect = resolveAdminRedirect\(route\.query\.redirect\)/);
+    expect(source).not.toMatch(/const redirect = String\(route\.query\.redirect \|\| \"\"\)\.trim\(\)/);
+  });
 });
