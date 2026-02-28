@@ -141,6 +141,58 @@ test("category create rejects unknown group", async () => {
   }
 });
 
+test("invalid taxonomy payload returns 400 without crashing server", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const invalidGroupRes = await fetch(`${baseUrl}/api/groups`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: "g".repeat(70),
+        title: "超长 ID",
+        order: 0,
+        hidden: false,
+      }),
+    });
+    assert.equal(invalidGroupRes.status, 400);
+    assert.equal((await invalidGroupRes.json()).error, "invalid_input");
+
+    const healthAfterGroup = await fetch(`${baseUrl}/api/health`);
+    assert.equal(healthAfterGroup.status, 200);
+
+    const invalidCategoryRes = await fetch(`${baseUrl}/api/categories`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: "c".repeat(70),
+        groupId: "physics",
+        title: "超长 ID",
+        order: 0,
+        hidden: false,
+      }),
+    });
+    assert.equal(invalidCategoryRes.status, 400);
+    assert.equal((await invalidCategoryRes.json()).error, "invalid_input");
+
+    const healthAfterCategory = await fetch(`${baseUrl}/api/health`);
+    assert.equal(healthAfterCategory.status, 200);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("group and category CRUD works", async () => {
   const rootDir = makeTempRoot({ animationsJson: {} });
   const authConfig = makeAuthConfig();

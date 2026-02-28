@@ -6,6 +6,7 @@ const { DEFAULT_GROUP_ID } = require("../lib/categories");
 const { loadCatalog } = require("../lib/catalog");
 const { mutateCategoriesState, noSave } = require("../lib/state");
 const { parseWithSchema } = require("../lib/validation");
+const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
 const logger = require("../lib/logger");
 
@@ -67,7 +68,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
     "/groups",
     authRequired,
     rateLimit({ key: "groups_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    async (req, res) => {
+    asyncHandler(async (req, res) => {
       const body = parseWithSchema(createGroupSchema, req.body);
       const id = body.id.toLowerCase();
       const now = new Date().toISOString();
@@ -96,14 +97,14 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
         res.status(500).json({ error: "server_error" });
         logger.error("groups_create_failed", err, { route: "POST /groups", groupId: id });
       }
-    },
+    }),
   );
 
   router.put(
     "/groups/:id",
     authRequired,
     rateLimit({ key: "groups_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    async (req, res) => {
+    asyncHandler(async (req, res) => {
       const id = parseWithSchema(groupIdSchema, req.params.id).toLowerCase();
       const body = parseWithSchema(updateGroupSchema, req.body);
       const now = new Date().toISOString();
@@ -136,14 +137,14 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
         res.status(500).json({ error: "server_error" });
         logger.error("groups_update_failed", err, { route: "PUT /groups/:id", groupId: id });
       }
-    },
+    }),
   );
 
   router.delete(
     "/groups/:id",
     authRequired,
     rateLimit({ key: "groups_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    async (req, res) => {
+    asyncHandler(async (req, res) => {
       const id = parseWithSchema(groupIdSchema, req.params.id).toLowerCase();
       try {
         const result = await mutateCategoriesState({ store }, (state) => {
@@ -168,7 +169,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
         res.status(500).json({ error: "server_error" });
         logger.error("groups_delete_failed", err, { route: "DELETE /groups/:id", groupId: id });
       }
-    },
+    }),
   );
 
   return router;

@@ -7,6 +7,7 @@ const { loadCatalog } = require("../lib/catalog");
 const { buildCategoriesPayload, buildCategoriesPayloadWithSql } = require("../lib/categoriesPayload");
 const { mutateCategoriesState, noSave } = require("../lib/state");
 const { parseWithSchema } = require("../lib/validation");
+const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
 const logger = require("../lib/logger");
 
@@ -87,7 +88,7 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
     "/categories",
     authRequired,
     rateLimit({ key: "categories_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    async (req, res) => {
+    asyncHandler(async (req, res) => {
       const body = parseWithSchema(createCategorySchema, req.body);
       const id = body.id.toLowerCase();
       const groupId = String(body.groupId || DEFAULT_GROUP_ID).toLowerCase();
@@ -124,14 +125,14 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
         res.status(500).json({ error: "server_error" });
         logger.error("categories_create_failed", err, { route: "POST /categories", categoryId: id });
       }
-    },
+    }),
   );
 
   router.put(
     "/categories/:id",
     authRequired,
     rateLimit({ key: "categories_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    async (req, res) => {
+    asyncHandler(async (req, res) => {
       const id = parseWithSchema(categoryIdSchema, req.params.id).toLowerCase();
       const body = parseWithSchema(updateCategorySchema, req.body);
       const now = new Date().toISOString();
@@ -186,14 +187,14 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
           categoryId: id,
         });
       }
-    },
+    }),
   );
 
   router.delete(
     "/categories/:id",
     authRequired,
     rateLimit({ key: "categories_write", windowMs: 60 * 60 * 1000, max: 120 }),
-    async (req, res) => {
+    asyncHandler(async (req, res) => {
       const id = parseWithSchema(categoryIdSchema, req.params.id).toLowerCase();
       try {
         await mutateCategoriesState({ store }, (state) => {
@@ -209,7 +210,7 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
           categoryId: id,
         });
       }
-    },
+    }),
   );
 
   return router;
