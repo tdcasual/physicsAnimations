@@ -364,11 +364,7 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-.catalog-card-desc {
-  margin-top: 6px;
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale, 1));
-}
+.catalog-card-desc { margin-top: 6px; color: var(--muted); overflow-wrap: anywhere; word-break: break-word; font-size: calc(13px * var(--ui-scale, 1)); }
 
 .catalog-empty {
   border: 1px dashed var(--border);

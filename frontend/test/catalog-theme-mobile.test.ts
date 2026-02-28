@@ -26,4 +26,12 @@ describe("catalog theme semantics", () => {
     expect(styleBlock).toMatch(/\.catalog-card-title\s*\{[\s\S]*flex-wrap:\s*wrap/);
     expect(styleBlock).toMatch(/\.catalog-card-title\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
   });
+
+  it("allows catalog card description to wrap long unbroken tokens on mobile", () => {
+    const source = read("src/views/CatalogView.vue");
+    const styleBlock = source.split("<style scoped>")[1] ?? "";
+
+    expect(styleBlock).toMatch(/\.catalog-card-desc\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(styleBlock).toMatch(/\.catalog-card-desc\s*\{[\s\S]*word-break:\s*break-word/);
+  });
 });
