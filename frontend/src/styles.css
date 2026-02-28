@@ -228,6 +228,15 @@ a {
   color: var(--muted);
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  inline-size: 18px;
+  block-size: 18px;
+  margin: 0;
+  accent-color: var(--primary);
+  flex: 0 0 auto;
+}
+
 .field-input {
   border: 1px solid var(--border);
   border-radius: 10px;

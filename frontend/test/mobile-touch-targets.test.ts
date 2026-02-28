@@ -21,6 +21,8 @@ describe("mobile touch targets", () => {
     expect(globalCss).toMatch(/\.btn\s*\{[\s\S]*min-height:\s*40px/);
     expect(globalCss).toMatch(/\.field-input\s*\{[\s\S]*min-height:\s*40px/);
     expect(globalCss).toMatch(/\.checkbox\s*\{[\s\S]*min-height:\s*40px/);
+    expect(globalCss).toMatch(/input\[type="checkbox"\],\s*input\[type="radio"\]\s*\{[\s\S]*inline-size:\s*18px/);
+    expect(globalCss).toMatch(/input\[type="checkbox"\],\s*input\[type="radio"\]\s*\{[\s\S]*block-size:\s*18px/);
     expect(catalogView).toMatch(/\.catalog-search\s*\{[\s\S]*min-height:\s*40px/);
     expect(catalogView).toMatch(/\.catalog-tab\s*\{[\s\S]*min-height:\s*40px/);
     expect(libraryFolderView).toMatch(/<RouterLink[^>]*class="[^"]*\bbtn\b[^"]*"/);
