@@ -16,6 +16,10 @@ function readLibrarySources() {
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
   const folderActions = read("src/features/library/useLibraryFolderActions.ts");
+  const assetCrudActions = read("src/features/library/useLibraryAssetCrudActions.ts");
+  const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
+  const panelSections = read("src/features/library/useLibraryPanelSections.ts");
+  const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
   const folderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
   const assetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
   const inspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
@@ -33,6 +37,10 @@ function readLibrarySources() {
     assetSelection,
     assetFilters,
     folderActions,
+    assetCrudActions,
+    assetEditorActions,
+    panelSections,
+    adminLifecycle,
     folderColumn,
     assetColumn,
     inspectorColumn,
@@ -50,6 +58,10 @@ function readLibrarySources() {
       assetSelection,
       assetFilters,
       folderActions,
+      assetCrudActions,
+      assetEditorActions,
+      panelSections,
+      adminLifecycle,
       folderColumn,
       assetColumn,
       inspectorColumn,
@@ -162,9 +174,11 @@ describe("admin library layout", () => {
   });
 
   it("routes panel switching through setActivePanelTab to keep sections expanded", () => {
-    const { state } = readLibrarySources();
-    expect(state).toMatch(/function setActivePanelTab/);
-    const directAssignments = state.match(/activePanelTab\.value\s*=/g) ?? [];
+    const { state, panelSections } = readLibrarySources();
+    expect(state).toMatch(/useLibraryPanelSections/);
+    expect(state).not.toMatch(/function setActivePanelTab/);
+    expect(panelSections).toMatch(/function setActivePanelTab/);
+    const directAssignments = panelSections.match(/activePanelTab\.value\s*=/g) ?? [];
     expect(directAssignments.length).toBe(1);
   });
 

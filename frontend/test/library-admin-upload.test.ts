@@ -16,6 +16,10 @@ function readLibrarySources() {
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
   const folderActions = read("src/features/library/useLibraryFolderActions.ts");
+  const assetCrudActions = read("src/features/library/useLibraryAssetCrudActions.ts");
+  const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
+  const panelSections = read("src/features/library/useLibraryPanelSections.ts");
+  const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
   return {
     view,
     template,
@@ -26,7 +30,11 @@ function readLibrarySources() {
     assetSelection,
     assetFilters,
     folderActions,
-    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}`,
+    assetCrudActions,
+    assetEditorActions,
+    panelSections,
+    adminLifecycle,
+    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}\n${assetCrudActions}\n${assetEditorActions}\n${panelSections}\n${adminLifecycle}`,
   };
 }
 
@@ -62,7 +70,7 @@ describe("admin library upload", () => {
   it("allows resource display name input and rename action", () => {
     const { template, combined } = readLibrarySources();
     expect(combined).toMatch(/assetDisplayName/);
-    expect(combined).toMatch(/displayName:\s*assetDisplayName\.value/);
+    expect(combined).toMatch(/displayName:\s*(?:deps\.)?assetDisplayName\.value/);
     expect(combined).toMatch(/updateLibraryAsset/);
     expect(template).toMatch(/重命名显示名/);
   });
@@ -81,8 +89,8 @@ describe("admin library upload", () => {
     expect(combined).toMatch(/assetEmbedProfileId/);
     expect(combined).toMatch(/assetEmbedOptionsJson/);
     expect(template).toMatch(/Embed 参数 JSON/);
-    expect(combined).toMatch(/embedProfileId:\s*assetParserMode\.value === "profile"/);
-    expect(combined).toMatch(/embedOptionsJson:\s*assetParserMode\.value === "profile"/);
+    expect(combined).toMatch(/embedProfileId:\s*(?:deps\.)?assetParserMode\.value === "profile"/);
+    expect(combined).toMatch(/embedOptionsJson:\s*(?:deps\.)?assetParserMode\.value === "profile"/);
   });
 
   it("supports embed profile management inputs and actions", () => {
