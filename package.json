@@ -8,6 +8,7 @@
     "dev": "node server/index.js",
     "dev:frontend": "npm --prefix frontend run dev",
     "build:frontend": "npm --prefix frontend run build",
+    "typecheck:frontend": "npm --prefix frontend run typecheck",
     "test:frontend": "npm --prefix frontend run test --",
     "update-list": "node generate_list.js",
     "install-playwright-deps": "node scripts/install_playwright_deps.js",
