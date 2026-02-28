@@ -1,0 +1,26 @@
+{
+  "defaultRuns": 8,
+  "defaultWarmup": 2,
+  "endpoints": {
+    "/api/catalog": {
+      "avgMs": 80,
+      "p95Ms": 180
+    },
+    "/api/categories": {
+      "avgMs": 50,
+      "p95Ms": 120
+    },
+    "/api/items?page=1&pageSize=24": {
+      "avgMs": 40,
+      "p95Ms": 90
+    },
+    "/api/items?type=link": {
+      "avgMs": 40,
+      "p95Ms": 90
+    },
+    "/api/items?q=term": {
+      "avgMs": 40,
+      "p95Ms": 90
+    }
+  }
+}

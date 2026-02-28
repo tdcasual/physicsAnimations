@@ -7,6 +7,8 @@ const { performance } = require("node:perf_hooks");
 
 const { createApp } = require("../server/app");
 
+const PERF_BUDGET_PATH = path.resolve(__dirname, "..", "config", "performance-budgets.json");
+
 const DEFAULT_SCALE = {
   items: 2000,
   categories: 80,
@@ -25,6 +27,26 @@ function toFloat(value, fallback) {
   if (value === undefined || value === null || value === "") return fallback;
   const parsed = Number.parseFloat(String(value));
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toBoolean(value, fallback) {
+  if (value === undefined || value === null || value === "") return fallback;
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized) return fallback;
+  if (["1", "true", "yes", "on"].includes(normalized)) return true;
+  if (["0", "false", "no", "off"].includes(normalized)) return false;
+  return fallback;
+}
+
+function loadPerfBudgets() {
+  const raw = fs.readFileSync(PERF_BUDGET_PATH, "utf8");
+  const parsed = JSON.parse(raw);
+  const endpoints = parsed?.endpoints && typeof parsed.endpoints === "object" ? parsed.endpoints : {};
+  return {
+    defaultRuns: toInt(parsed?.defaultRuns, 8),
+    defaultWarmup: toInt(parsed?.defaultWarmup, 2),
+    endpoints,
+  };
 }
 
 function getScaleFromEnv() {
@@ -241,6 +263,7 @@ test("perf fixture matches scale B", () => {
 
 test("perf benchmarks emit stats", async () => {
   const { scale, label } = getScaleFromEnv();
+  const budgets = loadPerfBudgets();
   const rootDir = makeTempRoot();
   const fixture = buildFixture(scale);
   writeFixture(rootDir, fixture);
@@ -248,10 +271,11 @@ test("perf benchmarks emit stats", async () => {
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
-    const runs = Math.max(1, toInt(process.env.PERF_RUNS, 8));
-    const warmup = Math.max(0, toInt(process.env.PERF_WARMUP, 2));
+    const runs = Math.max(1, toInt(process.env.PERF_RUNS, budgets.defaultRuns));
+    const warmup = Math.max(0, toInt(process.env.PERF_WARMUP, budgets.defaultWarmup));
     const assertAvg = toFloat(process.env.PERF_ASSERT_AVG_MS, null);
     const assertP95 = toFloat(process.env.PERF_ASSERT_P95_MS, null);
+    const disableBudgetAsserts = toBoolean(process.env.PERF_DISABLE_BUDGET_ASSERTS, false);
 
     console.log(
       `[perf] scale=${label} items=${scale.items} categories=${scale.categories} groups=${scale.groups} node=${process.version}`,
@@ -278,16 +302,20 @@ test("perf benchmarks emit stats", async () => {
         `[perf] ${bench.name} avg=${summary.avg.toFixed(2)}ms p50=${summary.p50.toFixed(2)}ms p95=${summary.p95.toFixed(2)}ms max=${summary.max.toFixed(2)}ms bytes=${bench.bytes}`,
       );
 
-      if (assertAvg !== null) {
+      const endpointBudget = budgets.endpoints?.[bench.name] || {};
+      const targetAvg = assertAvg !== null ? assertAvg : toFloat(endpointBudget?.avgMs, null);
+      const targetP95 = assertP95 !== null ? assertP95 : toFloat(endpointBudget?.p95Ms, null);
+
+      if (!disableBudgetAsserts && targetAvg !== null) {
         assert.ok(
-          summary.avg <= assertAvg,
-          `${bench.name} avg ${summary.avg.toFixed(2)}ms exceeds ${assertAvg}ms`,
+          summary.avg <= targetAvg,
+          `${bench.name} avg ${summary.avg.toFixed(2)}ms exceeds ${targetAvg}ms`,
         );
       }
-      if (assertP95 !== null) {
+      if (!disableBudgetAsserts && targetP95 !== null) {
         assert.ok(
-          summary.p95 <= assertP95,
-          `${bench.name} p95 ${summary.p95.toFixed(2)}ms exceeds ${assertP95}ms`,
+          summary.p95 <= targetP95,
+          `${bench.name} p95 ${summary.p95.toFixed(2)}ms exceeds ${targetP95}ms`,
         );
       }
     }

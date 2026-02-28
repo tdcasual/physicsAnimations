@@ -89,6 +89,12 @@ test("/api/metrics returns data when authenticated", async () => {
     assert.equal(typeof data?.taskQueue, "object");
     assert.equal(typeof data?.taskQueue?.concurrency, "number");
     assert.equal(typeof data?.stateDb, "object");
+    assert.equal(typeof data?.http, "object");
+    assert.equal(typeof data?.http?.requestsTotal, "number");
+    assert.equal(typeof data?.http?.activeRequests, "number");
+    assert.equal(typeof data?.http?.statusCounts, "object");
+    assert.equal(typeof data?.http?.latencyMs, "object");
+    assert.equal(typeof data?.http?.latencyMs?.p95, "number");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
@@ -109,6 +115,8 @@ test("/api/metrics supports explicit public mode", async () => {
     const data = await response.json();
     assert.equal(typeof data?.uptimeSec, "number");
     assert.equal(typeof data?.memory, "object");
+    assert.equal(typeof data?.http, "object");
+    assert.equal(typeof data?.http?.requestsTotal, "number");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

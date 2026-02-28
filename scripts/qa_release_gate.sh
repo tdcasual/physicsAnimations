@@ -2,6 +2,7 @@
 set -euo pipefail
 
 npm run guard:file-size
+npm run guard:security
 npm test
 npm --prefix frontend run test
 npm run typecheck:frontend

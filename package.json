@@ -17,6 +17,7 @@
     "update:geogebra-bundle": "node scripts/update_geogebra_bundle.js",
     "update:geogebra-bundle:job": "sh ./scripts/run_geogebra_updater.sh",
     "guard:file-size": "node scripts/check_file_line_budgets.js",
+    "guard:security": "node scripts/check_security_guards.js",
     "smoke:spa-admin": "node scripts/smoke_spa_admin.js",
     "smoke:spa-admin-write": "node scripts/smoke_spa_admin_writepath.js",
     "smoke:spa-library-admin": "node scripts/smoke_spa_library_admin.js",

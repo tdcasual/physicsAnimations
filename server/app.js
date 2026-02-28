@@ -1,10 +1,12 @@
 const path = require("path");
 const fs = require("fs");
 const express = require("express");
+const packageJson = require("../package.json");
 
 const { getAuthConfig, requireAuth } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
 const { createStoreManager } = require("./lib/contentStore");
+const { createRuntimeMetrics } = require("./lib/runtimeMetrics");
 const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
 const { loadSystemState } = require("./lib/systemState");
 const { createStateDbStore } = require("./lib/stateDb");
@@ -13,6 +15,7 @@ const { createQueryReposFromStore } = require("./ports/queryRepos");
 
 const { errorHandler } = require("./middleware/errorHandler");
 const { requestContextMiddleware } = require("./middleware/requestContext");
+const { securityHeadersMiddleware } = require("./middleware/securityHeaders");
 const { createAuthRouter } = require("./routes/auth");
 const { createGroupsRouter } = require("./routes/groups");
 const { createCategoriesRouter } = require("./routes/categories");
@@ -140,8 +143,11 @@ function createApp({
   });
   const store = stateDbWrapped.store;
   const queryRepos = overrideQueryRepos || createQueryReposFromStore({ store });
+  const runtimeMetrics = createRuntimeMetrics();
 
   app.use(requestContextMiddleware);
+  app.use(securityHeadersMiddleware);
+  app.use(runtimeMetrics.middleware);
   app.use(express.json({ limit: "2mb" }));
 
   app.get("/api/health", (_req, res) => {
@@ -154,11 +160,22 @@ function createApp({
 
   const metricsHandler = (_req, res) => {
     res.json({
+      app: {
+        name: packageJson.name,
+        version: packageJson.version,
+      },
+      process: {
+        pid: process.pid,
+        node: process.version,
+        platform: process.platform,
+        arch: process.arch,
+      },
       uptimeSec: Math.floor(process.uptime()),
       memory: process.memoryUsage(),
       screenshotQueue: getScreenshotQueueStats(),
       taskQueue: taskQueue.getStats(),
       stateDb: stateDbWrapped.info,
+      http: runtimeMetrics.snapshot(),
     });
   };
   if (metricsPublic) app.get("/api/metrics", metricsHandler);

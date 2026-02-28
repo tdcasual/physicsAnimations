@@ -1,0 +1,26 @@
+{
+  "rules": [
+    {
+      "name": "forbid-eval",
+      "roots": ["server", "frontend/src"],
+      "extensions": [".js", ".ts", ".vue"],
+      "pattern": "\\beval\\s*\\(",
+      "message": "Avoid eval in runtime source."
+    },
+    {
+      "name": "forbid-function-constructor",
+      "roots": ["server", "frontend/src"],
+      "extensions": [".js", ".ts", ".vue"],
+      "pattern": "\\bnew\\s+Function\\s*\\(",
+      "message": "Avoid Function constructor in runtime source."
+    },
+    {
+      "name": "forbid-child-process-runtime",
+      "roots": ["server", "frontend/src"],
+      "extensions": [".js", ".ts", ".vue"],
+      "pattern": "(require\\s*\\(\\s*[\"'](?:node:)?child_process[\"']\\s*\\))|(from\\s+[\"'](?:node:)?child_process[\"'])",
+      "message": "Do not use child_process in runtime source."
+    }
+  ],
+  "allowMatches": []
+}
