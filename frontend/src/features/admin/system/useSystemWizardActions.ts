@@ -58,6 +58,8 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
     if (!String(ctx.url.value || "").trim()) {
       ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
       ctx.errorText.value = "请填写 WebDAV 地址。";
+      ctx.validateText.value = "";
+      ctx.validateOk.value = false;
       return;
     }
     ctx.clearFieldErrors("webdavUrl");

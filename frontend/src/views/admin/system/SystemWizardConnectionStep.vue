@@ -63,6 +63,9 @@ const scanRemoteModel = computed({
           type="url"
           name="webdav_url"
           autocomplete="url"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
           placeholder="https://example.com/dav/"
           @input="clearFieldErrors('webdavUrl')"
         />
@@ -71,17 +74,44 @@ const scanRemoteModel = computed({
 
       <label class="field">
         <span>WebDAV Base Path</span>
-        <input v-model="basePathModel" class="field-input" type="text" name="webdav_base_path" autocomplete="off" />
+        <input
+          v-model="basePathModel"
+          class="field-input"
+          type="text"
+          name="webdav_base_path"
+          autocomplete="off"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+        />
       </label>
 
       <label class="field">
         <span>WebDAV 用户名</span>
-        <input v-model="usernameModel" class="field-input" type="text" name="webdav_username" autocomplete="username" />
+        <input
+          v-model="usernameModel"
+          class="field-input"
+          type="text"
+          name="webdav_username"
+          autocomplete="username"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+        />
       </label>
 
       <label class="field">
         <span>WebDAV 密码（留空表示不更新）</span>
-        <input v-model="passwordModel" class="field-input" type="password" name="webdav_password" autocomplete="current-password" />
+        <input
+          v-model="passwordModel"
+          class="field-input"
+          type="password"
+          name="webdav_password"
+          autocomplete="current-password"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+        />
       </label>
 
       <label class="field">

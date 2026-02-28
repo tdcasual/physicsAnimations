@@ -446,13 +446,24 @@
                   v-model="embedScriptUrl"
                   class="field-input"
                   type="text"
+                  autocapitalize="none"
+                  autocorrect="off"
+                  spellcheck="false"
                   placeholder="例如：https://field.infinitas.fun/embed/embed.js"
                 />
                 <div v-if="getFieldError('createEmbedScriptUrl')" class="field-error-text">{{ getFieldError("createEmbedScriptUrl") }}</div>
               </label>
               <label class="field">
                 <span>备用脚本地址（可选）</span>
-                <input v-model="embedFallbackScriptUrl" class="field-input" type="text" placeholder="可选备用脚本 URL" />
+                <input
+                  v-model="embedFallbackScriptUrl"
+                  class="field-input"
+                  type="text"
+                  autocapitalize="none"
+                  autocorrect="off"
+                  spellcheck="false"
+                  placeholder="可选备用脚本 URL"
+                />
               </label>
               <label class="field">
                 <span>viewerPath（可选）</span>
@@ -541,12 +552,26 @@
                 </label>
                 <label class="field" :class="{ 'has-error': getFieldError('editEmbedScriptUrl') }">
                   <span>embed.js 地址</span>
-                  <input v-model="embedEditScriptUrl" class="field-input" type="text" />
+                  <input
+                    v-model="embedEditScriptUrl"
+                    class="field-input"
+                    type="text"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
+                  />
                   <div v-if="getFieldError('editEmbedScriptUrl')" class="field-error-text">{{ getFieldError("editEmbedScriptUrl") }}</div>
                 </label>
                 <label class="field">
                   <span>备用脚本地址（可选）</span>
-                  <input v-model="embedEditFallbackScriptUrl" class="field-input" type="text" />
+                  <input
+                    v-model="embedEditFallbackScriptUrl"
+                    class="field-input"
+                    type="text"
+                    autocapitalize="none"
+                    autocorrect="off"
+                    spellcheck="false"
+                  />
                 </label>
                 <label class="field">
                   <span>viewerPath</span>
@@ -617,4 +642,3 @@
 
     <div v-if="feedback" class="admin-feedback" :class="{ error: feedbackError, success: !feedbackError }">{{ feedback }}</div>
   </section>
-

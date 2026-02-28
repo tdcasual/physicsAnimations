@@ -203,6 +203,8 @@ h3 {
 .category-title {
   font-size: 14px;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .group-meta,

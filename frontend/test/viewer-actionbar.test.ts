@@ -22,4 +22,11 @@ describe("viewer action bar", () => {
     expect(source).toMatch(/if \(requestSeq !== refreshSeq\.value\) return/);
     expect(source).toMatch(/if \(requestSeq === refreshSeq\.value\) \{/);
   });
+
+  it("wraps long titles in viewer header to avoid mobile overflow", () => {
+    const source = read("src/views/ViewerView.vue");
+    expect(source).toMatch(/\.viewer-title\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(source).toMatch(/\.viewer-title\s*\{[\s\S]*word-break:\s*break-word/);
+    expect(source).toMatch(/\.viewer-title\s*\{[\s\S]*min-width:\s*0/);
+  });
 });

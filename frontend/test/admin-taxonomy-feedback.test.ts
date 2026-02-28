@@ -29,4 +29,10 @@ describe("admin taxonomy action feedback", () => {
     expect(groupPanel).toMatch(/class="[^"]*action-feedback/);
     expect(categoryPanel).toMatch(/class="[^"]*action-feedback/);
   });
+
+  it("keeps long group and category labels wrapped on narrow mobile screens", () => {
+    const treePanel = read("src/views/admin/taxonomy/TaxonomyTreePanel.vue");
+    expect(treePanel).toMatch(/\.group-title,\s*\.category-title\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(treePanel).toMatch(/\.group-title,\s*\.category-title\s*\{[\s\S]*word-break:\s*break-word/);
+  });
 });

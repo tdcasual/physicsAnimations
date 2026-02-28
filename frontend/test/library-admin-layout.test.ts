@@ -228,4 +228,14 @@ describe("admin library layout", () => {
     expect(style).toMatch(/\.folder-name,\s*\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
     expect(style).toMatch(/\.folder-meta,\s*\.asset-meta,\s*\.selected-folder\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
   });
+
+  it("disables mobile auto-correct and auto-capitalization for embed URL fields", () => {
+    const { template } = readLibrarySources();
+    expect(template).toMatch(/v-model="embedScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(template).toMatch(/v-model="embedScriptUrl"[\s\S]*autocorrect="off"/);
+    expect(template).toMatch(/v-model="embedEditScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(template).toMatch(/v-model="embedEditScriptUrl"[\s\S]*autocorrect="off"/);
+    expect(template).toMatch(/v-model="embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(template).toMatch(/v-model="embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
+  });
 });

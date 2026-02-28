@@ -112,6 +112,9 @@ async function submit() {
           type="password"
           name="current_password"
           autocomplete="current-password"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
           @input="clearFieldErrors('currentPassword')"
         />
         <div v-if="getFieldError('currentPassword')" class="field-error-text">{{ getFieldError("currentPassword") }}</div>
@@ -125,6 +128,9 @@ async function submit() {
           type="text"
           name="username"
           autocomplete="username"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
           @input="clearFieldErrors('newUsername')"
         />
         <div v-if="getFieldError('newUsername')" class="field-error-text">{{ getFieldError("newUsername") }}</div>
@@ -138,6 +144,9 @@ async function submit() {
           type="password"
           name="new_password"
           autocomplete="new-password"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
           @input="clearFieldErrors('newPassword')"
         />
         <div v-if="getFieldError('newPassword')" class="field-error-text">{{ getFieldError("newPassword") }}</div>
@@ -151,6 +160,9 @@ async function submit() {
           type="password"
           name="confirm_new_password"
           autocomplete="new-password"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
           @input="clearFieldErrors('confirmPassword')"
         />
         <div v-if="getFieldError('confirmPassword')" class="field-error-text">{{ getFieldError("confirmPassword") }}</div>

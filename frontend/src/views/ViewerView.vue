@@ -206,6 +206,8 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .viewer-back {
@@ -214,6 +216,9 @@ onBeforeUnmount(() => {
 
 .viewer-title {
   font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .viewer-actions {

@@ -47,6 +47,9 @@ const emit = defineEmits<{
       :value="props.linkUrl"
       class="field-input"
       type="url"
+      autocapitalize="none"
+      autocorrect="off"
+      spellcheck="false"
       placeholder="https://example.com"
       @input="
         emit('update:linkUrl', ($event.target as HTMLInputElement).value);
