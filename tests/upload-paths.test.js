@@ -242,15 +242,18 @@ test("html upload with risky content requires confirmation and preserves origina
     secondForm.append("file", new Blob([riskyHtml]), "risky.html");
     secondForm.append("categoryId", "other");
     secondForm.append("allowRiskyHtml", "true");
+    const secondUploadStart = Date.now();
     const secondResponse = await fetch(`${baseUrl}/api/items/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: secondForm,
     });
+    const secondUploadDurationMs = Date.now() - secondUploadStart;
     assert.equal(secondResponse.status, 200);
     const secondBody = await secondResponse.json();
     assert.equal(secondBody.ok, true);
     assert.ok(secondBody.id);
+    assert.ok(secondUploadDurationMs < 15_000);
 
     const storedHtml = fs.readFileSync(
       path.join(rootDir, "content", "uploads", secondBody.id, "index.html"),
