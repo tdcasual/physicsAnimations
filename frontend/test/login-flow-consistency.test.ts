@@ -21,6 +21,14 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/await router\.replace\(\"\/admin\/dashboard\"\)/);
   });
 
+  it("disables auto-capitalization and auto-correct in app-shell login modal inputs", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/name="username"[\s\S]*autocapitalize="none"/);
+    expect(source).toMatch(/name="username"[\s\S]*autocorrect="off"/);
+    expect(source).toMatch(/name="password"[\s\S]*autocapitalize="none"/);
+    expect(source).toMatch(/name="password"[\s\S]*autocorrect="off"/);
+  });
+
   it("sanitizes login redirect query to admin paths before navigating", () => {
     const source = read("src/views/LoginView.vue");
     expect(source).toMatch(/resolveAdminRedirect/);

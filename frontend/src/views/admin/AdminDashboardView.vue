@@ -4,6 +4,7 @@ import { fetchDashboardStats, type DashboardStats } from "../../features/admin/a
 
 const loading = ref(false);
 const errorText = ref("");
+const reloadSeq = ref(0);
 const stats = ref<DashboardStats>({
   dynamicTotal: 0,
   uploadTotal: 0,
@@ -14,15 +15,22 @@ const stats = ref<DashboardStats>({
 });
 
 async function reload() {
+  const requestSeq = reloadSeq.value + 1;
+  reloadSeq.value = requestSeq;
   loading.value = true;
   errorText.value = "";
   try {
-    stats.value = await fetchDashboardStats();
+    const nextStats = await fetchDashboardStats();
+    if (requestSeq !== reloadSeq.value) return;
+    stats.value = nextStats;
   } catch (err) {
+    if (requestSeq !== reloadSeq.value) return;
     const e = err as { status?: number };
     errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "加载统计失败。";
   } finally {
-    loading.value = false;
+    if (requestSeq === reloadSeq.value) {
+      loading.value = false;
+    }
   }
 }
 

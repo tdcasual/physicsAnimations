@@ -195,6 +195,14 @@ describe("admin library layout", () => {
     expect(dataActions).toMatch(/加载文件夹资源失败/);
   });
 
+  it("guards folder list reload against stale responses under weak networks", () => {
+    const { dataActions } = readLibrarySources();
+    expect(dataActions).toMatch(/folderListLoadSeq/);
+    expect(dataActions).toMatch(/const requestId = deps\.folderListLoadSeq\.value \+ 1/);
+    expect(dataActions).toMatch(/deps\.folderListLoadSeq\.value = requestId/);
+    expect(dataActions).toMatch(/if \(requestId !== deps\.folderListLoadSeq\.value\) return/);
+  });
+
   it("splits saving state by domain to avoid full-page lock", () => {
     const { state } = readLibrarySources();
     expect(state).toMatch(/const savingFolder = ref\(false\)/);

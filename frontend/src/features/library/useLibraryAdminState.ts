@@ -72,6 +72,7 @@ export function useLibraryAdminState() {
     embedEditDefaultOptionsJson,
     embedEditEnabled,
     folderAssetsLoadSeq,
+    folderListLoadSeq,
     selectedFolder,
     editingAsset,
   } = useLibraryAdminDraftState();
@@ -193,6 +194,7 @@ export function useLibraryAdminState() {
     selectedFolderId,
     folderAssets,
     deletedAssets,
+    folderListLoadSeq,
     folderAssetsLoadSeq,
     selectedAssetIds,
     undoAssetIds,

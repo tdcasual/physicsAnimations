@@ -202,6 +202,9 @@ a {
   border-radius: 14px;
   background: var(--surface);
   padding: 16px;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 28px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
   display: grid;
   gap: 12px;
 }

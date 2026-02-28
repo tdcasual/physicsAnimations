@@ -7,6 +7,7 @@ type LibraryAdminDataActionsDeps = {
   selectedFolderId: Ref<string>;
   folderAssets: Ref<LibraryAsset[]>;
   deletedAssets: Ref<LibraryAsset[]>;
+  folderListLoadSeq: Ref<number>;
   folderAssetsLoadSeq: Ref<number>;
   selectedAssetIds: Ref<string[]>;
   undoAssetIds: Ref<string[]>;
@@ -19,7 +20,10 @@ type LibraryAdminDataActionsDeps = {
 
 export function useLibraryAdminDataActions(deps: LibraryAdminDataActionsDeps) {
   async function reloadFolders() {
+    const requestId = deps.folderListLoadSeq.value + 1;
+    deps.folderListLoadSeq.value = requestId;
     const list = await listLibraryFolders();
+    if (requestId !== deps.folderListLoadSeq.value) return;
     deps.folders.value = list;
     if (!deps.selectedFolderId.value && list.length > 0) {
       deps.selectedFolderId.value = list[0].id;

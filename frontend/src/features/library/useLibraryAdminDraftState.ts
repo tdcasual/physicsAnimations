@@ -45,6 +45,7 @@ export function useLibraryAdminDraftState() {
   const embedEditEnabled = ref(true);
 
   const folderAssetsLoadSeq = ref(0);
+  const folderListLoadSeq = ref(0);
   const selectedFolder = computed(() => folders.value.find((folder) => folder.id === selectedFolderId.value) || null);
   const editingAsset = computed(() => folderAssets.value.find((asset) => asset.id === editingAssetId.value) || null);
 
@@ -87,6 +88,7 @@ export function useLibraryAdminDraftState() {
     embedEditDefaultOptionsJson,
     embedEditEnabled,
     folderAssetsLoadSeq,
+    folderListLoadSeq,
     selectedFolder,
     editingAsset,
   };

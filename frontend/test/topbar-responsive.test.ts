@@ -26,4 +26,11 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/\.topbar\s*\{[\s\S]*padding-left:\s*env\(safe-area-inset-left,\s*0px\)/);
     expect(css).toMatch(/\.topbar\s*\{[\s\S]*padding-right:\s*env\(safe-area-inset-right,\s*0px\)/);
   });
+
+  it("keeps modal card scrollable within dynamic viewport when mobile keyboard is open", () => {
+    const css = readFile("src/styles.css");
+    expect(css).toMatch(/\.modal-card\s*\{[\s\S]*max-height:\s*calc\(100dvh\s*-\s*env\(safe-area-inset-top,\s*0px\)\s*-\s*env\(safe-area-inset-bottom,\s*0px\)\s*-\s*28px\)/);
+    expect(css).toMatch(/\.modal-card\s*\{[\s\S]*overflow:\s*auto/);
+    expect(css).toMatch(/\.modal-card\s*\{[\s\S]*-webkit-overflow-scrolling:\s*touch/);
+  });
 });

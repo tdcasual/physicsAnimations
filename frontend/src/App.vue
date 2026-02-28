@@ -208,6 +208,9 @@ onBeforeUnmount(() => {
               type="text"
               name="username"
               autocomplete="username"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
             />
           </label>
 
@@ -219,6 +222,9 @@ onBeforeUnmount(() => {
               type="password"
               name="password"
               autocomplete="current-password"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
             />
           </label>
 
