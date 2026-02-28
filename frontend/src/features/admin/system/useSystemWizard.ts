@@ -1,14 +1,13 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { onBeforeRouteLeave } from "vue-router";
-import { getSystemInfo, updateSystemStorage, validateSystemStorage } from "../adminApi";
 import {
-  buildSystemUpdatePayload,
   canRunManualSync,
   isRemoteMode,
   normalizeUiMode,
   shouldRequireWebdavUrl,
 } from "../systemFormState";
 import { useFieldErrors } from "../composables/useFieldErrors";
+import { createSystemWizardActions } from "./useSystemWizardActions";
 
 export interface SystemStorage {
   mode: string;
@@ -144,20 +143,6 @@ export function useSystemWizard() {
     if (options.resetStep) wizardStep.value = 1;
   }
 
-  async function loadSystem(options: { resetStep: boolean } = { resetStep: true }) {
-    loading.value = true;
-    errorText.value = "";
-    try {
-      const data = await getSystemInfo();
-      applyStorage(data?.storage || {}, { resetStep: options.resetStep });
-    } catch (err) {
-      const e = err as { status?: number };
-      errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "加载系统配置失败。";
-    } finally {
-      loading.value = false;
-    }
-  }
-
   function onModeChanged() {
     successText.value = "";
     validateText.value = "";
@@ -188,118 +173,31 @@ export function useSystemWizard() {
     wizardStep.value = 3;
   }
 
-  async function runValidation() {
-    if (!remoteMode.value) {
-      validateOk.value = true;
-      validateText.value = "local 模式无需 WebDAV 连接校验。";
-      return;
-    }
-    if (!String(url.value || "").trim()) {
-      setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-      errorText.value = "请填写 WebDAV 地址。";
-      return;
-    }
-    clearFieldErrors("webdavUrl");
-
-    validating.value = true;
-    errorText.value = "";
-    validateText.value = "";
-    validateOk.value = false;
-    try {
-      await validateSystemStorage({
-        webdav: {
-          url: url.value,
-          basePath: basePath.value,
-          username: username.value,
-          password: password.value,
-          timeoutMs: timeoutMs.value,
-        },
-      });
-      validateOk.value = true;
-      validateText.value = "连接校验通过。";
-    } catch (err) {
-      const e = err as { status?: number; data?: any };
-      const reason = String(e?.data?.reason || "").trim();
-      if (e?.data?.error === "webdav_missing_url") {
-        setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-        errorText.value = "请填写 WebDAV 地址。";
-        return;
-      }
-      validateText.value = reason ? `连接校验失败：${reason}` : "连接校验失败，请检查地址和账号配置。";
-      validateOk.value = false;
-    } finally {
-      validating.value = false;
-    }
-  }
-
-  async function saveStorage() {
-    if (requiresWebdavUrl.value && !String(url.value || "").trim()) {
-      setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-      errorText.value = "请填写 WebDAV 地址。";
-      return;
-    }
-    clearFieldErrors("webdavUrl");
-    if (readOnlyMode.value) {
-      errorText.value = "当前为只读模式，无法保存配置。";
-      return;
-    }
-
-    saving.value = true;
-    errorText.value = "";
-    successText.value = "";
-    try {
-      const payload = buildSystemUpdatePayload({
-        mode: mode.value,
-        url: url.value,
-        basePath: basePath.value,
-        username: username.value,
-        password: password.value,
-        timeoutRaw: String(timeoutMs.value ?? ""),
-        scanRemote: scanRemote.value,
-        sync: false,
-      });
-      const data = await updateSystemStorage(payload);
-      if (data?.storage) applyStorage(data.storage, { resetStep: false });
-      else await loadSystem({ resetStep: false });
-
-      successText.value = "系统配置已保存。";
-      wizardStep.value = 4;
-    } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.data?.error === "webdav_missing_url") {
-        setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-        errorText.value = "请填写 WebDAV 地址。";
-        return;
-      }
-      errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "保存系统配置失败。";
-    } finally {
-      saving.value = false;
-    }
-  }
-
-  async function syncNow() {
-    if (!canSyncNow.value) return;
-
-    syncing.value = true;
-    errorText.value = "";
-    successText.value = "";
-    try {
-      const data = await updateSystemStorage({
-        mode: mode.value,
-        sync: true,
-        webdav: { scanRemote: scanRemote.value },
-      });
-      if (data?.storage) applyStorage(data.storage, { resetStep: false });
-      else await loadSystem({ resetStep: false });
-
-      successText.value = "同步完成。";
-    } catch (err) {
-      const e = err as { status?: number };
-      errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "同步失败。";
-    } finally {
-      syncing.value = false;
-    }
-  }
+  const { loadSystem, runValidation, saveStorage, syncNow } = createSystemWizardActions({
+    loading,
+    saving,
+    validating,
+    syncing,
+    errorText,
+    successText,
+    validateText,
+    validateOk,
+    wizardStep,
+    mode,
+    url,
+    basePath,
+    username,
+    password,
+    timeoutMs,
+    scanRemote,
+    remoteMode,
+    requiresWebdavUrl,
+    readOnlyMode,
+    canSyncNow,
+    setFieldError,
+    clearFieldErrors,
+    applyStorage,
+  });
 
   function handleBeforeUnload(event: BeforeUnloadEvent) {
     if (!hasUnsavedChanges.value || saving.value || syncing.value) return;
