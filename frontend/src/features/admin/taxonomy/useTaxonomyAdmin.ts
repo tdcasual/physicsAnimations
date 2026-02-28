@@ -43,7 +43,6 @@ export function useTaxonomyAdmin() {
     tree,
     visibleGroups,
     allSortedGroups,
-    groupById,
     categoryById,
     fallbackGroupId,
     selectedGroup,

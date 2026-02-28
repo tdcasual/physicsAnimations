@@ -63,6 +63,12 @@
     - [vercel.json](/Users/lvxiaoer/Documents/physicsAnimations/vercel.json:9)
     - [vercel-config.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/vercel-config.test.js:14)
   - 修复内容：移除 `404.html` include 并加入守护断言，避免旧入口残留
+- 已修复：分类管理组合式函数存在未使用状态引用（死代码）
+  - 修复点：[useTaxonomyAdmin.ts](/Users/lvxiaoer/Documents/physicsAnimations/frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts:46)
+  - 修复内容：移除未被消费的 `groupById` 解构引用
+  - 回归验证：
+    - `npm exec -- tsc --noEmit --noUnusedLocals --noUnusedParameters -p tsconfig.json`（frontend）通过
+    - `npm run test:frontend -- --run` 全量通过
 
 ## 发现清单（按优先级）
 
@@ -185,13 +191,10 @@
 
 ## 无效代码候选（低置信度，建议二次确认）
 
-- `vercel.json` 里的旧资源条目：
-  - `assets/**`、`index.html`、`viewer.html`（与当前 SPA hard-cutover 路径不一致）
-- `404.html` 根文件：
-  - 当前 Express 路由统一返回 JSON 404，未见运行时引用
+- 暂无新增高置信度候选（`vercel` legacy include 与根目录 `404.html` 已清理）
 
 ## 下一轮建议
 
 1. 处理 P2（历史 `output/mobile-audit` 数据清理与重建，避免误判）
 2. 继续移动端专项回归（触控尺寸、横向溢出、暗色主题）
-3. 评估根目录 `404.html` 是否删除（当前已从部署打包链路剥离）
+3. 继续检查文档与运行链路一致性（部署、门禁、回滚路径）
