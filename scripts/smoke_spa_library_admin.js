@@ -8,6 +8,7 @@ const { Blob } = require("node:buffer");
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const logger = require("../server/lib/logger");
+const { ensureSpaDistFresh } = require("./lib/ensure_spa_dist_fresh");
 
 async function findOpenPort() {
   return new Promise((resolve, reject) => {
@@ -96,6 +97,7 @@ async function requestJson(baseUrl, token, pathName, init = {}) {
 
 async function run() {
   const rootDir = path.join(__dirname, "..");
+  ensureSpaDistFresh(rootDir);
   const outputDir = path.join(rootDir, "output", "playwright");
   fs.mkdirSync(outputDir, { recursive: true });
 
