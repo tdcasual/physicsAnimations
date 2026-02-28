@@ -11,6 +11,7 @@ function readLibrarySources() {
   const template = read("src/views/admin/library/AdminLibraryView.template.html");
   const style = read("src/views/admin/library/AdminLibraryView.css");
   const state = read("src/features/library/useLibraryAdminState.ts");
+  const draftState = read("src/features/library/useLibraryAdminDraftState.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
@@ -25,6 +26,7 @@ function readLibrarySources() {
     template,
     style,
     state,
+    draftState,
     feedback,
     embedActions,
     assetSelection,
@@ -34,7 +36,7 @@ function readLibrarySources() {
     assetEditorActions,
     panelSections,
     adminLifecycle,
-    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}\n${assetCrudActions}\n${assetEditorActions}\n${panelSections}\n${adminLifecycle}`,
+    combined: `${view}\n${template}\n${style}\n${state}\n${draftState}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}\n${assetCrudActions}\n${assetEditorActions}\n${panelSections}\n${adminLifecycle}`,
   };
 }
 
@@ -46,8 +48,8 @@ describe("admin library upload", () => {
   });
 
   it("defaults upload mode to embed demo mode", () => {
-    const { template, state } = readLibrarySources();
-    expect(state).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/);
+    const { template, combined } = readLibrarySources();
+    expect(combined).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/);
     expect(template).toMatch(/<option value="embed">演示（默认）<\/option>/);
     expect(template).toMatch(/<option value="download">仅下载原文件<\/option>/);
   });

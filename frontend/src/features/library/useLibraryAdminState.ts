@@ -1,5 +1,4 @@
 import { computed, ref, watch } from "vue";
-import type { JsonObjectParseResult } from "./libraryAdminModels";
 import { useLibraryAdminFeedback } from "./useLibraryAdminFeedback";
 import { useLibraryAssetCrudActions } from "./useLibraryAssetCrudActions";
 import { useLibraryAssetEditorActions } from "./useLibraryAssetEditorActions";
@@ -10,7 +9,8 @@ import { useLibraryPanelSections } from "./useLibraryPanelSections";
 import { useLibraryAssetSelection } from "./useLibraryAssetSelection";
 import { useLibraryEmbedProfileActions } from "./useLibraryEmbedProfileActions";
 import { useLibraryAdminDataActions } from "./useLibraryAdminDataActions";
-import type { LibraryAsset, LibraryEmbedProfile, LibraryFolder, LibraryOpenMode } from "./types";
+import { useLibraryAdminDraftState } from "./useLibraryAdminDraftState";
+import { createJsonObjectInputParser } from "./createJsonObjectInputParser";
 export function useLibraryAdminState() {
   const loading = ref(false);
   const savingFolder = ref(false);
@@ -33,46 +33,48 @@ export function useLibraryAdminState() {
     clearOperationLogs,
     getApiErrorCode,
   } = useLibraryAdminFeedback();
-  const folders = ref<LibraryFolder[]>([]);
-  const selectedFolderId = ref("");
-  const folderAssets = ref<LibraryAsset[]>([]);
-  const deletedAssets = ref<LibraryAsset[]>([]);
-  const embedProfiles = ref<LibraryEmbedProfile[]>([]);
-  const assetFile = ref<File | null>(null);
-  const assetDisplayName = ref("");
-  const openMode = ref<LibraryOpenMode>("embed");
-  const assetParserMode = ref<"auto" | "profile">("auto");
-  const assetEmbedProfileId = ref("");
-  const assetEmbedOptionsJson = ref("");
-  const editingAssetId = ref("");
-  const assetEditDisplayName = ref("");
-  const assetEditFolderId = ref("");
-  const assetEditOpenMode = ref<LibraryOpenMode>("embed");
-  const assetEditParserMode = ref<"auto" | "profile">("auto");
-  const assetEditEmbedProfileId = ref("");
-  const assetEditEmbedOptionsJson = ref("{}");
-  const embedProfileName = ref("");
-  const embedScriptUrl = ref("");
-  const embedFallbackScriptUrl = ref("");
-  const embedViewerPath = ref("");
-  const embedConstructorName = ref("ElectricFieldApp");
-  const embedAssetUrlOptionKey = ref("sceneUrl");
-  const embedExtensionsText = ref("");
-  const embedDefaultOptionsJson = ref("{}");
-  const embedEnabled = ref(true);
-  const editingEmbedProfileId = ref("");
-  const embedEditName = ref("");
-  const embedEditScriptUrl = ref("");
-  const embedEditFallbackScriptUrl = ref("");
-  const embedEditViewerPath = ref("");
-  const embedEditConstructorName = ref("ElectricFieldApp");
-  const embedEditAssetUrlOptionKey = ref("sceneUrl");
-  const embedEditExtensionsText = ref("");
-  const embedEditDefaultOptionsJson = ref("{}");
-  const embedEditEnabled = ref(true);
-  const folderAssetsLoadSeq = ref(0);
-  const selectedFolder = computed(() => folders.value.find((folder) => folder.id === selectedFolderId.value) || null);
-  const editingAsset = computed(() => folderAssets.value.find((asset) => asset.id === editingAssetId.value) || null);
+  const {
+    folders,
+    selectedFolderId,
+    folderAssets,
+    deletedAssets,
+    embedProfiles,
+    assetFile,
+    assetDisplayName,
+    openMode,
+    assetParserMode,
+    assetEmbedProfileId,
+    assetEmbedOptionsJson,
+    editingAssetId,
+    assetEditDisplayName,
+    assetEditFolderId,
+    assetEditOpenMode,
+    assetEditParserMode,
+    assetEditEmbedProfileId,
+    assetEditEmbedOptionsJson,
+    embedProfileName,
+    embedScriptUrl,
+    embedFallbackScriptUrl,
+    embedViewerPath,
+    embedConstructorName,
+    embedAssetUrlOptionKey,
+    embedExtensionsText,
+    embedDefaultOptionsJson,
+    embedEnabled,
+    editingEmbedProfileId,
+    embedEditName,
+    embedEditScriptUrl,
+    embedEditFallbackScriptUrl,
+    embedEditViewerPath,
+    embedEditConstructorName,
+    embedEditAssetUrlOptionKey,
+    embedEditExtensionsText,
+    embedEditDefaultOptionsJson,
+    embedEditEnabled,
+    folderAssetsLoadSeq,
+    selectedFolder,
+    editingAsset,
+  } = useLibraryAdminDraftState();
   const assetFilters = useLibraryAssetFilters({
     folders,
     folderAssets,
@@ -131,27 +133,10 @@ export function useLibraryAdminState() {
     removeAsset,
   } = assetSelection;
   
-  function parseJsonObjectInput(
-    raw: string,
-    fieldLabel: string,
-    fieldKey = "",
-  ): JsonObjectParseResult {
-    const text = String(raw || "").trim();
-    if (!text) return { ok: true, value: {} };
-    try {
-      const parsed = JSON.parse(text);
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        if (fieldKey) setFieldError(fieldKey, `${fieldLabel} 需要是对象。`);
-        setFeedback(`${fieldLabel} 需要是对象。`, true);
-        return { ok: false };
-      }
-      return { ok: true, value: parsed as Record<string, unknown> };
-    } catch {
-      if (fieldKey) setFieldError(fieldKey, `${fieldLabel} 格式错误。`);
-      setFeedback(`${fieldLabel} 格式错误。`, true);
-      return { ok: false };
-    }
-  }
+  const parseJsonObjectInput = createJsonObjectInputParser({
+    setFeedback,
+    setFieldError,
+  });
 
   const {
     activePanelTab,
