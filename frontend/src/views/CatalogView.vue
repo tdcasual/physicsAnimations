@@ -123,7 +123,6 @@ onMounted(async () => {
   }
 });
 </script>
-
 <template>
   <section class="catalog-view">
     <div class="catalog-toolbar">
@@ -345,11 +344,9 @@ onMounted(async () => {
 .catalog-card-title {
   font-weight: 600;
   display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
+  align-items: flex-start; flex-wrap: wrap;
   gap: 6px;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  overflow-wrap: anywhere; word-break: break-word;
   font-size: calc(15px * var(--ui-scale, 1));
 }
 
