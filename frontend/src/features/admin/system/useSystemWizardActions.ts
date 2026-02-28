@@ -69,14 +69,25 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
     ctx.validateText.value = "";
     ctx.validateOk.value = false;
     try {
+      const webdavPayload: {
+        url: string;
+        basePath: string;
+        username: string;
+        password: string;
+        timeoutMs?: number;
+      } = {
+        url: ctx.url.value,
+        basePath: ctx.basePath.value,
+        username: ctx.username.value,
+        password: ctx.password.value,
+      };
+      const timeoutForValidation = Number(ctx.timeoutMs.value);
+      if (Number.isFinite(timeoutForValidation)) {
+        webdavPayload.timeoutMs = Math.trunc(timeoutForValidation);
+      }
+
       await validateSystemStorage({
-        webdav: {
-          url: ctx.url.value,
-          basePath: ctx.basePath.value,
-          username: ctx.username.value,
-          password: ctx.password.value,
-          timeoutMs: ctx.timeoutMs.value,
-        },
+        webdav: webdavPayload,
       });
       ctx.validateOk.value = true;
       ctx.validateText.value = "连接校验通过。";
@@ -117,7 +128,7 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
         basePath: ctx.basePath.value,
         username: ctx.username.value,
         password: ctx.password.value,
-        timeoutRaw: String(ctx.timeoutMs.value ?? ""),
+        timeoutRaw: Number.isFinite(ctx.timeoutMs.value) ? String(Math.trunc(ctx.timeoutMs.value)) : "",
         scanRemote: ctx.scanRemote.value,
         sync: false,
       });

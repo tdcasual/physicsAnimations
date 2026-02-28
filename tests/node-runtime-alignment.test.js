@@ -15,6 +15,9 @@ test("package.json and frontend/package.json declare Node 24 engines", () => {
 
   assert.equal(rootPkg.engines?.node, ">=24 <25");
   assert.equal(frontendPkg.engines?.node, ">=24 <25");
+
+  const nodeTypesVersion = String(frontendPkg.devDependencies?.["@types/node"] || "");
+  assert.match(nodeTypesVersion, /^\^24(\.|$)/);
 });
 
 test("Dockerfile uses Node 24 base images for all stages", () => {

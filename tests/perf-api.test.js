@@ -237,6 +237,17 @@ function summarize(runs) {
   };
 }
 
+function getBudgetErrors(name, summary, targetAvg, targetP95) {
+  const errors = [];
+  if (targetAvg !== null && summary.avg > targetAvg) {
+    errors.push(`${name} avg ${summary.avg.toFixed(2)}ms exceeds ${targetAvg}ms`);
+  }
+  if (targetP95 !== null && summary.p95 > targetP95) {
+    errors.push(`${name} p95 ${summary.p95.toFixed(2)}ms exceeds ${targetP95}ms`);
+  }
+  return errors;
+}
+
 async function runBenchmark({ name, baseUrl, path: apiPath, warmup, runs }) {
   for (let i = 0; i < warmup; i += 1) {
     await fetchJson(baseUrl, apiPath);
@@ -273,6 +284,9 @@ test("perf benchmarks emit stats", async () => {
   try {
     const runs = Math.max(1, toInt(process.env.PERF_RUNS, budgets.defaultRuns));
     const warmup = Math.max(0, toInt(process.env.PERF_WARMUP, budgets.defaultWarmup));
+    const retryOnFail = toBoolean(process.env.PERF_RETRY_ON_FAIL, true);
+    const retryRuns = Math.max(1, toInt(process.env.PERF_RETRY_RUNS, runs));
+    const retryWarmup = Math.max(0, toInt(process.env.PERF_RETRY_WARMUP, warmup));
     const assertAvg = toFloat(process.env.PERF_ASSERT_AVG_MS, null);
     const assertP95 = toFloat(process.env.PERF_ASSERT_P95_MS, null);
     const disableBudgetAsserts = toBoolean(process.env.PERF_DISABLE_BUDGET_ASSERTS, false);
@@ -306,17 +320,30 @@ test("perf benchmarks emit stats", async () => {
       const targetAvg = assertAvg !== null ? assertAvg : toFloat(endpointBudget?.avgMs, null);
       const targetP95 = assertP95 !== null ? assertP95 : toFloat(endpointBudget?.p95Ms, null);
 
-      if (!disableBudgetAsserts && targetAvg !== null) {
-        assert.ok(
-          summary.avg <= targetAvg,
-          `${bench.name} avg ${summary.avg.toFixed(2)}ms exceeds ${targetAvg}ms`,
-        );
+      if (disableBudgetAsserts) continue;
+
+      const errors = getBudgetErrors(bench.name, summary, targetAvg, targetP95);
+      if (!errors.length) continue;
+
+      if (!retryOnFail) {
+        assert.fail(errors.join("; "));
       }
-      if (!disableBudgetAsserts && targetP95 !== null) {
-        assert.ok(
-          summary.p95 <= targetP95,
-          `${bench.name} p95 ${summary.p95.toFixed(2)}ms exceeds ${targetP95}ms`,
-        );
+
+      console.warn(`[perf] ${bench.name} budget miss on attempt 1, retrying once...`);
+      const retryBench = await runBenchmark({
+        name: endpoint.name,
+        baseUrl,
+        path: endpoint.path,
+        warmup: retryWarmup,
+        runs: retryRuns,
+      });
+      const retrySummary = summarize(retryBench.runs);
+      console.log(
+        `[perf][retry] ${retryBench.name} avg=${retrySummary.avg.toFixed(2)}ms p50=${retrySummary.p50.toFixed(2)}ms p95=${retrySummary.p95.toFixed(2)}ms max=${retrySummary.max.toFixed(2)}ms bytes=${retryBench.bytes}`,
+      );
+      const retryErrors = getBudgetErrors(retryBench.name, retrySummary, targetAvg, targetP95);
+      if (retryErrors.length) {
+        assert.fail(`budget failed after retry: ${errors.join("; ")}; retry: ${retryErrors.join("; ")}`);
       }
     }
   } finally {

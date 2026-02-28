@@ -92,7 +92,9 @@ function shouldServeSpaRoute(reqPath) {
   if (p.startsWith("/content/") || p === "/content") return false;
   if (p === "/animations.json") return false;
   if (p === "/app" || p.startsWith("/app/")) return false;
-  if (/^\/[^/]+\.[^/]+$/.test(p)) return false;
+  const hasExtensionTail = /\/[^/]+\.[^/]+$/.test(p);
+  const dynamicRouteWithDots = p.startsWith("/viewer/") || p.startsWith("/library/folder/");
+  if (hasExtensionTail && !dynamicRouteWithDots) return false;
   return true;
 }
 

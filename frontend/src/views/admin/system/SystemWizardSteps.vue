@@ -129,7 +129,7 @@ function onModeChange() {
         <div><span>URL：</span>{{ remoteMode ? (url || "-") : "-" }}</div>
         <div><span>Base Path：</span>{{ remoteMode ? (basePath || "-") : "-" }}</div>
         <div><span>用户：</span>{{ remoteMode ? (username || "-") : "-" }}</div>
-        <div><span>超时：</span>{{ remoteMode ? `${timeoutMs}ms` : "-" }}</div>
+        <div><span>超时：</span>{{ remoteMode ? (Number.isFinite(timeoutMs) ? `${timeoutMs}ms` : "默认(15000ms)") : "-" }}</div>
       </div>
 
       <div v-if="validateText" class="validate-text" :class="{ ok: validateOk }">{{ validateText }}</div>

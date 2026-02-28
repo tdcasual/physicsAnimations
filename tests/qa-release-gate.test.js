@@ -14,4 +14,8 @@ test("qa gate script includes required verification commands", () => {
   assert.match(script, /npm run smoke:spa-admin/);
   assert.match(script, /npm run smoke:spa-admin-write/);
   assert.match(script, /npm run smoke:spa-library-admin/);
+
+  const buildIdx = script.indexOf("npm run build:frontend");
+  const backendTestIdx = script.indexOf("npm test");
+  assert.ok(buildIdx >= 0 && backendTestIdx >= 0 && buildIdx < backendTestIdx);
 });

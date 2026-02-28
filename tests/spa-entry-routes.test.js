@@ -130,3 +130,28 @@ test("does not serve SPA entry for extension-like root paths", async () => {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("does not serve SPA entry for nested extension-like paths outside known SPA routes", async () => {
+  const rootDir = makeTempRoot();
+  const spaDist = path.join(rootDir, "frontend", "dist");
+  fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
+  fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>root-spa</title>");
+
+  const app = createApp({ rootDir });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const blocked = ["/foo/bar.js", "/foo/bar/baz.css", "/foo/bar/baz.map"];
+    for (const urlPath of blocked) {
+      const response = await fetch(`${baseUrl}${urlPath}`);
+      assert.equal(response.status, 404, `${urlPath} should be 404`);
+      assert.deepEqual(await response.json(), { error: "not_found" });
+    }
+
+    const viewerLike = await fetch(`${baseUrl}/viewer/${encodeURIComponent("mechanics/demo.html")}`);
+    assert.equal(viewerLike.status, 200);
+    assert.match(await viewerLike.text(), /root-spa/);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

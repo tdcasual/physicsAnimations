@@ -4,11 +4,9 @@
     "api/index.js": {
       "maxDuration": 30,
       "includeFiles": [
-        "assets/**",
+        "frontend/dist/**",
         "animations/**",
         "animations.json",
-        "index.html",
-        "viewer.html",
         "404.html"
       ]
     }
@@ -17,4 +15,3 @@
     { "source": "/(.*)", "destination": "/api/index.js" }
   ]
 }
-

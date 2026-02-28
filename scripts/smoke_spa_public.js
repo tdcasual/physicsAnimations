@@ -80,10 +80,6 @@ function isIgnorableConsoleError(text, locationUrl) {
   const url = String(locationUrl || "");
   if (!value && !url) return false;
   if (value.includes("favicon.ico")) return true;
-  if (url.includes("/animations/")) return true;
-  if (value.includes("X-Frame-Options")) return true;
-  if (value.includes("Content Security Policy")) return true;
-  if (value.includes("Refused to frame")) return true;
   return false;
 }
 
@@ -319,8 +315,6 @@ async function run() {
       });
       page.on("pageerror", (error) => {
         const message = error?.message || String(error);
-        const stack = error?.stack || "";
-        if (stack.includes("/animations/")) return;
         pageErrors.push(message);
       });
 

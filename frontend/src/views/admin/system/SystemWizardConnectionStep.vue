@@ -40,9 +40,20 @@ const passwordModel = computed({
   get: () => props.password,
   set: (value: string) => emit("update:password", value),
 });
-const timeoutMsModel = computed({
-  get: () => props.timeoutMs,
-  set: (value: number | string) => emit("update:timeoutMs", Number(value || 0)),
+
+function parseTimeoutMsInput(value: number | string): number {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? Math.trunc(value) : Number.NaN;
+  }
+  const raw = String(value || "").trim();
+  if (!raw) return Number.NaN;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
+
+const timeoutMsModel = computed<number | string>({
+  get: () => (Number.isFinite(props.timeoutMs) ? props.timeoutMs : ""),
+  set: (value: number | string) => emit("update:timeoutMs", parseTimeoutMsInput(value)),
 });
 const scanRemoteModel = computed({
   get: () => props.scanRemote,
@@ -117,7 +128,7 @@ const scanRemoteModel = computed({
       <label class="field">
         <span>超时（毫秒）</span>
         <input
-          v-model.number="timeoutMsModel"
+          v-model="timeoutMsModel"
           class="field-input"
           type="number"
           name="webdav_timeout_ms"

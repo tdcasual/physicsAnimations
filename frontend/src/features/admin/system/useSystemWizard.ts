@@ -101,7 +101,7 @@ export function useSystemWizard() {
       url: String(url.value || "").trim(),
       basePath: String(basePath.value || "").trim(),
       username: String(username.value || "").trim(),
-      timeoutMs: Number(timeoutMs.value || 0),
+      timeoutMs: Number.isFinite(timeoutMs.value) ? Math.trunc(timeoutMs.value) : null,
       scanRemote: scanRemote.value === true,
       hasPasswordInput: Boolean(password.value),
     });
@@ -112,6 +112,9 @@ export function useSystemWizard() {
   }
 
   function applyStorage(nextStorage: any, options: { resetStep: boolean } = { resetStep: false }) {
+    const timeoutCandidate = Number(nextStorage?.webdav?.timeoutMs);
+    const normalizedTimeoutMs = Number.isFinite(timeoutCandidate) ? Math.trunc(timeoutCandidate) : 15000;
+
     storage.value = {
       mode: nextStorage?.mode || "local",
       effectiveMode: nextStorage?.effectiveMode || nextStorage?.mode || "local",
@@ -122,7 +125,7 @@ export function useSystemWizard() {
         url: nextStorage?.webdav?.url || "",
         basePath: nextStorage?.webdav?.basePath || "physicsAnimations",
         username: nextStorage?.webdav?.username || "",
-        timeoutMs: Number(nextStorage?.webdav?.timeoutMs || 15000),
+        timeoutMs: normalizedTimeoutMs,
         hasPassword: nextStorage?.webdav?.hasPassword === true,
         scanRemote: nextStorage?.webdav?.scanRemote === true,
       },
@@ -132,7 +135,7 @@ export function useSystemWizard() {
     url.value = storage.value.webdav.url || "";
     basePath.value = storage.value.webdav.basePath || "physicsAnimations";
     username.value = storage.value.webdav.username || "";
-    timeoutMs.value = Number(storage.value.webdav.timeoutMs || 15000);
+    timeoutMs.value = normalizedTimeoutMs;
     scanRemote.value = storage.value.webdav.scanRemote === true;
     password.value = "";
     validateText.value = "";
