@@ -160,6 +160,8 @@ h3 {
 
 .subaccordion > summary {
   cursor: pointer;
+  min-height: 40px;
+  padding: 10px 0;
   color: var(--muted);
   font-size: 13px;
 }

@@ -71,7 +71,7 @@ watch(
 <template>
   <section class="library-folder-view">
     <header class="library-head">
-      <RouterLink to="/">← 返回目录</RouterLink>
+      <RouterLink to="/" class="btn btn-ghost">← 返回目录</RouterLink>
       <h2>{{ folder?.name || "文件夹" }}</h2>
     </header>
 
