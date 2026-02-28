@@ -7,6 +7,30 @@ const { enqueueScreenshot } = require("./screenshotQueue");
 const { buildPlaywrightEnv } = require("./playwrightEnv");
 const { shouldAllowRequestUrl } = require("./ssrf");
 
+const DEFAULT_SCREENSHOT_TIMEOUT_MS = 30000;
+const DEFAULT_SCREENSHOT_FILE_TIMEOUT_MS = 5000;
+
+function parsePositiveTimeout(value) {
+  const parsed = Number.parseInt(String(value || ""), 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return null;
+  return parsed;
+}
+
+function resolveScreenshotNavigationOptions(targetUrl, env = process.env) {
+  const url = String(targetUrl || "");
+  const isFileUrl = url.startsWith("file:");
+  const webTimeout =
+    parsePositiveTimeout(env.PA_SCREENSHOT_TIMEOUT_MS) || DEFAULT_SCREENSHOT_TIMEOUT_MS;
+  const fileTimeout =
+    parsePositiveTimeout(env.PA_SCREENSHOT_FILE_TIMEOUT_MS) ||
+    DEFAULT_SCREENSHOT_FILE_TIMEOUT_MS;
+
+  return {
+    waitUntil: isFileUrl ? "load" : "networkidle",
+    timeout: isFileUrl ? fileTimeout : webTimeout,
+  };
+}
+
 function fileUrlPath(url) {
   try {
     if (!(url instanceof URL)) return "";
@@ -14,6 +38,14 @@ function fileUrlPath(url) {
     return decodeURIComponent(url.pathname || "");
   } catch {
     return "";
+  }
+}
+
+function parseUrl(rawUrl) {
+  try {
+    return new URL(rawUrl);
+  } catch {
+    return null;
   }
 }
 
@@ -32,21 +64,27 @@ async function captureScreenshot({ rootDir, targetUrl, outputPath, allowedFileRo
     });
     const page = await context.newPage();
     const hostnameCache = new Map();
+    const mainTarget = parseUrl(targetUrl);
+    const blockHttpRequests = mainTarget?.protocol === "file:";
 
     await page.route("**/*", async (route) => {
       const requestUrl = route.request().url();
+      const parsedRequestUrl = parseUrl(requestUrl);
+
+      if (
+        blockHttpRequests &&
+        parsedRequestUrl &&
+        (parsedRequestUrl.protocol === "http:" || parsedRequestUrl.protocol === "https:")
+      ) {
+        await route.abort();
+        return;
+      }
+
       let ok = await shouldAllowRequestUrl(requestUrl, hostnameCache);
 
       if (ok && allowedFileRoot) {
-        let parsed = null;
-        try {
-          parsed = new URL(requestUrl);
-        } catch {
-          parsed = null;
-        }
-
-        if (parsed?.protocol === "file:") {
-          const requestedPath = fileUrlPath(parsed);
+        if (parsedRequestUrl?.protocol === "file:") {
+          const requestedPath = fileUrlPath(parsedRequestUrl);
           const root = path.resolve(String(allowedFileRoot));
           const full = path.resolve(requestedPath);
           ok = full === root || full.startsWith(`${root}${path.sep}`);
@@ -59,7 +97,7 @@ async function captureScreenshot({ rootDir, targetUrl, outputPath, allowedFileRo
       await route.continue();
     });
 
-    await page.goto(targetUrl, { waitUntil: "networkidle", timeout: 30000 });
+    await page.goto(targetUrl, resolveScreenshotNavigationOptions(targetUrl));
     await page.waitForTimeout(800);
     await page.screenshot({ path: outputPath });
 
@@ -82,4 +120,5 @@ module.exports = {
   captureScreenshot,
   captureScreenshotQueued,
   filePathToUrl,
+  resolveScreenshotNavigationOptions,
 };

@@ -15,8 +15,18 @@ test("createAdapterRegistry registers adapters and resolves by matcher", async (
   const { createAdapterRegistry } = require("../server/services/library/adapters/registry");
 
   const registry = createAdapterRegistry([
-    { key: "zip", match: ({ fileName }) => String(fileName || "").endsWith(".zip") },
-    { key: "ggb", match: ({ fileName }) => String(fileName || "").endsWith(".ggb") },
+    {
+      key: "zip",
+      match: ({ fileName }) => String(fileName || "").endsWith(".zip"),
+      capabilities: { supportsEmbed: false, supportsDownload: true },
+      buildViewer: async () => ({ generated: false, html: "" }),
+    },
+    {
+      key: "ggb",
+      match: ({ fileName }) => String(fileName || "").endsWith(".ggb"),
+      capabilities: { supportsEmbed: true, supportsDownload: true },
+      buildViewer: async () => ({ generated: true, html: "<div></div>" }),
+    },
   ]);
 
   const found = registry.findForFile({ fileName: "demo.ggb" });
@@ -36,7 +46,13 @@ test("createAdapterRegistry skips invalid adapter entries", async () => {
     null,
     {},
     { key: "", match: () => true },
-    { key: "ok", match: () => true },
+    { key: "broken", match: () => true },
+    {
+      key: "ok",
+      match: () => true,
+      capabilities: { supportsEmbed: true, supportsDownload: true },
+      buildViewer: async () => ({ generated: true, html: "<div></div>" }),
+    },
   ]);
 
   assert.equal(registry.adapters.length, 1);

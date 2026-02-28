@@ -18,6 +18,8 @@ describe("admin inline feedback", () => {
     const systemView = read("src/views/admin/AdminSystemView.vue");
     const systemState = read("src/features/admin/system/useSystemWizard.ts");
     const systemSteps = read("src/views/admin/system/SystemWizardSteps.vue");
+    const systemConnectionStep = read("src/views/admin/system/SystemWizardConnectionStep.vue");
+    const systemWizardCombined = [systemSteps, systemConnectionStep].join("\n");
 
     for (const source of [contentLogic, uploadsLogic, account]) {
       expect(source).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
@@ -28,7 +30,7 @@ describe("admin inline feedback", () => {
     expect(systemState).toMatch(/useFieldErrors/);
     expect(systemState).toMatch(/const \{ fieldErrors, setFieldError, clearFieldErrors, getFieldError \} = useFieldErrors\(\)/);
 
-    for (const source of [contentForm, uploadsForm, account, systemSteps]) {
+    for (const source of [contentForm, uploadsForm, account, systemWizardCombined]) {
       expect(source).toMatch(/field-error-text/);
       expect(source).toMatch(/has-error/);
     }
@@ -38,6 +40,6 @@ describe("admin inline feedback", () => {
     expect(account).toMatch(/getFieldError\("currentPassword"\)/);
     expect(account).toMatch(/getFieldError\("confirmPassword"\)/);
     expect(systemView).toMatch(/getFieldError/);
-    expect(systemSteps).toMatch(/getFieldError\("webdavUrl"\)/);
+    expect(systemWizardCombined).toMatch(/getFieldError\("webdavUrl"\)/);
   });
 });

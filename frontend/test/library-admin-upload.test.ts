@@ -11,22 +11,32 @@ function readLibrarySources() {
   const template = read("src/views/admin/library/AdminLibraryView.template.html");
   const style = read("src/views/admin/library/AdminLibraryView.css");
   const state = read("src/features/library/useLibraryAdminState.ts");
+  const draftState = read("src/features/library/useLibraryAdminDraftState.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
   const folderActions = read("src/features/library/useLibraryFolderActions.ts");
+  const assetCrudActions = read("src/features/library/useLibraryAssetCrudActions.ts");
+  const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
+  const panelSections = read("src/features/library/useLibraryPanelSections.ts");
+  const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
   return {
     view,
     template,
     style,
     state,
+    draftState,
     feedback,
     embedActions,
     assetSelection,
     assetFilters,
     folderActions,
-    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}`,
+    assetCrudActions,
+    assetEditorActions,
+    panelSections,
+    adminLifecycle,
+    combined: `${view}\n${template}\n${style}\n${state}\n${draftState}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}\n${assetCrudActions}\n${assetEditorActions}\n${panelSections}\n${adminLifecycle}`,
   };
 }
 
@@ -38,8 +48,8 @@ describe("admin library upload", () => {
   });
 
   it("defaults upload mode to embed demo mode", () => {
-    const { template, state } = readLibrarySources();
-    expect(state).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/);
+    const { template, combined } = readLibrarySources();
+    expect(combined).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/);
     expect(template).toMatch(/<option value="embed">演示（默认）<\/option>/);
     expect(template).toMatch(/<option value="download">仅下载原文件<\/option>/);
   });
@@ -62,7 +72,7 @@ describe("admin library upload", () => {
   it("allows resource display name input and rename action", () => {
     const { template, combined } = readLibrarySources();
     expect(combined).toMatch(/assetDisplayName/);
-    expect(combined).toMatch(/displayName:\s*assetDisplayName\.value/);
+    expect(combined).toMatch(/displayName:\s*(?:deps\.)?assetDisplayName\.value/);
     expect(combined).toMatch(/updateLibraryAsset/);
     expect(template).toMatch(/重命名显示名/);
   });
@@ -81,8 +91,8 @@ describe("admin library upload", () => {
     expect(combined).toMatch(/assetEmbedProfileId/);
     expect(combined).toMatch(/assetEmbedOptionsJson/);
     expect(template).toMatch(/Embed 参数 JSON/);
-    expect(combined).toMatch(/embedProfileId:\s*assetParserMode\.value === "profile"/);
-    expect(combined).toMatch(/embedOptionsJson:\s*assetParserMode\.value === "profile"/);
+    expect(combined).toMatch(/embedProfileId:\s*(?:deps\.)?assetParserMode\.value === "profile"/);
+    expect(combined).toMatch(/embedOptionsJson:\s*(?:deps\.)?assetParserMode\.value === "profile"/);
   });
 
   it("supports embed profile management inputs and actions", () => {

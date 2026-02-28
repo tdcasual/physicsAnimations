@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, ref, type Ref } from "vue";
 
 interface UsePagedAdminListOptions {
   pageSize?: number;
@@ -15,7 +15,7 @@ interface PageResult<T> {
 }
 
 export function usePagedAdminList<T>({ pageSize = 24 }: UsePagedAdminListOptions = {}) {
-  const items = ref<T[]>([]);
+  const items: Ref<T[]> = ref([]);
   const total = ref(0);
   const page = ref(1);
   const latestRequestSeq = ref(0);

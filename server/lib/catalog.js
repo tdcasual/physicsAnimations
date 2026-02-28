@@ -1,174 +1,15 @@
-const fs = require("fs");
-const path = require("path");
-
-const { DEFAULT_GROUP_ID, GROUP_TITLES, CATEGORY_TITLES } = require("./categories");
-const { readAnimationsJson } = require("./animationsIndex");
-const { loadItemsState, loadCategoriesState, loadBuiltinItemsState } = require("./state");
-const logger = require("./logger");
-
-function safeText(text) {
-  if (typeof text !== "string") return "";
-  return text;
-}
-
-function applyBuiltinOverride(item, override) {
-  const out = { ...item };
-  if (!override || typeof override !== "object") return out;
-  if (override.deleted === true) return null;
-
-  if (typeof override.title === "string") {
-    const title = override.title.trim();
-    if (title) out.title = safeText(title);
-  }
-  if (typeof override.description === "string") {
-    out.description = safeText(override.description);
-  }
-  if (typeof override.categoryId === "string") {
-    const categoryId = override.categoryId.trim();
-    if (categoryId) out.categoryId = safeText(categoryId);
-  }
-  if (Number.isFinite(override.order)) out.order = Math.trunc(override.order);
-  if (typeof override.published === "boolean") out.published = override.published;
-  if (typeof override.hidden === "boolean") out.hidden = override.hidden;
-  if (typeof override.updatedAt === "string") out.updatedAt = override.updatedAt;
-
-  return out;
-}
-
-function getDefaultCategoryTitle(categoryId) {
-  return safeText(CATEGORY_TITLES[categoryId] || categoryId);
-}
-
-function getDefaultGroupTitle(groupId) {
-  return safeText(GROUP_TITLES[groupId] || groupId);
-}
-
-function ensureCategory(categories, { id, groupId }) {
-  if (categories[id]) return categories[id];
-  categories[id] = {
-    id,
-    groupId: groupId || DEFAULT_GROUP_ID,
-    title: getDefaultCategoryTitle(id),
-    order: 0,
-    hidden: false,
-    items: [],
-  };
-  return categories[id];
-}
-
-function loadBuiltinCatalog({
-  rootDir,
-  builtinState,
-  includeHiddenItems = false,
-  includeUnpublishedItems = false,
-} = {}) {
-  const data = readAnimationsJson({ rootDir });
-  if (!data) return { categories: {} };
-  const overrides = builtinState?.items && typeof builtinState.items === "object" ? builtinState.items : {};
-  const categories = {};
-
-  for (const [categoryId, category] of Object.entries(data)) {
-    const title = safeText(category?.title || CATEGORY_TITLES[categoryId] || categoryId);
-    categories[categoryId] = {
-      id: categoryId,
-      groupId: DEFAULT_GROUP_ID,
-      title,
-      order: 0,
-      hidden: false,
-      items: [],
-    };
-  }
-
-  for (const [categoryId, category] of Object.entries(data)) {
-    for (const item of category?.items || []) {
-      const file = safeText(item?.file || "");
-      if (!file) continue;
-      const thumbnail = safeText(item?.thumbnail || "");
-      const itemTitle = safeText(item?.title || file.replace(/\.html$/i, ""));
-      const description = safeText(item?.description || "");
-
-      const baseItem = {
-        id: file,
-        type: "builtin",
-        categoryId,
-        title: itemTitle,
-        description,
-        order: 0,
-        href: `/viewer/${encodeURIComponent(file)}`,
-        src: `animations/${file}`,
-        thumbnail,
-        published: true,
-        hidden: false,
-        createdAt: "",
-        updatedAt: "",
-      };
-
-      const merged = applyBuiltinOverride(baseItem, overrides[file]);
-      if (!merged) continue;
-      const finalCategoryId = merged.categoryId || categoryId;
-      merged.categoryId = finalCategoryId;
-
-      const published = merged.published !== false;
-      const hidden = merged.hidden === true;
-      if (!includeUnpublishedItems && !published) continue;
-      if (!includeHiddenItems && hidden) continue;
-
-      ensureCategory(categories, { id: finalCategoryId, groupId: DEFAULT_GROUP_ID }).items.push(merged);
-    }
-  }
-
-  return { categories };
-}
-
-function applyCategoryConfig(category, config) {
-  if (!config || typeof config !== "object") return;
-  const maybeTitle = typeof config.title === "string" ? config.title.trim() : "";
-  if (maybeTitle) category.title = safeText(maybeTitle);
-  if (Number.isFinite(config.order)) category.order = Math.trunc(config.order);
-  if (typeof config.hidden === "boolean") category.hidden = config.hidden;
-  if (typeof config.groupId === "string" && config.groupId.trim()) category.groupId = config.groupId.trim();
-}
-
-function applyGroupConfig(group, config) {
-  if (!config || typeof config !== "object") return;
-  const maybeTitle = typeof config.title === "string" ? config.title.trim() : "";
-  if (maybeTitle) group.title = safeText(maybeTitle);
-  if (Number.isFinite(config.order)) group.order = Math.trunc(config.order);
-  if (typeof config.hidden === "boolean") group.hidden = config.hidden;
-}
-
-async function loadDynamicCatalogItems({
-  store,
-  taxonomyQueryRepo,
-  includeHiddenItems = false,
-  includeUnpublishedItems = false,
-} = {}) {
-  const queryDynamicItemsForCatalog =
-    typeof taxonomyQueryRepo?.queryDynamicItemsForCatalog === "function"
-      ? (options) => taxonomyQueryRepo.queryDynamicItemsForCatalog(options)
-      : typeof store?.stateDbQuery?.queryDynamicItemsForCatalog === "function"
-        ? (options) => store.stateDbQuery.queryDynamicItemsForCatalog(options)
-        : null;
-
-  if (queryDynamicItemsForCatalog) {
-    try {
-      const sqlResult = await queryDynamicItemsForCatalog({
-        includeHiddenItems,
-        includeUnpublishedItems,
-      });
-      if (sqlResult && Array.isArray(sqlResult.items)) {
-        return sqlResult;
-      }
-    } catch (err) {
-      logger.warn("catalog_sql_dynamic_query_failed", {
-        fallback: "items_json",
-        error: err,
-      });
-    }
-  }
-
-  return loadItemsState({ store });
-}
+const { loadCategoriesState, loadBuiltinItemsState } = require("./state");
+const { loadBuiltinCatalog } = require("./catalog/builtinLoader");
+const { loadDynamicCatalogItems } = require("./catalog/dynamicLoader");
+const {
+  DEFAULT_GROUP_ID,
+  CATEGORY_TITLES,
+  applyCategoryConfig,
+  applyGroupConfig,
+  ensureCategory,
+  getDefaultGroupTitle,
+  safeText,
+} = require("./catalog/helpers");
 
 async function loadCatalog({
   rootDir,
@@ -220,8 +61,7 @@ async function loadCatalog({
     const category = ensureCategory(categories, { id: item.categoryId, groupId: DEFAULT_GROUP_ID });
 
     const href = `/viewer/${encodeURIComponent(item.id)}`;
-    const src =
-      item.type === "link" ? safeText(item.url || "") : safeText(item.path || "");
+    const src = item.type === "link" ? safeText(item.url || "") : safeText(item.path || "");
 
     category.items.push({
       id: item.id,

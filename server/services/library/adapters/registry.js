@@ -1,16 +1,10 @@
+const { isValidAdapter } = require("./contract");
+
 function createAdapterRegistry(adapters = []) {
   const list = [];
   for (const adapter of adapters) {
-    if (!adapter || typeof adapter !== "object") continue;
-    if (typeof adapter.key !== "string" || !adapter.key.trim()) continue;
-    if (typeof adapter.match !== "function") continue;
-    list.push({
-      ...adapter,
-      buildViewer:
-        typeof adapter.buildViewer === "function"
-          ? adapter.buildViewer
-          : async () => ({ generated: false, html: "" }),
-    });
+    if (!isValidAdapter(adapter)) continue;
+    list.push(adapter);
   }
 
   function findForFile(input) {

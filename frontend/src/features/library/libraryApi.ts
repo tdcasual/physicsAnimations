@@ -5,8 +5,22 @@ import type {
   LibraryEmbedProfile,
   LibraryFolder,
   LibraryFolderAssetsResponse,
-  LibraryOpenMode,
 } from "./types";
+import { toAsset, toEmbedProfile, toFolder } from "./libraryApiMappers";
+import {
+  buildCreateLibraryEmbedProfileBody,
+  buildCreateLibraryFolderBody,
+  buildUpdateLibraryAssetBody,
+  buildUpdateLibraryEmbedProfileBody,
+  buildUpdateLibraryFolderBody,
+  buildUploadLibraryAssetFormData,
+  type CreateLibraryEmbedProfilePayload,
+  type CreateLibraryFolderPayload,
+  type UpdateLibraryAssetPatch,
+  type UpdateLibraryEmbedProfilePatch,
+  type UpdateLibraryFolderPatch,
+  type UploadLibraryAssetPayload,
+} from "./libraryApiPayloads";
 
 interface LibraryApiError extends Error {
   status: number;
@@ -55,74 +69,6 @@ async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promi
 
   if (response.ok) return data as T;
   throw toApiError(response.status, data);
-}
-
-function toFolder(value: any): LibraryFolder {
-  return {
-    id: String(value?.id || ""),
-    name: String(value?.name || ""),
-    categoryId: String(value?.categoryId || "other"),
-    coverType: value?.coverType === "image" ? "image" : "blank",
-    coverPath: String(value?.coverPath || ""),
-    parentId: value?.parentId ?? null,
-    order: Number(value?.order || 0),
-    assetCount: Number(value?.assetCount || 0),
-    createdAt: String(value?.createdAt || ""),
-    updatedAt: String(value?.updatedAt || ""),
-  };
-}
-
-function toAsset(value: any) {
-  const deleted = value?.deleted === true;
-  return {
-    id: String(value?.id || ""),
-    folderId: String(value?.folderId || ""),
-    adapterKey: String(value?.adapterKey || ""),
-    displayName: String(value?.displayName || ""),
-    fileName: String(value?.fileName || ""),
-    filePath: String(value?.filePath || ""),
-    fileSize: Number(value?.fileSize || 0),
-    openMode: value?.openMode === "embed" ? "embed" : "download",
-    generatedEntryPath: String(value?.generatedEntryPath || ""),
-    embedProfileId: String(value?.embedProfileId || ""),
-    embedOptions:
-      value?.embedOptions && typeof value.embedOptions === "object" && !Array.isArray(value.embedOptions)
-        ? value.embedOptions
-        : {},
-    status: value?.status === "failed" ? "failed" : "ready",
-    deleted,
-    deletedAt: deleted ? String(value?.deletedAt || "") : "",
-    createdAt: String(value?.createdAt || ""),
-    updatedAt: String(value?.updatedAt || ""),
-  } as const;
-}
-
-function toEmbedProfile(value: any): LibraryEmbedProfile {
-  return {
-    id: String(value?.id || ""),
-    name: String(value?.name || ""),
-    scriptUrl: String(value?.scriptUrl || ""),
-    fallbackScriptUrl: String(value?.fallbackScriptUrl || ""),
-    viewerPath: String(value?.viewerPath || ""),
-    remoteScriptUrl: String(value?.remoteScriptUrl || value?.scriptUrl || ""),
-    remoteViewerPath: String(value?.remoteViewerPath || value?.viewerPath || ""),
-    syncMode: String(value?.syncMode || "local_mirror"),
-    syncStatus: String(value?.syncStatus || "pending"),
-    syncMessage: String(value?.syncMessage || ""),
-    lastSyncAt: String(value?.lastSyncAt || ""),
-    constructorName: String(value?.constructorName || "ElectricFieldApp"),
-    assetUrlOptionKey: String(value?.assetUrlOptionKey || "sceneUrl"),
-    matchExtensions: Array.isArray(value?.matchExtensions)
-      ? value.matchExtensions.map((item: unknown) => String(item || "").trim()).filter(Boolean)
-      : [],
-    defaultOptions:
-      value?.defaultOptions && typeof value.defaultOptions === "object" && !Array.isArray(value.defaultOptions)
-        ? value.defaultOptions
-        : {},
-    enabled: value?.enabled !== false,
-    createdAt: String(value?.createdAt || ""),
-    updatedAt: String(value?.updatedAt || ""),
-  };
 }
 
 export async function listLibraryCatalog(): Promise<LibraryCatalogResponse> {
@@ -179,37 +125,22 @@ export async function getLibraryAssetOpenInfo(assetId: string): Promise<LibraryA
   };
 }
 
-export async function createLibraryFolder(payload: {
-  name: string;
-  categoryId: string;
-  coverType?: "blank" | "image";
-}): Promise<any> {
+export async function createLibraryFolder(payload: CreateLibraryFolderPayload): Promise<any> {
   return apiFetch("/api/library/folders", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: payload.name,
-      categoryId: payload.categoryId || "other",
-      coverType: payload.coverType || "blank",
-    }),
+    body: JSON.stringify(buildCreateLibraryFolderBody(payload)),
   });
 }
 
 export async function updateLibraryFolder(
   folderId: string,
-  patch: Partial<{
-    name: string;
-    categoryId: string;
-  }>,
+  patch: UpdateLibraryFolderPatch,
 ): Promise<any> {
-  const body: Record<string, string> = {};
-  if (patch.name !== undefined) body.name = String(patch.name || "").trim();
-  if (patch.categoryId !== undefined) body.categoryId = String(patch.categoryId || "").trim();
-
   return apiFetch(`/api/library/folders/${encodeURIComponent(folderId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(buildUpdateLibraryFolderBody(patch)),
   });
 }
 
@@ -226,94 +157,29 @@ export async function uploadLibraryFolderCover(payload: {
   });
 }
 
-export async function uploadLibraryAsset(payload: {
-  folderId: string;
-  file: File;
-  openMode: LibraryOpenMode;
-  displayName?: string;
-  embedProfileId?: string;
-  embedOptionsJson?: string;
-}): Promise<any> {
-  const formData = new FormData();
-  formData.append("file", payload.file);
-  formData.append("openMode", payload.openMode || "embed");
-  formData.append("displayName", String(payload.displayName || "").trim());
-  if (payload.embedProfileId) {
-    formData.append("embedProfileId", String(payload.embedProfileId || "").trim());
-  }
-  formData.append("embedOptionsJson", String(payload.embedOptionsJson || "").trim());
-
+export async function uploadLibraryAsset(payload: UploadLibraryAssetPayload): Promise<any> {
   return apiFetch(`/api/library/folders/${encodeURIComponent(payload.folderId)}/assets`, {
     method: "POST",
-    body: formData,
+    body: buildUploadLibraryAssetFormData(payload),
   });
 }
 
-export async function createLibraryEmbedProfile(payload: {
-  name: string;
-  scriptUrl: string;
-  fallbackScriptUrl?: string;
-  viewerPath?: string;
-  constructorName?: string;
-  assetUrlOptionKey?: string;
-  matchExtensions?: string[];
-  defaultOptions?: Record<string, unknown>;
-  enabled?: boolean;
-}): Promise<any> {
+export async function createLibraryEmbedProfile(payload: CreateLibraryEmbedProfilePayload): Promise<any> {
   return apiFetch("/api/library/embed-profiles", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: String(payload.name || "").trim(),
-      scriptUrl: String(payload.scriptUrl || "").trim(),
-      fallbackScriptUrl: String(payload.fallbackScriptUrl || "").trim(),
-      viewerPath: String(payload.viewerPath || "").trim(),
-      constructorName: String(payload.constructorName || "ElectricFieldApp").trim(),
-      assetUrlOptionKey: String(payload.assetUrlOptionKey || "sceneUrl").trim(),
-      matchExtensions: Array.isArray(payload.matchExtensions) ? payload.matchExtensions : [],
-      defaultOptions:
-        payload.defaultOptions && typeof payload.defaultOptions === "object" && !Array.isArray(payload.defaultOptions)
-          ? payload.defaultOptions
-          : {},
-      enabled: payload.enabled !== false,
-    }),
+    body: JSON.stringify(buildCreateLibraryEmbedProfileBody(payload)),
   });
 }
 
 export async function updateLibraryEmbedProfile(
   profileId: string,
-  patch: Partial<{
-    name: string;
-    scriptUrl: string;
-    fallbackScriptUrl: string;
-    viewerPath: string;
-    constructorName: string;
-    assetUrlOptionKey: string;
-    matchExtensions: string[];
-    defaultOptions: Record<string, unknown>;
-    enabled: boolean;
-  }>,
+  patch: UpdateLibraryEmbedProfilePatch,
 ): Promise<any> {
-  const body: Record<string, unknown> = {};
-  if (patch.name !== undefined) body.name = String(patch.name || "").trim();
-  if (patch.scriptUrl !== undefined) body.scriptUrl = String(patch.scriptUrl || "").trim();
-  if (patch.fallbackScriptUrl !== undefined) body.fallbackScriptUrl = String(patch.fallbackScriptUrl || "").trim();
-  if (patch.viewerPath !== undefined) body.viewerPath = String(patch.viewerPath || "").trim();
-  if (patch.constructorName !== undefined) body.constructorName = String(patch.constructorName || "").trim();
-  if (patch.assetUrlOptionKey !== undefined) body.assetUrlOptionKey = String(patch.assetUrlOptionKey || "").trim();
-  if (patch.matchExtensions !== undefined) body.matchExtensions = Array.isArray(patch.matchExtensions) ? patch.matchExtensions : [];
-  if (patch.defaultOptions !== undefined) {
-    body.defaultOptions =
-      patch.defaultOptions && typeof patch.defaultOptions === "object" && !Array.isArray(patch.defaultOptions)
-        ? patch.defaultOptions
-        : {};
-  }
-  if (patch.enabled !== undefined) body.enabled = patch.enabled === true;
-
   return apiFetch(`/api/library/embed-profiles/${encodeURIComponent(profileId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(buildUpdateLibraryEmbedProfileBody(patch)),
   });
 }
 
@@ -331,37 +197,12 @@ export async function syncLibraryEmbedProfile(profileId: string): Promise<any> {
 
 export async function updateLibraryAsset(
   assetId: string,
-  patch: {
-    displayName?: string;
-    openMode?: LibraryOpenMode;
-    folderId?: string;
-    embedProfileId?: string;
-    embedOptions?: Record<string, unknown>;
-  },
+  patch: UpdateLibraryAssetPatch,
 ): Promise<any> {
-  const body: Record<string, unknown> = {};
-  if (patch?.displayName !== undefined) {
-    body.displayName = String(patch.displayName || "");
-  }
-  if (patch?.openMode !== undefined) {
-    body.openMode = patch.openMode === "embed" ? "embed" : "download";
-  }
-  if (patch?.folderId !== undefined) {
-    body.folderId = String(patch.folderId || "").trim();
-  }
-  if (patch?.embedProfileId !== undefined) {
-    body.embedProfileId = String(patch.embedProfileId || "").trim();
-  }
-  if (patch?.embedOptions !== undefined) {
-    body.embedOptions =
-      patch.embedOptions && typeof patch.embedOptions === "object" && !Array.isArray(patch.embedOptions)
-        ? patch.embedOptions
-        : {};
-  }
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify(buildUpdateLibraryAssetBody(patch)),
   });
 }
 

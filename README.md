@@ -154,6 +154,7 @@ docker compose --profile maintenance run --rm ggb-updater
 - [安全说明与上线建议](docs/guides/security.md)
 - [发布运维 Runbook](docs/guides/ops-release-runbook.md)
 - [资源库事故处置 Runbook](docs/guides/ops-library-incident-runbook.md)
+- [维护与扩展 DoD](docs/guides/maintainability-extensibility-dod.md)
 
 ## 目录结构（简版）
 

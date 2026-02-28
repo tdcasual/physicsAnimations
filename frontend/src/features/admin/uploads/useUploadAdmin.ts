@@ -2,15 +2,12 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { normalizePublicUrl } from "../../catalog/catalogLink";
 import {
   type AdminItemRow,
-  deleteAdminItem,
-  listAdminItems,
-  listTaxonomy,
-  updateAdminItem,
   uploadHtmlItem,
 } from "../adminApi";
 import { useActionFeedback } from "../composables/useActionFeedback";
 import { useFieldErrors } from "../composables/useFieldErrors";
 import { usePagedAdminList } from "../composables/usePagedAdminList";
+import { createUploadAdminActions } from "./useUploadAdminActions";
 
 interface CategoryRow {
   id: string;
@@ -136,52 +133,32 @@ export function useUploadAdmin() {
     if (!currentItem) resetEdit();
   }
 
-  async function reloadTaxonomy() {
-    const data = await listTaxonomy();
-    groups.value = Array.isArray(data?.groups) ? data.groups : [];
-    categories.value = Array.isArray(data?.categories) ? data.categories : [];
-    if (!categories.value.some((row) => row.id === categoryId.value)) {
-      categoryId.value = categories.value[0]?.id || "other";
-    }
-    if (!categories.value.some((row) => row.id === editCategoryId.value)) {
-      editCategoryId.value = categories.value[0]?.id || "other";
-    }
-  }
-
-  async function reloadUploads(params: { reset: boolean } = { reset: true }) {
-    const requestSeq = nextRequestSeq();
-    loading.value = true;
-    errorText.value = "";
-
-    try {
-      const nextPage = params.reset ? 1 : page.value + 1;
-      const data = await listAdminItems({
-        page: nextPage,
-        pageSize,
-        q: query.value.trim(),
-        type: "upload",
-      });
-      const received = Array.isArray(data?.items) ? data.items : [];
-      if (!isLatestRequest(requestSeq)) return;
-      applyPageResult(
-        {
-          items: received,
-          page: Number(data?.page || nextPage),
-          total: Number(data?.total || 0),
-        },
-        { reset: params.reset },
-      );
-      syncEditStateWithItems();
-    } catch (err) {
-      if (!isLatestRequest(requestSeq)) return;
-      const e = err as { status?: number };
-      errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "加载上传列表失败。";
-    } finally {
-      if (isLatestRequest(requestSeq)) {
-        loading.value = false;
-      }
-    }
-  }
+  const { reloadTaxonomy, reloadUploads, saveEdit, removeItem } = createUploadAdminActions({
+    loading,
+    saving,
+    errorText,
+    groups,
+    categories,
+    items,
+    query,
+    categoryId,
+    editCategoryId,
+    editingId,
+    editTitle,
+    editDescription,
+    editOrder,
+    editPublished,
+    editHidden,
+    page,
+    pageSize,
+    nextRequestSeq,
+    isLatestRequest,
+    applyPageResult,
+    syncEditStateWithItems,
+    resetEdit,
+    beginEdit,
+    setActionFeedback,
+  });
 
   async function submitUpload() {
     if (!file.value) {
@@ -243,47 +220,6 @@ export function useUploadAdmin() {
         return;
       }
       setActionFeedback("上传失败。", true);
-    } finally {
-      saving.value = false;
-    }
-  }
-
-  async function saveEdit(id: string) {
-    saving.value = true;
-    setActionFeedback("");
-    try {
-      await updateAdminItem(id, {
-        title: editTitle.value.trim(),
-        description: editDescription.value.trim(),
-        categoryId: editCategoryId.value,
-        order: Number(editOrder.value || 0),
-        published: editPublished.value,
-        hidden: editHidden.value,
-      });
-      await reloadUploads({ reset: true });
-      const updated = items.value.find((item) => item.id === id);
-      if (updated) beginEdit(updated);
-      setActionFeedback("保存成功。", false);
-    } catch (err) {
-      const e = err as { status?: number };
-      setActionFeedback(e?.status === 401 ? "请先登录管理员账号。" : "保存失败。", true);
-    } finally {
-      saving.value = false;
-    }
-  }
-
-  async function removeItem(id: string) {
-    if (!window.confirm("确定删除该上传内容吗？")) return;
-    saving.value = true;
-    setActionFeedback("");
-    try {
-      await deleteAdminItem(id);
-      if (editingId.value === id) resetEdit();
-      await reloadUploads({ reset: true });
-      setActionFeedback("上传内容已删除。", false);
-    } catch (err) {
-      const e = err as { status?: number };
-      setActionFeedback(e?.status === 401 ? "请先登录管理员账号。" : "删除失败。", true);
     } finally {
       saving.value = false;
     }

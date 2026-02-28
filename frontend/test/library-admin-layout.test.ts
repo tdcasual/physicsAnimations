@@ -11,11 +11,16 @@ function readLibrarySources() {
   const template = read("src/views/admin/library/AdminLibraryView.template.html");
   const style = read("src/views/admin/library/AdminLibraryView.css");
   const state = read("src/features/library/useLibraryAdminState.ts");
+  const dataActions = read("src/features/library/useLibraryAdminDataActions.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
   const folderActions = read("src/features/library/useLibraryFolderActions.ts");
+  const assetCrudActions = read("src/features/library/useLibraryAssetCrudActions.ts");
+  const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
+  const panelSections = read("src/features/library/useLibraryPanelSections.ts");
+  const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
   const folderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
   const assetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
   const inspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
@@ -28,11 +33,16 @@ function readLibrarySources() {
     template,
     style,
     state,
+    dataActions,
     feedback,
     embedActions,
     assetSelection,
     assetFilters,
     folderActions,
+    assetCrudActions,
+    assetEditorActions,
+    panelSections,
+    adminLifecycle,
     folderColumn,
     assetColumn,
     inspectorColumn,
@@ -45,11 +55,16 @@ function readLibrarySources() {
       template,
       style,
       state,
+      dataActions,
       feedback,
       embedActions,
       assetSelection,
       assetFilters,
       folderActions,
+      assetCrudActions,
+      assetEditorActions,
+      panelSections,
+      adminLifecycle,
       folderColumn,
       assetColumn,
       inspectorColumn,
@@ -162,19 +177,22 @@ describe("admin library layout", () => {
   });
 
   it("routes panel switching through setActivePanelTab to keep sections expanded", () => {
-    const { state } = readLibrarySources();
-    expect(state).toMatch(/function setActivePanelTab/);
-    const directAssignments = state.match(/activePanelTab\.value\s*=/g) ?? [];
+    const { state, panelSections } = readLibrarySources();
+    expect(state).toMatch(/useLibraryPanelSections/);
+    expect(state).not.toMatch(/function setActivePanelTab/);
+    expect(panelSections).toMatch(/function setActivePanelTab/);
+    const directAssignments = panelSections.match(/activePanelTab\.value\s*=/g) ?? [];
     expect(directAssignments.length).toBe(1);
   });
 
   it("guards folder asset reload against race conditions and unhandled errors", () => {
-    const { state } = readLibrarySources();
-    expect(state).toMatch(/folderAssetsLoadSeq/);
-    expect(state).toMatch(/const requestId = folderAssetsLoadSeq\.value \+ 1/);
-    expect(state).toMatch(/requestId !== folderAssetsLoadSeq\.value \|\| selectedFolderId\.value !== folderId/);
+    const { state, dataActions } = readLibrarySources();
+    expect(state).toMatch(/useLibraryAdminDataActions/);
+    expect(dataActions).toMatch(/folderAssetsLoadSeq/);
+    expect(dataActions).toMatch(/const requestId = deps\.folderAssetsLoadSeq\.value \+ 1/);
+    expect(dataActions).toMatch(/requestId !== deps\.folderAssetsLoadSeq\.value \|\| deps\.selectedFolderId\.value !== folderId/);
     expect(state).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/);
-    expect(state).toMatch(/加载文件夹资源失败/);
+    expect(dataActions).toMatch(/加载文件夹资源失败/);
   });
 
   it("splits saving state by domain to avoid full-page lock", () => {
