@@ -43,7 +43,15 @@ async function submit() {
     <form class="login-form" @submit.prevent="submit">
       <label class="field">
         <span>用户名</span>
-        <input v-model="username" class="field-input" type="text" autocomplete="username" />
+        <input
+          v-model="username"
+          class="field-input"
+          type="text"
+          autocomplete="username"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
+        />
       </label>
 
       <label class="field">
@@ -53,6 +61,9 @@ async function submit() {
           class="field-input"
           type="password"
           autocomplete="current-password"
+          autocapitalize="none"
+          autocorrect="off"
+          spellcheck="false"
         />
       </label>
 

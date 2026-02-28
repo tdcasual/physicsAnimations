@@ -27,4 +27,12 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/const redirect = resolveAdminRedirect\(route\.query\.redirect\)/);
     expect(source).not.toMatch(/const redirect = String\(route\.query\.redirect \|\| \"\"\)\.trim\(\)/);
   });
+
+  it("disables mobile auto-capitalization and auto-correct for credentials", () => {
+    const source = read("src/views/LoginView.vue");
+    expect(source).toMatch(/autocomplete=\"username\"/);
+    expect(source).toMatch(/autocapitalize=\"none\"/);
+    expect(source).toMatch(/autocorrect=\"off\"/);
+    expect(source).toMatch(/spellcheck=\"false\"/);
+  });
 });

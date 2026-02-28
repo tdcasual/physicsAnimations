@@ -23,4 +23,12 @@ describe("library folder view", () => {
     expect(source).toMatch(/const nextAssets = await listLibraryFolderAssets\(folderId\)/);
     expect(source).not.toMatch(/Promise\.all\(\s*\[\s*getLibraryFolder\(folderId\)\s*,\s*listLibraryFolderAssets\(folderId\)\s*\]/);
   });
+
+  it("ignores stale reload responses after route changes", () => {
+    const source = read("src/views/LibraryFolderView.vue");
+    expect(source).toMatch(/const reloadSeq = ref\(0\)/);
+    expect(source).toMatch(/const requestSeq = reloadSeq\.value \+ 1/);
+    expect(source).toMatch(/reloadSeq\.value = requestSeq/);
+    expect(source).toMatch(/if \(requestSeq !== reloadSeq\.value \|\| routeFolderId\(\) !== folderId\) return/);
+  });
 });

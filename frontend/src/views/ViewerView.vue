@@ -10,6 +10,7 @@ const model = ref<ViewerModel | null>(null);
 const screenshotMode = ref(false);
 const screenshotVisible = ref(false);
 const modeButtonText = ref("仅截图");
+const refreshSeq = ref(0);
 let hideScreenshotTimer = 0;
 
 const frameSrc = computed(() => {
@@ -48,9 +49,12 @@ function getRouteParams() {
 
 async function refresh() {
   clearHideScreenshotTimer();
+  const requestSeq = refreshSeq.value + 1;
+  refreshSeq.value = requestSeq;
   loading.value = true;
   try {
     const next = await loadViewerModel(getRouteParams());
+    if (requestSeq !== refreshSeq.value) return;
     model.value = next;
     if (next.status === "ready") {
       document.title = next.title || "作品预览";
@@ -62,7 +66,9 @@ async function refresh() {
       screenshotVisible.value = false;
     }
   } finally {
-    loading.value = false;
+    if (requestSeq === refreshSeq.value) {
+      loading.value = false;
+    }
   }
 }
 

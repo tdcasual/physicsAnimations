@@ -13,4 +13,13 @@ describe("viewer action bar", () => {
     expect(source).toMatch(/\.viewer-bar\s*\{[\s\S]*position:\s*sticky/);
     expect(source).toMatch(/\.viewer-bar\s*\{[\s\S]*top:\s*0/);
   });
+
+  it("ignores stale async viewer refresh responses after route changes", () => {
+    const source = read("src/views/ViewerView.vue");
+    expect(source).toMatch(/const refreshSeq = ref\(0\)/);
+    expect(source).toMatch(/const requestSeq = refreshSeq\.value \+ 1/);
+    expect(source).toMatch(/refreshSeq\.value = requestSeq/);
+    expect(source).toMatch(/if \(requestSeq !== refreshSeq\.value\) return/);
+    expect(source).toMatch(/if \(requestSeq === refreshSeq\.value\) \{/);
+  });
 });

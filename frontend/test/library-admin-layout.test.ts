@@ -219,4 +219,13 @@ describe("admin library layout", () => {
     expect(template).toMatch(/getFieldError\("createEmbedProfileName"\)/);
     expect(template).toMatch(/getFieldError\("createEmbedScriptUrl"\)/);
   });
+
+  it("prevents long names from breaking mobile row layout", () => {
+    const { style } = readLibrarySources();
+    expect(style).toMatch(/\.folder-pick\s*\{[\s\S]*min-width:\s*0;/);
+    expect(style).toMatch(/\.asset-main\s*\{[\s\S]*flex:\s*1;/);
+    expect(style).toMatch(/\.asset-main\s*\{[\s\S]*min-width:\s*0;/);
+    expect(style).toMatch(/\.folder-name,\s*\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
+    expect(style).toMatch(/\.folder-meta,\s*\.asset-meta,\s*\.selected-folder\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
+  });
 });

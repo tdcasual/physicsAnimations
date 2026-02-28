@@ -19,4 +19,11 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/\.app-shell\s*\{[\s\S]*min-height:\s*100vh/);
     expect(css).toMatch(/\.app-shell\s*\{[\s\S]*min-height:\s*100dvh/);
   });
+
+  it("reserves safe-area inset padding for notch devices", () => {
+    const css = readFile("src/styles.css");
+    expect(css).toMatch(/\.topbar\s*\{[\s\S]*padding-top:\s*env\(safe-area-inset-top,\s*0px\)/);
+    expect(css).toMatch(/\.topbar\s*\{[\s\S]*padding-left:\s*env\(safe-area-inset-left,\s*0px\)/);
+    expect(css).toMatch(/\.topbar\s*\{[\s\S]*padding-right:\s*env\(safe-area-inset-right,\s*0px\)/);
+  });
 });

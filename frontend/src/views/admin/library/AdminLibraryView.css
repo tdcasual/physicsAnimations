@@ -280,6 +280,8 @@
 .asset-main {
   display: grid;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .asset-actions-inline {
@@ -306,6 +308,7 @@
   padding: 0;
   cursor: pointer;
   flex: 1;
+  min-width: 0;
   min-height: 40px;
   display: inline-flex;
   flex-direction: column;
@@ -316,6 +319,8 @@
 .folder-name,
 .asset-name {
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .folder-meta,
@@ -323,6 +328,8 @@
 .selected-folder {
   font-size: 13px;
   color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .empty {

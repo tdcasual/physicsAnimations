@@ -14,6 +14,7 @@ const loading = ref(false);
 const errorText = ref("");
 const folder = ref<LibraryFolder | null>(null);
 const assets = ref<LibraryAsset[]>([]);
+const reloadSeq = ref(0);
 
 function routeFolderId(): string {
   return String(route.params.id || "").trim();
@@ -31,11 +32,14 @@ function downloadAssetHref(asset: LibraryAsset): string {
 }
 
 async function reload() {
+  const requestSeq = reloadSeq.value + 1;
+  reloadSeq.value = requestSeq;
   const folderId = routeFolderId();
   if (!folderId) {
     errorText.value = "缺少文件夹参数。";
     folder.value = null;
     assets.value = [];
+    loading.value = false;
     return;
   }
 
@@ -44,15 +48,19 @@ async function reload() {
   try {
     const nextFolder = await getLibraryFolder(folderId);
     const nextAssets = await listLibraryFolderAssets(folderId);
+    if (requestSeq !== reloadSeq.value || routeFolderId() !== folderId) return;
     folder.value = nextFolder;
     assets.value = nextAssets.assets;
     document.title = nextFolder.name ? `${nextFolder.name} - 资源库` : "资源库文件夹";
   } catch {
+    if (requestSeq !== reloadSeq.value || routeFolderId() !== folderId) return;
     errorText.value = "加载文件夹失败。";
     folder.value = null;
     assets.value = [];
   } finally {
-    loading.value = false;
+    if (requestSeq === reloadSeq.value) {
+      loading.value = false;
+    }
   }
 }
 
