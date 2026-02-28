@@ -217,6 +217,8 @@ const createCategoryHiddenModel = computed({
 h3 {
   margin: 0;
   font-size: 16px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .meta-line {

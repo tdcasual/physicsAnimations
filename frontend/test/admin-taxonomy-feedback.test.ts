@@ -32,7 +32,13 @@ describe("admin taxonomy action feedback", () => {
 
   it("keeps long group and category labels wrapped on narrow mobile screens", () => {
     const treePanel = read("src/views/admin/taxonomy/TaxonomyTreePanel.vue");
+    const groupPanel = read("src/views/admin/taxonomy/GroupEditorPanel.vue");
+    const categoryPanel = read("src/views/admin/taxonomy/CategoryEditorPanel.vue");
     expect(treePanel).toMatch(/\.group-title,\s*\.category-title\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
     expect(treePanel).toMatch(/\.group-title,\s*\.category-title\s*\{[\s\S]*word-break:\s*break-word/);
+    expect(groupPanel).toMatch(/h3\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(groupPanel).toMatch(/h3\s*\{[\s\S]*word-break:\s*break-word/);
+    expect(categoryPanel).toMatch(/h3\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(categoryPanel).toMatch(/h3\s*\{[\s\S]*word-break:\s*break-word/);
   });
 });

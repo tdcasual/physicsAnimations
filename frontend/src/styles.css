@@ -249,6 +249,9 @@ input[type="radio"] {
   border-radius: 10px;
   background: var(--surface);
   color: var(--text);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 40px;
   padding: 9px 10px;
 }

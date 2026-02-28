@@ -14,4 +14,10 @@ describe("admin mobile input safeguards", () => {
     expect(source).toMatch(/autocorrect="off"/);
     expect(source).toMatch(/spellcheck="false"/);
   });
+
+  it("keeps shared field inputs constrained to container width on narrow screens", () => {
+    const css = read("src/styles.css");
+    expect(css).toMatch(/\.field-input\s*\{[^}]*width:\s*100%/);
+    expect(css).toMatch(/\.field-input\s*\{[^}]*min-width:\s*0/);
+  });
 });
