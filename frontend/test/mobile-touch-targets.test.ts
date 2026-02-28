@@ -12,6 +12,7 @@ describe("mobile touch targets", () => {
     const catalogView = read("src/views/CatalogView.vue");
     const libraryFolderView = read("src/views/LibraryFolderView.vue");
     const loginView = read("src/views/LoginView.vue");
+    const adminLibraryCss = read("src/views/admin/library/AdminLibraryView.css");
     const taxonomyCategoryEditor = read("src/views/admin/taxonomy/CategoryEditorPanel.vue");
     const taxonomyGroupEditor = read("src/views/admin/taxonomy/GroupEditorPanel.vue");
     const systemWizardSteps = read("src/views/admin/system/SystemWizardSteps.vue");
@@ -26,6 +27,11 @@ describe("mobile touch targets", () => {
     expect(catalogView).toMatch(/\.catalog-search\s*\{[\s\S]*min-height:\s*40px/);
     expect(catalogView).toMatch(/\.catalog-tab\s*\{[\s\S]*min-height:\s*40px/);
     expect(libraryFolderView).toMatch(/<RouterLink[^>]*class="[^"]*\bbtn\b[^"]*"/);
+    expect(adminLibraryCss).toMatch(/\.panel-tab\s*\{[\s\S]*min-height:\s*40px/);
+    expect(adminLibraryCss).toMatch(/\.panel-section-toggle\s*\{[\s\S]*min-height:\s*40px/);
+    expect(adminLibraryCss).toMatch(/\.folder-pick\s*\{[\s\S]*min-height:\s*40px/);
+    expect(adminLibraryCss).toMatch(/\.batch-select-all\s*\{[\s\S]*min-height:\s*40px/);
+    expect(adminLibraryCss).toMatch(/\.asset-select-wrap\s*\{[\s\S]*min-height:\s*40px/);
     expect(loginView).toMatch(/\.field-input\s*\{[\s\S]*min-height:\s*40px/);
     expect(taxonomyCategoryEditor).toMatch(/\.subaccordion\s*>\s*summary\s*\{[\s\S]*min-height:\s*40px/);
     expect(taxonomyGroupEditor).toMatch(/\.subaccordion\s*>\s*summary\s*\{[\s\S]*min-height:\s*40px/);
