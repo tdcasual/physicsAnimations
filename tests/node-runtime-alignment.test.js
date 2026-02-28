@@ -20,6 +20,12 @@ test("package.json and frontend/package.json declare Node 24 engines", () => {
   assert.match(nodeTypesVersion, /^\^24(\.|$)/);
 });
 
+test("frontend test script preloads localStorage shim for Node worker stability", () => {
+  const frontendPkg = JSON.parse(readUtf8("frontend/package.json"));
+  const script = String(frontendPkg.scripts?.test || "");
+  assert.match(script, /--import\s+\.\/test\/node-localstorage-shim\.mjs/);
+});
+
 test("Dockerfile uses Node 24 base images for all stages", () => {
   const dockerfile = readUtf8("Dockerfile");
   const fromLines = dockerfile

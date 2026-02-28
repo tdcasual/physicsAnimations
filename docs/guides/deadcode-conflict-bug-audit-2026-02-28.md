@@ -8,7 +8,7 @@
 
 ## 已执行验证
 
-- 后端测试：`npm test`，`177/177` 通过（含性能预算回归）
+- 后端测试：`npm test`，`178/178` 通过（含性能预算回归与脚本守护）
 - 前端测试：`npm --prefix frontend run test -- --run`，`55/55` 文件通过（`166/166` 用例）
 - SPA 冒烟：`smoke:spa-public`、`smoke:spa-admin`、`smoke:spa-admin-write`、`smoke:spa-library-admin` 全部通过
 - 前端依赖图扫描（`frontend/src`）：
@@ -50,7 +50,19 @@
 - 已修复：`perf-api` 预算断言受并发抖动影响导致偶发红灯
   - 修复点：[perf-api.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/perf-api.test.js:292)
   - 修复内容：预算失败时单次重试并输出对比统计，保留真实回归拦截
-  - 回归验证：`npm test` 通过（`177/177`）
+  - 回归验证：`npm test` 通过（`178/178`）
+- 已修复：前端测试中 `--localstorage-file` 无效路径 warning 噪音
+  - 修复点：
+    - [frontend/package.json](/Users/lvxiaoer/Documents/physicsAnimations/frontend/package.json:13)
+    - [vite.config.ts](/Users/lvxiaoer/Documents/physicsAnimations/frontend/vite.config.ts:14)
+    - [node-localstorage-shim.mjs](/Users/lvxiaoer/Documents/physicsAnimations/frontend/test/node-localstorage-shim.mjs:1)
+  - 修复内容：测试进程及 worker 预加载 `localStorage` shim，避免 Node webstorage 参数告警
+  - 回归验证：`npm run test:frontend -- --run` 全量通过且告警消失
+- 已修复：Vercel 仍打包 legacy `404.html`（无消费链路）
+  - 修复点：
+    - [vercel.json](/Users/lvxiaoer/Documents/physicsAnimations/vercel.json:9)
+    - [vercel-config.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/vercel-config.test.js:14)
+  - 修复内容：移除 `404.html` include 并加入守护断言，避免旧入口残留
 
 ## 发现清单（按优先级）
 
@@ -181,5 +193,5 @@
 ## 下一轮建议
 
 1. 处理 P2（历史 `output/mobile-audit` 数据清理与重建，避免误判）
-2. 排查前端测试中的 `--localstorage-file` 无效路径 warning（降低噪音并防止潜在配置漂移）
-3. 继续移动端专项回归（触控尺寸、横向溢出、暗色主题）
+2. 继续移动端专项回归（触控尺寸、横向溢出、暗色主题）
+3. 评估根目录 `404.html` 是否删除（当前已从部署打包链路剥离）

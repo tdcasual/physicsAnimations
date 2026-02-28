@@ -10,4 +10,6 @@ test("vercel includeFiles aligns with SPA dist runtime layout", () => {
   assert.ok(includeFiles.includes("frontend/dist/**"), "must include frontend/dist/** for SPA runtime");
   assert.equal(includeFiles.includes("index.html"), false, "legacy root index.html should not be included");
   assert.equal(includeFiles.includes("viewer.html"), false, "legacy root viewer.html should not be included");
+  assert.equal(includeFiles.includes("404.html"), false, "legacy root 404.html should not be included");
+  assert.equal(fs.existsSync("404.html"), false, "legacy root 404.html should be removed from repo");
 });
