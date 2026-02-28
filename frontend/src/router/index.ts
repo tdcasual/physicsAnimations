@@ -11,6 +11,30 @@ export function createAppRouter({
 }: { history?: RouterHistory } = {}) {
   let validatedToken = "";
 
+  function resolveLoginRedirect(raw: unknown): { path: string; query?: Record<string, string> } {
+    const redirect = String(raw || "").trim();
+    if (!redirect.startsWith("/admin")) {
+      return { path: "/admin/dashboard" };
+    }
+
+    try {
+      const parsed = new URL(redirect, "http://localhost");
+      if (!parsed.pathname.startsWith("/admin")) {
+        return { path: "/admin/dashboard" };
+      }
+      const query: Record<string, string> = {};
+      for (const [key, value] of parsed.searchParams.entries()) {
+        query[key] = value;
+      }
+      if (!Object.keys(query).length) {
+        return { path: parsed.pathname };
+      }
+      return { path: parsed.pathname, query };
+    } catch {
+      return { path: "/admin/dashboard" };
+    }
+  }
+
   const router = createRouter({
     history,
     routes: appRoutes,
@@ -18,11 +42,7 @@ export function createAppRouter({
 
   router.beforeEach(async (to) => {
     const isLoginPath = to.path === "/login";
-    const loginRedirect = (() => {
-      const redirect = String(to.query.redirect || "").trim();
-      if (redirect.startsWith("/admin")) return redirect;
-      return "/admin/dashboard";
-    })();
+    const loginRedirect = resolveLoginRedirect(to.query.redirect);
 
     if (isLoginPath) {
       const token = getToken();
@@ -32,13 +52,13 @@ export function createAppRouter({
       }
 
       if (validatedToken === token) {
-        return { path: loginRedirect };
+        return loginRedirect;
       }
 
       try {
         await me();
         validatedToken = token;
-        return { path: loginRedirect };
+        return loginRedirect;
       } catch {
         clearToken();
         validatedToken = "";

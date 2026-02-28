@@ -70,6 +70,23 @@ describe("admin route guard", () => {
     expect(router.currentRoute.value.path).toBe("/admin/dashboard");
   });
 
+  it("keeps redirect query string when leaving /login with valid session", async () => {
+    sessionStorage.setItem("pa_admin_token", "token-1");
+    globalThis.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ username: "admin" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    ) as typeof fetch;
+
+    const router = createAppRouter({ history: createMemoryHistory("/") });
+    await router.push("/login?redirect=%2Fadmin%2Fcontent%3Ffoo%3D1");
+    await router.isReady();
+
+    expect(router.currentRoute.value.path).toBe("/admin/content");
+    expect(router.currentRoute.value.query.foo).toBe("1");
+  });
+
   it("keeps stale-token users on /login and clears token", async () => {
     sessionStorage.setItem("pa_admin_token", "stale");
     globalThis.fetch = vi.fn(async () =>
