@@ -111,7 +111,7 @@ onBeforeUnmount(() => {
   <section class="viewer-page">
     <header class="viewer-bar">
       <div class="viewer-bar-left">
-        <RouterLink class="viewer-back" to="/">← 返回</RouterLink>
+        <RouterLink class="viewer-back viewer-btn" to="/">← 返回</RouterLink>
         <div class="viewer-title">
           {{
             loading

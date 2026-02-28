@@ -29,6 +29,7 @@ describe("mobile touch targets", () => {
     expect(loginView).toMatch(/\.field-input\s*\{[\s\S]*min-height:\s*40px/);
     expect(taxonomyCategoryEditor).toMatch(/\.subaccordion\s*>\s*summary\s*\{[\s\S]*min-height:\s*40px/);
     expect(taxonomyGroupEditor).toMatch(/\.subaccordion\s*>\s*summary\s*\{[\s\S]*min-height:\s*40px/);
+    expect(viewerView).toMatch(/<RouterLink[^>]*class="[^"]*\bviewer-btn\b[^"]*"/);
     expect(systemWizardSteps).toMatch(/\.step-button\s*\{[\s\S]*min-height:\s*40px/);
     expect(viewerView).toMatch(/\.viewer-btn\s*\{[\s\S]*min-height:\s*40px/);
     expect(adminLayout).toMatch(/\.admin-link\s*\{[\s\S]*min-height:\s*40px/);
