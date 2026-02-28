@@ -13,4 +13,10 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/\.topbar-inner\s*\{[\s\S]*flex-wrap:\s*wrap/);
     expect(css).toMatch(/\.actions\s*\{[\s\S]*flex-wrap:\s*wrap/);
   });
+
+  it("uses dynamic viewport units to avoid iOS 100vh jump", () => {
+    const css = readFile("src/styles.css");
+    expect(css).toMatch(/\.app-shell\s*\{[\s\S]*min-height:\s*100vh/);
+    expect(css).toMatch(/\.app-shell\s*\{[\s\S]*min-height:\s*100dvh/);
+  });
 });

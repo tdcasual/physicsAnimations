@@ -11,7 +11,7 @@ export function createAppRouter({
 }: { history?: RouterHistory } = {}) {
   let validatedToken = "";
 
-  function resolveLoginRedirect(raw: unknown): { path: string; query?: Record<string, string> } {
+  function resolveLoginRedirect(raw: unknown): { path: string; query?: Record<string, string>; hash?: string } {
     const redirect = String(raw || "").trim();
     if (!redirect.startsWith("/admin")) {
       return { path: "/admin/dashboard" };
@@ -26,10 +26,14 @@ export function createAppRouter({
       for (const [key, value] of parsed.searchParams.entries()) {
         query[key] = value;
       }
+      const hash = parsed.hash || undefined;
       if (!Object.keys(query).length) {
-        return { path: parsed.pathname };
+        if (!hash) {
+          return { path: parsed.pathname };
+        }
+        return { path: parsed.pathname, hash };
       }
-      return { path: parsed.pathname, query };
+      return { path: parsed.pathname, query, hash };
     } catch {
       return { path: "/admin/dashboard" };
     }
