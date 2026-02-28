@@ -17,13 +17,16 @@ describe("ui interaction guardrails", () => {
   });
 
   it("prevents stale list request results from overriding newer queries", () => {
-    const contentSource = readFile("src/features/admin/content/useContentAdmin.ts");
+    const contentCombinedSource = [
+      readFile("src/features/admin/content/useContentAdmin.ts"),
+      readFile("src/features/admin/content/useContentAdminActions.ts"),
+    ].join("\n");
     const uploadsCombinedSource = [
       readFile("src/features/admin/uploads/useUploadAdmin.ts"),
       readFile("src/features/admin/uploads/useUploadAdminActions.ts"),
     ].join("\n");
 
-    for (const source of [contentSource, uploadsCombinedSource]) {
+    for (const source of [contentCombinedSource, uploadsCombinedSource]) {
       expect(source).not.toMatch(/if\s*\(loading\.value\)\s*return;/);
       expect(source).toMatch(/nextRequestSeq/);
       expect(source).toMatch(/isLatestRequest/);
