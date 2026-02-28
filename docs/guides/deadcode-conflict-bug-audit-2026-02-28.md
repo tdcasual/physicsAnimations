@@ -69,6 +69,14 @@
   - 回归验证：
     - `npm exec -- tsc --noEmit --noUnusedLocals --noUnusedParameters -p tsconfig.json`（frontend）通过
     - `npm run test:frontend -- --run` 全量通过
+- 已修复：发布门禁在 TTY 下可能进入 vitest watch 模式并挂起
+  - 修复点：
+    - [qa_release_gate.sh](/Users/lvxiaoer/Documents/physicsAnimations/scripts/qa_release_gate.sh:7)
+    - [qa-release-gate.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/qa-release-gate.test.js:10)
+  - 修复内容：前端测试命令改为显式单次执行 `npm --prefix frontend run test -- --run`
+  - 回归验证：
+    - `node --test tests/qa-release-gate.test.js` 通过
+    - `npm run test:frontend -- --run`、`npm test` 全量通过
 
 ## 发现清单（按优先级）
 

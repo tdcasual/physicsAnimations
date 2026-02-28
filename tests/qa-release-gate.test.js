@@ -7,7 +7,7 @@ test("qa gate script includes required verification commands", () => {
   assert.match(script, /npm run guard:file-size/);
   assert.match(script, /npm run guard:security/);
   assert.match(script, /npm test/);
-  assert.match(script, /npm --prefix frontend run test/);
+  assert.match(script, /npm --prefix frontend run test -- --run/);
   assert.match(script, /npm run typecheck:frontend/);
   assert.match(script, /npm run build:frontend/);
   assert.match(script, /npm run smoke:spa-public/);
