@@ -135,6 +135,9 @@ watch(
 
 .library-head h2 {
   margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .library-state {

@@ -41,4 +41,13 @@ describe("library folder view", () => {
     expect(styleBlock).toMatch(/\.asset-meta\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
     expect(styleBlock).toMatch(/\.asset-meta\s*\{[\s\S]*word-break:\s*break-word/);
   });
+
+  it("wraps long folder heading text on mobile to avoid page-level horizontal overflow", () => {
+    const source = read("src/views/LibraryFolderView.vue");
+    const styleBlock = source.split("<style scoped>")[1] ?? "";
+
+    expect(styleBlock).toMatch(/\.library-head h2\s*\{[\s\S]*min-width:\s*0/);
+    expect(styleBlock).toMatch(/\.library-head h2\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(styleBlock).toMatch(/\.library-head h2\s*\{[\s\S]*word-break:\s*break-word/);
+  });
 });
