@@ -135,7 +135,7 @@ docker run -d --name physics-animations \
 
 - `vercel.json`
 - `api/index.js`
-- `serverless-handler.js`（通用 handler）
+- `serverless-handler.js`（兼容入口，内部复用 `api/index.js`）
 
 在 Serverless 平台上，请优先考虑以下策略：
 
