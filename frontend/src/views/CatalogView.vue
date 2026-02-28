@@ -260,6 +260,7 @@ onMounted(async () => {
   width: min(520px, 100%);
   border: 1px solid var(--border);
   border-radius: 999px;
+  min-height: 40px;
   padding: 9px 12px;
   background: var(--surface);
   color: var(--text);

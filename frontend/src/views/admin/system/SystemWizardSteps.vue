@@ -217,6 +217,7 @@ h4 {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 10px;
+  min-height: 40px;
   background: color-mix(in srgb, var(--surface) 92%, var(--bg));
   color: inherit;
   cursor: pointer;

@@ -102,6 +102,7 @@ h1 {
   border-radius: 10px;
   background: var(--surface);
   color: var(--text);
+  min-height: 40px;
   padding: 8px 10px;
 }
 
