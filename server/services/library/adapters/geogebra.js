@@ -193,6 +193,10 @@ function createGeogebraAdapter(options = {}) {
   const scriptSources = buildScriptSources(options);
   return {
     key: "geogebra",
+    capabilities: {
+      supportsEmbed: true,
+      supportsDownload: true,
+    },
     match({ fileName }) {
       return /\.ggb$/i.test(normalizeFileName(fileName));
     },

@@ -38,6 +38,10 @@ function buildEmbedHtml({ assetPublicFileUrl, title }) {
 function createPhETAdapter() {
   return {
     key: "phet",
+    capabilities: {
+      supportsEmbed: true,
+      supportsDownload: true,
+    },
     match({ fileName, fileBuffer }) {
       const name = normalizeFileName(fileName);
       if (!isHtmlName(name)) return false;

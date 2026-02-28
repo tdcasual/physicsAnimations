@@ -1,4 +1,5 @@
 const { createAdapterRegistry } = require("./registry");
+const { isValidAdapter } = require("./contract");
 const { createGeogebraAdapter } = require("./geogebra");
 const { createPhETAdapter } = require("./phet");
 
@@ -9,6 +10,7 @@ function createDefaultLibraryAdapterRegistry() {
 module.exports = {
   createDefaultLibraryAdapterRegistry,
   createAdapterRegistry,
+  isValidAdapter,
   createGeogebraAdapter,
   createPhETAdapter,
 };
