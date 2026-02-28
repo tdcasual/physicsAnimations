@@ -179,7 +179,7 @@ function requireAuth({ authConfig }) {
       });
       req.user = { username: payload.sub, role: payload.role };
       next();
-    } catch (err) {
+    } catch {
       res.status(401).json({ error: "invalid_token" });
     }
   };

@@ -77,6 +77,20 @@
   - 回归验证：
     - `node --test tests/qa-release-gate.test.js` 通过
     - `npm run test:frontend -- --run`、`npm test` 全量通过
+- 已修复：后端状态/鉴权链路存在未使用代码片段（死代码）
+  - 修复点：
+    - [adminState.js](/Users/lvxiaoer/Documents/physicsAnimations/server/lib/adminState.js:1)
+    - [auth.js](/Users/lvxiaoer/Documents/physicsAnimations/server/lib/auth.js:182)
+    - [wrappedStore.js](/Users/lvxiaoer/Documents/physicsAnimations/server/lib/stateDb/wrappedStore.js:17)
+    - [library-service.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/library-service.test.js:305)
+  - 修复内容：
+    - 删除未被调用的 `withStateLock` 实现与配套 `stateLocks`
+    - 移除 `catch (err)` 中未使用变量
+    - 移除 `mirrorOps` 中未使用的 `getBuiltinOverridesDirty` 解构
+    - 清理测试中的未使用局部变量
+  - 回归验证：
+    - `eslint no-unused-vars`（server/scripts/tests 定向规则）通过
+    - `npm test` 全量通过（`178/178`）
 
 ## 发现清单（按优先级）
 

@@ -14,7 +14,6 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
     setDynamicIndexedReady,
     getBuiltinIndexedReady,
     setBuiltinIndexedReady,
-    getBuiltinOverridesDirty,
     setBuiltinOverridesDirty,
     setBuiltinAnimationsSignature,
   } = mirrorOps;

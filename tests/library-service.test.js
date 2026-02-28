@@ -302,7 +302,6 @@ test("updateAsset updates displayName and persists updatedAt", async () => {
     originalName: "demo.ggb",
     openMode: "download",
   });
-  const beforeUpdatedAt = uploaded.asset.updatedAt;
 
   const updated = await service.updateAsset({
     assetId: uploaded.asset.id,

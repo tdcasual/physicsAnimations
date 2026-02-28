@@ -1,24 +1,6 @@
 const { createError } = require("./errors");
 
 const ADMIN_STATE_KEY = "admin.json";
-const stateLocks = new Map();
-
-async function withStateLock(key, fn) {
-  const previous = stateLocks.get(key) || Promise.resolve();
-  let release = () => {};
-  const current = new Promise((resolve) => {
-    release = resolve;
-  });
-  stateLocks.set(key, current);
-
-  await previous;
-  try {
-    return await fn();
-  } finally {
-    release();
-    if (stateLocks.get(key) === current) stateLocks.delete(key);
-  }
-}
 
 async function loadAdminState({ store }) {
   const raw = await store.readBuffer(ADMIN_STATE_KEY);
