@@ -79,6 +79,7 @@ describe("loadViewerModel", () => {
     if (model.status !== "ready") return;
     expect(model.target).toBe("/animations/mechanics/demo.html");
     expect(model.title).toBe("内置演示");
+    expect(model.iframeSandbox).toBe("allow-scripts allow-same-origin");
   });
 
   it("returns invalid state when item target is unsafe", async () => {
@@ -134,6 +135,7 @@ describe("loadViewerModel", () => {
     if (model.status !== "ready") return;
     expect(model.target).toBe("/content/uploads/upload-1/index.html");
     expect(model.openHref).toBe("/content/uploads/upload-1/index.html");
+    expect(model.iframeSandbox).toBe("allow-scripts");
   });
 
   it("retries public item fetch without token when token is invalid", async () => {

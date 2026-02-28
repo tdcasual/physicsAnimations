@@ -63,6 +63,7 @@ describe("loadCatalogData", () => {
 
     expect(item?.id).toBe("mechanics/demo.html");
     expect(item?.src).toBe("animations/mechanics/demo.html");
+    expect(item?.href).toBe("/viewer/mechanics%2Fdemo.html");
     expect(item?.type).toBe("builtin");
   });
 });

@@ -53,4 +53,37 @@ describe("admin route guard", () => {
     expect(router.currentRoute.value.query.redirect).toBe("/admin/dashboard");
     expect(sessionStorage.getItem("pa_admin_token")).toBeNull();
   });
+
+  it("redirects authenticated users away from /login to /admin/dashboard", async () => {
+    sessionStorage.setItem("pa_admin_token", "token-1");
+    globalThis.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ username: "admin" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    ) as typeof fetch;
+
+    const router = createAppRouter({ history: createMemoryHistory("/") });
+    await router.push("/login");
+    await router.isReady();
+
+    expect(router.currentRoute.value.path).toBe("/admin/dashboard");
+  });
+
+  it("keeps stale-token users on /login and clears token", async () => {
+    sessionStorage.setItem("pa_admin_token", "stale");
+    globalThis.fetch = vi.fn(async () =>
+      new Response(JSON.stringify({ error: "unauthorized" }), {
+        status: 401,
+        headers: { "content-type": "application/json" },
+      }),
+    ) as typeof fetch;
+
+    const router = createAppRouter({ history: createMemoryHistory("/") });
+    await router.push("/login");
+    await router.isReady();
+
+    expect(router.currentRoute.value.path).toBe("/login");
+    expect(sessionStorage.getItem("pa_admin_token")).toBeNull();
+  });
 });

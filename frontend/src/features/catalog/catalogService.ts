@@ -16,7 +16,7 @@ function buildBuiltinItem(params: { categoryId: string; item: Record<string, unk
     title: safeText(params.item.title || file.replace(/\.html$/i, "")),
     description: safeText(params.item.description),
     src: `animations/${file}`,
-    href: `animations/${file}`,
+    href: `/viewer/${encodeURIComponent(file)}`,
     thumbnail,
     order: 0,
   };

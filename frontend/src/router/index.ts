@@ -17,6 +17,35 @@ export function createAppRouter({
   });
 
   router.beforeEach(async (to) => {
+    const isLoginPath = to.path === "/login";
+    const loginRedirect = (() => {
+      const redirect = String(to.query.redirect || "").trim();
+      if (redirect.startsWith("/admin")) return redirect;
+      return "/admin/dashboard";
+    })();
+
+    if (isLoginPath) {
+      const token = getToken();
+      if (!token) {
+        validatedToken = "";
+        return true;
+      }
+
+      if (validatedToken === token) {
+        return { path: loginRedirect };
+      }
+
+      try {
+        await me();
+        validatedToken = token;
+        return { path: loginRedirect };
+      } catch {
+        clearToken();
+        validatedToken = "";
+        return true;
+      }
+    }
+
     const isAdminPath = to.path.startsWith("/admin");
     if (!isAdminPath) return true;
 

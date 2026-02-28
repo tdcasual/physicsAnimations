@@ -17,6 +17,11 @@ const frameSrc = computed(() => {
   return model.value.target;
 });
 
+const frameSandbox = computed(() => {
+  if (model.value?.status !== "ready") return "allow-scripts";
+  return model.value.iframeSandbox || "allow-scripts";
+});
+
 const openHref = computed(() => {
   if (model.value?.status !== "ready") return "#";
   return model.value.openHref;
@@ -162,7 +167,7 @@ onBeforeUnmount(() => {
         :src="frameSrc"
         title="作品"
         loading="eager"
-        sandbox="allow-scripts"
+        :sandbox="frameSandbox"
         referrerpolicy="no-referrer"
         @load="onFrameLoad"
       />

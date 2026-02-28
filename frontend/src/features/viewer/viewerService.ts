@@ -9,6 +9,7 @@ interface ReadyViewerModel {
   title: string;
   target: string;
   openHref: string;
+  iframeSandbox: string;
   screenshotUrl: string;
   showHint: boolean;
   hintText: string;
@@ -169,6 +170,8 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
   if (item?.thumbnail) screenshotUrl = String(item.thumbnail);
 
   const isExternalLink = item ? item.type === "link" : isHttpUrl(target);
+  const isBuiltinLike = item ? item.type === "builtin" : target.startsWith("/animations/");
+  const iframeSandbox = isBuiltinLike ? "allow-scripts allow-same-origin" : "allow-scripts";
   const showHint = isExternalLink;
   const hintText = isExternalLink
     ? "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：默认直接进入交互；若无法嵌入请点“打开原页面”。"
@@ -182,6 +185,7 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
     title,
     target,
     openHref: target,
+    iframeSandbox,
     screenshotUrl,
     showHint,
     hintText,
