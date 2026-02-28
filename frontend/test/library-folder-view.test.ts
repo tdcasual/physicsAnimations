@@ -16,4 +16,11 @@ describe("library folder view", () => {
     expect(source).toMatch(/target="_blank"/);
     expect(source).toMatch(/asset\.displayName\s*\|\|\s*asset\.fileName/);
   });
+
+  it("loads folder detail before requesting assets to avoid duplicate 404 noise", () => {
+    const source = read("src/views/LibraryFolderView.vue");
+    expect(source).toMatch(/const nextFolder = await getLibraryFolder\(folderId\)/);
+    expect(source).toMatch(/const nextAssets = await listLibraryFolderAssets\(folderId\)/);
+    expect(source).not.toMatch(/Promise\.all\(\s*\[\s*getLibraryFolder\(folderId\)\s*,\s*listLibraryFolderAssets\(folderId\)\s*\]/);
+  });
 });

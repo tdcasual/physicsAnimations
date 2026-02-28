@@ -42,10 +42,8 @@ async function reload() {
   loading.value = true;
   errorText.value = "";
   try {
-    const [nextFolder, nextAssets] = await Promise.all([
-      getLibraryFolder(folderId),
-      listLibraryFolderAssets(folderId),
-    ]);
+    const nextFolder = await getLibraryFolder(folderId);
+    const nextAssets = await listLibraryFolderAssets(folderId);
     folder.value = nextFolder;
     assets.value = nextAssets.assets;
     document.title = nextFolder.name ? `${nextFolder.name} - 资源库` : "资源库文件夹";
