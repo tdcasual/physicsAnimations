@@ -10,8 +10,5 @@ export function normalizePublicUrl(raw: string): string {
 }
 
 export function getCatalogItemHref(item: CatalogItem): string {
-  if (item.type === "link" || item.type === "upload" || item.type === "builtin") {
-    return normalizePublicUrl(item.src || item.href || "#");
-  }
   return normalizePublicUrl(item.href || item.src || "#");
 }

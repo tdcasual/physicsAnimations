@@ -258,9 +258,11 @@ onMounted(async () => {
 
 .catalog-search {
   width: min(520px, 100%);
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 999px;
   padding: 9px 12px;
+  background: var(--surface);
+  color: var(--text);
   font-size: calc(14px * var(--ui-scale, 1));
 }
 
@@ -272,18 +274,22 @@ onMounted(async () => {
 }
 
 .catalog-tab {
-  border: 1px solid #d1d5db;
-  background: #f8fafc;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
   border-radius: 999px;
   padding: 6px 12px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
   white-space: nowrap;
+  color: var(--text);
   font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .catalog-tab.active {
-  border-color: #2563eb;
-  background: #dbeafe;
+  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
 }
 
 .catalog-select {
@@ -291,10 +297,10 @@ onMounted(async () => {
 }
 
 .catalog-state {
-  border: 1px dashed #d1d5db;
+  border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 20px;
-  color: #475569;
+  color: var(--muted);
 }
 
 .catalog-grid {
@@ -304,17 +310,17 @@ onMounted(async () => {
 }
 
 .catalog-card {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--border);
   border-radius: 12px;
   text-decoration: none;
   color: inherit;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--surface);
 }
 
 .catalog-thumb {
   aspect-ratio: 16 / 9;
-  background: #e2e8f0;
+  background: color-mix(in srgb, var(--surface) 75%, var(--bg));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,7 +333,7 @@ onMounted(async () => {
 }
 
 .catalog-thumb-placeholder {
-  color: #334155;
+  color: var(--muted);
   font-weight: 600;
 }
 
@@ -344,7 +350,7 @@ onMounted(async () => {
 }
 
 .catalog-link-tag {
-  color: #0369a1;
+  color: color-mix(in srgb, var(--primary) 78%, var(--text));
   font-weight: 500;
 }
 
@@ -353,20 +359,20 @@ onMounted(async () => {
 }
 
 .catalog-folder-tag {
-  color: #475569;
+  color: var(--muted);
   font-weight: 500;
 }
 
 .catalog-card-desc {
   margin-top: 6px;
-  color: #475569;
+  color: var(--muted);
   font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .catalog-empty {
-  border: 1px dashed #d1d5db;
+  border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 20px;
-  color: #475569;
+  color: var(--muted);
 }
 </style>

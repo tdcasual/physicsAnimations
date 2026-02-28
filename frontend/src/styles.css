@@ -95,6 +95,10 @@ a {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 12px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: calc(13px * var(--ui-scale));
   text-decoration: none;
   cursor: pointer;

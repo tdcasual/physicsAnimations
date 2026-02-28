@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
@@ -17,6 +17,7 @@ const loginError = ref("");
 const classroomModeEnabled = ref(false);
 const modalCardRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
+const isLoginRoute = computed(() => String(route.path || "") === "/login");
 
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 
@@ -108,6 +109,7 @@ async function submitLogin() {
     });
     loginPassword.value = "";
     closeLogin();
+    await router.replace("/admin/dashboard");
   } catch (err) {
     loginError.value = toLoginMessage(err);
   }
@@ -171,8 +173,10 @@ onBeforeUnmount(() => {
             课堂模式{{ classroomModeEnabled ? "开" : "关" }}
           </button>
           <button type="button" class="btn btn-ghost" @click="toggleTheme()">主题</button>
-          <button v-if="!auth.loggedIn" type="button" class="btn btn-primary" @click="openLogin">登录</button>
-          <template v-else>
+          <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
+            登录
+          </button>
+          <template v-if="auth.loggedIn">
             <RouterLink to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
             <button type="button" class="btn btn-ghost" @click="logout">退出</button>
           </template>

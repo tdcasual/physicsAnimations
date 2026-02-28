@@ -37,6 +37,10 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 10px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-decoration: none;
   color: inherit;
   background: color-mix(in srgb, var(--surface) 88%, var(--bg));

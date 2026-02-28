@@ -43,28 +43,28 @@ async function submit() {
 <template>
   <section class="login-view">
     <h1>管理员登录</h1>
+    <form class="login-form" @submit.prevent="submit">
+      <label class="field">
+        <span>用户名</span>
+        <input v-model="username" class="field-input" type="text" autocomplete="username" />
+      </label>
 
-    <label class="field">
-      <span>用户名</span>
-      <input v-model="username" class="field-input" type="text" autocomplete="username" />
-    </label>
+      <label class="field">
+        <span>密码</span>
+        <input
+          v-model="password"
+          class="field-input"
+          type="password"
+          autocomplete="current-password"
+        />
+      </label>
 
-    <label class="field">
-      <span>密码</span>
-      <input
-        v-model="password"
-        class="field-input"
-        type="password"
-        autocomplete="current-password"
-        @keydown.enter.prevent="submit"
-      />
-    </label>
+      <div v-if="errorText" class="error-text">{{ errorText }}</div>
 
-    <div v-if="errorText" class="error-text">{{ errorText }}</div>
-
-    <div class="actions">
-      <button type="button" class="btn btn-primary" :disabled="auth.loading" @click="submit">登录</button>
-    </div>
+      <div class="actions">
+        <button type="submit" class="btn btn-primary" :disabled="auth.loading">登录</button>
+      </div>
+    </form>
   </section>
 </template>
 
@@ -76,6 +76,11 @@ async function submit() {
   border-radius: 12px;
   background: var(--surface);
   padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.login-form {
   display: grid;
   gap: 10px;
 }
@@ -109,6 +114,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 10px;
+  min-height: 40px;
   background: var(--surface);
   color: inherit;
   font-size: 13px;
