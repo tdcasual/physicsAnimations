@@ -9,6 +9,14 @@ const { Blob } = require("node:buffer");
 const bcrypt = require("bcryptjs");
 const { createApp } = require("../server/app");
 
+test("library router composes domain route modules", () => {
+  const source = fs.readFileSync(path.join(__dirname, "..", "server", "routes", "library.js"), "utf8");
+  assert.match(source, /registerCatalogRoutes/);
+  assert.match(source, /registerFolderRoutes/);
+  assert.match(source, /registerAssetRoutes/);
+  assert.match(source, /registerEmbedProfileRoutes/);
+});
+
 function makeTempRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-lib-test-"));
   fs.mkdirSync(path.join(root, "assets"), { recursive: true });
