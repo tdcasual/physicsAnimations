@@ -20,6 +20,7 @@ const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
 const isLoginRoute = computed(() => String(route.path || "") === "/login");
 
 let lastFocusedBeforeLogin: HTMLElement | null = null;
+let bodyOverflowBeforeLogin = "";
 
 function openLogin() {
   lastFocusedBeforeLogin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -142,6 +143,8 @@ onMounted(async () => {
 
 watch(loginOpen, async (open) => {
   if (open) {
+    bodyOverflowBeforeLogin = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     window.addEventListener("keydown", handleLoginModalKeydown);
     await nextTick();
     loginUsernameInputRef.value?.focus();
@@ -149,6 +152,8 @@ watch(loginOpen, async (open) => {
   }
 
   window.removeEventListener("keydown", handleLoginModalKeydown);
+  document.body.style.overflow = bodyOverflowBeforeLogin;
+  bodyOverflowBeforeLogin = "";
   const restoreTarget = lastFocusedBeforeLogin;
   lastFocusedBeforeLogin = null;
   restoreTarget?.focus();
@@ -157,6 +162,7 @@ watch(loginOpen, async (open) => {
 onBeforeUnmount(() => {
   window.removeEventListener("pa-auth-expired", handleAuthExpired as EventListener);
   window.removeEventListener("keydown", handleLoginModalKeydown);
+  document.body.style.overflow = bodyOverflowBeforeLogin;
 });
 </script>
 

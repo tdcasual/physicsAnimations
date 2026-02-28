@@ -29,6 +29,14 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/name="password"[\s\S]*autocorrect="off"/);
   });
 
+  it("locks body scroll while login modal is open and restores it after close", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/let bodyOverflowBeforeLogin = ""/);
+    expect(source).toMatch(/bodyOverflowBeforeLogin = document\.body\.style\.overflow/);
+    expect(source).toMatch(/document\.body\.style\.overflow = "hidden"/);
+    expect(source).toMatch(/document\.body\.style\.overflow = bodyOverflowBeforeLogin/);
+  });
+
   it("sanitizes login redirect query to admin paths before navigating", () => {
     const source = read("src/views/LoginView.vue");
     expect(source).toMatch(/resolveAdminRedirect/);
