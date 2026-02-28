@@ -15,6 +15,7 @@ function readLibrarySources() {
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
+  const folderActions = read("src/features/library/useLibraryFolderActions.ts");
   return {
     view,
     template,
@@ -24,7 +25,8 @@ function readLibrarySources() {
     embedActions,
     assetSelection,
     assetFilters,
-    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}`,
+    folderActions,
+    combined: `${view}\n${template}\n${style}\n${state}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}`,
   };
 }
 
