@@ -18,4 +18,12 @@ describe("catalog theme semantics", () => {
     expect(styleBlock).toMatch(/var\(--surface\)/);
     expect(styleBlock).toMatch(/var\(--border\)/);
   });
+
+  it("allows catalog card title to wrap long unbroken tokens on mobile", () => {
+    const source = read("src/views/CatalogView.vue");
+    const styleBlock = source.split("<style scoped>")[1] ?? "";
+
+    expect(styleBlock).toMatch(/\.catalog-card-title\s*\{[\s\S]*flex-wrap:\s*wrap/);
+    expect(styleBlock).toMatch(/\.catalog-card-title\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+  });
 });
