@@ -72,6 +72,7 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
             });
             setDynamicIndexedReady(true);
           } catch {
+            // Best-effort mirror warmup: fallback to source store on next read.
           }
         }
         if (normalizedKey === BUILTIN_ITEMS_STATE_KEY && !getBuiltinIndexedReady() && isUsable()) {
@@ -198,6 +199,7 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
           return Readable.from([cached]);
         }
       } catch {
+        // Best-effort mirror read: fallback to backing store stream below.
       }
 
       return store.createReadStream(normalizedKey);

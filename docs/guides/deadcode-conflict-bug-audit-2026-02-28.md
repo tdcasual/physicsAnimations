@@ -91,6 +91,12 @@
   - 回归验证：
     - `eslint no-unused-vars`（server/scripts/tests 定向规则）通过
     - `npm test` 全量通过（`178/178`）
+- 已修复：`wrappedStore` 空 `catch` 缺少语义注释，容易被误判为漏处理异常
+  - 修复点：[wrappedStore.js](/Users/lvxiaoer/Documents/physicsAnimations/server/lib/stateDb/wrappedStore.js:74)
+  - 修复内容：保留“镜像失败回退主存储”的原行为，补充注释明确其为 best-effort 策略
+  - 回归验证：
+    - `eslint no-empty`（server 定向规则）通过
+    - `npm test` 全量通过（`178/178`）
 
 ## 发现清单（按优先级）
 
