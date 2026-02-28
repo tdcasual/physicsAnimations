@@ -31,4 +31,14 @@ describe("library folder view", () => {
     expect(source).toMatch(/reloadSeq\.value = requestSeq/);
     expect(source).toMatch(/if \(requestSeq !== reloadSeq\.value \|\| routeFolderId\(\) !== folderId\) return/);
   });
+
+  it("wraps long unbroken asset names and metadata on narrow mobile cards", () => {
+    const source = read("src/views/LibraryFolderView.vue");
+    const styleBlock = source.split("<style scoped>")[1] ?? "";
+
+    expect(styleBlock).toMatch(/\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(styleBlock).toMatch(/\.asset-name\s*\{[\s\S]*word-break:\s*break-word/);
+    expect(styleBlock).toMatch(/\.asset-meta\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(styleBlock).toMatch(/\.asset-meta\s*\{[\s\S]*word-break:\s*break-word/);
+  });
 });

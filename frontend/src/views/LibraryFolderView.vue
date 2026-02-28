@@ -161,11 +161,15 @@ watch(
 
 .asset-name {
   font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font-size: calc(15px * var(--ui-scale, 1));
 }
 
 .asset-meta {
   color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
   font-size: calc(13px * var(--ui-scale, 1));
 }
 
