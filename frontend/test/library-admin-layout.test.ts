@@ -11,6 +11,7 @@ function readLibrarySources() {
   const template = read("src/views/admin/library/AdminLibraryView.template.html");
   const style = read("src/views/admin/library/AdminLibraryView.css");
   const state = read("src/features/library/useLibraryAdminState.ts");
+  const dataActions = read("src/features/library/useLibraryAdminDataActions.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
@@ -32,6 +33,7 @@ function readLibrarySources() {
     template,
     style,
     state,
+    dataActions,
     feedback,
     embedActions,
     assetSelection,
@@ -53,6 +55,7 @@ function readLibrarySources() {
       template,
       style,
       state,
+      dataActions,
       feedback,
       embedActions,
       assetSelection,
@@ -183,12 +186,13 @@ describe("admin library layout", () => {
   });
 
   it("guards folder asset reload against race conditions and unhandled errors", () => {
-    const { state } = readLibrarySources();
-    expect(state).toMatch(/folderAssetsLoadSeq/);
-    expect(state).toMatch(/const requestId = folderAssetsLoadSeq\.value \+ 1/);
-    expect(state).toMatch(/requestId !== folderAssetsLoadSeq\.value \|\| selectedFolderId\.value !== folderId/);
+    const { state, dataActions } = readLibrarySources();
+    expect(state).toMatch(/useLibraryAdminDataActions/);
+    expect(dataActions).toMatch(/folderAssetsLoadSeq/);
+    expect(dataActions).toMatch(/const requestId = deps\.folderAssetsLoadSeq\.value \+ 1/);
+    expect(dataActions).toMatch(/requestId !== deps\.folderAssetsLoadSeq\.value \|\| deps\.selectedFolderId\.value !== folderId/);
     expect(state).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/);
-    expect(state).toMatch(/加载文件夹资源失败/);
+    expect(dataActions).toMatch(/加载文件夹资源失败/);
   });
 
   it("splits saving state by domain to avoid full-page lock", () => {

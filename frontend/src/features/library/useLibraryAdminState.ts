@@ -1,10 +1,4 @@
 import { computed, ref, watch } from "vue";
-import {
-  getLibraryFolder,
-  listLibraryDeletedAssets,
-  listLibraryFolderAssets,
-  listLibraryFolders,
-} from "./libraryApi";
 import type { JsonObjectParseResult } from "./libraryAdminModels";
 import { useLibraryAdminFeedback } from "./useLibraryAdminFeedback";
 import { useLibraryAssetCrudActions } from "./useLibraryAssetCrudActions";
@@ -15,6 +9,7 @@ import { useLibraryFolderActions } from "./useLibraryFolderActions";
 import { useLibraryPanelSections } from "./useLibraryPanelSections";
 import { useLibraryAssetSelection } from "./useLibraryAssetSelection";
 import { useLibraryEmbedProfileActions } from "./useLibraryEmbedProfileActions";
+import { useLibraryAdminDataActions } from "./useLibraryAdminDataActions";
 import type { LibraryAsset, LibraryEmbedProfile, LibraryFolder, LibraryOpenMode } from "./types";
 export function useLibraryAdminState() {
   const loading = ref(false);
@@ -99,13 +94,18 @@ export function useLibraryAdminState() {
     filteredEmbedProfiles,
   } = assetFilters;
 
+  let reloadFolders: () => Promise<void> = async () => {};
+  let reloadFolderAssets: () => Promise<void> = async () => {};
+  let syncFolderEditDraft = () => {};
+  let cancelAssetEdit = () => {};
+
   const assetSelection = useLibraryAssetSelection({
     savingAsset,
     selectedFolderId,
     filteredFolderAssets,
     sortedFilteredFolderAssets,
-    reloadFolders,
-    reloadFolderAssets,
+    reloadFolders: () => reloadFolders(),
+    reloadFolderAssets: () => reloadFolderAssets(),
     setFeedback,
     getApiErrorCode,
   });
@@ -202,65 +202,23 @@ export function useLibraryAdminState() {
     ensurePanelSectionOpen,
     parseJsonObjectInput,
   });
-  
-  async function reloadFolders() {
-    const list = await listLibraryFolders();
-    folders.value = list;
-    if (!selectedFolderId.value && list.length > 0) {
-      selectedFolderId.value = list[0].id;
-    } else if (selectedFolderId.value && !list.some((folder) => folder.id === selectedFolderId.value)) {
-      selectedFolderId.value = list[0]?.id || "";
-    }
-    syncFolderEditDraft();
-  }
-  
-  async function reloadFolderAssets() {
-    const folderId = selectedFolderId.value;
-    const requestId = folderAssetsLoadSeq.value + 1;
-    folderAssetsLoadSeq.value = requestId;
-    if (!folderId) {
-      folderAssets.value = [];
-      deletedAssets.value = [];
-      cancelAssetEdit();
-      clearSelectedAssets();
-      return;
-    }
-    try {
-      const [folder, assets, deleted] = await Promise.all([
-        getLibraryFolder(folderId),
-        listLibraryFolderAssets(folderId),
-        listLibraryDeletedAssets(folderId),
-      ]);
-      if (requestId !== folderAssetsLoadSeq.value || selectedFolderId.value !== folderId) return;
-      const idx = folders.value.findIndex((value) => value.id === folder.id);
-      if (idx >= 0) {
-        const nextCount = Number(folder.assetCount ?? assets.assets.length);
-        folders.value[idx] = {
-          ...folders.value[idx],
-          ...folder,
-          assetCount: Number.isFinite(nextCount) ? nextCount : assets.assets.length,
-        };
-      }
-      folderAssets.value = assets.assets;
-      deletedAssets.value = deleted.assets;
-      const idSet = new Set(assets.assets.map((asset) => asset.id));
-      selectedAssetIds.value = selectedAssetIds.value.filter((id) => idSet.has(id));
-      undoAssetIds.value = undoAssetIds.value.filter((id) => deleted.assets.some((asset) => asset.id === id));
-      if (editingAssetId.value && !assets.assets.some((asset) => asset.id === editingAssetId.value)) {
-        cancelAssetEdit();
-      }
-      syncFolderEditDraft();
-    } catch (err) {
-      if (requestId !== folderAssetsLoadSeq.value || selectedFolderId.value !== folderId) return;
-      folderAssets.value = [];
-      deletedAssets.value = [];
-      clearSelectedAssets();
-      cancelAssetEdit();
-      syncFolderEditDraft();
-      const e = err as { status?: number };
-      setFeedback(e?.status === 401 ? "请先登录管理员账号。" : "加载文件夹资源失败。", true);
-    }
-  }
+
+  const dataActions = useLibraryAdminDataActions({
+    folders,
+    selectedFolderId,
+    folderAssets,
+    deletedAssets,
+    folderAssetsLoadSeq,
+    selectedAssetIds,
+    undoAssetIds,
+    editingAssetId,
+    clearSelectedAssets,
+    cancelAssetEdit: () => cancelAssetEdit(),
+    syncFolderEditDraft: () => syncFolderEditDraft(),
+    setFeedback,
+  });
+  reloadFolders = dataActions.reloadFolders;
+  reloadFolderAssets = dataActions.reloadFolderAssets;
 
   const {
     categories,
@@ -272,7 +230,7 @@ export function useLibraryAdminState() {
     folderEditCategoryId,
     coverFile,
     groupedCategoryOptions,
-    syncFolderEditDraft,
+    syncFolderEditDraft: syncFolderEditDraftAction,
     syncCategorySelection,
     syncFolderEditCategorySelection,
     reloadTaxonomy,
@@ -293,6 +251,7 @@ export function useLibraryAdminState() {
     setFieldError,
     clearFieldErrors,
   });
+  syncFolderEditDraft = syncFolderEditDraftAction;
 
   const {
     onAssetFileChange,
@@ -318,7 +277,12 @@ export function useLibraryAdminState() {
     parseJsonObjectInput,
   });
 
-  const { cancelAssetEdit, startEditAsset, saveAssetEdit, renameAssetDisplayName } = useLibraryAssetEditorActions({
+  const {
+    cancelAssetEdit: cancelAssetEditAction,
+    startEditAsset,
+    saveAssetEdit,
+    renameAssetDisplayName,
+  } = useLibraryAssetEditorActions({
     savingAsset,
     selectedFolderId,
     editingAssetId,
@@ -337,6 +301,7 @@ export function useLibraryAdminState() {
     clearFieldErrors,
     parseJsonObjectInput,
   });
+  cancelAssetEdit = cancelAssetEditAction;
   
   watch(selectedFolderId, () => {
     syncFolderEditDraft();
@@ -444,8 +409,8 @@ export function useLibraryAdminState() {
     filteredOperationLogs,
     allFilteredAssetsSelected,
     parseJsonObjectInput,
-    syncFolderEditDraft,
-    cancelAssetEdit,
+    syncFolderEditDraft: syncFolderEditDraftAction,
+    cancelAssetEdit: cancelAssetEditAction,
     clearSelectedAssets,
     isAssetSelected,
     toggleAssetSelection,
