@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+npm run guard:file-size
 npm test
 npm --prefix frontend run test
 npm run typecheck:frontend

@@ -1,0 +1,32 @@
+{
+  "rules": [
+    {
+      "root": "server",
+      "extensions": [".js"],
+      "maxLines": 360
+    },
+    {
+      "root": "frontend/src",
+      "extensions": [".ts"],
+      "maxLines": 360
+    },
+    {
+      "root": "frontend/src",
+      "extensions": [".vue"],
+      "maxLines": 380
+    },
+    {
+      "root": "frontend/test",
+      "extensions": [".ts"],
+      "maxLines": 360
+    },
+    {
+      "root": "tests",
+      "extensions": [".js"],
+      "maxLines": 880
+    }
+  ],
+  "overrides": {
+    "frontend/src/features/library/useLibraryAdminState.ts": 455
+  }
+}
