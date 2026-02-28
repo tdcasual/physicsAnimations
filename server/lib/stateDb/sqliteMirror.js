@@ -11,6 +11,8 @@ const {
   normalizeKey,
   resolveDbPath,
 } = require("./mirrorHelpers");
+const { withImmediateTransaction } = require("./sqliteMirror/circuitGuard");
+const { createQueryRunner } = require("./sqliteMirror/queryRunner");
 
 function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
   const loadSqlite = typeof deps.loadNodeSqlite === "function" ? deps.loadNodeSqlite : loadNodeSqlite;
@@ -103,8 +105,7 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
 
   function syncDynamicItemsFromBuffer(buffer) {
     const rows = parseDynamicItemsFromBuffer(buffer);
-    db.exec("BEGIN IMMEDIATE");
-    try {
+    withImmediateTransaction(db, () => {
       clearDynamicStmt.run();
       for (const row of rows) {
         insertDynamicStmt.run(
@@ -124,23 +125,14 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
           row.updatedAt,
         );
       }
-      db.exec("COMMIT");
-    } catch (err) {
-      try {
-        db.exec("ROLLBACK");
-      } catch {
-        // ignore
-      }
-      throw err;
-    }
+    });
   }
 
   function syncBuiltinItems({ rootDir, builtinOverridesBuffer }) {
     const baseRows = loadBuiltinBaseRows({ rootDir });
     const overrides = parseBuiltinOverridesFromBuffer(builtinOverridesBuffer);
 
-    db.exec("BEGIN IMMEDIATE");
-    try {
+    withImmediateTransaction(db, () => {
       clearBuiltinStmt.run();
       for (const base of baseRows) {
         const override = overrides[base.id] || {};
@@ -171,15 +163,7 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
           updatedAt,
         );
       }
-      db.exec("COMMIT");
-    } catch (err) {
-      try {
-        db.exec("ROLLBACK");
-      } catch {
-        // ignore
-      }
-      throw err;
-    }
+    });
   }
 
   function mapBuiltinItemRow(row) {
@@ -220,378 +204,11 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
     };
   }
 
-  function queryDynamicItems({ isAdmin = false, q = "", categoryId = "", type = "", offset = 0, limit = 24 } = {}) {
-    const where = [];
-    const params = [];
-
-    if (!isAdmin) {
-      where.push("published = 1");
-      where.push("hidden = 0");
-    }
-
-    const normalizedCategoryId = toText(categoryId).trim();
-    if (normalizedCategoryId) {
-      where.push("category_id = ?");
-      params.push(normalizedCategoryId);
-    }
-
-    const normalizedType = toText(type).trim();
-    if (normalizedType) {
-      where.push("type = ?");
-      params.push(normalizedType);
-    }
-
-    const normalizedQ = toText(q).trim().toLowerCase();
-    if (normalizedQ) {
-      const like = `%${normalizedQ}%`;
-      where.push("(LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(url) LIKE ? OR LOWER(path) LIKE ? OR LOWER(id) LIKE ?)");
-      params.push(like, like, like, like, like);
-    }
-
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-    const countSql = `SELECT COUNT(1) AS total FROM state_dynamic_items ${whereSql}`;
-    const totalRow = prepareQuery(countSql).get(...params);
-    const total = toInt(totalRow?.total, 0);
-
-    const safeLimit = Math.max(1, toInt(limit, 24));
-    const safeOffset = Math.max(0, toInt(offset, 0));
-    const dataSql = `
-      SELECT
-        id, type, category_id, title, description, url, path, thumbnail,
-        order_value, published, hidden, upload_kind, created_at, updated_at
-      FROM state_dynamic_items
-      ${whereSql}
-      ORDER BY created_at DESC, title COLLATE NOCASE ASC, id ASC
-      LIMIT ? OFFSET ?
-    `;
-    const rows = prepareQuery(dataSql).all(...params, safeLimit, safeOffset);
-    const items = rows.map(mapDynamicItemRow);
-
-    return { total, items };
-  }
-
-  function queryDynamicItemsForCatalog({ includeHiddenItems = false, includeUnpublishedItems = false } = {}) {
-    const where = [];
-    if (!includeUnpublishedItems) where.push("published = 1");
-    if (!includeHiddenItems) where.push("hidden = 0");
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-    const rows = prepareQuery(
-        `
-          SELECT
-            id, type, category_id, title, description, url, path, thumbnail,
-            order_value, published, hidden, upload_kind, created_at, updated_at
-          FROM state_dynamic_items
-          ${whereSql}
-        `,
-      )
-      .all();
-
-    return { items: rows.map(mapDynamicItemRow) };
-  }
-
-  function queryDynamicItemById({ id = "", isAdmin = false } = {}) {
-    const normalizedId = toText(id).trim();
-    if (!normalizedId) return null;
-
-    const where = ["id = ?"];
-    const params = [normalizedId];
-    if (!isAdmin) {
-      where.push("published = 1");
-      where.push("hidden = 0");
-    }
-
-    const row = prepareQuery(
-        `
-          SELECT
-            id, type, category_id, title, description, url, path, thumbnail,
-            order_value, published, hidden, upload_kind, created_at, updated_at
-          FROM state_dynamic_items
-          WHERE ${where.join(" AND ")}
-          LIMIT 1
-        `,
-      )
-      .get(...params);
-
-    if (!row) return null;
-    return mapDynamicItemRow(row);
-  }
-
-  function queryBuiltinItemById({ id = "", isAdmin = false, includeDeleted = false } = {}) {
-    const normalizedId = toText(id).trim();
-    if (!normalizedId) return null;
-
-    const where = ["id = ?"];
-    const params = [normalizedId];
-    if (!isAdmin) {
-      where.push("published = 1");
-      where.push("hidden = 0");
-    }
-    if (!includeDeleted) {
-      where.push("deleted = 0");
-    }
-
-    const row = prepareQuery(
-        `
-          SELECT
-            id, category_id, title, description, thumbnail,
-            order_value, published, hidden, deleted, updated_at
-          FROM state_builtin_items
-          WHERE ${where.join(" AND ")}
-          LIMIT 1
-        `,
-      )
-      .get(...params);
-
-    if (!row) return null;
-    return mapBuiltinItemRow(row);
-  }
-
-  function queryBuiltinItems({
-    isAdmin = false,
-    includeDeleted = false,
-    q = "",
-    categoryId = "",
-    type = "",
-    offset = 0,
-    limit = 24,
-  } = {}) {
-    const normalizedType = toText(type).trim();
-    if (normalizedType && normalizedType !== "builtin") {
-      return { total: 0, items: [] };
-    }
-
-    const where = [];
-    const params = [];
-
-    if (!isAdmin) {
-      where.push("published = 1");
-      where.push("hidden = 0");
-    }
-
-    if (!includeDeleted) {
-      where.push("deleted = 0");
-    }
-
-    const normalizedCategoryId = toText(categoryId).trim();
-    if (normalizedCategoryId) {
-      where.push("category_id = ?");
-      params.push(normalizedCategoryId);
-    }
-
-    const normalizedQ = toText(q).trim().toLowerCase();
-    if (normalizedQ) {
-      const like = `%${normalizedQ}%`;
-      where.push("(LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(id) LIKE ?)");
-      params.push(like, like, like);
-    }
-
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-    const countSql = `SELECT COUNT(1) AS total FROM state_builtin_items ${whereSql}`;
-    const totalRow = prepareQuery(countSql).get(...params);
-    const total = Math.max(0, toInt(totalRow?.total, 0));
-
-    const safeOffset = Math.max(0, toInt(offset, 0));
-    const safeLimit = Math.max(0, toInt(limit, 24));
-    if (safeLimit <= 0) {
-      return { total, items: [] };
-    }
-
-    const rows = prepareQuery(
-        `
-          SELECT
-            id, category_id, title, description, thumbnail,
-            order_value, published, hidden, deleted, updated_at
-          FROM state_builtin_items
-          ${whereSql}
-          ORDER BY deleted ASC, title COLLATE NOCASE ASC, id ASC
-          LIMIT ? OFFSET ?
-        `,
-      )
-      .all(...params, safeLimit, safeOffset);
-
-    return {
-      total,
-      items: rows.map(mapBuiltinItemRow),
-    };
-  }
-
-  function queryItems({
-    isAdmin = false,
-    includeDeleted = false,
-    q = "",
-    categoryId = "",
-    type = "",
-    offset = 0,
-    limit = 24,
-  } = {}) {
-    const normalizedType = toText(type).trim();
-    const normalizedCategoryId = toText(categoryId).trim();
-    const normalizedQ = toText(q).trim().toLowerCase();
-    const safeOffset = Math.max(0, toInt(offset, 0));
-    const safeLimit = Math.max(0, toInt(limit, 24));
-
-    const dynamicEnabled = !normalizedType || normalizedType === "link" || normalizedType === "upload";
-    const builtinEnabled = !normalizedType || normalizedType === "builtin";
-    if (!dynamicEnabled && !builtinEnabled) {
-      return { total: 0, items: [] };
-    }
-
-    const dynamicWhere = [];
-    const dynamicParams = [];
-    if (!isAdmin) {
-      dynamicWhere.push("published = 1");
-      dynamicWhere.push("hidden = 0");
-    }
-    if (normalizedCategoryId) {
-      dynamicWhere.push("category_id = ?");
-      dynamicParams.push(normalizedCategoryId);
-    }
-    if (normalizedType && normalizedType !== "builtin") {
-      dynamicWhere.push("type = ?");
-      dynamicParams.push(normalizedType);
-    }
-    if (normalizedQ) {
-      const like = `%${normalizedQ}%`;
-      dynamicWhere.push("(LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(url) LIKE ? OR LOWER(path) LIKE ? OR LOWER(id) LIKE ?)");
-      dynamicParams.push(like, like, like, like, like);
-    }
-    const dynamicWhereSql = dynamicWhere.length ? `WHERE ${dynamicWhere.join(" AND ")}` : "";
-
-    const builtinWhere = [];
-    const builtinParams = [];
-    if (!isAdmin) {
-      builtinWhere.push("published = 1");
-      builtinWhere.push("hidden = 0");
-    }
-    if (!includeDeleted) {
-      builtinWhere.push("deleted = 0");
-    }
-    if (normalizedCategoryId) {
-      builtinWhere.push("category_id = ?");
-      builtinParams.push(normalizedCategoryId);
-    }
-    if (normalizedQ) {
-      const like = `%${normalizedQ}%`;
-      builtinWhere.push("(LOWER(title) LIKE ? OR LOWER(description) LIKE ? OR LOWER(id) LIKE ?)");
-      builtinParams.push(like, like, like);
-    }
-    const builtinWhereSql = builtinWhere.length ? `WHERE ${builtinWhere.join(" AND ")}` : "";
-
-    const dynamicTotal = dynamicEnabled
-      ? Math.max(0, toInt(prepareQuery(`SELECT COUNT(1) AS total FROM state_dynamic_items ${dynamicWhereSql}`).get(...dynamicParams)?.total, 0))
-      : 0;
-    const builtinTotal = builtinEnabled
-      ? Math.max(0, toInt(prepareQuery(`SELECT COUNT(1) AS total FROM state_builtin_items ${builtinWhereSql}`).get(...builtinParams)?.total, 0))
-      : 0;
-    const total = dynamicTotal + builtinTotal;
-
-    if (safeLimit <= 0 || total <= 0 || safeOffset >= total) {
-      return { total, items: [] };
-    }
-
-    const selectParts = [];
-    const selectParams = [];
-
-    if (dynamicEnabled) {
-      selectParts.push(`
-        SELECT
-          id,
-          type,
-          category_id,
-          title,
-          description,
-          url,
-          path,
-          thumbnail,
-          order_value,
-          published,
-          hidden,
-          upload_kind,
-          created_at,
-          updated_at,
-          0 AS deleted,
-          0 AS source_rank
-        FROM state_dynamic_items
-        ${dynamicWhereSql}
-      `);
-      selectParams.push(...dynamicParams);
-    }
-
-    if (builtinEnabled) {
-      selectParts.push(`
-        SELECT
-          id,
-          'builtin' AS type,
-          category_id,
-          title,
-          description,
-          '' AS url,
-          '' AS path,
-          thumbnail,
-          order_value,
-          published,
-          hidden,
-          'html' AS upload_kind,
-          '' AS created_at,
-          updated_at,
-          deleted,
-          1 AS source_rank
-        FROM state_builtin_items
-        ${builtinWhereSql}
-      `);
-      selectParams.push(...builtinParams);
-    }
-
-    const rows = prepareQuery(
-        `
-          SELECT *
-          FROM (
-            ${selectParts.join(" UNION ALL ")}
-          ) merged
-          ORDER BY source_rank ASC, created_at DESC, deleted ASC, title COLLATE NOCASE ASC, id ASC
-          LIMIT ? OFFSET ?
-        `,
-      )
-      .all(...selectParams, safeLimit, safeOffset);
-
-    const items = rows.map((row) => {
-      const itemType = toText(row.type);
-      if (itemType === "builtin") return mapBuiltinItemRow(row);
-      return mapDynamicItemRow(row);
-    });
-
-    return { total, items };
-  }
-
-  function queryDynamicCategoryCounts({ isAdmin = false } = {}) {
-    const where = [];
-    if (!isAdmin) {
-      where.push("published = 1");
-      where.push("hidden = 0");
-    }
-    const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
-
-    const rows = prepareQuery(
-        `
-          SELECT category_id, COUNT(1) AS total
-          FROM state_dynamic_items
-          ${whereSql}
-          GROUP BY category_id
-        `,
-      )
-      .all();
-
-    const byCategory = {};
-    for (const row of rows) {
-      const categoryId = toText(row?.category_id, "other").trim() || "other";
-      byCategory[categoryId] = (byCategory[categoryId] || 0) + Math.max(0, toInt(row?.total, 0));
-    }
-
-    return { byCategory };
-  }
+  const queryRunner = createQueryRunner({
+    prepareQuery,
+    mapDynamicItemRow,
+    mapBuiltinItemRow,
+  });
 
   return {
     dbPath: filePath,
@@ -622,13 +239,13 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
     getBuiltinItemsCount() {
       return toInt(countBuiltinStmt.get()?.total, 0);
     },
-    queryDynamicItems,
-    queryDynamicItemsForCatalog,
-    queryDynamicItemById,
-    queryBuiltinItemById,
-    queryBuiltinItems,
-    queryItems,
-    queryDynamicCategoryCounts,
+    queryDynamicItems: queryRunner.queryDynamicItems,
+    queryDynamicItemsForCatalog: queryRunner.queryDynamicItemsForCatalog,
+    queryDynamicItemById: queryRunner.queryDynamicItemById,
+    queryBuiltinItemById: queryRunner.queryBuiltinItemById,
+    queryBuiltinItems: queryRunner.queryBuiltinItems,
+    queryItems: queryRunner.queryItems,
+    queryDynamicCategoryCounts: queryRunner.queryDynamicCategoryCounts,
   };
 }
 
