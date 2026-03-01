@@ -26,7 +26,7 @@ async function startServer(app) {
 
 async function stopServer(server) {
   if (!server) return;
-  await new Promise((resolve) => server.close(resolve));
+  await new Promise((resolve) => { server.close(resolve); });
 }
 
 test("/api/items keeps page offset when dynamic SQL path falls back to in-memory", async () => {

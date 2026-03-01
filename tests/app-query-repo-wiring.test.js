@@ -84,7 +84,7 @@ test("createApp uses injected queryRepos for /api/items", async () => {
     const body = await res.json();
     assert.equal(body.items[0].id, "from_repo");
   } finally {
-    await new Promise((resolve) => server.close(resolve));
+    await new Promise((resolve) => { server.close(resolve); });
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });

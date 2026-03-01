@@ -34,7 +34,9 @@ async function waitForHealth(baseUrl, timeoutMs = 20000) {
     } catch {
       // keep polling
     }
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 250);
+    });
   }
   throw new Error(`Server health check timeout: ${baseUrl}/api/health`);
 }

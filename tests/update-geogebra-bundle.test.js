@@ -42,7 +42,7 @@ async function startBundleServer(bundleZipBuffer, zipName) {
     res.end("not found");
   });
 
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  await new Promise((resolve) => { server.listen(0, "127.0.0.1", resolve); });
   const address = server.address();
   const port = Number(address && typeof address === "object" ? address.port : 0);
   return {
@@ -96,7 +96,7 @@ test("runUpdate updates current symlink and prunes older releases", async () => 
   try {
     await fsp.mkdir(path.join(releasesDir, "old-a"), { recursive: true });
     await fsp.writeFile(path.join(releasesDir, "old-a", "marker.txt"), "a", "utf8");
-    await new Promise((resolve) => setTimeout(resolve, 25));
+    await new Promise((resolve) => { setTimeout(resolve, 25); });
     await fsp.mkdir(path.join(releasesDir, "old-b"), { recursive: true });
     await fsp.writeFile(path.join(releasesDir, "old-b", "marker.txt"), "b", "utf8");
     await fsp.symlink(path.relative(path.dirname(currentDir), path.join(releasesDir, "old-a")), currentDir, "dir");
@@ -122,7 +122,7 @@ test("runUpdate updates current symlink and prunes older releases", async () => 
       assert.deepEqual(names, ["old-b", "release-new"]);
       assert.equal(await pathExists(path.join(releasesDir, "release-new", "manifest.json")), true);
     } finally {
-      await new Promise((resolve) => server.close(resolve));
+      await new Promise((resolve) => { server.close(resolve); });
     }
   } finally {
     fs.rmSync(rootDir, { recursive: true, force: true });
@@ -152,7 +152,7 @@ test("runUpdate aborts on sha256 mismatch and keeps existing current release", a
         /sha256 mismatch/,
       );
     } finally {
-      await new Promise((resolve) => server.close(resolve));
+      await new Promise((resolve) => { server.close(resolve); });
     }
 
     const currentTarget = await fsp.realpath(currentDir);

@@ -57,7 +57,7 @@ async function startServer(app) {
 
 async function stopServer(server) {
   if (!server) return;
-  await new Promise((resolve) => server.close(resolve));
+  await new Promise((resolve) => { server.close(resolve); });
 }
 
 test("/api/catalog uses SQL-backed dynamic loader when available", async () => {

@@ -7,7 +7,7 @@ const path = require("node:path");
 const { createTaskQueue } = require("../server/lib/taskQueue");
 
 function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolve) => { setTimeout(resolve, ms); });
 }
 
 async function waitForStatus(queue, taskId, expected, { timeoutMs = 1200, intervalMs = 20 } = {}) {

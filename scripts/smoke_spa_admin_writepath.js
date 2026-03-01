@@ -33,7 +33,9 @@ async function waitForHealth(baseUrl, timeoutMs = 20000) {
     } catch {
       // keep polling
     }
-    await new Promise((resolve) => setTimeout(resolve, 250));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 250);
+    });
   }
   throw new Error(`Server health check timeout: ${baseUrl}/api/health`);
 }
@@ -108,7 +110,9 @@ async function waitUntilEnabled(locator, timeoutMs = 10000) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
     if (!(await locator.isDisabled())) return;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
   }
   throw new Error("timed out waiting for action button to become enabled");
 }

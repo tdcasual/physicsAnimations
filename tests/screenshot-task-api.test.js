@@ -69,7 +69,7 @@ async function startServer(app) {
 
 async function stopServer(server) {
   if (!server) return;
-  await new Promise((resolve) => server.close(resolve));
+  await new Promise((resolve) => { server.close(resolve); });
 }
 
 async function login(baseUrl, authConfig) {
@@ -93,7 +93,7 @@ async function waitForTask(baseUrl, token, taskId, status, timeoutMs = 1200) {
     assert.equal(res.status, 200);
     const data = await res.json();
     if (data?.task?.status === status) return data.task;
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await new Promise((resolve) => { setTimeout(resolve, 20); });
   }
   throw new Error(`task timeout: ${status}`);
 }

@@ -40,7 +40,7 @@ async function startServer(app) {
 
 async function stopServer(server) {
   if (!server) return;
-  await new Promise((resolve) => server.close(resolve));
+  await new Promise((resolve) => { server.close(resolve); });
 }
 
 async function startMockEmbedServer() {
@@ -109,7 +109,7 @@ async function startMockEmbedServer() {
     res.end("not found");
   });
 
-  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  await new Promise((resolve) => { server.listen(0, "127.0.0.1", resolve); });
   const { port } = server.address();
   return {
     server,
