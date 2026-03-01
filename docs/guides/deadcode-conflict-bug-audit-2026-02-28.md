@@ -8,8 +8,8 @@
 
 ## 已执行验证
 
-- 后端测试：`npm test`，`178/178` 通过（含性能预算回归与脚本守护）
-- 前端测试：`npm --prefix frontend run test -- --run`，`55/55` 文件通过（`166/166` 用例）
+- 后端测试：`npm test`，`179/179` 通过（含性能预算回归与脚本守护）
+- 前端测试：`npm --prefix frontend run test -- --run`，`56/56` 文件通过（`167/167` 用例）
 - SPA 冒烟：`smoke:spa-public`、`smoke:spa-admin`、`smoke:spa-admin-write`、`smoke:spa-library-admin` 全部通过
 - 前端依赖图扫描（`frontend/src`）：
   - 运行时代码可达性正常，未发现明显孤儿模块（`env.d.ts`、`main.ts` 为特例）
@@ -50,7 +50,7 @@
 - 已修复：`perf-api` 预算断言受并发抖动影响导致偶发红灯
   - 修复点：[perf-api.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/perf-api.test.js:292)
   - 修复内容：预算失败时单次重试并输出对比统计，保留真实回归拦截
-  - 回归验证：`npm test` 通过（`178/178`）
+  - 回归验证：`npm test` 通过（`179/179`）
 - 已修复：前端测试中 `--localstorage-file` 无效路径 warning 噪音
   - 修复点：
     - [frontend/package.json](/Users/lvxiaoer/Documents/physicsAnimations/frontend/package.json:13)
@@ -90,13 +90,54 @@
     - 清理测试中的未使用局部变量
   - 回归验证：
     - `eslint no-unused-vars`（server/scripts/tests 定向规则）通过
-    - `npm test` 全量通过（`178/178`）
+    - `npm test` 全量通过（`179/179`）
 - 已修复：`wrappedStore` 空 `catch` 缺少语义注释，容易被误判为漏处理异常
   - 修复点：[wrappedStore.js](/Users/lvxiaoer/Documents/physicsAnimations/server/lib/stateDb/wrappedStore.js:74)
   - 修复内容：保留“镜像失败回退主存储”的原行为，补充注释明确其为 best-effort 策略
   - 回归验证：
     - `eslint no-empty`（server 定向规则）通过
-    - `npm test` 全量通过（`178/178`）
+    - `npm test` 全量通过（`179/179`）
+- 已修复：配置文档遗漏 `hybrid` 存储模式，和运行实现不一致
+  - 修复点：
+    - [configuration.md](/Users/lvxiaoer/Documents/physicsAnimations/docs/guides/configuration.md:35)
+    - [configuration-doc-storage-mode.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/configuration-doc-storage-mode.test.js:1)
+  - 修复内容：`STORAGE_MODE` 选项补齐为 `local / hybrid / webdav`，并补充“未显式设置 `STORAGE_MODE` 且提供 `WEBDAV_URL` 时自动使用 `hybrid`”说明
+  - 回归验证：`node --test tests/ops-docs.test.js tests/configuration-doc-storage-mode.test.js` 通过
+- 已修复：SPA 冒烟脚本存在 Promise executor 隐式返回值（无效返回值模式）
+  - 修复点：
+    - [smoke_spa_public.js](/Users/lvxiaoer/Documents/physicsAnimations/scripts/smoke_spa_public.js:36)
+    - [smoke_spa_admin.js](/Users/lvxiaoer/Documents/physicsAnimations/scripts/smoke_spa_admin.js:36)
+    - [smoke_spa_library_admin.js](/Users/lvxiaoer/Documents/physicsAnimations/scripts/smoke_spa_library_admin.js:37)
+    - [smoke_spa_admin_writepath.js](/Users/lvxiaoer/Documents/physicsAnimations/scripts/smoke_spa_admin_writepath.js:36)
+  - 修复内容：将 `new Promise((resolve) => setTimeout(resolve, ...))` 改为显式块体，避免 executor 返回值被误用
+  - 回归验证：
+    - `eslint --rule 'no-promise-executor-return:error' scripts` 通过
+    - `node --test tests/spa-public-smoke-guards.test.js tests/spa-smoke-dist-freshness.test.js tests/library-smoke-script.test.js` 通过
+- 已修复：资源库 normalizers 存在未被消费的导出（死代码）
+  - 修复点：[normalizers.js](/Users/lvxiaoer/Documents/physicsAnimations/server/services/library/core/normalizers.js:232)
+  - 修复内容：删除未被任何调用链使用的 `mergeUniqueList` 函数与导出项
+  - 回归验证：
+    - `node --test tests/library-*.test.js` 通过（`56/56`）
+    - `npm test` 全量通过（`179/179`）
+- 已修复：测试辅助存在 Promise executor 隐式返回值（无效返回值模式）
+  - 修复点：
+    - [app-query-repo-wiring.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/app-query-repo-wiring.test.js:87)
+    - [library-route-api.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/library-route-api.test.js:43)
+    - [update-geogebra-bundle.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/update-geogebra-bundle.test.js:45)
+    - [task-queue.test.js](/Users/lvxiaoer/Documents/physicsAnimations/tests/task-queue.test.js:10)
+  - 修复内容：将单表达式 Promise executor 统一改为显式块体，避免无效返回值触发规则噪音
+  - 回归验证：
+    - `eslint --rule 'no-promise-executor-return:error' tests` 通过
+    - `npm test` 全量通过（`179/179`）
+- 已修复：系统向导只读模式下表单仍可编辑，导致“有改动但无法保存”的交互冲突
+  - 修复点：
+    - [SystemWizardSteps.vue](/Users/lvxiaoer/Documents/physicsAnimations/frontend/src/views/admin/system/SystemWizardSteps.vue:82)
+    - [SystemWizardConnectionStep.vue](/Users/lvxiaoer/Documents/physicsAnimations/frontend/src/views/admin/system/SystemWizardConnectionStep.vue:6)
+    - [admin-system-readonly-guards.test.ts](/Users/lvxiaoer/Documents/physicsAnimations/frontend/test/admin-system-readonly-guards.test.ts:1)
+  - 修复内容：在 readOnly 模式下禁用模式选择与连接步骤输入控件（含 checkbox 与“下一步”），避免制造不可提交的脏状态
+  - 回归验证：
+    - `vitest --run test/admin-system-readonly-guards.test.ts` 通过
+    - `npm run test:frontend -- --run` 全量通过（`56/56` 文件，`167/167` 用例）
 
 ## 发现清单（按优先级）
 
@@ -181,6 +222,18 @@
   - 容易导致误判回归、重复修复已解决问题
   - 评审噪音上升，降低审计结果可信度
 
+### [P2][已修复] 配置文档 `STORAGE_MODE` 选项与实现漂移
+
+- 证据：
+  - [configuration.md](/Users/lvxiaoer/Documents/physicsAnimations/docs/guides/configuration.md:35) 原先仅声明 `local / webdav`
+  - [contentStore.js](/Users/lvxiaoer/Documents/physicsAnimations/server/lib/contentStore.js:12) 实现支持 `hybrid`
+  - [contentStore.js](/Users/lvxiaoer/Documents/physicsAnimations/server/lib/contentStore.js:35) 未显式配置模式且存在 WebDAV 配置时会自动走 `hybrid`
+- 冲突点：
+  - 运维文档可选值少于运行时真实可选值，且缺失自动模式切换规则
+- 影响：
+  - 容易导致部署配置误判（把 `hybrid` 误当成不支持）
+  - 排障时对“为何进入混合模式”缺少直接解释
+
 ### [P3][已修复] Serverless 入口存在双实现，实际接线不一致（遗留无效代码候选）
 
 - 证据：
@@ -216,6 +269,50 @@
   - 但白名单会屏蔽一类高价值错误（动画页脚本错误、嵌入策略回归）
 - 影响：
   - 冒烟可能出现“绿灯但线上有明显错误”的假阴性
+
+### [P3][已修复] SPA 冒烟脚本存在 Promise executor 隐式返回值（无效代码模式）
+
+- 证据：
+  - [smoke_spa_public.js](/Users/lvxiaoer/Documents/physicsAnimations/scripts/smoke_spa_public.js:36) 存在 `new Promise((resolve) => setTimeout(resolve, 250))`
+  - [smoke_spa_admin_writepath.js](/Users/lvxiaoer/Documents/physicsAnimations/scripts/smoke_spa_admin_writepath.js:111) 同类写法重复出现
+- 冲突点：
+  - Promise executor 的返回值不会被消费，属于无效返回值模式
+  - 在规则收紧时会持续制造 lint 噪音，影响真实问题识别
+- 影响：
+  - 降低脚本质量门禁信噪比
+  - 增加后续规则升级时的额外整改成本
+
+### [P3][已修复] 资源库 normalizers 存在未被消费的导出（死代码）
+
+- 证据：
+  - [normalizers.js](/Users/lvxiaoer/Documents/physicsAnimations/server/services/library/core/normalizers.js:232) 曾导出 `mergeUniqueList`
+  - 全仓库无 `mergeUniqueList` 调用链（仅定义与导出）
+- 冲突点：
+  - 该函数不参与任何运行时路径，却持续增加模块认知成本
+- 影响：
+  - 误导维护者认为存在额外“列表去重聚合”逻辑入口
+  - 提升未来重构时的无效兼容负担
+
+### [P3][已修复] 测试辅助存在 Promise executor 隐式返回值（无效代码模式）
+
+- 证据：
+  - 多个测试文件使用 `new Promise((resolve) => server.close(resolve))`、`new Promise((resolve) => setTimeout(resolve, ms))`
+  - 在规则启用后会触发 `no-promise-executor-return`
+- 冲突点：
+  - Promise executor 返回值不会被读取，属于语义噪音
+- 影响：
+  - 增加测试代码 lint 噪音，弱化真正行为回归信号
+
+### [P2][已修复] 系统向导只读模式下可编辑但不可保存
+
+- 证据：
+  - [SystemWizardSteps.vue](/Users/lvxiaoer/Documents/physicsAnimations/frontend/src/views/admin/system/SystemWizardSteps.vue:82) 只读模式下此前未禁用模式 radio
+  - [SystemWizardConnectionStep.vue](/Users/lvxiaoer/Documents/physicsAnimations/frontend/src/views/admin/system/SystemWizardConnectionStep.vue:71) 连接表单输入此前未绑定只读禁用
+  - [useSystemWizard.ts](/Users/lvxiaoer/Documents/physicsAnimations/frontend/src/features/admin/system/useSystemWizard.ts:82) 只读模式明确禁止保存
+- 冲突点：
+  - UI 允许继续编辑，但业务层拒绝保存，形成“可输入但不可提交”的冲突
+- 影响：
+  - 用户容易反复触发无效改动，增加离页确认和误操作成本
 
 ## 无效代码候选（低置信度，建议二次确认）
 
