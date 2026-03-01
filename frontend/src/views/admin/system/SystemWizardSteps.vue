@@ -79,17 +79,17 @@ function onModeChange() {
       <h4>选择模式</h4>
       <div class="mode-grid">
         <label class="mode-card" :class="{ active: mode === 'local' }">
-          <input v-model="modeModel" type="radio" value="local" @change="onModeChange" />
+          <input v-model="modeModel" type="radio" value="local" :disabled="readOnlyMode" @change="onModeChange" />
           <strong>local</strong>
           <span>仅使用本地目录存储，配置简单，离线可用。</span>
         </label>
         <label class="mode-card" :class="{ active: mode === 'hybrid' }">
-          <input v-model="modeModel" type="radio" value="hybrid" @change="onModeChange" />
+          <input v-model="modeModel" type="radio" value="hybrid" :disabled="readOnlyMode" @change="onModeChange" />
           <strong>hybrid</strong>
           <span>本地读写为主，同时同步到 WebDAV，兼顾可靠性和备份。</span>
         </label>
         <label class="mode-card" :class="{ active: mode === 'webdav' }">
-          <input v-model="modeModel" type="radio" value="webdav" @change="onModeChange" />
+          <input v-model="modeModel" type="radio" value="webdav" :disabled="readOnlyMode" @change="onModeChange" />
           <strong>webdav</strong>
           <span>直接使用 WebDAV 作为主存储，适合集中化部署场景。</span>
         </label>
@@ -103,6 +103,7 @@ function onModeChange() {
     <SystemWizardConnectionStep
       v-else-if="wizardStep === 2"
       :remote-mode="remoteMode"
+      :read-only-mode="readOnlyMode"
       :url="url"
       :base-path="basePath"
       :username="username"

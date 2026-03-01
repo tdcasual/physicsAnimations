@@ -3,6 +3,7 @@ import { computed } from "vue";
 
 const props = defineProps<{
   remoteMode: boolean;
+  readOnlyMode: boolean;
   url: string;
   basePath: string;
   username: string;
@@ -72,6 +73,7 @@ const scanRemoteModel = computed({
           v-model="urlModel"
           class="field-input"
           type="url"
+          :disabled="readOnlyMode"
           name="webdav_url"
           autocomplete="url"
           autocapitalize="none"
@@ -89,6 +91,7 @@ const scanRemoteModel = computed({
           v-model="basePathModel"
           class="field-input"
           type="text"
+          :disabled="readOnlyMode"
           name="webdav_base_path"
           autocomplete="off"
           autocapitalize="none"
@@ -103,6 +106,7 @@ const scanRemoteModel = computed({
           v-model="usernameModel"
           class="field-input"
           type="text"
+          :disabled="readOnlyMode"
           name="webdav_username"
           autocomplete="username"
           autocapitalize="none"
@@ -117,6 +121,7 @@ const scanRemoteModel = computed({
           v-model="passwordModel"
           class="field-input"
           type="password"
+          :disabled="readOnlyMode"
           name="webdav_password"
           autocomplete="current-password"
           autocapitalize="none"
@@ -131,6 +136,7 @@ const scanRemoteModel = computed({
           v-model="timeoutMsModel"
           class="field-input"
           type="number"
+          :disabled="readOnlyMode"
           name="webdav_timeout_ms"
           autocomplete="off"
           min="1000"
@@ -138,7 +144,7 @@ const scanRemoteModel = computed({
       </label>
 
       <label class="checkbox">
-        <input v-model="scanRemoteModel" type="checkbox" />
+        <input v-model="scanRemoteModel" type="checkbox" :disabled="readOnlyMode" />
         <span>同步时扫描远端目录</span>
       </label>
     </div>
@@ -147,7 +153,7 @@ const scanRemoteModel = computed({
 
     <div class="actions admin-actions">
       <button type="button" class="btn btn-ghost" @click="emit('go-prev')">上一步</button>
-      <button type="button" class="btn btn-primary" @click="emit('go-next')">下一步</button>
+      <button type="button" class="btn btn-primary" :disabled="readOnlyMode" @click="emit('go-next')">下一步</button>
     </div>
   </div>
 </template>
