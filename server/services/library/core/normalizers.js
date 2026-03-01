@@ -229,20 +229,6 @@ function shouldSkipRef(value) {
   return false;
 }
 
-function mergeUniqueList(...lists) {
-  const seen = new Set();
-  const out = [];
-  for (const list of lists) {
-    for (const raw of list || []) {
-      const value = String(raw || "").trim();
-      if (!value || seen.has(value)) continue;
-      seen.add(value);
-      out.push(value);
-    }
-  }
-  return out;
-}
-
 module.exports = {
   IMAGE_EXT_BY_MIME,
   normalizeOpenMode,
@@ -264,5 +250,4 @@ module.exports = {
   parseJsRefs,
   parseCssRefs,
   shouldSkipRef,
-  mergeUniqueList,
 };
