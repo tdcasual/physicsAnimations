@@ -64,6 +64,7 @@ async function run() {
   const server = startServer(rootDir, port, logPath);
   const consoleErrors = [];
   const pageErrors = [];
+  const apiServerErrors = [];
   let createdId = "";
   let authToken = "";
 
@@ -88,6 +89,13 @@ async function run() {
       });
       page.on("pageerror", (error) => {
         pageErrors.push(error?.message || String(error));
+      });
+      page.on("response", (response) => {
+        const status = response.status();
+        const url = response.url();
+        if (response.status() >= 500 && url.includes("/api/")) {
+          apiServerErrors.push(`${status} ${response.request().method()} ${url}`);
+        }
       });
       page.on("dialog", (dialog) => {
         if (dialog.type() === "confirm") {
@@ -188,10 +196,11 @@ async function run() {
       await browser.close();
     }
 
-    if (consoleErrors.length || pageErrors.length) {
+    if (consoleErrors.length || pageErrors.length || apiServerErrors.length) {
       const parts = [];
       if (consoleErrors.length) parts.push(`console errors:\n- ${consoleErrors.join("\n- ")}`);
       if (pageErrors.length) parts.push(`page errors:\n- ${pageErrors.join("\n- ")}`);
+      if (apiServerErrors.length) parts.push(`api 5xx responses:\n- ${apiServerErrors.join("\n- ")}`);
       throw new Error(parts.join("\n"));
     }
 

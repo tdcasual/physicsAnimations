@@ -21,6 +21,7 @@
     "guard:audit": "node scripts/check_audit_high_critical.js",
     "smoke:spa-admin": "node scripts/smoke_spa_admin.js",
     "smoke:spa-admin-write": "node scripts/smoke_spa_admin_writepath.js",
+    "test:e2e:admin-write": "node scripts/smoke_spa_admin_writepath.js",
     "smoke:spa-library-admin": "node scripts/smoke_spa_library_admin.js",
     "smoke:spa-public": "node scripts/smoke_spa_public.js",
     "qa:release": "bash ./scripts/qa_release_gate.sh",

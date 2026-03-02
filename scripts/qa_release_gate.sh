@@ -8,6 +8,7 @@ npm run build:frontend
 npm test
 npm --prefix frontend run test -- --run
 npm run typecheck:frontend
+npm run test:e2e:admin-write
 npm run smoke:spa-public
 npm run smoke:spa-admin
 npm run smoke:spa-admin-write
