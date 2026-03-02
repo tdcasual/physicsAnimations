@@ -34,8 +34,7 @@ test("query facade exposes unified queryItemById and prefers dynamic item", asyn
   const calls = [];
   const facade = createStateDbQueryFacade({
     mirror: {
-      queryDynamicItemById: ({ id }) => (id === "dyn_1" ? { id: "dyn_1", type: "link" } : null),
-      queryBuiltinItemById: () => ({ id: "builtin_1", type: "builtin" }),
+      queryItemById: ({ id }) => (id === "dyn_1" ? { id: "dyn_1", type: "link" } : null),
     },
     ensureDynamicItemsIndexed: async () => {
       calls.push("ensureDynamic");
@@ -58,6 +57,6 @@ test("query facade exposes unified queryItemById and prefers dynamic item", asyn
     "ensureUsable",
     "ensureDynamic",
     "ensureBuiltin",
-    "mirror.queryDynamicItemById",
+    "mirror.queryItemById",
   ]);
 });

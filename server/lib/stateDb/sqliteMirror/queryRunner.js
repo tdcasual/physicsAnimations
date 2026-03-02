@@ -105,6 +105,12 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
     return mapBuiltinItemRow(row);
   }
 
+  function queryItemById({ id = "", isAdmin = false, includeDeleted = false } = {}) {
+    const dynamicItem = queryDynamicItemById({ id, isAdmin });
+    if (dynamicItem) return dynamicItem;
+    return queryBuiltinItemById({ id, isAdmin, includeDeleted });
+  }
+
   function queryBuiltinItems({
     isAdmin = false,
     includeDeleted = false,
@@ -279,8 +285,7 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
   return {
     queryDynamicItems,
     queryDynamicItemsForCatalog,
-    queryDynamicItemById,
-    queryBuiltinItemById,
+    queryItemById,
     queryBuiltinItems,
     queryItems,
     queryDynamicCategoryCounts,

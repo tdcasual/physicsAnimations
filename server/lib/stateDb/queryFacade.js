@@ -34,17 +34,12 @@ function createStateDbQueryFacade({
       await ensureDynamicItemsIndexed();
       await ensureBuiltinItemsIndexed();
 
-      const id = String(options.id || "");
-      const isAdmin = options.isAdmin === true;
-      const includeDeleted = options.includeDeleted === true;
-
-      const dynamicItem = runMirrorOperation("mirror.queryDynamicItemById", () =>
-        mirror.queryDynamicItemById({ id, isAdmin }),
-      );
-      if (dynamicItem) return dynamicItem;
-
-      return runMirrorOperation("mirror.queryBuiltinItemById", () =>
-        mirror.queryBuiltinItemById({ id, isAdmin, includeDeleted }),
+      return runMirrorOperation("mirror.queryItemById", () =>
+        mirror.queryItemById({
+          id: String(options.id || ""),
+          isAdmin: options.isAdmin === true,
+          includeDeleted: options.includeDeleted === true,
+        }),
       );
     },
     async queryDynamicCategoryCounts(options = {}) {
