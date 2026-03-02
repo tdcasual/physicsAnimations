@@ -1,36 +1,9 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
 
 const { createApp } = require("../server/app");
-
-function makeTempRoot() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-sec-headers-"));
-  fs.writeFileSync(path.join(root, "animations.json"), "{}\n");
-  fs.mkdirSync(path.join(root, "assets"), { recursive: true });
-  fs.mkdirSync(path.join(root, "animations"), { recursive: true });
-  fs.mkdirSync(path.join(root, "content"), { recursive: true });
-  return root;
-}
-
-async function startServer(app) {
-  return new Promise((resolve) => {
-    const server = app.listen(0, "127.0.0.1", () => {
-      const { port } = server.address();
-      resolve({
-        server,
-        baseUrl: `http://127.0.0.1:${port}`,
-      });
-    });
-  });
-}
-
-async function stopServer(server) {
-  if (!server) return;
-  await new Promise((resolve) => { server.close(resolve); });
-}
+const { makeTempRoot, removeTempRoot } = require("./helpers/tempRoot");
+const { startServer, stopServer } = require("./helpers/testServer");
 
 function assertApiSecurityHeaders(response) {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
@@ -43,7 +16,7 @@ function assertApiSecurityHeaders(response) {
 }
 
 test("api routes set defensive security headers", async () => {
-  const rootDir = makeTempRoot();
+  const rootDir = makeTempRoot({ prefix: "pa-sec-headers-" });
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
@@ -60,6 +33,6 @@ test("api routes set defensive security headers", async () => {
     assertApiSecurityHeaders(metricsRes);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });

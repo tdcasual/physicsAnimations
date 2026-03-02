@@ -1,38 +1,18 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 
 const { createApp } = require("../server/app");
-
-function makeTempRoot() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-spa-test-"));
-  fs.mkdirSync(path.join(root, "animations"), { recursive: true });
-  fs.mkdirSync(path.join(root, "content"), { recursive: true });
-  fs.writeFileSync(path.join(root, "animations.json"), "{}");
-  return root;
-}
-
-async function startServer(app) {
-  return new Promise((resolve) => {
-    const server = app.listen(0, "127.0.0.1", () => {
-      const { port } = server.address();
-      resolve({
-        server,
-        baseUrl: `http://127.0.0.1:${port}`,
-      });
-    });
-  });
-}
-
-async function stopServer(server) {
-  if (!server) return;
-  await new Promise((resolve) => { server.close(resolve); });
-}
+const { makeTempRoot, removeTempRoot } = require("./helpers/tempRoot");
+const { startServer, stopServer } = require("./helpers/testServer");
 
 test("root routes serve SPA entry and static assets", async () => {
-  const rootDir = makeTempRoot();
+  const rootDir = makeTempRoot({
+    prefix: "pa-spa-test-",
+    animationsJson: "{}",
+    withAssets: false,
+  });
   const spaDist = path.join(rootDir, "frontend", "dist");
   fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
   fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>root-spa</title>");
@@ -63,12 +43,16 @@ test("root routes serve SPA entry and static assets", async () => {
     assert.equal(health.ok, true);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
-test("legacy frontend entry points return not_found", async () => {
-  const rootDir = makeTempRoot();
+test("legacy frontend entry points are treated as SPA routes", async () => {
+  const rootDir = makeTempRoot({
+    prefix: "pa-spa-test-",
+    animationsJson: "{}",
+    withAssets: false,
+  });
   const spaDist = path.join(rootDir, "frontend", "dist");
   fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
   fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>cutover</title>");
@@ -88,18 +72,21 @@ test("legacy frontend entry points return not_found", async () => {
     ];
     for (const urlPath of urls) {
       const response = await fetch(`${baseUrl}${urlPath}`);
-      assert.equal(response.status, 404, `${urlPath} should be 404`);
-      const payload = await response.json();
-      assert.equal(payload.error, "not_found", `${urlPath} should return not_found`);
+      assert.equal(response.status, 200, `${urlPath} should resolve to SPA entry`);
+      assert.match(await response.text(), /cutover/);
     }
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
 test("returns service_unavailable when SPA dist is missing", async () => {
-  const rootDir = makeTempRoot();
+  const rootDir = makeTempRoot({
+    prefix: "pa-spa-test-",
+    animationsJson: "{}",
+    withAssets: false,
+  });
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
@@ -117,12 +104,16 @@ test("returns service_unavailable when SPA dist is missing", async () => {
     assert.equal(health.ok, true);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
-test("does not serve SPA entry for extension-like root paths", async () => {
-  const rootDir = makeTempRoot();
+test("serves SPA entry for extension-like root paths", async () => {
+  const rootDir = makeTempRoot({
+    prefix: "pa-spa-test-",
+    animationsJson: "{}",
+    withAssets: false,
+  });
   const spaDist = path.join(rootDir, "frontend", "dist");
   fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
   fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>root-spa</title>");
@@ -131,16 +122,20 @@ test("does not serve SPA entry for extension-like root paths", async () => {
   const { server, baseUrl } = await startServer(app);
   try {
     const robots = await fetch(`${baseUrl}/robots.txt`);
-    assert.equal(robots.status, 404);
-    assert.deepEqual(await robots.json(), { error: "not_found" });
+    assert.equal(robots.status, 200);
+    assert.match(await robots.text(), /root-spa/);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
-test("does not serve SPA entry for nested extension-like paths outside known SPA routes", async () => {
-  const rootDir = makeTempRoot();
+test("serves SPA entry for nested extension-like paths", async () => {
+  const rootDir = makeTempRoot({
+    prefix: "pa-spa-test-",
+    animationsJson: "{}",
+    withAssets: false,
+  });
   const spaDist = path.join(rootDir, "frontend", "dist");
   fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
   fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>root-spa</title>");
@@ -148,11 +143,11 @@ test("does not serve SPA entry for nested extension-like paths outside known SPA
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
-    const blocked = ["/foo/bar.js", "/foo/bar/baz.css", "/foo/bar/baz.map"];
-    for (const urlPath of blocked) {
+    const routes = ["/foo/bar.js", "/foo/bar/baz.css", "/foo/bar/baz.map"];
+    for (const urlPath of routes) {
       const response = await fetch(`${baseUrl}${urlPath}`);
-      assert.equal(response.status, 404, `${urlPath} should be 404`);
-      assert.deepEqual(await response.json(), { error: "not_found" });
+      assert.equal(response.status, 200, `${urlPath} should resolve to SPA entry`);
+      assert.match(await response.text(), /root-spa/);
     }
 
     const viewerLike = await fetch(`${baseUrl}/viewer/${encodeURIComponent("mechanics/demo.html")}`);
@@ -160,6 +155,6 @@ test("does not serve SPA entry for nested extension-like paths outside known SPA
     assert.match(await viewerLike.text(), /root-spa/);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
