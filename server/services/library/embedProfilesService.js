@@ -73,7 +73,6 @@ function createEmbedProfilesService({
       viewerPath: cleanViewerPath,
       remoteScriptUrl: cleanScriptUrl,
       remoteViewerPath: cleanViewerPath,
-      syncMode: "local_mirror",
       syncStatus: "pending",
       syncMessage: "",
       lastSyncAt: "",

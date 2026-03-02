@@ -137,7 +137,6 @@ function sanitizeEmbedProfileEntry(value) {
     viewerPath: toText(value.viewerPath).trim(),
     remoteScriptUrl: toText(value.remoteScriptUrl).trim() || toText(value.scriptUrl).trim(),
     remoteViewerPath: toText(value.remoteViewerPath).trim() || toText(value.viewerPath).trim(),
-    syncMode: toText(value.syncMode, "local_mirror").trim() || "local_mirror",
     syncStatus: toText(value.syncStatus, "pending").trim() || "pending",
     syncMessage: toText(value.syncMessage),
     lastSyncAt: toText(value.lastSyncAt),

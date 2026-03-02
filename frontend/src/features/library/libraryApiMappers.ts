@@ -60,7 +60,6 @@ export function toEmbedProfile(value: any): LibraryEmbedProfile {
     viewerPath: String(value?.viewerPath || ""),
     remoteScriptUrl: String(value?.remoteScriptUrl || value?.scriptUrl || ""),
     remoteViewerPath: String(value?.remoteViewerPath || value?.viewerPath || ""),
-    syncMode: String(value?.syncMode || "local_mirror"),
     syncStatus: String(value?.syncStatus || "pending"),
     syncMessage: String(value?.syncMessage || ""),
     lastSyncAt: String(value?.lastSyncAt || ""),

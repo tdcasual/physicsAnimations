@@ -127,6 +127,7 @@ test("libraryState saves and reloads sanitized folders/assets payload", async ()
   assert.equal(profiles.version, 1);
   assert.equal(profiles.profiles.length, 1);
   assert.equal(profiles.profiles[0].id, "ep_1");
+  assert.equal(Object.prototype.hasOwnProperty.call(profiles.profiles[0], "syncMode"), false);
 });
 
 test("libraryState mutate helpers persist updates", async () => {

@@ -42,7 +42,6 @@ export interface LibraryEmbedProfile {
   viewerPath: string;
   remoteScriptUrl: string;
   remoteViewerPath: string;
-  syncMode: string;
   syncStatus: string;
   syncMessage: string;
   lastSyncAt: string;
