@@ -33,8 +33,6 @@ test("/api/items prefers merged SQL query when available", async () => {
   const rootDir = makeTempRoot();
 
   let mergedCall = null;
-  let dynamicCalled = false;
-  let builtinCalled = false;
 
   const store = {
     async readBuffer() {
@@ -67,28 +65,24 @@ test("/api/items prefers merged SQL query when available", async () => {
               updatedAt: "2026-01-03T00:00:00.000Z",
             },
             {
-              id: "builtin_merged_1",
-              type: "builtin",
+              id: "dyn_merged_2",
+              type: "upload",
               categoryId: "other",
-              title: "Merged Builtin",
+              title: "Merged Upload",
               description: "",
+              path: "content/uploads/dyn_merged_2/index.html",
               thumbnail: "",
               order: 0,
               published: true,
               hidden: false,
-              deleted: false,
-              createdAt: "",
-              updatedAt: "",
+              uploadKind: "zip",
+              createdAt: "2026-01-02T00:00:00.000Z",
+              updatedAt: "2026-01-02T00:00:00.000Z",
             },
           ],
         };
       },
       async queryDynamicItems() {
-        dynamicCalled = true;
-        return { total: 0, items: [] };
-      },
-      async queryBuiltinItems() {
-        builtinCalled = true;
         return { total: 0, items: [] };
       },
     },
@@ -110,11 +104,8 @@ test("/api/items prefers merged SQL query when available", async () => {
     assert.equal(mergedCall.includeDeleted, false);
     assert.equal(mergedCall.isAdmin, false);
 
-    assert.equal(dynamicCalled, false);
-    assert.equal(builtinCalled, false);
-
     const ids = (data.items || []).map((it) => it.id);
-    assert.deepEqual(ids, ["dyn_merged_1", "builtin_merged_1"]);
+    assert.deepEqual(ids, ["dyn_merged_1", "dyn_merged_2"]);
     assert.equal(data.total, 2);
     assert.equal(data.page, 2);
     assert.equal(data.pageSize, 5);

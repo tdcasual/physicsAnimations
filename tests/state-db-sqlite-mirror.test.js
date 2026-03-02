@@ -47,9 +47,6 @@ test("queryDynamicCategoryCounts normalizes dangerous category ids", () => {
     mapDynamicItemRow(row) {
       return row;
     },
-    mapBuiltinItemRow(row) {
-      return row;
-    },
   });
 
   const out = runner.queryDynamicCategoryCounts({ isAdmin: true });

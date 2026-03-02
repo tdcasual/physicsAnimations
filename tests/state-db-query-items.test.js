@@ -14,37 +14,15 @@ function hasNodeSqlite() {
 function makeTempRoot() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-query-items-"));
   fs.mkdirSync(path.join(root, "content"), { recursive: true });
-  fs.writeFileSync(
-    path.join(root, "animations.json"),
-    JSON.stringify(
-      {
-        mechanics: {
-          title: "力学",
-          items: [
-            {
-              file: "mechanics/a.html",
-              title: "AAA Builtin",
-              description: "builtin",
-              thumbnail: "",
-            },
-          ],
-        },
-      },
-      null,
-      2,
-    ),
-  );
+  fs.writeFileSync(path.join(root, "animations.json"), "{}\n");
   return root;
 }
 
-function makeInMemoryStore({ itemsState, builtinState }) {
+function makeInMemoryStore({ itemsState }) {
   const blobs = new Map();
 
   if (itemsState) {
     blobs.set("items.json", Buffer.from(`${JSON.stringify(itemsState, null, 2)}\n`, "utf8"));
-  }
-  if (builtinState) {
-    blobs.set("builtin_items.json", Buffer.from(`${JSON.stringify(builtinState, null, 2)}\n`, "utf8"));
   }
 
   function normalizeKey(key) {
@@ -75,7 +53,7 @@ function makeInMemoryStore({ itemsState, builtinState }) {
   };
 }
 
-test("state db queryItems preserves dynamic-first ordering and includeDeleted semantics", async () => {
+test("state db queryItems keeps dynamic-only semantics and rejects builtin type filter", async () => {
   if (!hasNodeSqlite()) return;
 
   const rootDir = makeTempRoot();
@@ -99,15 +77,6 @@ test("state db queryItems preserves dynamic-first ordering and includeDeleted se
           updatedAt: "",
         },
       ],
-    },
-    builtinState: {
-      version: 1,
-      items: {
-        "mechanics/a.html": {
-          deleted: true,
-          updatedAt: "2026-01-03T00:00:00.000Z",
-        },
-      },
     },
   });
 
@@ -147,10 +116,10 @@ test("state db queryItems preserves dynamic-first ordering and includeDeleted se
       limit: 20,
     });
 
-    assert.equal(adminResult.total, 2);
+    assert.equal(adminResult.total, 1);
     assert.deepEqual(
       (adminResult.items || []).map((item) => item.id),
-      ["d_no_time", "mechanics/a.html"],
+      ["d_no_time"],
     );
 
     const builtinOnlyAdmin = await wrapped.store.stateDbQuery.queryItems({
@@ -162,48 +131,18 @@ test("state db queryItems preserves dynamic-first ordering and includeDeleted se
       offset: 0,
       limit: 20,
     });
-    assert.equal(builtinOnlyAdmin.total, 1);
-    assert.deepEqual(
-      (builtinOnlyAdmin.items || []).map((item) => item.id),
-      ["mechanics/a.html"],
-    );
-    assert.equal(builtinOnlyAdmin.items?.[0]?.deleted, true);
+    assert.equal(builtinOnlyAdmin.total, 0);
+    assert.deepEqual(builtinOnlyAdmin.items, []);
   } finally {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
 
 
-test("state db queryItems applies stable tie-break ordering across dynamic and builtin rows", async () => {
+test("state db queryItems applies stable tie-break ordering across dynamic rows", async () => {
   if (!hasNodeSqlite()) return;
 
   const rootDir = makeTempRoot();
-  fs.writeFileSync(
-    path.join(rootDir, "animations.json"),
-    JSON.stringify(
-      {
-        mechanics: {
-          title: "力学",
-          items: [
-            {
-              file: "mechanics/a.html",
-              title: "Alpha Builtin",
-              description: "builtin",
-              thumbnail: "",
-            },
-            {
-              file: "mechanics/b.html",
-              title: "Alpha Builtin",
-              description: "builtin",
-              thumbnail: "",
-            },
-          ],
-        },
-      },
-      null,
-      2,
-    ),
-  );
 
   const baseStore = makeInMemoryStore({
     itemsState: {
@@ -256,15 +195,6 @@ test("state db queryItems applies stable tie-break ordering across dynamic and b
         },
       ],
     },
-    builtinState: {
-      version: 1,
-      items: {
-        "mechanics/b.html": {
-          deleted: true,
-          updatedAt: "2026-01-03T00:00:00.000Z",
-        },
-      },
-    },
   });
 
   const wrapped = createStateDbStore({
@@ -285,10 +215,10 @@ test("state db queryItems applies stable tie-break ordering across dynamic and b
       limit: 20,
     });
 
-    assert.equal(full.total, 5);
+    assert.equal(full.total, 3);
     assert.deepEqual(
       (full.items || []).map((item) => item.id),
-      ["d_1", "d_2", "d_3", "mechanics/a.html", "mechanics/b.html"],
+      ["d_1", "d_2", "d_3"],
     );
 
     const crossPage = await wrapped.store.stateDbQuery.queryItems({
@@ -301,10 +231,10 @@ test("state db queryItems applies stable tie-break ordering across dynamic and b
       limit: 2,
     });
 
-    assert.equal(crossPage.total, 5);
+    assert.equal(crossPage.total, 3);
     assert.deepEqual(
       (crossPage.items || []).map((item) => item.id),
-      ["d_3", "mechanics/a.html"],
+      ["d_3"],
     );
   } finally {
     fs.rmSync(rootDir, { recursive: true, force: true });
@@ -351,10 +281,6 @@ test("state db queryItems tolerates duplicate dynamic ids and keeps newest row",
         },
       ],
     },
-    builtinState: {
-      version: 1,
-      items: {},
-    },
   });
 
   const wrapped = createStateDbStore({
@@ -376,7 +302,7 @@ test("state db queryItems tolerates duplicate dynamic ids and keeps newest row",
     });
 
     assert.equal(wrapped.info.circuitOpen, false);
-    assert.equal(out.total, 2);
+    assert.equal(out.total, 1);
     assert.equal(out.items?.[0]?.id, "d_dup");
     assert.equal(out.items?.[0]?.title, "Newest");
   } finally {

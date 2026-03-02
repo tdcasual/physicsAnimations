@@ -13,24 +13,6 @@ function normalizeCategoryId(categoryId) {
 }
 
 function toApiItem(item) {
-  if (item.type === "builtin") {
-    return {
-      id: item.id,
-      type: "builtin",
-      categoryId: item.categoryId,
-      title: item.title,
-      description: item.description,
-      thumbnail: item.thumbnail,
-      order: item.order || 0,
-      published: item.published !== false,
-      hidden: item.hidden === true,
-      deleted: item.deleted === true,
-      src: `animations/${item.id}`,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-    };
-  }
-
   const src = item.type === "link" ? item.url : item.path;
   return {
     id: item.id,

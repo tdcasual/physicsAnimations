@@ -5,8 +5,6 @@ const {
   toInt,
   toText,
   parseDynamicItemsFromBuffer,
-  parseBuiltinOverridesFromBuffer,
-  loadBuiltinBaseRows,
   normalizeStateDbMode,
   normalizeKey,
   resolveDbPath,
@@ -54,23 +52,6 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
   db.exec("CREATE INDEX IF NOT EXISTS idx_state_dynamic_items_visibility ON state_dynamic_items(published, hidden)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_state_dynamic_items_created ON state_dynamic_items(created_at)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_state_dynamic_items_sort ON state_dynamic_items(created_at DESC, title COLLATE NOCASE, id)");
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS state_builtin_items (
-      id TEXT PRIMARY KEY,
-      category_id TEXT NOT NULL,
-      title TEXT NOT NULL,
-      description TEXT NOT NULL,
-      thumbnail TEXT NOT NULL,
-      order_value INTEGER NOT NULL,
-      published INTEGER NOT NULL,
-      hidden INTEGER NOT NULL,
-      deleted INTEGER NOT NULL,
-      updated_at TEXT NOT NULL
-    )
-  `);
-  db.exec("CREATE INDEX IF NOT EXISTS idx_state_builtin_items_category ON state_builtin_items(category_id)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_state_builtin_items_visibility ON state_builtin_items(published, hidden, deleted)");
-  db.exec("CREATE INDEX IF NOT EXISTS idx_state_builtin_items_sort ON state_builtin_items(deleted, title COLLATE NOCASE, id)");
 
   const statementCache = new Map();
   function prepareQuery(sql) {
@@ -93,14 +74,6 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
       id, type, category_id, title, description, url, path, thumbnail,
       order_value, published, hidden, upload_kind, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  const clearBuiltinStmt = prepareQuery("DELETE FROM state_builtin_items");
-  const countBuiltinStmt = prepareQuery("SELECT COUNT(1) as total FROM state_builtin_items");
-  const insertBuiltinStmt = prepareQuery(`
-    INSERT INTO state_builtin_items (
-      id, category_id, title, description, thumbnail,
-      order_value, published, hidden, deleted, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   function syncDynamicItemsFromBuffer(buffer) {
@@ -128,61 +101,6 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
     });
   }
 
-  function syncBuiltinItems({ rootDir, builtinOverridesBuffer }) {
-    const baseRows = loadBuiltinBaseRows({ rootDir });
-    const overrides = parseBuiltinOverridesFromBuffer(builtinOverridesBuffer);
-
-    withImmediateTransaction(db, () => {
-      clearBuiltinStmt.run();
-      for (const base of baseRows) {
-        const override = overrides[base.id] || {};
-
-        const categoryId = toText(override.categoryId, base.categoryId).trim() || base.categoryId;
-        const title = toText(override.title, base.title);
-        const description = Object.prototype.hasOwnProperty.call(override, "description")
-          ? toText(override.description)
-          : base.description;
-        const thumbnail = base.thumbnail;
-        const order = Number.isFinite(override.order) ? Math.trunc(override.order) : base.order;
-        const published =
-          typeof override.published === "boolean" ? override.published : base.published;
-        const hidden = typeof override.hidden === "boolean" ? override.hidden : base.hidden;
-        const deleted = override.deleted === true;
-        const updatedAt = toText(override.updatedAt, base.updatedAt);
-
-        insertBuiltinStmt.run(
-          base.id,
-          categoryId,
-          title,
-          description,
-          thumbnail,
-          order,
-          published ? 1 : 0,
-          hidden ? 1 : 0,
-          deleted ? 1 : 0,
-          updatedAt,
-        );
-      }
-    });
-  }
-
-  function mapBuiltinItemRow(row) {
-    return {
-      id: toText(row.id),
-      type: "builtin",
-      categoryId: toText(row.category_id, "other") || "other",
-      title: toText(row.title),
-      description: toText(row.description),
-      thumbnail: toText(row.thumbnail),
-      order: toInt(row.order_value, 0),
-      published: toInt(row.published, 0) === 1,
-      hidden: toInt(row.hidden, 0) === 1,
-      deleted: toInt(row.deleted, 0) === 1,
-      createdAt: "",
-      updatedAt: toText(row.updated_at),
-    };
-  }
-
   function mapDynamicItemRow(row) {
     const itemType = toText(row.type);
     return {
@@ -207,7 +125,6 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
   const queryRunner = createQueryRunner({
     prepareQuery,
     mapDynamicItemRow,
-    mapBuiltinItemRow,
   });
 
   return {
@@ -226,18 +143,11 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
       deleteStmt.run(normalizeKey(key));
     },
     syncDynamicItemsFromBuffer,
-    syncBuiltinItems,
     clearDynamicItems() {
       clearDynamicStmt.run();
     },
-    clearBuiltinItems() {
-      clearBuiltinStmt.run();
-    },
     getDynamicItemsCount() {
       return toInt(countDynamicStmt.get()?.total, 0);
-    },
-    getBuiltinItemsCount() {
-      return toInt(countBuiltinStmt.get()?.total, 0);
     },
     queryDynamicItemsForCatalog: queryRunner.queryDynamicItemsForCatalog,
     queryItemById: queryRunner.queryItemById,

@@ -1,15 +1,11 @@
-const fs = require("fs");
 const path = require("path");
 
 const STATE_BLOB_KEYS = new Set([
   "items.json",
   "categories.json",
-  "builtin_items.json",
   "items_tombstones.json",
   "admin.json",
 ]);
-
-const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
 const FORBIDDEN_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 function toInt(value, fallback = 0) {
@@ -25,13 +21,6 @@ function toBool(value, fallback = false) {
 
 function toText(value, fallback = "") {
   return typeof value === "string" ? value : fallback;
-}
-
-function isSafeMapKey(value) {
-  const key = String(value || "");
-  if (!key) return false;
-  if (FORBIDDEN_OBJECT_KEYS.has(key)) return false;
-  return true;
 }
 
 function normalizeCategoryId(value) {
@@ -109,81 +98,6 @@ function parseDynamicItemsFromBuffer(buffer) {
   return [...deduped.values()];
 }
 
-function parseBuiltinOverridesFromBuffer(buffer) {
-  if (!buffer) return Object.create(null);
-  let parsed = null;
-  try {
-    parsed = JSON.parse(Buffer.isBuffer(buffer) ? buffer.toString("utf8") : String(buffer));
-  } catch {
-    return Object.create(null);
-  }
-
-  const source = parsed?.items && typeof parsed.items === "object" ? parsed.items : {};
-  const overrides = Object.create(null);
-
-  for (const [id, value] of Object.entries(source)) {
-    if (!isSafeMapKey(id)) continue;
-    if (!value || typeof value !== "object") continue;
-
-    const out = {};
-    if (typeof value.title === "string" && value.title.trim()) out.title = value.title.trim();
-    if (typeof value.description === "string") out.description = value.description;
-    if (typeof value.categoryId === "string" && value.categoryId.trim()) out.categoryId = normalizeCategoryId(value.categoryId);
-    if (Number.isFinite(value.order)) out.order = Math.trunc(value.order);
-    if (typeof value.published === "boolean") out.published = value.published;
-    if (typeof value.hidden === "boolean") out.hidden = value.hidden;
-    if (typeof value.updatedAt === "string") out.updatedAt = value.updatedAt;
-    if (value.deleted === true) out.deleted = true;
-
-    overrides[id] = out;
-  }
-
-  return overrides;
-}
-
-function loadBuiltinBaseRows({ rootDir }) {
-  const filePath = path.join(rootDir || process.cwd(), "animations.json");
-  let parsed = null;
-  try {
-    parsed = JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
-    return [];
-  }
-
-  const rows = [];
-  for (const [categoryId, category] of Object.entries(parsed || {})) {
-    for (const item of category?.items || []) {
-      const id = toText(item?.file).trim();
-      if (!id) continue;
-
-      rows.push({
-        id,
-        categoryId: normalizeCategoryId(categoryId),
-        title: toText(item?.title, id.replace(/\.html$/i, "")),
-        description: toText(item?.description),
-        thumbnail: toText(item?.thumbnail),
-        order: 0,
-        published: true,
-        hidden: false,
-        deleted: false,
-        updatedAt: "",
-      });
-    }
-  }
-
-  return rows;
-}
-
-function getAnimationsSignature({ rootDir }) {
-  const filePath = path.join(rootDir || process.cwd(), "animations.json");
-  try {
-    const stat = fs.statSync(filePath);
-    return `${stat.mtimeMs}:${stat.size}`;
-  } catch {
-    return "missing";
-  }
-}
-
 function normalizeStateDbMode(raw) {
   const mode = String(raw || "").trim().toLowerCase();
   if (!mode || mode === "off" || mode === "disabled" || mode === "false") return "off";
@@ -209,14 +123,10 @@ function resolveDbPath({ rootDir, dbPath }) {
 
 module.exports = {
   STATE_BLOB_KEYS,
-  BUILTIN_ITEMS_STATE_KEY,
   toInt,
   toBool,
   toText,
   parseDynamicItemsFromBuffer,
-  parseBuiltinOverridesFromBuffer,
-  loadBuiltinBaseRows,
-  getAnimationsSignature,
   normalizeStateDbMode,
   normalizeKey,
   isStateBlobKey,

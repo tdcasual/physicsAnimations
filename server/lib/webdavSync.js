@@ -11,12 +11,11 @@ const {
   walkFiles,
   writeLocalBuffer,
 } = require("./webdavSync/fileUtils");
-const { mergeBuiltinItems, mergeCategories, mergeItemsAndTombstones } = require("./webdavSync/stateMerge");
+const { mergeCategories, mergeItemsAndTombstones } = require("./webdavSync/stateMerge");
 const { scanRemoteUploads } = require("./webdavSync/remoteScan");
 
 const ITEMS_STATE_KEY = "items.json";
 const CATEGORIES_STATE_KEY = "categories.json";
-const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
 const ITEM_TOMBSTONES_KEY = "items_tombstones.json";
 
 async function syncWithWebdav({
@@ -30,15 +29,12 @@ async function syncWithWebdav({
 
   const localItems = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: ITEMS_STATE_KEY }));
   const localCategories = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: CATEGORIES_STATE_KEY }));
-  const localBuiltin = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: BUILTIN_ITEMS_STATE_KEY }));
   const localTomb = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: ITEM_TOMBSTONES_KEY }));
 
   const remoteItems = parseJsonBuffer(await webdav.readBuffer(ITEMS_STATE_KEY));
   const remoteCategories = parseJsonBuffer(await webdav.readBuffer(CATEGORIES_STATE_KEY));
-  const remoteBuiltin = parseJsonBuffer(await webdav.readBuffer(BUILTIN_ITEMS_STATE_KEY));
   const remoteTomb = parseJsonBuffer(await webdav.readBuffer(ITEM_TOMBSTONES_KEY));
 
-  const mergedBuiltin = mergeBuiltinItems(localBuiltin, remoteBuiltin);
   const mergedCategories = mergeCategories(localCategories, remoteCategories);
   const mergedItemsPack = mergeItemsAndTombstones(localItems, remoteItems, localTomb, remoteTomb);
 
@@ -73,7 +69,6 @@ async function syncWithWebdav({
   const outFiles = [
     { key: ITEMS_STATE_KEY, value: mergedItems },
     { key: CATEGORIES_STATE_KEY, value: mergedCategories },
-    { key: BUILTIN_ITEMS_STATE_KEY, value: mergedBuiltin },
     { key: ITEM_TOMBSTONES_KEY, value: mergedTombstones },
   ];
   const stateFileKeys = new Set(outFiles.map((file) => file.key));

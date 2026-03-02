@@ -1,7 +1,6 @@
 function createStateDbQueryFacade({
   mirror,
   ensureDynamicItemsIndexed,
-  ensureBuiltinItemsIndexed,
   runMirrorOperation,
   ensureUsable,
 }) {
@@ -16,13 +15,11 @@ function createStateDbQueryFacade({
     async queryItems(options = {}) {
       ensureUsable();
       await ensureDynamicItemsIndexed();
-      await ensureBuiltinItemsIndexed();
       return runMirrorOperation("mirror.queryItems", () => mirror.queryItems(options));
     },
     async queryItemById(options = {}) {
       ensureUsable();
       await ensureDynamicItemsIndexed();
-      await ensureBuiltinItemsIndexed();
 
       return runMirrorOperation("mirror.queryItemById", () =>
         mirror.queryItemById({

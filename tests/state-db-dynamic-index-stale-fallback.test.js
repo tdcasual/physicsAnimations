@@ -349,24 +349,11 @@ test("stateDb queryItems should fail instead of clearing index when source items
   }
 });
 
-test("stateDb queryItems(type=builtin) should fail when builtin source read errors and cache is unavailable", async () => {
-  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-builtin-read-error-"));
+test("stateDb queryItems(type=builtin) returns empty under dynamic-only semantics", async () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-type-builtin-"));
   fs.mkdirSync(path.join(rootDir, "content"), { recursive: true });
-  fs.writeFileSync(
-    path.join(rootDir, "animations.json"),
-    JSON.stringify(
-      {
-        other: {
-          items: [{ file: "demo.html", title: "Demo" }],
-        },
-      },
-      null,
-      2,
-    ),
-    "utf8",
-  );
+  fs.writeFileSync(path.join(rootDir, "animations.json"), "{}\n", "utf8");
 
-  let builtinSyncCalls = 0;
   const mirror = {
     dbPath: path.join(rootDir, "content", "state.sqlite"),
     readBuffer() {
@@ -375,11 +362,7 @@ test("stateDb queryItems(type=builtin) should fail when builtin source read erro
     writeBuffer() {},
     deletePath() {},
     syncDynamicItemsFromBuffer() {},
-    syncBuiltinItems() {
-      builtinSyncCalls += 1;
-    },
     clearDynamicItems() {},
-    clearBuiltinItems() {},
     queryDynamicItems() {
       return { total: 0, items: [] };
     },
@@ -388,12 +371,6 @@ test("stateDb queryItems(type=builtin) should fail when builtin source read erro
     },
     queryDynamicItemById() {
       return null;
-    },
-    queryBuiltinItemById() {
-      return null;
-    },
-    queryBuiltinItems() {
-      return { total: 0, items: [] };
     },
     queryItems() {
       return { total: 0, items: [] };
@@ -411,10 +388,7 @@ test("stateDb queryItems(type=builtin) should fail when builtin source read erro
       store: {
         mode: "local",
         readOnly: false,
-        async readBuffer(key) {
-          if (String(key || "") === "builtin_items.json") {
-            throw new Error("builtin_source_read_failed");
-          }
+        async readBuffer() {
           return null;
         },
         async writeBuffer() {},
@@ -426,20 +400,17 @@ test("stateDb queryItems(type=builtin) should fail when builtin source read erro
       mode: "sqlite",
     });
 
-    await assert.rejects(
-      wrapped.store.stateDbQuery.queryItems({
-        isAdmin: true,
-        includeDeleted: true,
-        q: "",
-        categoryId: "",
-        type: "builtin",
-        offset: 0,
-        limit: 50,
-      }),
-      (err) => err && err.message === "builtin_source_read_failed",
-    );
-
-    assert.equal(builtinSyncCalls, 0);
+    const out = await wrapped.store.stateDbQuery.queryItems({
+      isAdmin: true,
+      includeDeleted: true,
+      q: "",
+      categoryId: "",
+      type: "builtin",
+      offset: 0,
+      limit: 50,
+    });
+    assert.equal(out.total, 0);
+    assert.deepEqual(out.items, []);
   } finally {
     loader.restore();
     fs.rmSync(rootDir, { recursive: true, force: true });

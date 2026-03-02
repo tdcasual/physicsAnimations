@@ -16,31 +16,19 @@ async function streamToString(stream) {
 function createWrappedStore({
   baseStore,
   mirror,
-  getDynamicIndexedReady = () => false,
   setDynamicIndexedReady = () => {},
-  getBuiltinIndexedReady = () => false,
-  setBuiltinIndexedReady = () => {},
-  setBuiltinOverridesDirty = () => {},
 } = {}) {
   return createStateDbWrappedStore({
     store: baseStore,
     info: { circuitOpen: false },
     stateDbQuery: {},
     mirrorOps: {
-      isStateBlobKey: (key) => key === "items.json" || key === "builtin_items.json",
+      isStateBlobKey: (key) => key === "items.json",
       normalizeKey: (key) => key,
       isUsable: () => true,
       runMirrorOperation: (_operation, fn) => fn(),
       mirror,
-      rootDir: process.cwd(),
-      BUILTIN_ITEMS_STATE_KEY: "builtin_items.json",
-      getAnimationsSignature: () => "",
-      getDynamicIndexedReady,
       setDynamicIndexedReady,
-      getBuiltinIndexedReady,
-      setBuiltinIndexedReady,
-      setBuiltinOverridesDirty,
-      setBuiltinAnimationsSignature: () => {},
     },
   });
 }
@@ -69,16 +57,7 @@ test("wrapped store proxies non-state blobs directly", async () => {
       isUsable: () => true,
       runMirrorOperation: (_operation, fn) => fn(),
       mirror: { readBuffer: () => null },
-      rootDir: process.cwd(),
-      BUILTIN_ITEMS_STATE_KEY: "builtin_items.json",
-      getAnimationsSignature: () => "",
-      getDynamicIndexedReady: () => false,
       setDynamicIndexedReady: () => {},
-      getBuiltinIndexedReady: () => false,
-      setBuiltinIndexedReady: () => {},
-      getBuiltinOverridesDirty: () => false,
-      setBuiltinOverridesDirty: () => {},
-      setBuiltinAnimationsSignature: () => {},
     },
   });
 
@@ -110,11 +89,9 @@ test("wrapped store marks dynamic index dirty when mirror write fails on items.j
         throw new Error("mirror_write_failed");
       },
       syncDynamicItemsFromBuffer: () => {},
-      syncBuiltinItems: () => {},
       deletePath: () => {},
       clearDynamicItems: () => {},
     },
-    getDynamicIndexedReady: () => true,
     setDynamicIndexedReady: (value) => {
       dynamicReadyUpdates.push(Boolean(value));
     },
@@ -150,11 +127,9 @@ test("wrapped store marks dynamic index dirty when mirror write-through fails on
         throw new Error("mirror_write_failed");
       },
       syncDynamicItemsFromBuffer: () => {},
-      syncBuiltinItems: () => {},
       deletePath: () => {},
       clearDynamicItems: () => {},
     },
-    getDynamicIndexedReady: () => true,
     setDynamicIndexedReady: (value) => {
       dynamicReadyUpdates.push(Boolean(value));
     },
@@ -194,11 +169,9 @@ test("wrapped store prefers source state blob over stale mirror cache after writ
         throw new Error("mirror_write_failed");
       },
       syncDynamicItemsFromBuffer: () => {},
-      syncBuiltinItems: () => {},
       deletePath: () => {},
       clearDynamicItems: () => {},
     },
-    getDynamicIndexedReady: () => true,
     setDynamicIndexedReady: () => {},
   });
 
@@ -230,11 +203,9 @@ test("wrapped store createReadStream should prefer source state blob over stale 
       readBuffer: () => stale,
       writeBuffer: () => {},
       syncDynamicItemsFromBuffer: () => {},
-      syncBuiltinItems: () => {},
       deletePath: () => {},
       clearDynamicItems: () => {},
     },
-    getDynamicIndexedReady: () => true,
     setDynamicIndexedReady: () => {},
   });
 

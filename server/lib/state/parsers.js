@@ -105,36 +105,6 @@ function parseCategoriesState(parsed) {
   return { version: TAXONOMY_VERSION, groups, categories };
 }
 
-function emptyBuiltinItemsState() {
-  return { version: 1, items: {} };
-}
-
-function parseBuiltinItemsState(parsed) {
-  if (!parsed || typeof parsed !== "object" || !parsed.items || typeof parsed.items !== "object") {
-    return emptyBuiltinItemsState();
-  }
-
-  const items = {};
-  for (const [id, value] of Object.entries(parsed.items)) {
-    if (!isSafeMapKey(id)) continue;
-    if (!value || typeof value !== "object") continue;
-
-    const entry = {};
-    if (typeof value.title === "string") entry.title = value.title;
-    if (typeof value.description === "string") entry.description = value.description;
-    if (typeof value.categoryId === "string") entry.categoryId = value.categoryId;
-    if (Number.isFinite(value.order)) entry.order = toInt(value.order, 0);
-    if (typeof value.published === "boolean") entry.published = value.published;
-    if (typeof value.hidden === "boolean") entry.hidden = value.hidden;
-    if (typeof value.deleted === "boolean") entry.deleted = value.deleted;
-    if (typeof value.updatedAt === "string") entry.updatedAt = value.updatedAt;
-
-    items[id] = entry;
-  }
-
-  return { version: 1, items };
-}
-
 function emptyItemTombstonesState() {
   return { version: 1, tombstones: {} };
 }
@@ -160,8 +130,6 @@ module.exports = {
   parseItemsState,
   emptyCategoriesState,
   parseCategoriesState,
-  emptyBuiltinItemsState,
-  parseBuiltinItemsState,
   emptyItemTombstonesState,
   parseItemTombstonesState,
 };

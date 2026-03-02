@@ -50,10 +50,10 @@ test("syncWithWebdav falls back to cwd when rootDir is omitted", async () => {
     const result = await loader.syncWithWebdav({ webdavConfig: {}, scanRemote: false });
     assert.equal(result.scan.enabled, false);
     assert.equal(result.uploaded, 0);
-    assert.equal(result.skipped, 4);
+    assert.equal(result.skipped, 3);
     assert.equal(written.has("items.json"), true);
     assert.equal(written.has("categories.json"), true);
-    assert.equal(written.has("builtin_items.json"), true);
+    assert.equal(written.has("builtin_items.json"), false);
     assert.equal(written.has("items_tombstones.json"), true);
   } finally {
     loader.restore();

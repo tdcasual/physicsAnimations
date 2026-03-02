@@ -67,26 +67,22 @@ function normalizeDynamicCountMap(rawMap) {
   return out;
 }
 
-function getCategoryBuiltinCount(category) {
-  return (category.items || []).filter((item) => item.type === "builtin").length;
-}
-
 function getCategoryDynamicCount(category, dynamicCountMap) {
   if (dynamicCountMap) {
     return Math.max(0, toInt(dynamicCountMap[category.id], 0));
   }
-  return (category.items || []).filter((item) => item.type !== "builtin").length;
+  return (category.items || []).length;
 }
 
 function buildCategoriesPayload(catalog, { dynamicCountMap = null } = {}) {
   const groups = Object.values(catalog.groups || {}).map((group) => {
     const categories = Object.values(group.categories || {});
-    const builtinCount = categories.reduce((sum, category) => sum + getCategoryBuiltinCount(category), 0);
+    const builtinCount = 0;
     const dynamicCount = categories.reduce(
       (sum, category) => sum + getCategoryDynamicCount(category, dynamicCountMap),
       0,
     );
-    const count = builtinCount + dynamicCount;
+    const count = dynamicCount;
 
     return {
       id: group.id,
@@ -108,7 +104,7 @@ function buildCategoriesPayload(catalog, { dynamicCountMap = null } = {}) {
 
   const categories = Object.values(catalog.groups || {}).flatMap((group) =>
     Object.values(group.categories || {}).map((category) => {
-      const builtinCount = getCategoryBuiltinCount(category);
+      const builtinCount = 0;
       const dynamicCount = getCategoryDynamicCount(category, dynamicCountMap);
       return {
         id: category.id,
@@ -116,7 +112,7 @@ function buildCategoriesPayload(catalog, { dynamicCountMap = null } = {}) {
         title: category.title,
         order: category.order || 0,
         hidden: Boolean(category.hidden),
-        count: builtinCount + dynamicCount,
+        count: dynamicCount,
         builtinCount,
         dynamicCount,
       };

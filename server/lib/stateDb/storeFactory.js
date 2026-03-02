@@ -4,11 +4,9 @@ const { createStateDbCircuitState } = require("./circuitState");
 const { createStateDbQueryFacade } = require("./queryFacade");
 const { createStateDbWrappedStore } = require("./wrappedStore");
 const {
-  BUILTIN_ITEMS_STATE_KEY,
   toInt,
   normalizeKey,
   isStateBlobKey,
-  getAnimationsSignature,
 } = require("./mirrorHelpers");
 
 function defaultStateDbInfo() {
@@ -62,9 +60,6 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
   };
 
   let dynamicIndexedReady = false;
-  let builtinIndexedReady = false;
-  let builtinOverridesDirty = true;
-  let builtinAnimationsSignature = "";
 
   function circuitOpenError() {
     const err = new Error("state_db_circuit_open");
@@ -131,47 +126,9 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
     dynamicIndexedReady = true;
   }
 
-  async function ensureBuiltinItemsIndexed() {
-    const animationsSignature = getAnimationsSignature({ rootDir });
-    if (builtinIndexedReady && !builtinOverridesDirty && animationsSignature === builtinAnimationsSignature) {
-      return;
-    }
-
-    ensureUsable();
-
-    let raw = null;
-    let sourceReadError = null;
-    try {
-      raw = await store.readBuffer(BUILTIN_ITEMS_STATE_KEY);
-    } catch (err) {
-      sourceReadError = err;
-    }
-
-    if (raw) {
-      try {
-        runMirrorOperation(`mirror.writeBuffer(${BUILTIN_ITEMS_STATE_KEY})`, () => {
-          mirror.writeBuffer(BUILTIN_ITEMS_STATE_KEY, raw);
-        });
-      } catch {
-        // Keep source-of-truth data path available even if mirror write-through fails.
-      }
-    } else if (sourceReadError) {
-      throw sourceReadError;
-    }
-
-    runMirrorOperation("mirror.syncBuiltinItems", () => {
-      mirror.syncBuiltinItems({ rootDir, builtinOverridesBuffer: raw });
-    });
-
-    builtinIndexedReady = true;
-    builtinOverridesDirty = false;
-    builtinAnimationsSignature = animationsSignature;
-  }
-
   const stateDbQuery = createStateDbQueryFacade({
     mirror,
     ensureDynamicItemsIndexed,
-    ensureBuiltinItemsIndexed,
     runMirrorOperation,
     ensureUsable,
   });
@@ -186,21 +143,8 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
       isUsable,
       runMirrorOperation,
       mirror,
-      rootDir,
-      BUILTIN_ITEMS_STATE_KEY,
-      getAnimationsSignature,
       setDynamicIndexedReady: (value) => {
         dynamicIndexedReady = Boolean(value);
-      },
-      setBuiltinIndexedReady: (value) => {
-        builtinIndexedReady = Boolean(value);
-      },
-      getBuiltinOverridesDirty: () => builtinOverridesDirty,
-      setBuiltinOverridesDirty: (value) => {
-        builtinOverridesDirty = Boolean(value);
-      },
-      setBuiltinAnimationsSignature: (value) => {
-        builtinAnimationsSignature = String(value || "");
       },
     },
   });

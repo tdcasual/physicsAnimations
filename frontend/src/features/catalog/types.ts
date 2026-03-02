@@ -1,4 +1,4 @@
-export type CatalogItemType = "builtin" | "upload" | "link" | string;
+export type CatalogItemType = "upload" | "link" | string;
 
 export interface CatalogItem {
   id: string;

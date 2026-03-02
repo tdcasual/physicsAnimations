@@ -2,7 +2,6 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
-  mergeBuiltinItems,
   mergeCategories,
   mergeItemsAndTombstones,
 } = require("../server/lib/webdavSync/stateMerge");
@@ -99,56 +98,6 @@ test("mergeItemsAndTombstones keeps newest duplicate entry within local state", 
   assert.equal(out.itemsState.items[0].title, "newest");
 });
 
-test("mergeBuiltinItems prefers newer remote override when ids collide", () => {
-  const local = {
-    version: 1,
-    items: {
-      "mechanics/demo.html": {
-        title: "local",
-        updatedAt: "2026-02-01T00:00:00.000Z",
-      },
-    },
-  };
-  const remote = {
-    version: 1,
-    items: {
-      "mechanics/demo.html": {
-        title: "remote",
-        updatedAt: "2026-02-02T00:00:00.000Z",
-      },
-    },
-  };
-
-  const out = mergeBuiltinItems(local, remote);
-
-  assert.equal(out.items["mechanics/demo.html"].title, "remote");
-});
-
-test("mergeBuiltinItems keeps local override when timestamp ties", () => {
-  const local = {
-    version: 1,
-    items: {
-      "mechanics/demo.html": {
-        title: "local",
-        updatedAt: "2026-02-02T00:00:00.000Z",
-      },
-    },
-  };
-  const remote = {
-    version: 1,
-    items: {
-      "mechanics/demo.html": {
-        title: "remote",
-        updatedAt: "2026-02-02T00:00:00.000Z",
-      },
-    },
-  };
-
-  const out = mergeBuiltinItems(local, remote);
-
-  assert.equal(out.items["mechanics/demo.html"].title, "local");
-});
-
 test("mergeCategories prefers newer remote category/group config when ids collide", () => {
   const local = {
     version: 2,
@@ -223,22 +172,6 @@ test("mergeCategories keeps local config when timestamps tie", () => {
 
   assert.equal(out.groups.physics.title, "Local Group");
   assert.equal(out.categories.optics.title, "Local Category");
-});
-
-test("mergeBuiltinItems ignores prototype-pollution map keys from remote state", () => {
-  const remoteItems = JSON.parse(
-    '{"__proto__":{"title":"Poison","updatedAt":"2026-02-02T00:00:00.000Z"},"mechanics/demo.html":{"title":"Safe","updatedAt":"2026-02-03T00:00:00.000Z"}}',
-  );
-
-  const out = mergeBuiltinItems(
-    { version: 1, items: {} },
-    { version: 1, items: remoteItems },
-  );
-
-  assert.equal(Object.getPrototypeOf(out.items), null);
-  assert.equal(out.items.__proto__, undefined);
-  assert.deepEqual(Object.keys(out.items), ["mechanics/demo.html"]);
-  assert.equal(out.items["mechanics/demo.html"].title, "Safe");
 });
 
 test("mergeCategories ignores dangerous group/category keys from remote state", () => {

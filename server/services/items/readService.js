@@ -64,7 +64,7 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
         isAdmin,
         includeDeleted: isAdmin,
       });
-      if (!sqlItem || sqlItem.type === "builtin") return null;
+      if (!sqlItem || (sqlItem.type !== "link" && sqlItem.type !== "upload")) return null;
       return toApiItem(sqlItem);
     } catch (sqlErr) {
       logger.warn("items_sql_item_lookup_failed", {

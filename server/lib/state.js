@@ -1,16 +1,13 @@
 const {
   CATEGORIES_STATE_KEY,
-  BUILTIN_ITEMS_STATE_KEY,
   ITEM_TOMBSTONES_KEY,
   ITEMS_STATE_KEY,
   TAXONOMY_VERSION,
 } = require("./state/constants");
 const {
-  emptyBuiltinItemsState,
   emptyCategoriesState,
   emptyItemsState,
   emptyItemTombstonesState,
-  parseBuiltinItemsState,
   parseCategoriesState,
   parseItemsState,
   parseItemTombstonesState,
@@ -70,32 +67,6 @@ const mutateCategoriesState = createStateMutator({
   saveState: saveCategoriesState,
 });
 
-async function loadBuiltinItemsState({ store }) {
-  return loadJsonState({
-    store,
-    key: BUILTIN_ITEMS_STATE_KEY,
-    emptyFactory: emptyBuiltinItemsState,
-    parser: parseBuiltinItemsState,
-  });
-}
-
-async function saveBuiltinItemsState({ store, state }) {
-  return saveJsonState({
-    store,
-    key: BUILTIN_ITEMS_STATE_KEY,
-    payload: {
-      version: 1,
-      items: state?.items && typeof state.items === "object" ? state.items : {},
-    },
-  });
-}
-
-const mutateBuiltinItemsState = createStateMutator({
-  key: BUILTIN_ITEMS_STATE_KEY,
-  loadState: loadBuiltinItemsState,
-  saveState: saveBuiltinItemsState,
-});
-
 async function loadItemTombstonesState({ store }) {
   return loadJsonState({
     store,
@@ -129,9 +100,6 @@ module.exports = {
   loadCategoriesState,
   saveCategoriesState,
   mutateCategoriesState,
-  loadBuiltinItemsState,
-  saveBuiltinItemsState,
-  mutateBuiltinItemsState,
   loadItemTombstonesState,
   saveItemTombstonesState,
   mutateItemTombstonesState,

@@ -57,12 +57,6 @@ function normalizeItemsState(raw) {
   return { version: 2, items };
 }
 
-function normalizeBuiltinItemsState(raw) {
-  if (!raw || typeof raw !== "object") return { version: 1, items: Object.create(null) };
-  const items = sanitizeObjectMap(raw.items);
-  return { version: 1, items };
-}
-
 function normalizeCategoriesState(raw) {
   if (!raw || typeof raw !== "object") return { version: 2, groups: Object.create(null), categories: Object.create(null) };
   const groups = sanitizeObjectMap(raw.groups);
@@ -74,33 +68,6 @@ function normalizeTombstonesState(raw) {
   if (!raw || typeof raw !== "object") return { version: 1, tombstones: Object.create(null) };
   const tombstones = sanitizeObjectMap(raw.tombstones);
   return { version: 1, tombstones };
-}
-
-function mergeBuiltinItems(localRaw, remoteRaw) {
-  const local = normalizeBuiltinItemsState(localRaw);
-  const remote = normalizeBuiltinItemsState(remoteRaw);
-  const out = Object.create(null);
-
-  const ids = new Set([...Object.keys(remote.items || {}), ...Object.keys(local.items || {})]);
-  for (const id of ids) {
-    const localEntry = local.items?.[id] && typeof local.items[id] === "object" ? local.items[id] : null;
-    const remoteEntry = remote.items?.[id] && typeof remote.items[id] === "object" ? remote.items[id] : null;
-
-    if (localEntry && !remoteEntry) {
-      out[id] = localEntry;
-      continue;
-    }
-    if (!localEntry && remoteEntry) {
-      out[id] = remoteEntry;
-      continue;
-    }
-    if (!localEntry && !remoteEntry) continue;
-    const localTime = toTimeMs(localEntry?.updatedAt);
-    const remoteTime = toTimeMs(remoteEntry?.updatedAt);
-    out[id] = remoteTime > localTime ? remoteEntry : localEntry;
-  }
-
-  return { version: 1, items: out };
 }
 
 function mergeCategories(localRaw, remoteRaw) {
@@ -220,7 +187,6 @@ function mergeItemsAndTombstones(localItemsRaw, remoteItemsRaw, localTombRaw, re
 
 module.exports = {
   toTimeMs,
-  mergeBuiltinItems,
   mergeCategories,
   mergeItemsAndTombstones,
 };

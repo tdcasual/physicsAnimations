@@ -7,13 +7,7 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
     isUsable,
     runMirrorOperation,
     mirror,
-    rootDir,
-    BUILTIN_ITEMS_STATE_KEY,
-    getAnimationsSignature,
     setDynamicIndexedReady,
-    setBuiltinIndexedReady,
-    setBuiltinOverridesDirty,
-    setBuiltinAnimationsSignature,
   } = mirrorOps;
 
   return {
@@ -75,21 +69,9 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
             });
             setDynamicIndexedReady(true);
           }
-
-          if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-            runMirrorOperation("mirror.syncBuiltinItems(readThrough)", () => {
-              mirror.syncBuiltinItems({ rootDir, builtinOverridesBuffer: raw });
-            });
-            setBuiltinIndexedReady(true);
-            setBuiltinOverridesDirty(false);
-            setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
-          }
         } catch {
           if (normalizedKey === "items.json") {
             setDynamicIndexedReady(false);
-          }
-          if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-            setBuiltinOverridesDirty(true);
           }
         }
         return raw;
@@ -117,21 +99,9 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
           });
           setDynamicIndexedReady(true);
         }
-
-        if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-          runMirrorOperation("mirror.syncBuiltinItems(write)", () => {
-            mirror.syncBuiltinItems({ rootDir, builtinOverridesBuffer: buffer });
-          });
-          setBuiltinIndexedReady(true);
-          setBuiltinOverridesDirty(false);
-          setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
-        }
       } catch {
         if (normalizedKey === "items.json") {
           setDynamicIndexedReady(false);
-        }
-        if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-          setBuiltinOverridesDirty(true);
         }
       }
     },
@@ -152,21 +122,9 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
           });
           setDynamicIndexedReady(true);
         }
-
-        if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-          runMirrorOperation("mirror.syncBuiltinItems(delete)", () => {
-            mirror.syncBuiltinItems({ rootDir, builtinOverridesBuffer: null });
-          });
-          setBuiltinIndexedReady(true);
-          setBuiltinOverridesDirty(false);
-          setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
-        }
       } catch {
         if (normalizedKey === "items.json") {
           setDynamicIndexedReady(false);
-        }
-        if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-          setBuiltinOverridesDirty(true);
         }
       }
     },

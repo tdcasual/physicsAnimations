@@ -29,25 +29,8 @@ test("normalizeCategoryId and safeText keep fallback behavior", async () => {
   assert.equal(safeText(123), "");
 });
 
-test("toApiItem maps builtin and dynamic items", async () => {
+test("toApiItem maps dynamic items", async () => {
   const { toApiItem } = require("../server/services/items/itemModel");
-
-  const builtin = toApiItem({
-    id: "b1",
-    type: "builtin",
-    categoryId: "other",
-    title: "Builtin",
-    description: "",
-    thumbnail: "",
-    order: 0,
-    published: true,
-    hidden: false,
-    deleted: true,
-    createdAt: "",
-    updatedAt: "",
-  });
-  assert.equal(builtin.src, "animations/b1");
-  assert.equal(builtin.deleted, true);
 
   const link = toApiItem({
     id: "l1",

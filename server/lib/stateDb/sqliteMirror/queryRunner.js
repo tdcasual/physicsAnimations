@@ -1,7 +1,6 @@
 const { toInt, toText } = require("../mirrorHelpers");
 const {
   buildDynamicWhereClause,
-  buildBuiltinWhereClause,
   buildDynamicCatalogWhereClause,
 } = require("./sqlBuilders");
 
@@ -14,7 +13,7 @@ function normalizeCategoryId(value) {
   return categoryId;
 }
 
-function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow }) {
+function createQueryRunner({ prepareQuery, mapDynamicItemRow }) {
   function queryDynamicItemsForCatalog({ includeHiddenItems = false, includeUnpublishedItems = false } = {}) {
     const whereSql = buildDynamicCatalogWhereClause({ includeHiddenItems, includeUnpublishedItems });
     const rows = prepareQuery(
@@ -55,44 +54,12 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
     return mapDynamicItemRow(row);
   }
 
-  function queryBuiltinItemById({ id = "", isAdmin = false, includeDeleted = false } = {}) {
-    const normalizedId = toText(id).trim();
-    if (!normalizedId) return null;
-
-    const where = ["id = ?"];
-    const params = [normalizedId];
-    if (!isAdmin) {
-      where.push("published = 1");
-      where.push("hidden = 0");
-    }
-    if (!includeDeleted) {
-      where.push("deleted = 0");
-    }
-
-    const row = prepareQuery(
-      `
-        SELECT
-          id, category_id, title, description, thumbnail,
-          order_value, published, hidden, deleted, updated_at
-        FROM state_builtin_items
-        WHERE ${where.join(" AND ")}
-        LIMIT 1
-      `,
-    ).get(...params);
-
-    if (!row) return null;
-    return mapBuiltinItemRow(row);
-  }
-
-  function queryItemById({ id = "", isAdmin = false, includeDeleted = false } = {}) {
-    const dynamicItem = queryDynamicItemById({ id, isAdmin });
-    if (dynamicItem) return dynamicItem;
-    return queryBuiltinItemById({ id, isAdmin, includeDeleted });
+  function queryItemById({ id = "", isAdmin = false } = {}) {
+    return queryDynamicItemById({ id, isAdmin });
   }
 
   function queryItems({
     isAdmin = false,
-    includeDeleted = false,
     q = "",
     categoryId = "",
     type = "",
@@ -105,99 +72,35 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
 
     const dynamicOnly = normalizedType === "dynamic";
     const dynamicEnabled = dynamicOnly || !normalizedType || normalizedType === "link" || normalizedType === "upload";
-    const builtinEnabled = !dynamicOnly && (!normalizedType || normalizedType === "builtin");
-    if (!dynamicEnabled && !builtinEnabled) return { total: 0, items: [] };
+    if (!dynamicEnabled) return { total: 0, items: [] };
 
     const dynamicFilter = buildDynamicWhereClause({
       isAdmin,
       q,
       categoryId,
-      type: dynamicOnly ? "" : dynamicEnabled ? normalizedType : "",
+      type: dynamicOnly ? "" : normalizedType,
     });
-    const builtinFilter = buildBuiltinWhereClause({ isAdmin, includeDeleted, q, categoryId });
-
-    const dynamicTotal = dynamicEnabled
-      ? Math.max(
-          0,
-          toInt(prepareQuery(`SELECT COUNT(1) AS total FROM state_dynamic_items ${dynamicFilter.whereSql}`).get(...dynamicFilter.params)?.total, 0),
-        )
-      : 0;
-    const builtinTotal = builtinEnabled
-      ? Math.max(
-          0,
-          toInt(prepareQuery(`SELECT COUNT(1) AS total FROM state_builtin_items ${builtinFilter.whereSql}`).get(...builtinFilter.params)?.total, 0),
-        )
-      : 0;
-    const total = dynamicTotal + builtinTotal;
+    const total = Math.max(
+      0,
+      toInt(prepareQuery(`SELECT COUNT(1) AS total FROM state_dynamic_items ${dynamicFilter.whereSql}`).get(...dynamicFilter.params)?.total, 0),
+    );
     if (safeLimit <= 0 || total <= 0 || safeOffset >= total) return { total, items: [] };
-
-    const selectParts = [];
-    const selectParams = [];
-
-    if (dynamicEnabled) {
-      selectParts.push(`
-        SELECT
-          id,
-          type,
-          category_id,
-          title,
-          description,
-          url,
-          path,
-          thumbnail,
-          order_value,
-          published,
-          hidden,
-          upload_kind,
-          created_at,
-          updated_at,
-          0 AS deleted,
-          0 AS source_rank
-        FROM state_dynamic_items
-        ${dynamicFilter.whereSql}
-      `);
-      selectParams.push(...dynamicFilter.params);
-    }
-
-    if (builtinEnabled) {
-      selectParts.push(`
-        SELECT
-          id,
-          'builtin' AS type,
-          category_id,
-          title,
-          description,
-          '' AS url,
-          '' AS path,
-          thumbnail,
-          order_value,
-          published,
-          hidden,
-          'html' AS upload_kind,
-          '' AS created_at,
-          updated_at,
-          deleted,
-          1 AS source_rank
-        FROM state_builtin_items
-        ${builtinFilter.whereSql}
-      `);
-      selectParams.push(...builtinFilter.params);
-    }
 
     const rows = prepareQuery(
       `
-        SELECT *
-        FROM (
-          ${selectParts.join(" UNION ALL ")}
-        ) merged
-        ORDER BY source_rank ASC, created_at DESC, deleted ASC, title COLLATE NOCASE ASC, id ASC
+        SELECT
+          id, type, category_id, title, description, url, path, thumbnail,
+          order_value, published, hidden, upload_kind, created_at, updated_at
+        FROM state_dynamic_items
+        ${dynamicFilter.whereSql}
+        ORDER BY created_at DESC, title COLLATE NOCASE ASC, id ASC
         LIMIT ? OFFSET ?
       `,
-    ).all(...selectParams, safeLimit, safeOffset);
+    ).all(...dynamicFilter.params, safeLimit, safeOffset);
 
     return {
       total,
-      items: rows.map((row) => (toText(row.type) === "builtin" ? mapBuiltinItemRow(row) : mapDynamicItemRow(row))),
+      items: rows.map(mapDynamicItemRow),
     };
   }
 

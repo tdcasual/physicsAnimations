@@ -12,9 +12,6 @@ test("query facade delegates through ensure+run wrappers", async () => {
     ensureDynamicItemsIndexed: async () => {
       calls.push("ensureDynamic");
     },
-    ensureBuiltinItemsIndexed: async () => {
-      calls.push("ensureBuiltin");
-    },
     runMirrorOperation: (operation, fn) => {
       calls.push(operation);
       return fn();
@@ -25,7 +22,7 @@ test("query facade delegates through ensure+run wrappers", async () => {
   });
 
   await facade.queryItems({});
-  assert.deepEqual(calls, ["ensureUsable", "ensureDynamic", "ensureBuiltin", "mirror.queryItems"]);
+  assert.deepEqual(calls, ["ensureUsable", "ensureDynamic", "mirror.queryItems"]);
   assert.equal(facade.queryDynamicItems, undefined);
   assert.equal(facade.queryBuiltinItems, undefined);
   assert.equal(facade.queryDynamicItemById, undefined);
@@ -41,9 +38,6 @@ test("query facade exposes unified queryItemById and prefers dynamic item", asyn
     ensureDynamicItemsIndexed: async () => {
       calls.push("ensureDynamic");
     },
-    ensureBuiltinItemsIndexed: async () => {
-      calls.push("ensureBuiltin");
-    },
     runMirrorOperation: (operation, fn) => {
       calls.push(operation);
       return fn();
@@ -58,7 +52,6 @@ test("query facade exposes unified queryItemById and prefers dynamic item", asyn
   assert.deepEqual(calls, [
     "ensureUsable",
     "ensureDynamic",
-    "ensureBuiltin",
     "mirror.queryItemById",
   ]);
 });
