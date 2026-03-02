@@ -1,38 +1,14 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
 
 const { createApp } = require("../server/app");
+const { makeTempRoot, removeTempRoot } = require("./helpers/tempRoot");
+const { startServer, stopServer } = require("./helpers/testServer");
 
-function makeTempRoot() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-items-merged-sql-"));
-  fs.mkdirSync(path.join(root, "assets"), { recursive: true });
-  fs.mkdirSync(path.join(root, "animations"), { recursive: true });
-  fs.mkdirSync(path.join(root, "content"), { recursive: true });
-  fs.writeFileSync(path.join(root, "animations.json"), "{}\n");
-  return root;
-}
+test("/api/items uses queryItems port when available", async () => {
+  const rootDir = makeTempRoot({ prefix: "pa-items-query-items-port-" });
 
-async function startServer(app) {
-  return new Promise((resolve) => {
-    const server = app.listen(0, "127.0.0.1", () => {
-      const { port } = server.address();
-      resolve({ server, baseUrl: `http://127.0.0.1:${port}` });
-    });
-  });
-}
-
-async function stopServer(server) {
-  if (!server) return;
-  await new Promise((resolve) => { server.close(resolve); });
-}
-
-test("/api/items prefers merged SQL query when available", async () => {
-  const rootDir = makeTempRoot();
-
-  let mergedCall = null;
+  let queryCall = null;
 
   const store = {
     async readBuffer() {
@@ -45,15 +21,15 @@ test("/api/items prefers merged SQL query when available", async () => {
     },
     stateDbQuery: {
       async queryItems(options = {}) {
-        mergedCall = options;
+        queryCall = options;
         return {
           total: 2,
           items: [
             {
-              id: "dyn_merged_1",
+              id: "dyn_query_1",
               type: "link",
               categoryId: "other",
-              title: "Merged Dynamic",
+              title: "Query Dynamic",
               description: "",
               url: "https://example.com/dyn",
               thumbnail: "",
@@ -65,12 +41,12 @@ test("/api/items prefers merged SQL query when available", async () => {
               updatedAt: "2026-01-03T00:00:00.000Z",
             },
             {
-              id: "dyn_merged_2",
+              id: "dyn_query_2",
               type: "upload",
               categoryId: "other",
-              title: "Merged Upload",
+              title: "Query Upload",
               description: "",
-              path: "content/uploads/dyn_merged_2/index.html",
+              path: "content/uploads/dyn_query_2/index.html",
               thumbnail: "",
               order: 0,
               published: true,
@@ -96,21 +72,21 @@ test("/api/items prefers merged SQL query when available", async () => {
     assert.equal(res.status, 200);
     const data = await res.json();
 
-    assert.ok(mergedCall);
-    assert.equal(mergedCall.q, "merged");
-    assert.equal(mergedCall.page, undefined);
-    assert.equal(mergedCall.offset, 5);
-    assert.equal(mergedCall.limit, 5);
-    assert.equal(mergedCall.includeDeleted, false);
-    assert.equal(mergedCall.isAdmin, false);
+    assert.ok(queryCall);
+    assert.equal(queryCall.q, "merged");
+    assert.equal(queryCall.page, undefined);
+    assert.equal(queryCall.offset, 5);
+    assert.equal(queryCall.limit, 5);
+    assert.equal(queryCall.includeDeleted, false);
+    assert.equal(queryCall.isAdmin, false);
 
     const ids = (data.items || []).map((it) => it.id);
-    assert.deepEqual(ids, ["dyn_merged_1", "dyn_merged_2"]);
+    assert.deepEqual(ids, ["dyn_query_1", "dyn_query_2"]);
     assert.equal(data.total, 2);
     assert.equal(data.page, 2);
     assert.equal(data.pageSize, 5);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });

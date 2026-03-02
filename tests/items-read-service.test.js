@@ -16,7 +16,7 @@ test("createItemsReadService exposes listItems and getItemById", async () => {
   assert.equal(typeof service.getItemById, "function");
 });
 
-test("listItems prefers merged SQL query when available", async () => {
+test("listItems uses queryItems port when available", async () => {
   let receivedOptions = null;
   const { createItemsReadService } = require("../server/services/items/readService");
 
@@ -31,7 +31,7 @@ test("listItems prefers merged SQL query when available", async () => {
               id: "merged_1",
               type: "link",
               categoryId: "other",
-              title: "Merged",
+              title: "Query Item",
               description: "",
               url: "https://example.com",
               thumbnail: "",
@@ -113,7 +113,7 @@ test("listItems uses injected itemsQueryRepo before touching in-memory loaders",
   assert.equal(out.items[0].id, "repo_1");
 });
 
-test("listItems returns state_db_unavailable when merged SQL query is missing", async () => {
+test("listItems returns state_db_unavailable when queryItems port is missing", async () => {
   const { createItemsReadService } = require("../server/services/items/readService");
 
   const service = createItemsReadService({

@@ -13,7 +13,7 @@ test("items model utils expose normalize/safe/map helpers", async () => {
   assert.equal(typeof toApiItem, "function");
 });
 
-test("normalizeCategoryId and safeText keep fallback behavior", async () => {
+test("normalizeCategoryId and safeText keep default normalization behavior", async () => {
   const {
     normalizeCategoryId,
     safeText,

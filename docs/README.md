@@ -42,3 +42,4 @@
 - `docs/guides/`：可执行的操作指南与运行策略
 - `docs/architecture/`：模块边界与约束（长期规则）
 - `docs/plans/`：历史方案与实施记录（供参考，不是规范）
+- `docs/archive/`：历史审计与迁移留档（仅追溯，不作为现行契约）
