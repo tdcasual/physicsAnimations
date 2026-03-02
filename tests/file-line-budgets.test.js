@@ -20,10 +20,14 @@ test("file line budget config covers core source domains", () => {
   const hasFrontendVueRule = config.rules.some(
     (rule) => rule.root === "frontend/src" && Array.isArray(rule.extensions) && rule.extensions.includes(".vue"),
   );
+  const hasScriptsJsRule = config.rules.some(
+    (rule) => rule.root === "scripts" && Array.isArray(rule.extensions) && rule.extensions.includes(".js"),
+  );
 
   assert.equal(hasServerJsRule, true);
   assert.equal(hasFrontendTsRule, true);
   assert.equal(hasFrontendVueRule, true);
+  assert.equal(hasScriptsJsRule, true);
 
   assert.ok(Number(config?.overrides?.["frontend/src/features/library/useLibraryAdminState.ts"]) < 500);
 });

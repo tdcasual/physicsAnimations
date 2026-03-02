@@ -21,6 +21,11 @@
       "maxLines": 360
     },
     {
+      "root": "scripts",
+      "extensions": [".js"],
+      "maxLines": 360
+    },
+    {
       "root": "tests",
       "extensions": [".js"],
       "maxLines": 880
@@ -29,6 +34,7 @@
   "overrides": {
     "frontend/src/features/library/useLibraryAdminState.ts": 420,
     "frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts": 330,
-    "frontend/src/views/CatalogView.vue": 340
+    "frontend/src/views/CatalogView.vue": 340,
+    "scripts/update_geogebra_bundle.js": 480
   }
 }
