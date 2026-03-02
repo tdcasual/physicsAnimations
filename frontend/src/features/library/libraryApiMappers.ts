@@ -1,5 +1,16 @@
 import type { LibraryAsset, LibraryEmbedProfile, LibraryFolder } from "./types";
 
+function toFiniteNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toOptionalId(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  return text ? text : null;
+}
+
 export function toFolder(value: any): LibraryFolder {
   return {
     id: String(value?.id || ""),
@@ -7,9 +18,9 @@ export function toFolder(value: any): LibraryFolder {
     categoryId: String(value?.categoryId || "other"),
     coverType: value?.coverType === "image" ? "image" : "blank",
     coverPath: String(value?.coverPath || ""),
-    parentId: value?.parentId ?? null,
-    order: Number(value?.order || 0),
-    assetCount: Number(value?.assetCount || 0),
+    parentId: toOptionalId(value?.parentId),
+    order: toFiniteNumber(value?.order, 0),
+    assetCount: toFiniteNumber(value?.assetCount, 0),
     createdAt: String(value?.createdAt || ""),
     updatedAt: String(value?.updatedAt || ""),
   };
@@ -24,8 +35,8 @@ export function toAsset(value: any): LibraryAsset {
     displayName: String(value?.displayName || ""),
     fileName: String(value?.fileName || ""),
     filePath: String(value?.filePath || ""),
-    fileSize: Number(value?.fileSize || 0),
-    openMode: value?.openMode === "embed" ? "embed" : "download",
+    fileSize: toFiniteNumber(value?.fileSize, 0),
+    openMode: value?.openMode === "download" ? "download" : "embed",
     generatedEntryPath: String(value?.generatedEntryPath || ""),
     embedProfileId: String(value?.embedProfileId || ""),
     embedOptions:

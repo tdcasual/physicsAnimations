@@ -26,9 +26,6 @@ describe("fetchDashboardStats", () => {
       if (url.includes("/api/items?") && url.includes("type=link")) {
         return jsonResponse({ total: 2, page: 1, pageSize: 1, items: [] });
       }
-      if (url.includes("/api/items?")) {
-        return jsonResponse({ total: 5, page: 1, pageSize: 1, items: [] });
-      }
       if (url.includes("/api/categories")) {
         return jsonResponse({
           groups: [],
@@ -50,5 +47,34 @@ describe("fetchDashboardStats", () => {
     expect(stats.builtinTotal).toBe(5);
     expect(stats.categoryTotal).toBe(2);
     expect(stats.total).toBe(10);
+    expect(fetchMock.mock.calls.some((args) => String(args[0]).includes("/api/items?") && !String(args[0]).includes("type="))).toBe(false);
+  });
+
+  it("falls back to zero when totals payload contains non-numeric values", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/items?") && url.includes("type=upload")) {
+        return jsonResponse({ total: "bad", page: 1, pageSize: 1, items: [] });
+      }
+      if (url.includes("/api/items?") && url.includes("type=link")) {
+        return jsonResponse({ total: "oops", page: 1, pageSize: 1, items: [] });
+      }
+      if (url.includes("/api/categories")) {
+        return jsonResponse({
+          groups: [],
+          categories: [{ id: "a", builtinCount: "x" }],
+        });
+      }
+      return jsonResponse({}, 404);
+    });
+
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const stats = await fetchDashboardStats();
+    expect(stats.uploadTotal).toBe(0);
+    expect(stats.linkTotal).toBe(0);
+    expect(stats.dynamicTotal).toBe(0);
+    expect(stats.builtinTotal).toBe(0);
+    expect(stats.total).toBe(0);
   });
 });

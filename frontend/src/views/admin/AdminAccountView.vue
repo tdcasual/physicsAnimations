@@ -47,6 +47,14 @@ async function submit() {
     setFieldError("currentPassword", "请输入当前密码。");
     return;
   }
+  if (newUsername.value && !newUsername.value.trim()) {
+    setFieldError("newUsername", "新用户名不能只包含空白字符。");
+    return;
+  }
+  if (newPassword.value && !newPassword.value.trim()) {
+    setFieldError("newPassword", "新密码不能只包含空白字符。");
+    return;
+  }
   if (!newUsername.value.trim() && !newPassword.value.trim()) {
     setFieldError("newUsername", "请填写新用户名或新密码。");
     setFieldError("newPassword", "请填写新用户名或新密码。");
@@ -79,6 +87,14 @@ async function submit() {
     const e = err as { status?: number; data?: any };
     if (e?.status === 401 && e?.data?.error === "invalid_credentials") {
       setFieldError("currentPassword", "当前密码错误。");
+      return;
+    }
+    if (e?.data?.error === "invalid_username") {
+      setFieldError("newUsername", "新用户名不能只包含空白字符。");
+      return;
+    }
+    if (e?.data?.error === "invalid_password") {
+      setFieldError("newPassword", "新密码不能只包含空白字符。");
       return;
     }
     if (e?.data?.error === "no_changes") {

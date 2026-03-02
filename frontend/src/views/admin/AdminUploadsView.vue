@@ -51,6 +51,7 @@ const vm = reactive(useUploadAdmin());
           :action-feedback="vm.actionFeedback"
           :action-feedback-error="vm.actionFeedbackError"
           :category-options="vm.categoryOptions"
+          :edit-title-error="vm.getFieldError('editTitle')"
           :edit-title="vm.editTitle"
           :edit-description="vm.editDescription"
           :edit-category-id="vm.editCategoryId"
@@ -58,7 +59,10 @@ const vm = reactive(useUploadAdmin());
           :edit-published="vm.editPublished"
           :edit-hidden="vm.editHidden"
           :saving="vm.saving"
-          @update:edit-title="vm.editTitle = $event"
+          @update:edit-title="
+            vm.editTitle = $event;
+            vm.clearFieldErrors('editTitle');
+          "
           @update:edit-description="vm.editDescription = $event"
           @update:edit-category-id="vm.editCategoryId = $event"
           @update:edit-order="vm.editOrder = $event"

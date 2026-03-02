@@ -1,6 +1,5 @@
 import { clearToken, getToken } from "../auth/authApi";
 import type {
-  LibraryAssetOpenInfo,
   LibraryCatalogResponse,
   LibraryEmbedProfile,
   LibraryFolder,
@@ -110,19 +109,6 @@ export async function listLibraryDeletedAssets(folderId?: string): Promise<Libra
   const data = await apiFetch<any>(path, { method: "GET" });
   const assets = Array.isArray(data?.assets) ? data.assets.map(toAsset) : [];
   return { assets };
-}
-
-export async function getLibraryAssetOpenInfo(assetId: string): Promise<LibraryAssetOpenInfo> {
-  const data = await apiFetch<any>(`/api/library/assets/${encodeURIComponent(assetId)}`, {
-    method: "GET",
-  });
-  return {
-    ok: data?.ok === true,
-    mode: data?.mode === "embed" ? "embed" : "download",
-    openUrl: String(data?.openUrl || ""),
-    downloadUrl: String(data?.downloadUrl || ""),
-    asset: toAsset(data?.asset || {}),
-  };
 }
 
 export async function createLibraryFolder(payload: CreateLibraryFolderPayload): Promise<any> {

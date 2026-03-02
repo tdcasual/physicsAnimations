@@ -7,6 +7,8 @@ describe("admin redirect resolver", () => {
     expect(resolveAdminRedirect("")).toEqual({ path: "/admin/dashboard" });
     expect(resolveAdminRedirect("/")).toEqual({ path: "/admin/dashboard" });
     expect(resolveAdminRedirect("/foo/bar")).toEqual({ path: "/admin/dashboard" });
+    expect(resolveAdminRedirect("/adminX")).toEqual({ path: "/admin/dashboard" });
+    expect(resolveAdminRedirect("/admin-content")).toEqual({ path: "/admin/dashboard" });
   });
 
   it("keeps admin path, query and hash", () => {

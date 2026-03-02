@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { loadViewerModel, type ViewerModel } from "../features/viewer/viewerService";
+import { normalizePublicUrl } from "../features/catalog/catalogLink";
 
 const route = useRoute();
 
@@ -165,7 +166,7 @@ onBeforeUnmount(() => {
       <img
         v-if="model.screenshotUrl && screenshotVisible"
         class="viewer-shot"
-        :src="model.screenshotUrl"
+        :src="normalizePublicUrl(model.screenshotUrl)"
         alt=""
       />
       <iframe
@@ -238,7 +239,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 10px;
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   background: var(--surface);

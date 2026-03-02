@@ -28,6 +28,7 @@ describe("systemFormState", () => {
   it("parses timeout only when finite integer", () => {
     expect(parseTimeoutMs("15000")).toBe(15000);
     expect(parseTimeoutMs(" 2000 ")).toBe(2000);
+    expect(parseTimeoutMs("15000ms")).toBeUndefined();
     expect(parseTimeoutMs("")).toBeUndefined();
     expect(parseTimeoutMs("abc")).toBeUndefined();
   });
@@ -70,6 +71,22 @@ describe("systemFormState", () => {
 
     expect(payload.webdav.password).toBe("secret");
     expect(payload.webdav.timeoutMs).toBe(30000);
+  });
+
+  it("buildSystemUpdatePayload treats whitespace-only password as not provided", () => {
+    const payload = buildSystemUpdatePayload({
+      mode: "hybrid",
+      url: "https://dav.example.com/root/",
+      basePath: "physicsAnimations",
+      username: "user1",
+      password: "   ",
+      timeoutRaw: "15000",
+      scanRemote: false,
+      sync: false,
+    });
+
+    expect("password" in payload.webdav).toBe(false);
+    expect(payload.webdav.timeoutMs).toBe(15000);
   });
 
   it("checks mode requirements and manual sync eligibility", () => {

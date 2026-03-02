@@ -37,6 +37,7 @@ export function normalizeWebdavBasePath(value: string): string {
 export function parseTimeoutMs(timeoutRaw: string): number | undefined {
   const raw = String(timeoutRaw || "").trim();
   if (!raw) return undefined;
+  if (!/^\d+$/.test(raw)) return undefined;
   const parsed = Number.parseInt(raw, 10);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
@@ -68,7 +69,7 @@ export function buildSystemUpdatePayload(input: SystemFormInput): SystemUpdatePa
   };
 
   const password = String(input.password || "");
-  if (password) payload.webdav.password = password;
+  if (password.trim()) payload.webdav.password = password;
 
   const timeoutMs = parseTimeoutMs(input.timeoutRaw);
   if (timeoutMs !== undefined) payload.webdav.timeoutMs = timeoutMs;

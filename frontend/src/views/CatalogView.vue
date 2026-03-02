@@ -259,7 +259,7 @@ onMounted(async () => {
   width: min(520px, 100%);
   border: 1px solid var(--border);
   border-radius: 999px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 9px 12px;
   background: var(--surface);
   color: var(--text);
@@ -278,7 +278,7 @@ onMounted(async () => {
   background: color-mix(in srgb, var(--surface) 90%, var(--bg));
   border-radius: 999px;
   padding: 6px 12px;
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   cursor: pointer;

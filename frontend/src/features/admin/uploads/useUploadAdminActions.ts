@@ -40,6 +40,8 @@ type UploadAdminActionParams = {
   resetEdit: () => void;
   beginEdit: (item: AdminItemRow) => void;
   setActionFeedback: (text: string, isError?: boolean) => void;
+  setFieldError: (key: string, message: string) => void;
+  clearFieldErrors: (...keys: string[]) => void;
 };
 
 function resolveAuthError(status?: number, fallbackText = "操作失败。"): string {
@@ -96,12 +98,20 @@ export function createUploadAdminActions(ctx: UploadAdminActionParams) {
   }
 
   async function saveEdit(id: string) {
+    ctx.clearFieldErrors("editTitle");
+    const title = ctx.editTitle.value.trim();
+    if (!title) {
+      ctx.setFieldError("editTitle", "标题不能为空。");
+      ctx.setActionFeedback("标题不能为空。", true);
+      return;
+    }
+
     ctx.saving.value = true;
     ctx.setActionFeedback("");
 
     try {
       await updateAdminItem(id, {
-        title: ctx.editTitle.value.trim(),
+        title,
         description: ctx.editDescription.value.trim(),
         categoryId: ctx.editCategoryId.value,
         order: Number(ctx.editOrder.value || 0),
@@ -114,7 +124,12 @@ export function createUploadAdminActions(ctx: UploadAdminActionParams) {
       if (updated) ctx.beginEdit(updated);
       ctx.setActionFeedback("保存成功。", false);
     } catch (err) {
-      const e = err as { status?: number };
+      const e = err as { status?: number; data?: { error?: string } };
+      if (e?.data?.error === "invalid_title") {
+        ctx.setFieldError("editTitle", "标题不能为空。");
+        ctx.setActionFeedback("标题不能为空。", true);
+        return;
+      }
       ctx.setActionFeedback(resolveAuthError(e?.status, "保存失败。"), true);
     } finally {
       ctx.saving.value = false;

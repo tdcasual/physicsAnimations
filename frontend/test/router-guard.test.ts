@@ -20,6 +20,14 @@ describe("admin route guard", () => {
     expect(router.currentRoute.value.query.redirect).toBe("/admin/dashboard");
   });
 
+  it("does not treat non-segment admin prefix paths as protected admin routes", async () => {
+    const router = createAppRouter({ history: createMemoryHistory("/") });
+    await router.push("/adminx");
+    await router.isReady();
+
+    expect(router.currentRoute.value.path).toBe("/");
+  });
+
   it("allows authenticated users to visit /admin routes", async () => {
     sessionStorage.setItem("pa_admin_token", "token-1");
     globalThis.fetch = vi.fn(async () =>

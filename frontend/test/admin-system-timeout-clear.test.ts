@@ -11,4 +11,10 @@ describe("system timeout clear behavior", () => {
     const source = read("src/views/admin/system/SystemWizardConnectionStep.vue");
     expect(source).not.toMatch(/Number\(value\s*\|\|\s*0\)/);
   });
+
+  it("uses strict timeout parsing instead of parseInt truncation", () => {
+    const source = read("src/views/admin/system/SystemWizardConnectionStep.vue");
+    expect(source).not.toMatch(/Number\.parseInt\(raw,\s*10\)/);
+    expect(source).toMatch(/parseTimeoutMs\(raw\)/);
+  });
 });

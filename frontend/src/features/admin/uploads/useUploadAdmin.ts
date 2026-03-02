@@ -158,6 +158,8 @@ export function useUploadAdmin() {
     resetEdit,
     beginEdit,
     setActionFeedback,
+    setFieldError,
+    clearFieldErrors,
   });
 
   async function submitUpload() {

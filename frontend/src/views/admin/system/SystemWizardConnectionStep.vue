@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { parseTimeoutMs } from "../../../features/admin/systemFormState";
 
 const props = defineProps<{
   remoteMode: boolean;
@@ -48,8 +49,8 @@ function parseTimeoutMsInput(value: number | string): number {
   }
   const raw = String(value || "").trim();
   if (!raw) return Number.NaN;
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) ? parsed : Number.NaN;
+  const parsed = parseTimeoutMs(raw);
+  return parsed === undefined ? Number.NaN : parsed;
 }
 
 const timeoutMsModel = computed<number | string>({

@@ -99,7 +99,7 @@ a {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 7px 12px;
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -230,7 +230,7 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
+  min-height: 44px;
   font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
@@ -252,7 +252,7 @@ input[type="radio"] {
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: 40px;
+  min-height: 44px;
   padding: 9px 10px;
 }
 

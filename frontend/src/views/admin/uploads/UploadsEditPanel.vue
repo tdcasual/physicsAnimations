@@ -11,6 +11,7 @@ const props = defineProps<{
   actionFeedback: string;
   actionFeedbackError: boolean;
   categoryOptions: OptionItem[];
+  editTitleError: string;
   editTitle: string;
   editDescription: string;
   editCategoryId: string;
@@ -49,7 +50,7 @@ const emit = defineEmits<{
   <div v-if="!props.selectedItem" class="empty">请先在左侧选择一条上传内容进行编辑。</div>
 
   <div v-else class="editor-form">
-    <label class="field">
+    <label class="field" :class="{ 'has-error': props.editTitleError }">
       <span>标题</span>
       <input
         :value="props.editTitle"
@@ -57,6 +58,7 @@ const emit = defineEmits<{
         type="text"
         @input="emit('update:editTitle', ($event.target as HTMLInputElement).value)"
       />
+      <div v-if="props.editTitleError" class="field-error-text">{{ props.editTitleError }}</div>
     </label>
 
     <label class="field">

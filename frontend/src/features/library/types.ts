@@ -62,11 +62,3 @@ export interface LibraryCatalogResponse {
 export interface LibraryFolderAssetsResponse {
   assets: LibraryAsset[];
 }
-
-export interface LibraryAssetOpenInfo {
-  ok: boolean;
-  mode: LibraryOpenMode;
-  openUrl: string;
-  downloadUrl: string;
-  asset: LibraryAsset;
-}

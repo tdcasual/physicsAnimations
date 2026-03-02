@@ -4,15 +4,19 @@ export interface AdminRedirectTarget {
   hash?: string;
 }
 
+function isAdminPath(path: string): boolean {
+  return path === "/admin" || path.startsWith("/admin/");
+}
+
 export function resolveAdminRedirect(raw: unknown): AdminRedirectTarget {
   const redirect = String(raw || "").trim();
-  if (!redirect.startsWith("/admin")) {
+  if (!isAdminPath(redirect)) {
     return { path: "/admin/dashboard" };
   }
 
   try {
     const parsed = new URL(redirect, "http://localhost");
-    if (!parsed.pathname.startsWith("/admin")) {
+    if (!isAdminPath(parsed.pathname)) {
       return { path: "/admin/dashboard" };
     }
 

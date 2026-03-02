@@ -51,4 +51,11 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/autocorrect=\"off\"/);
     expect(source).toMatch(/spellcheck=\"false\"/);
   });
+
+  it("reuses shared base form/button styles instead of redefining local duplicates", () => {
+    const source = read("src/views/LoginView.vue");
+    expect(source).not.toMatch(/\.field\s*\{/);
+    expect(source).not.toMatch(/\.field-input\s*\{/);
+    expect(source).not.toMatch(/\.btn\s*\{/);
+  });
 });

@@ -88,6 +88,7 @@ export function useContentAdmin() {
     editOrder.value = 0;
     editPublished.value = true;
     editHidden.value = false;
+    clearFieldErrors("editTitle");
   }
 
   function beginEdit(item: AdminItem) {
@@ -134,6 +135,8 @@ export function useContentAdmin() {
     syncEditStateWithItems,
     resetEdit,
     beginEdit,
+    setFieldError,
+    clearFieldErrors,
     setActionFeedback,
   });
 

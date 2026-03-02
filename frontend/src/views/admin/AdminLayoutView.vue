@@ -37,7 +37,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 6px 10px;
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;

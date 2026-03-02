@@ -239,8 +239,7 @@ export interface DashboardStats {
 }
 
 export async function fetchDashboardStats(): Promise<DashboardStats> {
-  const [all, uploads, links, taxonomy] = await Promise.all([
-    listAdminItems({ page: 1, pageSize: 1 }),
+  const [uploads, links, taxonomy] = await Promise.all([
     listAdminItems({ page: 1, pageSize: 1, type: "upload" }),
     listAdminItems({ page: 1, pageSize: 1, type: "link" }),
     listTaxonomy(),
@@ -252,9 +251,9 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     return sum + (Number.isFinite(count) ? count : 0);
   }, 0);
 
-  const dynamicTotal = Number(all?.total || 0);
   const uploadTotal = Number(uploads?.total || 0);
   const linkTotal = Number(links?.total || 0);
+  const dynamicTotal = uploadTotal + linkTotal;
   const categoryTotal = categories.length;
 
   return {
