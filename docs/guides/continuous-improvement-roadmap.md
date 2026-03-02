@@ -21,18 +21,18 @@
 
 ### 1.2 测试覆盖规模
 
-- 后端测试文件：`71`
-- 前端测试文件：`46`
+- 后端测试文件：`127`
+- 前端测试文件：`60`
 
 ### 1.3 文件体积预算热点（guard:file-size）
 
 当前最接近上限的文件：
 
-- `tests/library-route-api.test.js`: `853/880`
-- `tests/library-service.test.js`: `771/880`
-- `frontend/src/features/library/useLibraryAdminState.ts`: `449/455`
-- `frontend/src/views/CatalogView.vue`: `373/380`
-- `frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts`: `358/360`
+- `frontend/src/features/library/useLibraryAdminState.ts`: `450/455`
+- `frontend/src/views/CatalogView.vue`: `375/380`
+- `frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts`: `356/360`
+- `tests/library-route-api.test.js`: `450/880`（已拆分，原 800+ 风险已缓解）
+- `tests/library-service.test.js`: `424/880`（已拆分，原 700+ 风险已缓解）
 
 ### 1.4 性能预算（perf gate）
 
