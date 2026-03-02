@@ -143,11 +143,14 @@ function createEmbedProfilesService({
     if (scriptUrl !== undefined) {
       const cleanScriptUrl = normalizeUrlLike(scriptUrl);
       if (!isAllowedScriptUrl(cleanScriptUrl)) return { status: 400, error: "invalid_profile_script_url" };
+      const previousRemoteScriptUrl = normalizeUrlLike(profile.remoteScriptUrl || profile.scriptUrl);
       profile.remoteScriptUrl = cleanScriptUrl;
-      profile.scriptUrl = cleanScriptUrl;
-      requiresResync = true;
-      if (!profile.viewerPath) {
-        profile.viewerPath = deriveViewerPath(cleanScriptUrl) || "viewer.html";
+      if (cleanScriptUrl !== previousRemoteScriptUrl) {
+        profile.scriptUrl = cleanScriptUrl;
+        requiresResync = true;
+        if (!profile.viewerPath) {
+          profile.viewerPath = deriveViewerPath(cleanScriptUrl) || "viewer.html";
+        }
       }
     }
     if (fallbackScriptUrl !== undefined) {
@@ -160,9 +163,14 @@ function createEmbedProfilesService({
     if (viewerPath !== undefined) {
       const cleanViewerPath = normalizeUrlLike(viewerPath);
       if (!isAllowedViewerPath(cleanViewerPath)) return { status: 400, error: "invalid_profile_viewer_path" };
+      const previousRemoteViewerPath = normalizeUrlLike(
+        profile.remoteViewerPath || profile.viewerPath || deriveViewerPath(profile.remoteScriptUrl || profile.scriptUrl),
+      );
       profile.remoteViewerPath = cleanViewerPath;
-      profile.viewerPath = cleanViewerPath;
-      requiresResync = true;
+      if (cleanViewerPath !== previousRemoteViewerPath) {
+        profile.viewerPath = cleanViewerPath;
+        requiresResync = true;
+      }
     }
     if (constructorName !== undefined) {
       const cleanConstructorName = String(constructorName || "").trim() || "ElectricFieldApp";
