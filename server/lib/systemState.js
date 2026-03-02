@@ -61,7 +61,14 @@ function systemStatePath(rootDir) {
 }
 
 function buildEnvDefaults() {
-  const envMode = normalizeMode(process.env.STORAGE_MODE || "");
+  const rawEnvMode = String(process.env.STORAGE_MODE || "");
+  const envMode = normalizeMode(rawEnvMode);
+  if (rawEnvMode.trim() && !envMode) {
+    throw createError("invalid_storage_mode", 400, {
+      source: "env",
+      value: rawEnvMode,
+    });
+  }
   const envWebdavUrl = String(process.env.WEBDAV_URL || "");
   const mode = envMode || "local";
   return {
@@ -86,7 +93,16 @@ function normalizeState(raw, fallback) {
   if (!raw || typeof raw !== "object") return base;
 
   const storage = raw.storage && typeof raw.storage === "object" ? raw.storage : {};
-  const mode = normalizeMode(storage.mode) || base.storage.mode;
+  const rawStorageMode = typeof storage.mode === "string" ? storage.mode : "";
+  const storageModeInput = rawStorageMode.trim() !== "";
+  const normalizedStorageMode = normalizeMode(rawStorageMode);
+  if (storageModeInput && !normalizedStorageMode) {
+    throw createError("invalid_storage_mode", 400, {
+      source: "system_state",
+      value: rawStorageMode,
+    });
+  }
+  const mode = normalizedStorageMode || base.storage.mode;
   const webdav = storage.webdav && typeof storage.webdav === "object" ? storage.webdav : {};
 
   return {
@@ -113,7 +129,8 @@ function loadSystemState({ rootDir }) {
     const raw = fs.readFileSync(filePath, "utf8");
     const parsed = JSON.parse(raw);
     return normalizeState(parsed, fallback);
-  } catch {
+  } catch (err) {
+    if (err?.message === "invalid_storage_mode") throw err;
     return fallback;
   }
 }

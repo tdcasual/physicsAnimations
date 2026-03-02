@@ -42,7 +42,11 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
       const data = await getSystemInfo();
       ctx.applyStorage(data?.storage || {}, { resetStep: options.resetStep });
     } catch (err) {
-      const e = err as { status?: number };
+      const e = err as { status?: number; message?: string };
+      if (e?.message === "invalid_storage_mode") {
+        ctx.errorText.value = "系统配置中的存储模式无效，请修正后重试。";
+        return;
+      }
       ctx.errorText.value = resolveAuthError(e?.status, "加载系统配置失败。");
     } finally {
       ctx.loading.value = false;
@@ -139,7 +143,11 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
       ctx.successText.value = "系统配置已保存。";
       ctx.wizardStep.value = 4;
     } catch (err) {
-      const e = err as { status?: number; data?: any };
+      const e = err as { status?: number; data?: any; message?: string };
+      if (e?.message === "invalid_storage_mode") {
+        ctx.errorText.value = "存储模式无效，请重新选择。";
+        return;
+      }
       if (e?.data?.error === "webdav_missing_url") {
         ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
         ctx.errorText.value = "请填写 WebDAV 地址。";

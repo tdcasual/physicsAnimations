@@ -131,7 +131,11 @@ export function useSystemWizard() {
       },
     };
 
-    mode.value = normalizeUiMode(storage.value.mode || "local");
+    const normalizedMode = normalizeUiMode(storage.value.mode || "local");
+    if (!normalizedMode) {
+      throw new Error("invalid_storage_mode");
+    }
+    mode.value = normalizedMode;
     url.value = storage.value.webdav.url || "";
     basePath.value = storage.value.webdav.basePath || "physicsAnimations";
     username.value = storage.value.webdav.username || "";

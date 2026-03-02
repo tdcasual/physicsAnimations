@@ -10,9 +10,7 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
     rootDir,
     BUILTIN_ITEMS_STATE_KEY,
     getAnimationsSignature,
-    getDynamicIndexedReady,
     setDynamicIndexedReady,
-    getBuiltinIndexedReady,
     setBuiltinIndexedReady,
     setBuiltinOverridesDirty,
     setBuiltinAnimationsSignature,
@@ -99,38 +97,6 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
 
       if (!sourceError) {
         return null;
-      }
-
-      let cached = null;
-      try {
-        cached = runMirrorOperation(`mirror.readBuffer(${normalizedKey})`, () => mirror.readBuffer(normalizedKey));
-      } catch {
-        cached = null;
-      }
-      if (cached) {
-        if (normalizedKey === "items.json" && !getDynamicIndexedReady() && isUsable()) {
-          try {
-            runMirrorOperation("mirror.syncDynamicItemsFromBuffer(cache)", () => {
-              mirror.syncDynamicItemsFromBuffer(cached);
-            });
-            setDynamicIndexedReady(true);
-          } catch {
-            // Best-effort mirror warmup: fallback to source store on next read.
-          }
-        }
-        if (normalizedKey === BUILTIN_ITEMS_STATE_KEY && !getBuiltinIndexedReady() && isUsable()) {
-          try {
-            runMirrorOperation("mirror.syncBuiltinItems(cache)", () => {
-              mirror.syncBuiltinItems({ rootDir, builtinOverridesBuffer: cached });
-            });
-            setBuiltinIndexedReady(true);
-            setBuiltinOverridesDirty(false);
-            setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
-          } catch {
-            setBuiltinOverridesDirty(true);
-          }
-        }
-        return cached;
       }
       throw sourceError;
     },

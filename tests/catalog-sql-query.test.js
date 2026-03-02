@@ -197,3 +197,35 @@ test("/api/catalog uses SQL-backed dynamic loader when available", async () => {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("/api/catalog returns state_db_unavailable when SQL dynamic loader fails", async () => {
+  const rootDir = makeTempRoot();
+
+  const store = {
+    async readBuffer(key) {
+      const normalized = String(key || "").replace(/^\/+/, "");
+      if (normalized === "items.json") return Buffer.from('{"version":2,"items":[]}\n', "utf8");
+      if (normalized === "builtin_items.json") return Buffer.from('{"version":1,"items":{}}\n', "utf8");
+      if (normalized === "categories.json") return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
+      return null;
+    },
+    stateDbQuery: {
+      async queryDynamicItemsForCatalog() {
+        throw new Error("sql_dynamic_query_failed");
+      },
+    },
+  };
+
+  const app = createApp({ rootDir, authConfig: makeAuthConfig(), store });
+  const { server, baseUrl } = await startServer(app);
+
+  try {
+    const response = await fetch(`${baseUrl}/api/catalog`);
+    assert.equal(response.status, 503);
+    const data = await response.json();
+    assert.equal(data?.error, "state_db_unavailable");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

@@ -280,3 +280,46 @@ test("/api/categories keeps taxonomy semantics with SQL dynamic counts", async (
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("/api/categories returns state_db_unavailable when SQL category counts query fails", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+
+  const store = {
+    mode: "local",
+    readOnly: false,
+    async readBuffer() {
+      return null;
+    },
+    async writeBuffer() {},
+    async deletePath() {},
+    async createReadStream() {
+      return null;
+    },
+  };
+
+  const app = createApp({
+    rootDir,
+    authConfig,
+    store,
+    queryRepos: {
+      itemsQueryRepo: {},
+      taxonomyQueryRepo: {
+        async queryDynamicCategoryCounts() {
+          throw new Error("sql_counts_failed");
+        },
+      },
+    },
+  });
+
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const response = await fetch(`${baseUrl}/api/categories`);
+    assert.equal(response.status, 503);
+    const data = await response.json();
+    assert.equal(data?.error, "state_db_unavailable");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

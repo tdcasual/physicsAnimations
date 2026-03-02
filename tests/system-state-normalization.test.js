@@ -119,3 +119,47 @@ test("loadSystemState clamps numeric zero timeoutMs to minimum value", () => {
     assert.equal(state.storage.webdav.timeoutMs, 1000);
   });
 });
+
+test("loadSystemState rejects invalid persisted storage mode", () => {
+  withTempRoot((rootDir) => {
+    fs.writeFileSync(
+      path.join(rootDir, "content", "system.json"),
+      `${JSON.stringify(
+        {
+          version: 1,
+          storage: {
+            mode: "hybrid",
+            webdav: {
+              url: "https://dav.example.com/root",
+              timeoutMs: 15000,
+            },
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    assert.throws(
+      () => loadSystemState({ rootDir }),
+      (err) => err && err.message === "invalid_storage_mode",
+    );
+  });
+});
+
+test("loadSystemState rejects invalid STORAGE_MODE env value", () => {
+  const prevMode = process.env.STORAGE_MODE;
+  process.env.STORAGE_MODE = "hybrid";
+  try {
+    withTempRoot((rootDir) => {
+      assert.throws(
+        () => loadSystemState({ rootDir }),
+        (err) => err && err.message === "invalid_storage_mode",
+      );
+    });
+  } finally {
+    if (prevMode === undefined) delete process.env.STORAGE_MODE;
+    else process.env.STORAGE_MODE = prevMode;
+  }
+});

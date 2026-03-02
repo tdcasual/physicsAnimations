@@ -75,9 +75,10 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
           return;
         } catch (sqlErr) {
           logger.warn("categories_sql_dynamic_counts_failed", {
-            fallback: "catalog",
             error: sqlErr,
           });
+          res.status(503).json({ error: "state_db_unavailable" });
+          return;
         }
       }
 

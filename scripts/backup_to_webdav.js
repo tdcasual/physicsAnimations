@@ -55,7 +55,7 @@ async function main() {
   const rootDir = path.join(__dirname, "..");
   const store = createContentStore({ rootDir });
 
-  if (store.mode !== "webdav" && store.mode !== "hybrid") {
+  if (store.mode !== "webdav") {
     logger.error("backup_webdav_not_configured", null, {
       hint: "Set WEBDAV_URL (+ optional WEBDAV_BASE_PATH/WEBDAV_USERNAME/WEBDAV_PASSWORD).",
     });

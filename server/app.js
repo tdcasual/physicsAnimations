@@ -217,6 +217,10 @@ function createApp({
       });
       res.json(catalog);
     } catch (err) {
+      if (err?.message === "state_db_unavailable") {
+        res.status(503).json({ error: "state_db_unavailable" });
+        return;
+      }
       next(err);
     }
   });

@@ -1,5 +1,5 @@
 const { loadItemsState } = require("../state");
-const logger = require("../logger");
+const { createError } = require("../errors");
 
 async function loadDynamicCatalogItems({
   store,
@@ -23,12 +23,8 @@ async function loadDynamicCatalogItems({
       if (sqlResult && Array.isArray(sqlResult.items)) {
         return sqlResult;
       }
-    } catch (err) {
-      logger.warn("catalog_sql_dynamic_query_failed", {
-        fallback: "items_json",
-        error: err,
-      });
-    }
+    } catch {}
+    throw createError("state_db_unavailable", 503);
   }
 
   return loadItemsState({ store });

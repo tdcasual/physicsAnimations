@@ -9,8 +9,10 @@ export interface SystemFormInput {
   sync: boolean;
 }
 
+export type StorageMode = "local" | "webdav";
+
 export interface SystemUpdatePayload {
-  mode: string;
+  mode: StorageMode;
   sync: boolean;
   webdav: {
     url: string;
@@ -22,10 +24,18 @@ export interface SystemUpdatePayload {
   };
 }
 
-export function normalizeUiMode(mode: string): string {
+export function normalizeUiMode(mode: string): StorageMode | "" {
   const raw = String(mode || "").trim().toLowerCase();
   if (raw === "webdav" || raw === "local") return raw;
-  return "local";
+  return "";
+}
+
+function requireUiMode(mode: string): StorageMode {
+  const normalized = normalizeUiMode(mode);
+  if (!normalized) {
+    throw new Error("invalid_storage_mode");
+  }
+  return normalized;
 }
 
 export function normalizeWebdavBasePath(value: string): string {
@@ -56,8 +66,9 @@ export function canRunManualSync(params: { mode: string; url: string }): boolean
 }
 
 export function buildSystemUpdatePayload(input: SystemFormInput): SystemUpdatePayload {
+  const mode = requireUiMode(input.mode);
   const payload: SystemUpdatePayload = {
-    mode: normalizeUiMode(input.mode),
+    mode,
     sync: input.sync === true,
     webdav: {
       url: String(input.url || "").trim(),

@@ -115,8 +115,7 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
         // Keep source-of-truth data path available even if mirror write-through fails.
       }
     } else if (sourceReadError) {
-      raw = runMirrorOperation("mirror.readBuffer(items.json)", () => mirror.readBuffer("items.json"));
-      if (!raw) throw sourceReadError;
+      throw sourceReadError;
     }
 
     if (raw) {
@@ -157,10 +156,7 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
         // Keep source-of-truth data path available even if mirror write-through fails.
       }
     } else if (sourceReadError) {
-      raw = runMirrorOperation(`mirror.readBuffer(${BUILTIN_ITEMS_STATE_KEY})`, () =>
-        mirror.readBuffer(BUILTIN_ITEMS_STATE_KEY),
-      );
-      if (!raw) throw sourceReadError;
+      throw sourceReadError;
     }
 
     runMirrorOperation("mirror.syncBuiltinItems", () => {
@@ -193,11 +189,9 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
       rootDir,
       BUILTIN_ITEMS_STATE_KEY,
       getAnimationsSignature,
-      getDynamicIndexedReady: () => dynamicIndexedReady,
       setDynamicIndexedReady: (value) => {
         dynamicIndexedReady = Boolean(value);
       },
-      getBuiltinIndexedReady: () => builtinIndexedReady,
       setBuiltinIndexedReady: (value) => {
         builtinIndexedReady = Boolean(value);
       },

@@ -14,10 +14,10 @@ describe("systemFormState", () => {
   it("normalizes storage mode to local/webdav only", () => {
     expect(normalizeUiMode("webdav")).toBe("webdav");
     expect(normalizeUiMode("local")).toBe("local");
-    expect(normalizeUiMode("hybrid")).toBe("local");
-    expect(normalizeUiMode("local+webdav")).toBe("local");
-    expect(normalizeUiMode("mirror")).toBe("local");
-    expect(normalizeUiMode("")).toBe("local");
+    expect(normalizeUiMode("hybrid")).toBe("");
+    expect(normalizeUiMode("local+webdav")).toBe("");
+    expect(normalizeUiMode("mirror")).toBe("");
+    expect(normalizeUiMode("")).toBe("");
   });
 
   it("normalizes webdav base path with fallback", () => {
@@ -87,6 +87,21 @@ describe("systemFormState", () => {
 
     expect("password" in payload.webdav).toBe(false);
     expect(payload.webdav.timeoutMs).toBe(15000);
+  });
+
+  it("buildSystemUpdatePayload rejects invalid mode values", () => {
+    expect(() =>
+      buildSystemUpdatePayload({
+        mode: "hybrid",
+        url: "https://dav.example.com/root/",
+        basePath: "physicsAnimations",
+        username: "",
+        password: "",
+        timeoutRaw: "",
+        scanRemote: false,
+        sync: false,
+      }),
+    ).toThrow("invalid_storage_mode");
   });
 
   it("checks mode requirements and manual sync eligibility", () => {
