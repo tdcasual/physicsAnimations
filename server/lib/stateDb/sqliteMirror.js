@@ -239,10 +239,8 @@ function createSqliteMirror({ rootDir, dbPath, deps = {} }) {
     getBuiltinItemsCount() {
       return toInt(countBuiltinStmt.get()?.total, 0);
     },
-    queryDynamicItems: queryRunner.queryDynamicItems,
     queryDynamicItemsForCatalog: queryRunner.queryDynamicItemsForCatalog,
     queryItemById: queryRunner.queryItemById,
-    queryBuiltinItems: queryRunner.queryBuiltinItems,
     queryItems: queryRunner.queryItems,
     queryDynamicCategoryCounts: queryRunner.queryDynamicCategoryCounts,
   };

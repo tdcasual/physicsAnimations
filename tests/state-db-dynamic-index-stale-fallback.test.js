@@ -349,7 +349,7 @@ test("stateDb queryItems should fail instead of clearing index when source items
   }
 });
 
-test("stateDb queryBuiltinItems should fail when builtin source read errors and cache is unavailable", async () => {
+test("stateDb queryItems(type=builtin) should fail when builtin source read errors and cache is unavailable", async () => {
   const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-builtin-read-error-"));
   fs.mkdirSync(path.join(rootDir, "content"), { recursive: true });
   fs.writeFileSync(
@@ -427,12 +427,12 @@ test("stateDb queryBuiltinItems should fail when builtin source read errors and 
     });
 
     await assert.rejects(
-      wrapped.store.stateDbQuery.queryBuiltinItems({
+      wrapped.store.stateDbQuery.queryItems({
         isAdmin: true,
         includeDeleted: true,
         q: "",
         categoryId: "",
-        type: "",
+        type: "builtin",
         offset: 0,
         limit: 50,
       }),

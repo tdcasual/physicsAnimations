@@ -15,27 +15,6 @@ function normalizeCategoryId(value) {
 }
 
 function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow }) {
-  function queryDynamicItems({ isAdmin = false, q = "", categoryId = "", type = "", offset = 0, limit = 24 } = {}) {
-    const { whereSql, params } = buildDynamicWhereClause({ isAdmin, q, categoryId, type });
-    const countSql = `SELECT COUNT(1) AS total FROM state_dynamic_items ${whereSql}`;
-    const totalRow = prepareQuery(countSql).get(...params);
-    const total = toInt(totalRow?.total, 0);
-
-    const safeLimit = Math.max(1, toInt(limit, 24));
-    const safeOffset = Math.max(0, toInt(offset, 0));
-    const dataSql = `
-      SELECT
-        id, type, category_id, title, description, url, path, thumbnail,
-        order_value, published, hidden, upload_kind, created_at, updated_at
-      FROM state_dynamic_items
-      ${whereSql}
-      ORDER BY created_at DESC, title COLLATE NOCASE ASC, id ASC
-      LIMIT ? OFFSET ?
-    `;
-    const rows = prepareQuery(dataSql).all(...params, safeLimit, safeOffset);
-    return { total, items: rows.map(mapDynamicItemRow) };
-  }
-
   function queryDynamicItemsForCatalog({ includeHiddenItems = false, includeUnpublishedItems = false } = {}) {
     const whereSql = buildDynamicCatalogWhereClause({ includeHiddenItems, includeUnpublishedItems });
     const rows = prepareQuery(
@@ -109,42 +88,6 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
     const dynamicItem = queryDynamicItemById({ id, isAdmin });
     if (dynamicItem) return dynamicItem;
     return queryBuiltinItemById({ id, isAdmin, includeDeleted });
-  }
-
-  function queryBuiltinItems({
-    isAdmin = false,
-    includeDeleted = false,
-    q = "",
-    categoryId = "",
-    type = "",
-    offset = 0,
-    limit = 24,
-  } = {}) {
-    const normalizedType = toText(type).trim();
-    if (normalizedType && normalizedType !== "builtin") return { total: 0, items: [] };
-
-    const { whereSql, params } = buildBuiltinWhereClause({ isAdmin, includeDeleted, q, categoryId });
-    const countSql = `SELECT COUNT(1) AS total FROM state_builtin_items ${whereSql}`;
-    const totalRow = prepareQuery(countSql).get(...params);
-    const total = Math.max(0, toInt(totalRow?.total, 0));
-
-    const safeOffset = Math.max(0, toInt(offset, 0));
-    const safeLimit = Math.max(0, toInt(limit, 24));
-    if (safeLimit <= 0) return { total, items: [] };
-
-    const rows = prepareQuery(
-      `
-        SELECT
-          id, category_id, title, description, thumbnail,
-          order_value, published, hidden, deleted, updated_at
-        FROM state_builtin_items
-        ${whereSql}
-        ORDER BY deleted ASC, title COLLATE NOCASE ASC, id ASC
-        LIMIT ? OFFSET ?
-      `,
-    ).all(...params, safeLimit, safeOffset);
-
-    return { total, items: rows.map(mapBuiltinItemRow) };
   }
 
   function queryItems({
@@ -283,10 +226,8 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
   }
 
   return {
-    queryDynamicItems,
     queryDynamicItemsForCatalog,
     queryItemById,
-    queryBuiltinItems,
     queryItems,
     queryDynamicCategoryCounts,
   };

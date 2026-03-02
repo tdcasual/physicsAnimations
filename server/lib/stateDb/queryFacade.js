@@ -6,22 +6,12 @@ function createStateDbQueryFacade({
   ensureUsable,
 }) {
   return {
-    async queryDynamicItems(options = {}) {
-      ensureUsable();
-      await ensureDynamicItemsIndexed();
-      return runMirrorOperation("mirror.queryDynamicItems", () => mirror.queryDynamicItems(options));
-    },
     async queryDynamicItemsForCatalog(options = {}) {
       ensureUsable();
       await ensureDynamicItemsIndexed();
       return runMirrorOperation("mirror.queryDynamicItemsForCatalog", () =>
         mirror.queryDynamicItemsForCatalog(options),
       );
-    },
-    async queryBuiltinItems(options = {}) {
-      ensureUsable();
-      await ensureBuiltinItemsIndexed();
-      return runMirrorOperation("mirror.queryBuiltinItems", () => mirror.queryBuiltinItems(options));
     },
     async queryItems(options = {}) {
       ensureUsable();

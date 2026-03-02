@@ -26,6 +26,8 @@ test("query facade delegates through ensure+run wrappers", async () => {
 
   await facade.queryItems({});
   assert.deepEqual(calls, ["ensureUsable", "ensureDynamic", "ensureBuiltin", "mirror.queryItems"]);
+  assert.equal(facade.queryDynamicItems, undefined);
+  assert.equal(facade.queryBuiltinItems, undefined);
   assert.equal(facade.queryDynamicItemById, undefined);
   assert.equal(facade.queryBuiltinItemById, undefined);
 });
