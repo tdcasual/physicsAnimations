@@ -112,7 +112,6 @@ const {
   pushOperationLog,
   clearOperationLogs,
   getApiErrorCode,
-  setAssetBatchResult,
   onCreateCoverFileChange,
   onCoverFileChange,
   onAssetFileChange,

@@ -155,6 +155,11 @@ describe("admin library layout", () => {
     expect(assetSelection).toMatch(/async function runAssetBatchMove/);
   });
 
+  it("does not keep unused batch result setter bindings in the view layer", () => {
+    const { view } = readLibrarySources();
+    expect(view).not.toMatch(/\bsetAssetBatchResult\b/);
+  });
+
   it("moves query/filter/sort logic into the asset filters composable", () => {
     const { state, assetFilters } = readLibrarySources();
     expect(state).not.toMatch(/const folderSearchQuery = ref/);
