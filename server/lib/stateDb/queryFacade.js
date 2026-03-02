@@ -18,16 +18,6 @@ function createStateDbQueryFacade({
         mirror.queryDynamicItemsForCatalog(options),
       );
     },
-    async queryDynamicItemById(options = {}) {
-      ensureUsable();
-      await ensureDynamicItemsIndexed();
-      return runMirrorOperation("mirror.queryDynamicItemById", () => mirror.queryDynamicItemById(options));
-    },
-    async queryBuiltinItemById(options = {}) {
-      ensureUsable();
-      await ensureBuiltinItemsIndexed();
-      return runMirrorOperation("mirror.queryBuiltinItemById", () => mirror.queryBuiltinItemById(options));
-    },
     async queryBuiltinItems(options = {}) {
       ensureUsable();
       await ensureBuiltinItemsIndexed();
