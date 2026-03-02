@@ -22,32 +22,14 @@ function createNoopTaxonomyQueryRepo() {
 
 function createQueryReposFromStore({ store }) {
   const sql = store?.stateDbQuery || {};
-  const queryItemById =
-    typeof sql.queryItemById === "function"
-      ? (options) => sql.queryItemById(options)
-      : typeof sql.queryDynamicItemById === "function" || typeof sql.queryBuiltinItemById === "function"
-        ? async (options = {}) => {
-            const id = String(options.id || "");
-            const isAdmin = options.isAdmin === true;
-            const includeDeleted = options.includeDeleted === true;
-
-            if (typeof sql.queryDynamicItemById === "function") {
-              const dynamicItem = await sql.queryDynamicItemById({ id, isAdmin });
-              if (dynamicItem) return dynamicItem;
-            }
-
-            if (typeof sql.queryBuiltinItemById === "function") {
-              return sql.queryBuiltinItemById({ id, isAdmin, includeDeleted });
-            }
-
-            return null;
-          }
-        : undefined;
 
   return {
     itemsQueryRepo: {
       queryItems: typeof sql.queryItems === "function" ? (options) => sql.queryItems(options) : undefined,
-      queryItemById,
+      queryItemById:
+        typeof sql.queryItemById === "function"
+          ? (options) => sql.queryItemById(options)
+          : undefined,
     },
     taxonomyQueryRepo: {
       queryDynamicCategoryCounts:

@@ -1,26 +1,8 @@
 const logger = require("../../lib/logger");
 
-function createQueryItemByIdAdapter(repo) {
-  if (!repo || typeof repo !== "object") return null;
-  const dynamicLookup =
-    typeof repo.queryDynamicItemById === "function" ? (options) => repo.queryDynamicItemById(options) : null;
-  const builtinLookup =
-    typeof repo.queryBuiltinItemById === "function" ? (options) => repo.queryBuiltinItemById(options) : null;
-  if (!dynamicLookup && !builtinLookup) return null;
-
-  return async ({ id, isAdmin, includeDeleted }) => {
-    if (dynamicLookup) {
-      const dynamicItem = await dynamicLookup({ id, isAdmin });
-      if (dynamicItem) return dynamicItem;
-    }
-    if (builtinLookup) return builtinLookup({ id, isAdmin, includeDeleted });
-    return null;
-  };
-}
-
 function createItemsReadService({ store, itemsQueryRepo, deps }) {
   const { toApiItem } = deps;
-  const sourceRepo =
+  const repo =
     itemsQueryRepo ||
     {
       queryItems:
@@ -29,22 +11,7 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
         typeof store?.stateDbQuery?.queryItemById === "function"
           ? (options) => store.stateDbQuery.queryItemById(options)
           : null,
-      queryDynamicItemById:
-        typeof store?.stateDbQuery?.queryDynamicItemById === "function"
-          ? (options) => store.stateDbQuery.queryDynamicItemById(options)
-          : null,
-      queryBuiltinItemById:
-        typeof store?.stateDbQuery?.queryBuiltinItemById === "function"
-          ? (options) => store.stateDbQuery.queryBuiltinItemById(options)
-          : null,
     };
-  const repo = {
-    queryItems: typeof sourceRepo?.queryItems === "function" ? (options) => sourceRepo.queryItems(options) : null,
-    queryItemById:
-      typeof sourceRepo?.queryItemById === "function"
-        ? (options) => sourceRepo.queryItemById(options)
-        : createQueryItemByIdAdapter(sourceRepo),
-  };
 
   async function listItems({ isAdmin, query }) {
     const q = (query.q || "").trim().toLowerCase();

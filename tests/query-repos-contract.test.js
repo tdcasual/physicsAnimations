@@ -15,7 +15,7 @@ test("createQueryReposFromStore exposes stable items/taxonomy repos", async () =
       async queryBuiltinItems() {
         return { total: 0, items: [] };
       },
-      async queryDynamicItemById({ id }) {
+      async queryItemById({ id }) {
         return id === "x" ? { id: "x", type: "link" } : null;
       },
       async queryDynamicCategoryCounts() {
@@ -51,4 +51,26 @@ test("noop repos return deterministic empty payloads", async () => {
 
   const counts = await repos.taxonomyQueryRepo.queryDynamicCategoryCounts({});
   assert.deepEqual(counts, { byCategory: {} });
+});
+
+test("createQueryReposFromStore does not adapt split detail methods without queryItemById", async () => {
+  const { createQueryReposFromStore } = require("../server/ports/queryRepos");
+
+  const store = {
+    stateDbQuery: {
+      async queryItems() {
+        return { total: 0, items: [] };
+      },
+      async queryDynamicItemById() {
+        return { id: "legacy_dyn" };
+      },
+      async queryBuiltinItemById() {
+        return { id: "legacy_builtin" };
+      },
+    },
+  };
+
+  const repos = createQueryReposFromStore({ store });
+  assert.equal(typeof repos.itemsQueryRepo.queryItems, "function");
+  assert.equal(repos.itemsQueryRepo.queryItemById, undefined);
 });

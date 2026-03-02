@@ -57,8 +57,7 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();
 
-  const dynamicLookupCalls = [];
-  const builtinLookupCalls = [];
+  const detailLookupCalls = [];
   const store = {
     async readBuffer(key) {
       const normalized = String(key || "").replace(/^\/+/, "");
@@ -75,8 +74,8 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
       return null;
     },
     stateDbQuery: {
-      async queryDynamicItemById({ id, isAdmin }) {
-        dynamicLookupCalls.push({ id, isAdmin });
+      async queryItemById({ id, isAdmin, includeDeleted }) {
+        detailLookupCalls.push({ id, isAdmin, includeDeleted });
         if (id === "sql_public") {
           return {
             id: "sql_public",
@@ -114,11 +113,6 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
           };
         }
 
-        return null;
-      },
-      async queryBuiltinItemById({ id, isAdmin, includeDeleted }) {
-        builtinLookupCalls.push({ id, isAdmin, includeDeleted });
-
         if (id === "builtin_public") {
           return {
             id: "builtin_public",
@@ -138,6 +132,7 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
 
         if (id === "builtin_hidden") {
           if (!isAdmin) return null;
+          if (!includeDeleted) return null;
           return {
             id: "builtin_hidden",
             type: "builtin",
@@ -194,20 +189,19 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
     const builtinHiddenAdminData = await builtinHiddenAdminRes.json();
     assert.equal(builtinHiddenAdminData?.item?.id, "builtin_hidden");
 
-    assert.equal(dynamicLookupCalls.some((call) => call.id === "sql_public" && call.isAdmin === false), true);
-    assert.equal(dynamicLookupCalls.some((call) => call.id === "sql_hidden" && call.isAdmin === false), true);
-    assert.equal(dynamicLookupCalls.some((call) => call.id === "sql_hidden" && call.isAdmin === true), true);
-
+    assert.equal(detailLookupCalls.some((call) => call.id === "sql_public" && call.isAdmin === false), true);
+    assert.equal(detailLookupCalls.some((call) => call.id === "sql_hidden" && call.isAdmin === false), true);
+    assert.equal(detailLookupCalls.some((call) => call.id === "sql_hidden" && call.isAdmin === true), true);
     assert.equal(
-      builtinLookupCalls.some((call) => call.id === "builtin_public" && call.isAdmin === false && call.includeDeleted === false),
+      detailLookupCalls.some((call) => call.id === "builtin_public" && call.isAdmin === false && call.includeDeleted === false),
       true,
     );
     assert.equal(
-      builtinLookupCalls.some((call) => call.id === "builtin_hidden" && call.isAdmin === false && call.includeDeleted === false),
+      detailLookupCalls.some((call) => call.id === "builtin_hidden" && call.isAdmin === false && call.includeDeleted === false),
       true,
     );
     assert.equal(
-      builtinLookupCalls.some((call) => call.id === "builtin_hidden" && call.isAdmin === true && call.includeDeleted === true),
+      detailLookupCalls.some((call) => call.id === "builtin_hidden" && call.isAdmin === true && call.includeDeleted === true),
       true,
     );
   } finally {
