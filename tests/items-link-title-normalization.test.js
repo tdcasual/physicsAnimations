@@ -64,7 +64,7 @@ async function login(baseUrl, authConfig) {
 test("link create treats whitespace-only title as empty and falls back to hostname", async () => {
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();
-  const app = createApp({ rootDir, authConfig });
+  const app = createApp({ rootDir, authConfig, stateDbMode: "sqlite" });
   const { server, baseUrl } = await startServer(app);
 
   try {
@@ -100,7 +100,7 @@ test("link create treats whitespace-only title as empty and falls back to hostna
 test("item update rejects null order instead of coercing to 0", async () => {
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();
-  const app = createApp({ rootDir, authConfig });
+  const app = createApp({ rootDir, authConfig, stateDbMode: "sqlite" });
   const { server, baseUrl } = await startServer(app);
 
   try {

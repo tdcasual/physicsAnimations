@@ -11,12 +11,12 @@ import {
 } from "../src/features/admin/systemFormState";
 
 describe("systemFormState", () => {
-  it("normalizes storage mode aliases without collapsing webdav to hybrid", () => {
+  it("normalizes storage mode to local/webdav only", () => {
     expect(normalizeUiMode("webdav")).toBe("webdav");
-    expect(normalizeUiMode("hybrid")).toBe("hybrid");
     expect(normalizeUiMode("local")).toBe("local");
-    expect(normalizeUiMode("local+webdav")).toBe("hybrid");
-    expect(normalizeUiMode("mirror")).toBe("hybrid");
+    expect(normalizeUiMode("hybrid")).toBe("local");
+    expect(normalizeUiMode("local+webdav")).toBe("local");
+    expect(normalizeUiMode("mirror")).toBe("local");
     expect(normalizeUiMode("")).toBe("local");
   });
 
@@ -35,7 +35,7 @@ describe("systemFormState", () => {
 
   it("buildSystemUpdatePayload includes optional fields only when provided", () => {
     const payload = buildSystemUpdatePayload({
-      mode: "hybrid",
+      mode: "local",
       url: " https://dav.example.com/root/ ",
       basePath: "  ",
       username: " user1 ",
@@ -46,7 +46,7 @@ describe("systemFormState", () => {
     });
 
     expect(payload).toEqual({
-      mode: "hybrid",
+      mode: "local",
       sync: false,
       webdav: {
         url: "https://dav.example.com/root/",
@@ -75,7 +75,7 @@ describe("systemFormState", () => {
 
   it("buildSystemUpdatePayload treats whitespace-only password as not provided", () => {
     const payload = buildSystemUpdatePayload({
-      mode: "hybrid",
+      mode: "webdav",
       url: "https://dav.example.com/root/",
       basePath: "physicsAnimations",
       username: "user1",
@@ -90,15 +90,15 @@ describe("systemFormState", () => {
   });
 
   it("checks mode requirements and manual sync eligibility", () => {
-    expect(isRemoteMode("hybrid")).toBe(true);
+    expect(isRemoteMode("hybrid")).toBe(false);
     expect(isRemoteMode("webdav")).toBe(true);
     expect(isRemoteMode("local")).toBe(false);
 
-    expect(shouldRequireWebdavUrl("hybrid")).toBe(true);
+    expect(shouldRequireWebdavUrl("hybrid")).toBe(false);
     expect(shouldRequireWebdavUrl("webdav")).toBe(true);
     expect(shouldRequireWebdavUrl("local")).toBe(false);
 
-    expect(canRunManualSync({ mode: "hybrid", url: "https://dav.example.com" })).toBe(true);
+    expect(canRunManualSync({ mode: "hybrid", url: "https://dav.example.com" })).toBe(false);
     expect(canRunManualSync({ mode: "webdav", url: "https://dav.example.com" })).toBe(true);
     expect(canRunManualSync({ mode: "webdav", url: "   " })).toBe(false);
     expect(canRunManualSync({ mode: "local", url: "https://dav.example.com" })).toBe(false);

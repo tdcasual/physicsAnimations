@@ -185,7 +185,7 @@ describe("adminApi", () => {
 
     await getSystemInfo();
     await updateSystemStorage({
-      mode: "hybrid",
+      mode: "webdav",
       webdav: { url: "https://dav.example.com", scanRemote: true },
       sync: true,
     });

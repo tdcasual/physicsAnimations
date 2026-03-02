@@ -83,11 +83,6 @@ function onModeChange() {
           <strong>local</strong>
           <span>仅使用本地目录存储，配置简单，离线可用。</span>
         </label>
-        <label class="mode-card" :class="{ active: mode === 'hybrid' }">
-          <input v-model="modeModel" type="radio" value="hybrid" :disabled="readOnlyMode" @change="onModeChange" />
-          <strong>hybrid</strong>
-          <span>本地读写为主，同时同步到 WebDAV，兼顾可靠性和备份。</span>
-        </label>
         <label class="mode-card" :class="{ active: mode === 'webdav' }">
           <input v-model="modeModel" type="radio" value="webdav" :disabled="readOnlyMode" @change="onModeChange" />
           <strong>webdav</strong>

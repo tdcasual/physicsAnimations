@@ -52,9 +52,6 @@ function normalizeTimeoutMs(value, fallback = 15000) {
 function normalizeMode(raw) {
   const mode = String(raw || "").trim().toLowerCase();
   if (mode === "webdav") return "webdav";
-  if (mode === "hybrid") return "hybrid";
-  if (mode === "local+webdav") return "hybrid";
-  if (mode === "mirror") return "hybrid";
   if (mode === "local") return "local";
   return "";
 }
@@ -66,7 +63,7 @@ function systemStatePath(rootDir) {
 function buildEnvDefaults() {
   const envMode = normalizeMode(process.env.STORAGE_MODE || "");
   const envWebdavUrl = String(process.env.WEBDAV_URL || "");
-  const mode = envMode || (envWebdavUrl ? "hybrid" : "local");
+  const mode = envMode || "local";
   return {
     version: 1,
     storage: {

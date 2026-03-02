@@ -29,68 +29,12 @@ async function stopServer(server) {
   await new Promise((resolve) => { server.close(resolve); });
 }
 
-test("/api/items keeps page offset when dynamic SQL path falls back to in-memory", async () => {
+test("/api/items returns state_db_unavailable when merged SQL query fails", async () => {
   const rootDir = makeTempRoot();
 
   const store = {
-    async readBuffer(key) {
-      const normalized = String(key || "").replace(/^\/+/, "");
-      if (normalized === "items.json") {
-        return Buffer.from(
-          JSON.stringify({
-            version: 2,
-            items: [
-              {
-                id: "dyn-1",
-                type: "link",
-                categoryId: "other",
-                title: "Dynamic 1",
-                description: "",
-                url: "https://example.com/1",
-                thumbnail: "",
-                order: 0,
-                published: true,
-                hidden: false,
-                uploadKind: "html",
-                createdAt: "2026-01-03T00:00:00.000Z",
-                updatedAt: "2026-01-03T00:00:00.000Z",
-              },
-              {
-                id: "dyn-2",
-                type: "link",
-                categoryId: "other",
-                title: "Dynamic 2",
-                description: "",
-                url: "https://example.com/2",
-                thumbnail: "",
-                order: 0,
-                published: true,
-                hidden: false,
-                uploadKind: "html",
-                createdAt: "2026-01-02T00:00:00.000Z",
-                updatedAt: "2026-01-02T00:00:00.000Z",
-              },
-              {
-                id: "dyn-3",
-                type: "link",
-                categoryId: "other",
-                title: "Dynamic 3",
-                description: "",
-                url: "https://example.com/3",
-                thumbnail: "",
-                order: 0,
-                published: true,
-                hidden: false,
-                uploadKind: "html",
-                createdAt: "2026-01-01T00:00:00.000Z",
-                updatedAt: "2026-01-01T00:00:00.000Z",
-              },
-            ],
-          }),
-          "utf8",
-        );
-      }
-      return null;
+    async readBuffer() {
+      throw new Error("readBuffer should not be called");
     },
     async writeBuffer() {},
     async deletePath() {},
@@ -98,11 +42,8 @@ test("/api/items keeps page offset when dynamic SQL path falls back to in-memory
       return null;
     },
     stateDbQuery: {
-      async queryDynamicItems() {
+      async queryItems() {
         throw new Error("no such table: state_dynamic_items");
-      },
-      async queryBuiltinItems({ limit }) {
-        return { total: 0, items: limit > 0 ? [] : [] };
       },
     },
   };
@@ -112,14 +53,9 @@ test("/api/items keeps page offset when dynamic SQL path falls back to in-memory
 
   try {
     const response = await fetch(`${baseUrl}/api/items?page=2&pageSize=2`);
-    assert.equal(response.status, 200);
+    assert.equal(response.status, 503);
     const data = await response.json();
-
-    const ids = (data.items || []).map((item) => item.id);
-    assert.deepEqual(ids, ["dyn-3"]);
-    assert.equal(data.total, 3);
-    assert.equal(data.page, 2);
-    assert.equal(data.pageSize, 2);
+    assert.equal(data?.error, "state_db_unavailable");
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

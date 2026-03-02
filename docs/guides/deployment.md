@@ -6,9 +6,15 @@
 
 仓库已提供完整模板：`docker-compose.example.yml`（包含 `physics-animations` 与 `ggb-updater`）。
 
-## 与旧部署文件兼容性
+## 存储配置变更（破坏性）
 
-你之前的最小配置与当前版本兼容，仍可直接运行：
+当前版本不再保留历史存储兼容层。部署时需要确认：
+
+1. `STORAGE_MODE` 只能是 `local` 或 `webdav`。  
+2. 若使用 `webdav`，必须显式设置 `WEBDAV_URL`。  
+3. 不再支持 `hybrid` / `mirror` / `local+webdav`。  
+
+最小本地模式配置示例：
 
 ```yaml
 services:
@@ -26,7 +32,7 @@ services:
     restart: unless-stopped
 ```
 
-这份最小配置不会失效，但不会自动更新 GeoGebra 自托管包。
+这份最小配置不会自动更新 GeoGebra 自托管包。
 如果你想启用自动更新，保留原服务不变，再追加一个 `ggb-updater` 服务即可。
 
 ```yaml

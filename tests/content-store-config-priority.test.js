@@ -77,3 +77,34 @@ test("createContentStore keeps explicit webdav config values over env fallbacks"
     else process.env.WEBDAV_TIMEOUT_MS = prevTimeout;
   }
 });
+
+test("createContentStore does not infer remote mode from WEBDAV_URL when mode is omitted", () => {
+  const contentStorePath = require.resolve("../server/lib/contentStore");
+  const prevUrl = process.env.WEBDAV_URL;
+  const prevMode = process.env.STORAGE_MODE;
+  process.env.WEBDAV_URL = "https://env.example.com/dav";
+  delete process.env.STORAGE_MODE;
+  delete require.cache[contentStorePath];
+  const { createContentStore } = require(contentStorePath);
+
+  try {
+    const store = createContentStore({
+      rootDir: process.cwd(),
+      config: {
+        storage: {
+          webdav: {
+            url: "https://cfg.example.com/dav",
+          },
+        },
+      },
+    });
+
+    assert.equal(store.mode, "local");
+  } finally {
+    delete require.cache[contentStorePath];
+    if (prevUrl === undefined) delete process.env.WEBDAV_URL;
+    else process.env.WEBDAV_URL = prevUrl;
+    if (prevMode === undefined) delete process.env.STORAGE_MODE;
+    else process.env.STORAGE_MODE = prevMode;
+  }
+});

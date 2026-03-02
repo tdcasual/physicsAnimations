@@ -11,5 +11,5 @@ test("content store module stays below 240 lines after provider split", () => {
   assert.ok(lines < 240, `server/lib/contentStore.js has ${lines} lines, expected < 240`);
   assert.match(source, /createLocalStore/);
   assert.match(source, /createWebdavStore/);
-  assert.match(source, /createHybridStore/);
+  assert.doesNotMatch(source, /createHybridStore/);
 });

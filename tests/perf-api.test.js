@@ -279,7 +279,7 @@ test("perf benchmarks emit stats", async () => {
   const fixture = buildFixture(scale);
   writeFixture(rootDir, fixture);
 
-  const app = createApp({ rootDir });
+  const app = createApp({ rootDir, stateDbMode: "sqlite" });
   const { server, baseUrl } = await startServer(app);
   try {
     const runs = Math.max(1, toInt(process.env.PERF_RUNS, budgets.defaultRuns));

@@ -60,7 +60,7 @@ function toStorageResponse({ state, store, rootDir }) {
 }
 
 function isRemoteMode(mode) {
-  return mode === "webdav" || mode === "hybrid";
+  return mode === "webdav";
 }
 
 function createSystemRouter({ authConfig, store, taskQueue, rootDir, updateStoreConfig }) {

@@ -217,6 +217,36 @@ test("system storage rejects invalid mode values instead of silently ignoring", 
   }
 });
 
+test("system storage rejects legacy alias modes", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+    for (const mode of ["hybrid", "mirror", "local+webdav"]) {
+      const res = await fetch(`${baseUrl}/api/system/storage`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode,
+          sync: false,
+        }),
+      });
+
+      assert.equal(res.status, 400);
+      const data = await res.json();
+      assert.equal(data?.error, "invalid_storage_mode");
+    }
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("system storage local mode does not trigger sync", async () => {
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();

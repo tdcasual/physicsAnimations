@@ -131,3 +131,28 @@ test("listItems uses injected itemsQueryRepo before touching in-memory loaders",
   assert.equal(out.total, 1);
   assert.equal(out.items[0].id, "repo_1");
 });
+
+test("listItems returns state_db_unavailable when merged SQL query is missing", async () => {
+  const { createItemsReadService } = require("../server/services/items/readService");
+
+  const service = createItemsReadService({
+    store: {},
+    deps: {
+      loadItemsState: async () => {
+        throw new Error("loadItemsState should not be called");
+      },
+      loadBuiltinItems: async () => {
+        throw new Error("loadBuiltinItems should not be called");
+      },
+      toApiItem: (item) => item,
+      safeText: (value) => String(value || ""),
+    },
+  });
+
+  const out = await service.listItems({
+    isAdmin: false,
+    query: { page: 1, pageSize: 24, q: "", categoryId: "", type: "" },
+  });
+
+  assert.deepEqual(out, { status: 503, error: "state_db_unavailable" });
+});

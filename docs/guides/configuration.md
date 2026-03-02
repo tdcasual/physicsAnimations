@@ -32,14 +32,18 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `STORAGE_MODE` | `local` | 可选 `local` / `hybrid` / `webdav` |
+| `STORAGE_MODE` | `local` | 可选 `local` / `webdav` |
 | `WEBDAV_URL` | 未设置 | WebDAV 根地址 |
 | `WEBDAV_BASE_PATH` | `physicsAnimations` | WebDAV 子路径 |
 | `WEBDAV_USERNAME` | 未设置 | WebDAV 账号 |
 | `WEBDAV_PASSWORD` | 未设置 | WebDAV 密码 |
 | `WEBDAV_TIMEOUT_MS` | `15000` | WebDAV 请求超时 |
 
-说明：未设置 `STORAGE_MODE` 且提供 `WEBDAV_URL` 时，会自动使用 `hybrid` 模式。
+说明：
+
+- 必须显式设置 `STORAGE_MODE=webdav` 才会启用 WebDAV。
+- 不再支持 `hybrid` / `mirror` / `local+webdav`。
+- `STORAGE_MODE=webdav` 但未配置 `WEBDAV_URL` 时，服务会在启动时直接报错。
 
 ## 状态数据库（可选）
 

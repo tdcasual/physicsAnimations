@@ -23,6 +23,7 @@ function registerItemsReadRoutes({ router, authOptional, readService }) {
       const isAdmin = req.user?.role === "admin";
       const id = parseWithSchema(idSchema, req.params.id);
       const item = await readService.getItemById({ id, isAdmin });
+      if (respondWithServiceResult(res, item)) return;
       if (!item) {
         res.status(404).json({ error: "not_found" });
         return;
