@@ -55,7 +55,26 @@ docker logs --tail 200 physics-animations
 3. 资源库页可访问：`/admin/library`
 4. 关键 API 正常：`/api/health`、`/api/catalog`
 
-## 4. Rollback
+## 4. Metrics 阈值检查（p95 / 5xx）
+
+发布后还需执行可观测性阈值检查，重点关注 `/api/metrics`：
+
+- `http.latencyMs.p95`（整体 p95 延迟）
+- `http.statusCounts.5xx`（5xx 错误计数）
+
+详细阈值与触发动作见：
+
+- `docs/guides/ops-observability-thresholds.md`
+
+最小检查命令：
+
+```bash
+curl -sf http://127.0.0.1:4173/api/metrics | jq '.http'
+```
+
+若超过阈值，先按阈值文档执行缓解动作，再决定是否回滚。
+
+## 5. Rollback
 
 触发条件：发布后健康检查失败、核心页面不可用、关键写路径异常。
 
@@ -76,7 +95,7 @@ curl -sf http://127.0.0.1:4173/api/health
 
 3. 记录回滚时间、原因、影响范围。
 
-## 5. Troubleshooting Quick Commands
+## 6. Troubleshooting Quick Commands
 
 ```bash
 docker ps
@@ -85,7 +104,7 @@ curl -i http://127.0.0.1:4173/api/health
 lsof -iTCP:4173 -sTCP:LISTEN -n -P
 ```
 
-## 6. Notes
+## 7. Notes
 
 - `content` 卷必须持久化挂载，否则上传资源与运行态配置会丢失。
 - GeoGebra 自托管更新与应用发布解耦，不应阻塞业务服务启动。

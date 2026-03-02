@@ -10,11 +10,16 @@ test("ops docs include rollback and recovery sections", () => {
   assert.match(release, /Rollback/i);
   assert.match(release, /Verification/i);
   assert.match(release, /qa:release/);
+  assert.match(release, /p95/i);
+  assert.match(release, /5xx/i);
+  assert.match(release, /阈值/);
   assert.match(incident, /Permanent Delete/i);
   assert.match(incident, /Embed/i);
   assert.match(incident, /恢复/i);
   assert.match(docsIndex, /maintainability-extensibility-dod/i);
   assert.match(docsIndex, /continuous-improvement-roadmap/i);
+  assert.match(docsIndex, /ops-observability-thresholds/i);
   assert.match(rootReadme, /maintainability-extensibility-dod/i);
   assert.match(rootReadme, /continuous-improvement-roadmap/i);
+  assert.match(rootReadme, /ops-observability-thresholds/i);
 });

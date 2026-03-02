@@ -10,6 +10,7 @@
 - 前端 SPA / 路由行为：`docs/guides/spa-and-frontend.md`
 - 发布运维 Runbook：`docs/guides/ops-release-runbook.md`
 - 资源库事故处置：`docs/guides/ops-library-incident-runbook.md`
+- 可观测性阈值与处置：`docs/guides/ops-observability-thresholds.md`
 - 维护与扩展 DoD：`docs/guides/maintainability-extensibility-dod.md`
 - 持续改进路线图：`docs/guides/continuous-improvement-roadmap.md`
 
@@ -23,6 +24,7 @@
 - `docs/guides/ops-release-runbook.md`
 - `docs/guides/security.md`
 - `docs/guides/ops-library-incident-runbook.md`
+- `docs/guides/ops-observability-thresholds.md`
 
 ## 我是开发 / 改代码
 
