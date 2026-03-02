@@ -7,10 +7,7 @@ test("createItemsReadService exposes listItems and getItemById", async () => {
   const service = createItemsReadService({
     store: {},
     deps: {
-      loadItemsState: async () => ({ items: [] }),
-      loadBuiltinItems: async () => [],
       toApiItem: (item) => item,
-      safeText: (value) => String(value || ""),
     },
   });
 
@@ -51,14 +48,7 @@ test("listItems prefers merged SQL query when available", async () => {
       },
     },
     deps: {
-      loadItemsState: async () => {
-        throw new Error("loadItemsState should not be called");
-      },
-      loadBuiltinItems: async () => {
-        throw new Error("loadBuiltinItems should not be called");
-      },
       toApiItem: (item) => item,
-      safeText: (value) => String(value || ""),
     },
   });
 
@@ -112,14 +102,7 @@ test("listItems uses injected itemsQueryRepo before touching in-memory loaders",
       },
     },
     deps: {
-      loadItemsState: async () => {
-        throw new Error("loadItemsState should not be called");
-      },
-      loadBuiltinItems: async () => {
-        throw new Error("loadBuiltinItems should not be called");
-      },
       toApiItem: (item) => item,
-      safeText: (value) => String(value || ""),
     },
   });
 
@@ -138,14 +121,7 @@ test("listItems returns state_db_unavailable when merged SQL query is missing", 
   const service = createItemsReadService({
     store: {},
     deps: {
-      loadItemsState: async () => {
-        throw new Error("loadItemsState should not be called");
-      },
-      loadBuiltinItems: async () => {
-        throw new Error("loadBuiltinItems should not be called");
-      },
       toApiItem: (item) => item,
-      safeText: (value) => String(value || ""),
     },
   });
 
@@ -179,9 +155,6 @@ test("getItemById prefers unified queryItemById port", async () => {
       },
       async queryDynamicItemById() {
         throw new Error("queryDynamicItemById should not be called");
-      },
-      async queryBuiltinItemById() {
-        throw new Error("queryBuiltinItemById should not be called");
       },
     },
     deps: {

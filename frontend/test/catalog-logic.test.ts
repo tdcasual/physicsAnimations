@@ -19,7 +19,7 @@ const sampleCatalog: CatalogData = {
           items: [
             {
               id: "m-1",
-              type: "builtin",
+              type: "link",
               categoryId: "kinematics",
               title: "速度图像",
               description: "v-t 图像分析",

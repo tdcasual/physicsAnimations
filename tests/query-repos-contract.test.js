@@ -9,12 +9,6 @@ test("createQueryReposFromStore exposes stable items/taxonomy repos", async () =
       async queryItems() {
         return { total: 1, items: [{ id: "x" }] };
       },
-      async queryDynamicItems() {
-        return { total: 0, items: [] };
-      },
-      async queryBuiltinItems() {
-        return { total: 0, items: [] };
-      },
       async queryItemById({ id }) {
         return id === "x" ? { id: "x", type: "link" } : null;
       },
@@ -28,7 +22,6 @@ test("createQueryReposFromStore exposes stable items/taxonomy repos", async () =
   assert.equal(typeof repos.itemsQueryRepo.queryItems, "function");
   assert.equal(typeof repos.itemsQueryRepo.queryItemById, "function");
   assert.equal(repos.itemsQueryRepo.queryDynamicItems, undefined);
-  assert.equal(repos.itemsQueryRepo.queryBuiltinItems, undefined);
   assert.equal(typeof repos.taxonomyQueryRepo.queryDynamicCategoryCounts, "function");
 
   const items = await repos.itemsQueryRepo.queryItems({});
@@ -63,9 +56,6 @@ test("createQueryReposFromStore does not adapt split detail methods without quer
       },
       async queryDynamicItemById() {
         return { id: "legacy_dyn" };
-      },
-      async queryBuiltinItemById() {
-        return { id: "legacy_builtin" };
       },
     },
   };

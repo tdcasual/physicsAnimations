@@ -21,8 +21,8 @@ function makeTempRoot() {
           items: [
             {
               file: "mechanics/demo.html",
-              title: "Builtin Demo",
-              description: "builtin",
+              title: "Legacy Demo",
+              description: "legacy",
               thumbnail: "",
             },
           ],
@@ -68,7 +68,6 @@ test("/api/catalog uses SQL-backed dynamic loader when available", async () => {
     async readBuffer(key) {
       const normalized = String(key || "").replace(/^\/+/, "");
       if (normalized === "items.json") return Buffer.from('{"version":2,"items":[]}\n', "utf8");
-      if (normalized === "builtin_items.json") return Buffer.from('{"version":1,"items":{}}\n', "utf8");
       if (normalized === "categories.json") {
         return Buffer.from(
           `${JSON.stringify(
@@ -202,7 +201,6 @@ test("/api/catalog returns state_db_unavailable when SQL dynamic loader fails", 
     async readBuffer(key) {
       const normalized = String(key || "").replace(/^\/+/, "");
       if (normalized === "items.json") return Buffer.from('{"version":2,"items":[]}\n', "utf8");
-      if (normalized === "builtin_items.json") return Buffer.from('{"version":1,"items":{}}\n', "utf8");
       if (normalized === "categories.json") return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
       return null;
     },

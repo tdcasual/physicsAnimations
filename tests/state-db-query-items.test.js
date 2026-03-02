@@ -53,7 +53,7 @@ function makeInMemoryStore({ itemsState }) {
   };
 }
 
-test("state db queryItems keeps dynamic-only semantics and rejects builtin type filter", async () => {
+test("state db queryItems keeps dynamic-only semantics and rejects unsupported type filter", async () => {
   if (!hasNodeSqlite()) return;
 
   const rootDir = makeTempRoot();
@@ -122,17 +122,17 @@ test("state db queryItems keeps dynamic-only semantics and rejects builtin type 
       ["d_no_time"],
     );
 
-    const builtinOnlyAdmin = await wrapped.store.stateDbQuery.queryItems({
+    const unsupportedTypeAdmin = await wrapped.store.stateDbQuery.queryItems({
       isAdmin: true,
       includeDeleted: true,
       q: "",
       categoryId: "",
-      type: "builtin",
+      type: "legacy",
       offset: 0,
       limit: 20,
     });
-    assert.equal(builtinOnlyAdmin.total, 0);
-    assert.deepEqual(builtinOnlyAdmin.items, []);
+    assert.equal(unsupportedTypeAdmin.total, 0);
+    assert.deepEqual(unsupportedTypeAdmin.items, []);
   } finally {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }

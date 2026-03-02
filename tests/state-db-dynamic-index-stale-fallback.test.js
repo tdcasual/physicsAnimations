@@ -93,11 +93,9 @@ test("stateDb queryItems should not serve stale mirror items after write-through
       }
       indexed.items = Array.isArray(parsed?.items) ? parsed.items : [];
     },
-    syncBuiltinItems() {},
     clearDynamicItems() {
       indexed.items = [];
     },
-    clearBuiltinItems() {},
     queryDynamicItems() {
       return { total: indexed.items.length, items: indexed.items.slice() };
     },
@@ -106,12 +104,6 @@ test("stateDb queryItems should not serve stale mirror items after write-through
     },
     queryDynamicItemById({ id }) {
       return indexed.items.find((item) => item.id === id) || null;
-    },
-    queryBuiltinItemById() {
-      return null;
-    },
-    queryBuiltinItems() {
-      return { total: 0, items: [] };
     },
     queryItems() {
       return { total: indexed.items.length, items: indexed.items.slice() };
@@ -188,11 +180,9 @@ test("stateDb queryItems should not resurrect stale mirror cache when source ite
       }
       indexed.items = Array.isArray(parsed?.items) ? parsed.items : [];
     },
-    syncBuiltinItems() {},
     clearDynamicItems() {
       indexed.items = [];
     },
-    clearBuiltinItems() {},
     queryDynamicItems() {
       return { total: indexed.items.length, items: indexed.items.slice() };
     },
@@ -201,12 +191,6 @@ test("stateDb queryItems should not resurrect stale mirror cache when source ite
     },
     queryDynamicItemById({ id }) {
       return indexed.items.find((item) => item.id === id) || null;
-    },
-    queryBuiltinItemById() {
-      return null;
-    },
-    queryBuiltinItems() {
-      return { total: 0, items: [] };
     },
     queryItems() {
       return { total: indexed.items.length, items: indexed.items.slice() };
@@ -277,12 +261,10 @@ test("stateDb queryItems should fail instead of clearing index when source items
       }
       indexed.items = Array.isArray(parsed?.items) ? parsed.items : [];
     },
-    syncBuiltinItems() {},
     clearDynamicItems() {
       cleared += 1;
       indexed.items = [];
     },
-    clearBuiltinItems() {},
     queryDynamicItems() {
       return { total: indexed.items.length, items: indexed.items.slice() };
     },
@@ -291,12 +273,6 @@ test("stateDb queryItems should fail instead of clearing index when source items
     },
     queryDynamicItemById({ id }) {
       return indexed.items.find((item) => item.id === id) || null;
-    },
-    queryBuiltinItemById() {
-      return null;
-    },
-    queryBuiltinItems() {
-      return { total: 0, items: [] };
     },
     queryItems() {
       return { total: indexed.items.length, items: indexed.items.slice() };
@@ -349,8 +325,8 @@ test("stateDb queryItems should fail instead of clearing index when source items
   }
 });
 
-test("stateDb queryItems(type=builtin) returns empty under dynamic-only semantics", async () => {
-  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-type-builtin-"));
+test("stateDb queryItems(type=legacy) returns empty under dynamic-only semantics", async () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-state-db-type-legacy-"));
   fs.mkdirSync(path.join(rootDir, "content"), { recursive: true });
   fs.writeFileSync(path.join(rootDir, "animations.json"), "{}\n", "utf8");
 
@@ -405,7 +381,7 @@ test("stateDb queryItems(type=builtin) returns empty under dynamic-only semantic
       includeDeleted: true,
       q: "",
       categoryId: "",
-      type: "builtin",
+      type: "legacy",
       offset: 0,
       limit: 50,
     });

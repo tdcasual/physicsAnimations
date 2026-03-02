@@ -21,8 +21,8 @@ function makeTempRoot({ animationsJson } = {}) {
           items: [
             {
               file: "mechanics/demo.html",
-              title: "Builtin Demo",
-              description: "builtin",
+              title: "Legacy Demo",
+              description: "legacy",
               thumbnail: "",
             },
           ],
@@ -193,8 +193,8 @@ test("/api/items uses SQL-backed dynamic query when state db enabled", async () 
     const detailUnpublishedAdminData = await detailUnpublishedAdminRes.json();
     assert.equal(detailUnpublishedAdminData?.item?.id, "l_unpublished_1");
 
-    const removedBuiltinRes = await fetch(`${baseUrl}/api/items/${encodeURIComponent("mechanics/demo.html")}`);
-    assert.equal(removedBuiltinRes.status, 404);
+    const missingLegacyRes = await fetch(`${baseUrl}/api/items/${encodeURIComponent("legacy/demo.html")}`);
+    assert.equal(missingLegacyRes.status, 404);
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

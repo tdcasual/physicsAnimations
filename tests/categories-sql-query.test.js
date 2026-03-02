@@ -21,8 +21,8 @@ function makeTempRoot({ animationsJson } = {}) {
           items: [
             {
               file: "mechanics/demo.html",
-              title: "Builtin Demo",
-              description: "builtin",
+              title: "Legacy Demo",
+              description: "legacy",
               thumbnail: "",
             },
           ],

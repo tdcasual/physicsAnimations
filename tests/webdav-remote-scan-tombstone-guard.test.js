@@ -41,9 +41,6 @@ test("syncWithWebdav scanRemote does not resurrect tombstoned uploads", async ()
       if (normalized === "categories.json") {
         return Buffer.from(JSON.stringify({ version: 2, groups: {}, categories: {} }), "utf8");
       }
-      if (normalized === "builtin_items.json") {
-        return Buffer.from(JSON.stringify({ version: 1, items: {} }), "utf8");
-      }
       if (normalized === "items_tombstones.json") {
         return Buffer.from(
           JSON.stringify({

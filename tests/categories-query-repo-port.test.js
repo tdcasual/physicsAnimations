@@ -19,9 +19,6 @@ test("buildCategoriesPayloadWithSql uses injected taxonomyQueryRepo", async () =
         if (normalized === "categories.json") {
           return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
         }
-        if (normalized === "builtin_items.json") {
-          return Buffer.from('{"version":1,"items":{}}\n', "utf8");
-        }
         if (normalized === "items.json") {
           return Buffer.from('{"version":2,"items":[]}\n', "utf8");
         }

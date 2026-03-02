@@ -19,8 +19,8 @@ test("buildCategoriesPayload uses dynamic count map and keeps stable sorting", (
             order: 9,
             hidden: false,
             items: [
-              { id: "b1", type: "builtin" },
               { id: "d1", type: "link" },
+              { id: "d3", type: "link" },
             ],
           },
           optics: {
@@ -29,7 +29,7 @@ test("buildCategoriesPayload uses dynamic count map and keeps stable sorting", (
             title: "光学",
             order: 2,
             hidden: false,
-            items: [{ id: "b2", type: "builtin" }],
+            items: [{ id: "d2", type: "link" }],
           },
         },
       },

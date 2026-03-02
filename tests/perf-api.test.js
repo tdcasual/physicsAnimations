@@ -13,8 +13,8 @@ const DEFAULT_SCALE = {
   items: 2000,
   categories: 80,
   groups: 5,
-  builtinCategories: 20,
-  builtinItemsPerCategory: 10,
+  seedCatalogCategories: 20,
+  seedItemsPerCategory: 10,
 };
 
 function toInt(value, fallback) {
@@ -58,14 +58,14 @@ function getScaleFromEnv() {
   if (envCategories !== null) scale.categories = envCategories;
   if (envGroups !== null) scale.groups = envGroups;
 
-  const envBuiltinCategories = toInt(process.env.PERF_BUILTIN_CATEGORIES, null);
-  const envBuiltinItems = toInt(process.env.PERF_BUILTIN_ITEMS_PER_CATEGORY, null);
-  if (envBuiltinCategories !== null) {
-    scale.builtinCategories = envBuiltinCategories;
+  const envSeedCatalogCategories = toInt(process.env.PERF_SEED_CATALOG_CATEGORIES, null);
+  const envSeedItemsPerCategory = toInt(process.env.PERF_SEED_ITEMS_PER_CATEGORY, null);
+  if (envSeedCatalogCategories !== null) {
+    scale.seedCatalogCategories = envSeedCatalogCategories;
   } else {
-    scale.builtinCategories = Math.min(scale.categories, DEFAULT_SCALE.builtinCategories);
+    scale.seedCatalogCategories = Math.min(scale.categories, DEFAULT_SCALE.seedCatalogCategories);
   }
-  if (envBuiltinItems !== null) scale.builtinItemsPerCategory = envBuiltinItems;
+  if (envSeedItemsPerCategory !== null) scale.seedItemsPerCategory = envSeedItemsPerCategory;
 
   let label = (process.env.PERF_SCALE || "B").toUpperCase();
   if (envItems !== null || envCategories !== null || envGroups !== null) label = "custom";
@@ -109,11 +109,11 @@ function buildFixture(scale = DEFAULT_SCALE) {
   });
 
   const animationsJson = {};
-  for (let i = 0; i < scale.builtinCategories; i += 1) {
-    const categoryId = `builtin_${i + 1}`;
+  for (let i = 0; i < scale.seedCatalogCategories; i += 1) {
+    const categoryId = `seed_${i + 1}`;
     animationsJson[categoryId] = {
-      title: `Builtin ${i + 1}`,
-      items: Array.from({ length: scale.builtinItemsPerCategory }, (_, j) => ({
+      title: `Seed ${i + 1}`,
+      items: Array.from({ length: scale.seedItemsPerCategory }, (_, j) => ({
         file: `${categoryId}/demo_${j + 1}.html`,
         title: `Demo ${i + 1}-${j + 1}`,
         description: "",

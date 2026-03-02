@@ -33,9 +33,6 @@ test("loadCatalog guards categoryId map keys against prototype pollution payload
   const store = {
     async readBuffer(key) {
       const normalized = String(key || "").replace(/^\/+/, "");
-      if (normalized === "builtin_items.json") {
-        return Buffer.from('{"version":1,"items":{}}\n', "utf8");
-      }
       if (normalized === "categories.json") {
         return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
       }

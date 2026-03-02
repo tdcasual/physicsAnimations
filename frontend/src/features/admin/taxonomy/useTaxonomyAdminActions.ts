@@ -147,8 +147,8 @@ export function createTaxonomyAdminActions(ctx: TaxonomyAdminActionsParams) {
     const group = ctx.selectedGroup.value;
     if (!group) return;
 
-    const isBuiltin = group.id === ctx.defaultGroupId;
-    const confirmText = isBuiltin
+    const isDefaultGroup = group.id === ctx.defaultGroupId;
+    const confirmText = isDefaultGroup
       ? `确定重置大类「${group.id}」的设置为默认吗？`
       : `确定删除大类「${group.id}」吗？（删除前需先移动/删除其二级分类）`;
     if (!window.confirm(confirmText)) return;
@@ -160,7 +160,7 @@ export function createTaxonomyAdminActions(ctx: TaxonomyAdminActionsParams) {
     try {
       await deleteGroup(group.id);
       await reloadTaxonomy();
-      ctx.setActionFeedback(isBuiltin ? "大类已重置。" : "大类已删除。");
+      ctx.setActionFeedback(isDefaultGroup ? "大类已重置。" : "大类已删除。");
     } catch (err) {
       const e = err as { status?: number; data?: { error?: string } };
       if (e?.data?.error === "group_not_empty") {
@@ -168,7 +168,10 @@ export function createTaxonomyAdminActions(ctx: TaxonomyAdminActionsParams) {
         ctx.setActionFeedback(ctx.errorText.value, true);
         return;
       }
-      ctx.errorText.value = resolveAuthError(e?.status, isBuiltin ? "重置大类失败。" : "删除大类失败。");
+      ctx.errorText.value = resolveAuthError(
+        e?.status,
+        isDefaultGroup ? "重置大类失败。" : "删除大类失败。",
+      );
       ctx.setActionFeedback(ctx.errorText.value, true);
     } finally {
       ctx.saving.value = false;

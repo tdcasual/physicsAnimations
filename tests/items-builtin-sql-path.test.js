@@ -7,7 +7,7 @@ const path = require("node:path");
 const { createApp } = require("../server/app");
 
 function makeTempRoot() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-items-builtin-sql-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-items-split-sql-"));
   fs.mkdirSync(path.join(root, "assets"), { recursive: true });
   fs.mkdirSync(path.join(root, "animations"), { recursive: true });
   fs.mkdirSync(path.join(root, "content"), { recursive: true });
@@ -29,7 +29,7 @@ async function stopServer(server) {
   await new Promise((resolve) => { server.close(resolve); });
 }
 
-test("/api/items rejects split-query mode and requires merged SQL query", async () => {
+test("/api/items rejects legacy split-query mode and requires merged SQL query", async () => {
   const rootDir = makeTempRoot();
 
   const store = {
@@ -44,9 +44,6 @@ test("/api/items rejects split-query mode and requires merged SQL query", async 
     stateDbQuery: {
       async queryDynamicItems() {
         return { total: 1, items: [] };
-      },
-      async queryBuiltinItems() {
-        return { total: 2, items: [] };
       },
     },
   };

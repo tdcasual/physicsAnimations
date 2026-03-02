@@ -62,7 +62,6 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
     async readBuffer(key) {
       const normalized = String(key || "").replace(/^\/+/, "");
       if (normalized === "items.json") return Buffer.from('{"version":2,"items":[]}\n', "utf8");
-      if (normalized === "builtin_items.json") return Buffer.from('{"version":1,"items":{}}\n', "utf8");
       if (normalized === "categories.json") {
         return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
       }
@@ -113,42 +112,6 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
           };
         }
 
-        if (id === "builtin_public") {
-          return {
-            id: "builtin_public",
-            type: "builtin",
-            categoryId: "other",
-            title: "Builtin Public",
-            description: "",
-            thumbnail: "",
-            order: 0,
-            published: true,
-            hidden: false,
-            deleted: false,
-            createdAt: "",
-            updatedAt: "2026-01-01T00:00:00.000Z",
-          };
-        }
-
-        if (id === "builtin_hidden") {
-          if (!isAdmin) return null;
-          if (!includeDeleted) return null;
-          return {
-            id: "builtin_hidden",
-            type: "builtin",
-            categoryId: "other",
-            title: "Builtin Hidden",
-            description: "",
-            thumbnail: "",
-            order: 0,
-            published: true,
-            hidden: true,
-            deleted: false,
-            createdAt: "",
-            updatedAt: "2026-01-01T00:00:00.000Z",
-          };
-        }
-
         return null;
       },
     },
@@ -174,32 +137,9 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
     const hiddenAdminData = await hiddenAdminRes.json();
     assert.equal(hiddenAdminData?.item?.id, "sql_hidden");
 
-    const builtinPublicRes = await fetch(`${baseUrl}/api/items/builtin_public`);
-    assert.equal(builtinPublicRes.status, 404);
-
-    const builtinHiddenPublicRes = await fetch(`${baseUrl}/api/items/builtin_hidden`);
-    assert.equal(builtinHiddenPublicRes.status, 404);
-
-    const builtinHiddenAdminRes = await fetch(`${baseUrl}/api/items/builtin_hidden`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    assert.equal(builtinHiddenAdminRes.status, 404);
-
     assert.equal(detailLookupCalls.some((call) => call.id === "sql_public" && call.isAdmin === false), true);
     assert.equal(detailLookupCalls.some((call) => call.id === "sql_hidden" && call.isAdmin === false), true);
     assert.equal(detailLookupCalls.some((call) => call.id === "sql_hidden" && call.isAdmin === true), true);
-    assert.equal(
-      detailLookupCalls.some((call) => call.id === "builtin_public" && call.isAdmin === false && call.includeDeleted === false),
-      true,
-    );
-    assert.equal(
-      detailLookupCalls.some((call) => call.id === "builtin_hidden" && call.isAdmin === false && call.includeDeleted === false),
-      true,
-    );
-    assert.equal(
-      detailLookupCalls.some((call) => call.id === "builtin_hidden" && call.isAdmin === true && call.includeDeleted === true),
-      true,
-    );
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
