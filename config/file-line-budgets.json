@@ -27,6 +27,8 @@
     }
   ],
   "overrides": {
-    "frontend/src/features/library/useLibraryAdminState.ts": 455
+    "frontend/src/features/library/useLibraryAdminState.ts": 420,
+    "frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts": 330,
+    "frontend/src/views/CatalogView.vue": 340
   }
 }
