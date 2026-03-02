@@ -42,7 +42,7 @@ export function parseTimeoutMs(timeoutRaw: string): number | undefined {
 }
 
 export function shouldRequireWebdavUrl(mode: string): boolean {
-  return mode === "webdav";
+  return normalizeUiMode(mode) === "webdav";
 }
 
 export function isRemoteMode(mode: string): boolean {

@@ -96,6 +96,7 @@ describe("systemFormState", () => {
 
     expect(shouldRequireWebdavUrl("hybrid")).toBe(false);
     expect(shouldRequireWebdavUrl("webdav")).toBe(true);
+    expect(shouldRequireWebdavUrl(" WebDAV ")).toBe(true);
     expect(shouldRequireWebdavUrl("local")).toBe(false);
 
     expect(canRunManualSync({ mode: "hybrid", url: "https://dav.example.com" })).toBe(false);
