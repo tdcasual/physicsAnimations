@@ -4,6 +4,28 @@
 
 ## 1. 当前基线（可量化）
 
+### 1.0 基线刷新记录（2026-03-03）
+
+本轮基线采集命令：
+
+1. `npm run qa:release`
+2. `npm run guard:file-size`
+3. `npm run guard:security`
+4. `npm audit --omit=dev --json`
+5. `npm --prefix frontend audit --omit=dev --json`
+
+采集结果：
+
+- `qa:release` 在 `smoke:spa-public` 阶段失败（当前工作区无可用 public category 测试数据），其余前置门禁均通过。
+- `guard:file-size` 通过；top5 热点仍为：
+  - `tests/system-state.test.js`: `477/880`
+  - `frontend/src/features/library/useLibraryAdminState.ts`: `451/455`
+  - `tests/library-route-api.test.js`: `451/880`
+  - `tests/library-service.test.js`: `425/880`
+  - `tests/library-service-lifecycle.test.js`: `396/880`
+- `guard:security` 通过（`checked 528 files`）。
+- `npm audit --omit=dev`（root/frontend）均为 `0 vulnerabilities`（`high=0`, `critical=0`）。
+
 ### 1.1 质量门禁（发布前）
 
 `npm run qa:release` 串行执行：
