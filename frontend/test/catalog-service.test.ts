@@ -33,37 +33,18 @@ describe("loadCatalogData", () => {
     expect(fetchMock).toHaveBeenCalledWith("/api/catalog", expect.any(Object));
   });
 
-  it("falls back to animations.json when /api/catalog fails", async () => {
+  it("returns empty groups when /api/catalog fails", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       if (String(input).includes("/api/catalog")) {
         return new Response("failed", { status: 500 });
       }
-      return new Response(
-        JSON.stringify({
-          mechanics: {
-            title: "力学",
-            items: [
-              {
-                file: "mechanics/demo.html",
-                title: "演示",
-                description: "说明",
-                thumbnail: "animations/thumbnails/demo.png",
-              },
-            ],
-          },
-        }),
-        { status: 200, headers: { "content-type": "application/json" } },
-      );
+      return new Response("not_found", { status: 404 });
     });
 
     globalThis.fetch = fetchMock as typeof fetch;
 
     const catalog = await loadCatalogData();
-    const item = catalog.groups.physics?.categories.mechanics?.items?.[0];
-
-    expect(item?.id).toBe("mechanics/demo.html");
-    expect(item?.src).toBe("animations/mechanics/demo.html");
-    expect(item?.href).toBe("/viewer/mechanics%2Fdemo.html");
-    expect(item?.type).toBe("builtin");
+    expect(catalog.groups).toEqual({});
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

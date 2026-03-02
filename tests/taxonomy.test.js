@@ -8,7 +8,7 @@ const bcrypt = require("bcryptjs");
 
 const { createApp } = require("../server/app");
 
-function makeTempRoot({ animationsJson } = {}) {
+function makeTempRoot({ animationsJson, itemsJson } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-test-"));
   fs.mkdirSync(path.join(root, "assets"), { recursive: true });
   fs.mkdirSync(path.join(root, "animations"), { recursive: true });
@@ -28,6 +28,33 @@ function makeTempRoot({ animationsJson } = {}) {
             },
           ],
         },
+      },
+      null,
+      2,
+    ),
+  );
+  fs.writeFileSync(
+    path.join(root, "content", "items.json"),
+    JSON.stringify(
+      itemsJson || {
+        version: 2,
+        items: [
+          {
+            id: "seed_mechanics",
+            type: "link",
+            categoryId: "mechanics",
+            url: "https://example.com/mechanics",
+            title: "Mechanics Seed",
+            description: "",
+            thumbnail: "",
+            order: 0,
+            published: true,
+            hidden: false,
+            uploadKind: "html",
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
       },
       null,
       2,

@@ -46,40 +46,20 @@ describe("loadViewerModel", () => {
     expect(model.modeButtonText).toBe("仅截图");
   });
 
-  it("falls back to builtin item when item detail is unavailable", async () => {
+  it("returns not_found when item detail is unavailable", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/api/items/")) {
         return new Response("not_found", { status: 404 });
-      }
-      if (url.includes("/api/health")) {
-        return new Response("not_found", { status: 404 });
-      }
-      if (url.includes("/animations.json")) {
-        return jsonResponse({
-          mechanics: {
-            title: "力学",
-            items: [
-              {
-                file: "mechanics/demo.html",
-                title: "内置演示",
-                description: "",
-                thumbnail: "animations/thumbnails/mechanics/demo.png",
-              },
-            ],
-          },
-        });
       }
       return new Response("not_found", { status: 404 });
     });
     globalThis.fetch = fetchMock as typeof fetch;
 
     const model = await loadViewerModel({ id: "mechanics/demo.html" });
-    expect(model.status).toBe("ready");
-    if (model.status !== "ready") return;
-    expect(model.target).toBe("/animations/mechanics/demo.html");
-    expect(model.title).toBe("内置演示");
-    expect(model.iframeSandbox).toBe("allow-scripts allow-same-origin");
+    expect(model.status).toBe("error");
+    if (model.status !== "error") return;
+    expect(model.code).toBe("not_found");
   });
 
   it("returns invalid state when item target is unsafe", async () => {

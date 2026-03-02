@@ -5,12 +5,10 @@ const { requireAuth, optionalAuth } = require("../lib/auth");
 const {
   loadItemsState,
   mutateItemsState,
-  mutateBuiltinItemsState,
   mutateItemTombstonesState,
   noSave,
 } = require("../lib/state");
 const { parseWithSchema, idSchema } = require("../lib/validation");
-const { createItemsBuiltinService } = require("../services/items/builtinService");
 const {
   safeText,
   normalizeCategoryId,
@@ -36,22 +34,11 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
   const warnScreenshotDeps = createWarnScreenshotDeps();
   const queue = taskQueue || null;
 
-  const builtinService = createItemsBuiltinService({
-    rootDir,
-    store,
-    deps: { normalizeCategoryId },
-  });
-  const loadBuiltinIndex = builtinService.loadBuiltinIndex;
-  const loadBuiltinItems = builtinService.loadBuiltinItems;
-  const findBuiltinItemById = builtinService.findBuiltinItemById;
-
   const readService = createItemsReadService({
     store,
     itemsQueryRepo: queryRepos?.itemsQueryRepo,
     deps: {
       loadItemsState,
-      loadBuiltinItems,
-      findBuiltinItemById,
       toApiItem,
       safeText,
     },
@@ -61,12 +48,9 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
     store,
     deps: {
       mutateItemsState,
-      mutateBuiltinItemsState,
       mutateItemTombstonesState,
       normalizeCategoryId,
       noSave,
-      loadBuiltinIndex,
-      findBuiltinItemById,
       toApiItem,
     },
   });

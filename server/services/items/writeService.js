@@ -1,12 +1,9 @@
 function createItemsWriteService({ store, deps }) {
   const {
     mutateItemsState,
-    mutateBuiltinItemsState,
     mutateItemTombstonesState,
     normalizeCategoryId,
     noSave,
-    loadBuiltinIndex,
-    findBuiltinItemById,
     toApiItem,
   } = deps;
 
@@ -40,57 +37,7 @@ function createItemsWriteService({ store, deps }) {
     if (dynamicResult) {
       return { ok: true, item: toApiItem(dynamicResult) };
     }
-
-    const builtinBase = loadBuiltinIndex().find((it) => it.id === id);
-    if (!builtinBase) {
-      return { status: 404, error: "not_found" };
-    }
-
-    const builtinTitleProvided = patch.title !== undefined;
-    const nextBuiltinTitle = builtinTitleProvided ? String(patch.title || "").trim() : "";
-    if (builtinTitleProvided && !nextBuiltinTitle) {
-      return { status: 400, error: "invalid_title" };
-    }
-
-    await mutateBuiltinItemsState({ store }, (builtinState) => {
-      if (!builtinState.items) builtinState.items = {};
-      const current =
-        builtinState.items[id] && typeof builtinState.items[id] === "object"
-          ? { ...builtinState.items[id] }
-          : {};
-
-      if (builtinTitleProvided) current.title = nextBuiltinTitle;
-      if (patch.description !== undefined) {
-        const desc = String(patch.description || "");
-        if (!desc.trim()) delete current.description;
-        else current.description = desc;
-      }
-      if (patch.categoryId !== undefined) {
-        const raw = String(patch.categoryId || "").trim();
-        if (!raw) delete current.categoryId;
-        else current.categoryId = normalizeCategoryId(raw);
-      }
-      if (patch.order !== undefined) current.order = patch.order;
-      if (patch.published !== undefined) current.published = patch.published;
-      if (patch.hidden !== undefined) current.hidden = patch.hidden;
-      if (patch.deleted === true) current.deleted = true;
-      if (patch.deleted === false) delete current.deleted;
-
-      current.updatedAt = new Date().toISOString();
-
-      const hasAnyOverride = Object.entries(current).some(
-        ([key, value]) => key !== "updatedAt" && value !== undefined,
-      );
-      if (hasAnyOverride) builtinState.items[id] = current;
-      else delete builtinState.items[id];
-    });
-
-    const updated = await findBuiltinItemById(id, { includeDeleted: true });
-    if (!updated) {
-      return { status: 404, error: "not_found" };
-    }
-
-    return { ok: true, item: toApiItem(updated) };
+    return { status: 404, error: "not_found" };
   }
 
   async function deleteItem({ id }) {
@@ -122,25 +69,7 @@ function createItemsWriteService({ store, deps }) {
       }
       return { ok: true };
     }
-
-    const builtinBase = loadBuiltinIndex().find((it) => it.id === id);
-    if (!builtinBase) {
-      return { status: 404, error: "not_found" };
-    }
-
-    await mutateBuiltinItemsState({ store }, (builtinState) => {
-      if (!builtinState.items) builtinState.items = {};
-      const current =
-        builtinState.items[id] && typeof builtinState.items[id] === "object"
-          ? { ...builtinState.items[id] }
-          : {};
-
-      current.deleted = true;
-      current.updatedAt = new Date().toISOString();
-      builtinState.items[id] = current;
-    });
-
-    return { ok: true };
+    return { status: 404, error: "not_found" };
   }
 
   return {

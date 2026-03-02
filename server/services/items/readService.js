@@ -16,7 +16,8 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
   async function listItems({ isAdmin, query }) {
     const q = (query.q || "").trim().toLowerCase();
     const categoryId = (query.categoryId || "").trim();
-    const type = (query.type || "").trim();
+    const requestedType = (query.type || "").trim();
+    const type = requestedType || "dynamic";
     const supportsSqlMergedQuery = typeof repo?.queryItems === "function";
 
     const offset = (query.page - 1) * query.pageSize;
@@ -63,8 +64,8 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
         isAdmin,
         includeDeleted: isAdmin,
       });
-      if (sqlItem) return toApiItem(sqlItem);
-      return null;
+      if (!sqlItem || sqlItem.type === "builtin") return null;
+      return toApiItem(sqlItem);
     } catch (sqlErr) {
       logger.warn("items_sql_item_lookup_failed", {
         fallback: "state_db_unavailable",

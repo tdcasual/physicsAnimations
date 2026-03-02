@@ -1,5 +1,4 @@
-const { loadCategoriesState, loadBuiltinItemsState } = require("./state");
-const { loadBuiltinCatalog } = require("./catalog/builtinLoader");
+const { loadCategoriesState } = require("./state");
 const { loadDynamicCatalogItems } = require("./catalog/dynamicLoader");
 const {
   DEFAULT_GROUP_ID,
@@ -23,13 +22,6 @@ async function loadCatalog({
   includeUnpublishedItems = false,
   includeConfigCategories = false,
 } = {}) {
-  const builtinState = await loadBuiltinItemsState({ store });
-  const builtin = loadBuiltinCatalog({
-    rootDir,
-    builtinState,
-    includeHiddenItems,
-    includeUnpublishedItems,
-  });
   const dynamic = await loadDynamicCatalogItems({
     store,
     taxonomyQueryRepo,
@@ -38,7 +30,7 @@ async function loadCatalog({
   });
   const categoryState = await loadCategoriesState({ store });
 
-  const categories = Object.assign(Object.create(null), builtin.categories || {});
+  const categories = Object.create(null);
 
   if (includeConfigCategories) {
     for (const [rawCategoryId, config] of Object.entries(categoryState.categories || {})) {

@@ -18,12 +18,9 @@ test("createItemsWriteService exposes updateItem and deleteItem", async () => {
     store: {},
     deps: {
       mutateItemsState: async () => null,
-      mutateBuiltinItemsState: async () => null,
       mutateItemTombstonesState: async () => null,
       normalizeCategoryId: (value) => String(value || "other"),
       noSave: createNoSave,
-      loadBuiltinIndex: () => [],
-      findBuiltinItemById: async () => null,
       toApiItem: (item) => item,
     },
   });
@@ -56,12 +53,9 @@ test("updateItem updates dynamic item and returns updated entity", async () => {
     store: {},
     deps: {
       mutateItemsState: async (_ctx, mutator) => runMutator(mutator, state),
-      mutateBuiltinItemsState: async () => null,
       mutateItemTombstonesState: async () => null,
       normalizeCategoryId: (value) => String(value || "other"),
       noSave: createNoSave,
-      loadBuiltinIndex: () => [],
-      findBuiltinItemById: async () => null,
       toApiItem: (item) => item,
     },
   });
@@ -104,12 +98,9 @@ test("updateItem rejects whitespace-only title for dynamic items", async () => {
     store: {},
     deps: {
       mutateItemsState: async (_ctx, mutator) => runMutator(mutator, state),
-      mutateBuiltinItemsState: async () => null,
       mutateItemTombstonesState: async () => null,
       normalizeCategoryId: (value) => String(value || "other"),
       noSave: createNoSave,
-      loadBuiltinIndex: () => [],
-      findBuiltinItemById: async () => null,
       toApiItem: (item) => item,
     },
   });
@@ -124,51 +115,27 @@ test("updateItem rejects whitespace-only title for dynamic items", async () => {
   assert.equal(state.items[0].title, "Keep Title");
 });
 
-test("updateItem rejects whitespace-only title for builtin items and does not apply partial changes", async () => {
+test("updateItem returns not_found for non-dynamic item id", async () => {
   const { createItemsWriteService } = require("../server/services/items/writeService");
-
-  const builtinState = {
-    items: {
-      b1: {
-        title: "Override Title",
-        description: "Old desc",
-        updatedAt: "",
-      },
-    },
-  };
 
   const service = createItemsWriteService({
     store: {},
     deps: {
       mutateItemsState: async () => null,
-      mutateBuiltinItemsState: async (_ctx, mutator) => runMutator(mutator, builtinState),
       mutateItemTombstonesState: async () => null,
       normalizeCategoryId: (value) => String(value || "other"),
       noSave: createNoSave,
-      loadBuiltinIndex: () => [{ id: "b1", title: "Base Title" }],
-      findBuiltinItemById: async (id) => {
-        if (id !== "b1") return null;
-        const override = builtinState.items.b1 || {};
-        return {
-          id: "b1",
-          type: "link",
-          title: override.title || "Base Title",
-          description: override.description || "",
-        };
-      },
       toApiItem: (item) => item,
     },
   });
 
   const result = await service.updateItem({
     id: "b1",
-    patch: { title: "   ", description: "new desc" },
+    patch: { title: "Updated" },
   });
 
-  assert.equal(result?.status, 400);
-  assert.equal(result?.error, "invalid_title");
-  assert.equal(builtinState.items.b1.title, "Override Title");
-  assert.equal(builtinState.items.b1.description, "Old desc");
+  assert.equal(result?.status, 404);
+  assert.equal(result?.error, "not_found");
 });
 
 test("deleteItem returns error when tombstone persistence fails", async () => {
@@ -190,14 +157,11 @@ test("deleteItem returns error when tombstone persistence fails", async () => {
     },
     deps: {
       mutateItemsState: async (_ctx, mutator) => runMutator(mutator, state),
-      mutateBuiltinItemsState: async () => null,
       mutateItemTombstonesState: async () => {
         throw new Error("disk_full");
       },
       normalizeCategoryId: (value) => String(value || "other"),
       noSave: createNoSave,
-      loadBuiltinIndex: () => [],
-      findBuiltinItemById: async () => null,
       toApiItem: (item) => item,
     },
   });

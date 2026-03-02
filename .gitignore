@@ -94,6 +94,8 @@ content/items_tombstones.json
 content/library/
 content/uploads/
 content/thumbnails/
+content/state.sqlite
+content/state.sqlite-*
 output/
 
 # parcel-bundler cache (https://parceljs.org/)

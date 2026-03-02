@@ -175,9 +175,7 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
     assert.equal(hiddenAdminData?.item?.id, "sql_hidden");
 
     const builtinPublicRes = await fetch(`${baseUrl}/api/items/builtin_public`);
-    assert.equal(builtinPublicRes.status, 200);
-    const builtinPublicData = await builtinPublicRes.json();
-    assert.equal(builtinPublicData?.item?.id, "builtin_public");
+    assert.equal(builtinPublicRes.status, 404);
 
     const builtinHiddenPublicRes = await fetch(`${baseUrl}/api/items/builtin_hidden`);
     assert.equal(builtinHiddenPublicRes.status, 404);
@@ -185,9 +183,7 @@ test("/api/items/:id uses SQL detail lookup when available", async () => {
     const builtinHiddenAdminRes = await fetch(`${baseUrl}/api/items/builtin_hidden`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    assert.equal(builtinHiddenAdminRes.status, 200);
-    const builtinHiddenAdminData = await builtinHiddenAdminRes.json();
-    assert.equal(builtinHiddenAdminData?.item?.id, "builtin_hidden");
+    assert.equal(builtinHiddenAdminRes.status, 404);
 
     assert.equal(detailLookupCalls.some((call) => call.id === "sql_public" && call.isAdmin === false), true);
     assert.equal(detailLookupCalls.some((call) => call.id === "sql_hidden" && call.isAdmin === false), true);

@@ -77,7 +77,15 @@ test("legacy frontend entry points return not_found", async () => {
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
-    const urls = ["/index.html", "/viewer.html", "/app", "/app/", "/app/viewer/demo"];
+    const urls = [
+      "/index.html",
+      "/viewer.html",
+      "/app",
+      "/app/",
+      "/app/viewer/demo",
+      "/animations.json",
+      "/animations/mechanics/demo.html",
+    ];
     for (const urlPath of urls) {
       const response = await fetch(`${baseUrl}${urlPath}`);
       assert.equal(response.status, 404, `${urlPath} should be 404`);

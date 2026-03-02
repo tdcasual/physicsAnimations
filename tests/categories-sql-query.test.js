@@ -230,9 +230,9 @@ test("/api/categories keeps taxonomy semantics with SQL dynamic counts", async (
     assert.equal(publicCategories.has("ghostcat"), false);
     assert.equal(publicCategories.has("emptyonly"), false);
 
-    assert.equal(publicCategories.get("mechanics")?.builtinCount, 1);
+    assert.equal(publicCategories.get("mechanics")?.builtinCount, 0);
     assert.equal(publicCategories.get("mechanics")?.dynamicCount, 1);
-    assert.equal(publicCategories.get("mechanics")?.count, 2);
+    assert.equal(publicCategories.get("mechanics")?.count, 1);
 
     assert.equal(publicCategories.get("algebra")?.builtinCount, 0);
     assert.equal(publicCategories.get("algebra")?.dynamicCount, 1);
@@ -241,7 +241,7 @@ test("/api/categories keeps taxonomy semantics with SQL dynamic counts", async (
     assert.equal(publicGroups.has("physics"), true);
     assert.equal(publicGroups.has("math"), true);
     assert.equal(publicGroups.has("ghost"), false);
-    assert.equal(publicGroups.get("physics")?.count, 3);
+    assert.equal(publicGroups.get("physics")?.count, 2);
     assert.equal(publicGroups.get("math")?.count, 1);
 
     const token = await login(baseUrl, authConfig);
@@ -259,9 +259,9 @@ test("/api/categories keeps taxonomy semantics with SQL dynamic counts", async (
     assert.equal(adminCategories.has("ghostcat"), true);
     assert.equal(adminCategories.has("emptyonly"), true);
 
-    assert.equal(adminCategories.get("mechanics")?.builtinCount, 1);
+    assert.equal(adminCategories.get("mechanics")?.builtinCount, 0);
     assert.equal(adminCategories.get("mechanics")?.dynamicCount, 3);
-    assert.equal(adminCategories.get("mechanics")?.count, 4);
+    assert.equal(adminCategories.get("mechanics")?.count, 3);
 
     assert.equal(adminCategories.get("hiddencat")?.hidden, true);
     assert.equal(adminCategories.get("hiddencat")?.dynamicCount, 1);

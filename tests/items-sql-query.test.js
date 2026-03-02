@@ -148,7 +148,6 @@ test("/api/items uses SQL-backed dynamic query when state db enabled", async () 
     assert.equal(publicIds.has("l_public_1"), true);
     assert.equal(publicIds.has("u_hidden_1"), false);
     assert.equal(publicIds.has("l_unpublished_1"), false);
-    assert.equal(publicIds.has("mechanics/demo.html"), true);
 
     const token = await login(baseUrl, authConfig);
     const adminRes = await fetch(`${baseUrl}/api/items?page=1&pageSize=50`, {
@@ -161,7 +160,6 @@ test("/api/items uses SQL-backed dynamic query when state db enabled", async () 
     assert.equal(adminIds.has("l_public_1"), true);
     assert.equal(adminIds.has("u_hidden_1"), true);
     assert.equal(adminIds.has("l_unpublished_1"), true);
-    assert.equal(adminIds.has("mechanics/demo.html"), true);
 
     const searchRes = await fetch(`${baseUrl}/api/items?page=1&pageSize=50&q=public`);
     assert.equal(searchRes.status, 200);
@@ -195,40 +193,10 @@ test("/api/items uses SQL-backed dynamic query when state db enabled", async () 
     const detailUnpublishedAdminData = await detailUnpublishedAdminRes.json();
     assert.equal(detailUnpublishedAdminData?.item?.id, "l_unpublished_1");
 
-    const builtinId = "mechanics/demo.html";
-    const encodedBuiltinId = encodeURIComponent(builtinId);
-
-    const builtinDetailPublicBeforeRes = await fetch(`${baseUrl}/api/items/${encodedBuiltinId}`);
-    assert.equal(builtinDetailPublicBeforeRes.status, 200);
-    const builtinDetailPublicBeforeData = await builtinDetailPublicBeforeRes.json();
-    assert.equal(builtinDetailPublicBeforeData?.item?.id, builtinId);
-
-    const hideBuiltinRes = await fetch(`${baseUrl}/api/items/${encodedBuiltinId}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ hidden: true }),
-    });
-    assert.equal(hideBuiltinRes.status, 200);
-    const hideBuiltinData = await hideBuiltinRes.json();
-    assert.equal(hideBuiltinData?.item?.id, builtinId);
-    assert.equal(hideBuiltinData?.item?.hidden, true);
-
-    const builtinDetailPublicAfterRes = await fetch(`${baseUrl}/api/items/${encodedBuiltinId}`);
-    assert.equal(builtinDetailPublicAfterRes.status, 404);
-
-    const builtinDetailAdminAfterRes = await fetch(`${baseUrl}/api/items/${encodedBuiltinId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    assert.equal(builtinDetailAdminAfterRes.status, 200);
-    const builtinDetailAdminAfterData = await builtinDetailAdminAfterRes.json();
-    assert.equal(builtinDetailAdminAfterData?.item?.id, builtinId);
-    assert.equal(builtinDetailAdminAfterData?.item?.hidden, true);
+    const removedBuiltinRes = await fetch(`${baseUrl}/api/items/${encodeURIComponent("mechanics/demo.html")}`);
+    assert.equal(removedBuiltinRes.status, 404);
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
-

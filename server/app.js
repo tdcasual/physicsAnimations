@@ -105,9 +105,7 @@ function shouldServeSpaRoute(reqPath) {
   if (!p.startsWith("/")) return false;
   if (p.startsWith("/api/") || p === "/api") return false;
   if (p.startsWith("/assets/") || p === "/assets") return false;
-  if (p.startsWith("/animations/") || p === "/animations") return false;
   if (p.startsWith("/content/") || p === "/content") return false;
-  if (p === "/animations.json") return false;
   if (p === "/app" || p.startsWith("/app/")) return false;
   const hasExtensionTail = /\/[^/]+\.[^/]+$/.test(p);
   const dynamicRouteWithDots = p.startsWith("/viewer/") || p.startsWith("/library/folder/");
@@ -255,7 +253,6 @@ function createApp({
     res.sendFile("index.html", { root: spaDistDir });
   }
 
-  app.use("/animations", express.static(path.join(rootDir, "animations")));
   app.get(/^\/content\/uploads\/.*/, async (req, res, next) => {
     try {
       const key = safeContentKey(req.path, "uploads");
@@ -322,10 +319,6 @@ function createApp({
     } catch (err) {
       next(err);
     }
-  });
-
-  app.get("/animations.json", (_req, res) => {
-    res.sendFile("animations.json", { root: rootDir });
   });
 
   app.get(/^\/.*/, (req, res, next) => {

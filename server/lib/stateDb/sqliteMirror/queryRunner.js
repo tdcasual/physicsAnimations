@@ -103,15 +103,16 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
     const safeOffset = Math.max(0, toInt(offset, 0));
     const safeLimit = Math.max(0, toInt(limit, 24));
 
-    const dynamicEnabled = !normalizedType || normalizedType === "link" || normalizedType === "upload";
-    const builtinEnabled = !normalizedType || normalizedType === "builtin";
+    const dynamicOnly = normalizedType === "dynamic";
+    const dynamicEnabled = dynamicOnly || !normalizedType || normalizedType === "link" || normalizedType === "upload";
+    const builtinEnabled = !dynamicOnly && (!normalizedType || normalizedType === "builtin");
     if (!dynamicEnabled && !builtinEnabled) return { total: 0, items: [] };
 
     const dynamicFilter = buildDynamicWhereClause({
       isAdmin,
       q,
       categoryId,
-      type: dynamicEnabled ? normalizedType : "",
+      type: dynamicOnly ? "" : dynamicEnabled ? normalizedType : "",
     });
     const builtinFilter = buildBuiltinWhereClause({ isAdmin, includeDeleted, q, categoryId });
 

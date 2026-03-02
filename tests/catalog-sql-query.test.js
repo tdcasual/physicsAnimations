@@ -175,12 +175,9 @@ test("/api/catalog uses SQL-backed dynamic loader when available", async () => {
     assert.ok(data?.groups?.physics?.categories?.mechanics);
     const mechanicsItems = data.groups.physics.categories.mechanics.items || [];
     const mechanicsIds = new Set(mechanicsItems.map((item) => item.id));
-    assert.equal(mechanicsIds.has("mechanics/demo.html"), true);
     assert.equal(mechanicsIds.has("dyn_mechanics_public"), true);
     assert.equal(mechanicsIds.has("dyn_mechanics_hidden"), false);
     assert.equal(mechanicsIds.has("dyn_mechanics_unpublished"), false);
-    const builtIn = mechanicsItems.find((item) => item.id === "mechanics/demo.html");
-    assert.equal(builtIn?.href, "/viewer/mechanics%2Fdemo.html");
     const dynamicPublic = mechanicsItems.find((item) => item.id === "dyn_mechanics_public");
     assert.equal(dynamicPublic?.href, "/viewer/dyn_mechanics_public");
 
