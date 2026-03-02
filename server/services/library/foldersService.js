@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const path = require("path");
 
 const { IMAGE_EXT_BY_MIME, toPublicPath, toStorageKey } = require("./core/normalizers");
+const ALLOWED_COVER_EXTS = new Set(IMAGE_EXT_BY_MIME.values());
 
 function createFoldersService({
   store,
@@ -41,10 +42,13 @@ function createFoldersService({
   }
 
   async function createFolder({ name, categoryId, coverType } = {}) {
+    const cleanName = String(name || "").trim();
+    if (!cleanName) return { status: 400, error: "invalid_folder_name" };
+
     const now = new Date().toISOString();
     const folder = {
       id: `f_${crypto.randomUUID()}`,
-      name: String(name || "").trim(),
+      name: cleanName,
       categoryId: normalizeCategoryId(categoryId),
       coverType: coverType === "image" ? "image" : "blank",
       coverPath: "",
@@ -94,22 +98,39 @@ function createFoldersService({
     const mime = String(mimeType || "").toLowerCase();
     if (!mime.startsWith("image/")) return { status: 400, error: "cover_invalid_type" };
 
-    const extByName = path.extname(String(originalName || "")).toLowerCase();
-    const ext = extByName || IMAGE_EXT_BY_MIME.get(mime) || "";
+    const extByNameRaw = path.extname(String(originalName || "")).toLowerCase();
+    const extByName = ALLOWED_COVER_EXTS.has(extByNameRaw) ? extByNameRaw : "";
+    const extByMime = IMAGE_EXT_BY_MIME.get(mime) || "";
+    const ext = extByMime || extByName;
     if (!ext) return { status: 400, error: "cover_invalid_type" };
 
     const key = `library/covers/${folder.id}${ext}`;
+    const previousCoverKey = toStorageKey(folder.coverPath);
+    const previousCoverBuffer = previousCoverKey === key ? await store.readBuffer(key) : null;
     await store.writeBuffer(key, fileBuffer, { contentType: mime || undefined });
     const now = new Date().toISOString();
     const coverPath = toPublicPath(key);
 
-    await mutateLibraryFoldersState({ store }, (state) => {
-      const target = state.folders.find((item) => item.id === folder.id);
-      if (!target) return;
-      target.coverType = "image";
-      target.coverPath = coverPath;
-      target.updatedAt = now;
-    });
+    try {
+      await mutateLibraryFoldersState({ store }, (state) => {
+        const target = state.folders.find((item) => item.id === folder.id);
+        if (!target) return;
+        target.coverType = "image";
+        target.coverPath = coverPath;
+        target.updatedAt = now;
+      });
+    } catch (err) {
+      if (previousCoverBuffer) {
+        await store.writeBuffer(key, previousCoverBuffer).catch(() => {});
+      } else {
+        await store.deletePath(key).catch(() => {});
+      }
+      throw err;
+    }
+
+    if (previousCoverKey && previousCoverKey !== key) {
+      await store.deletePath(previousCoverKey).catch(() => {});
+    }
 
     return {
       ok: true,
@@ -128,23 +149,33 @@ function createFoldersService({
     if (aliveAssets.length > 0) return { status: 409, error: "folder_not_empty" };
     const deletedAssets = folderAssets.filter((asset) => asset.deleted === true);
     if (deletedAssets.length > 0) {
+      for (const asset of deletedAssets) {
+        try {
+          await store.deletePath(`library/assets/${asset.id}`, { recursive: true });
+        } catch {
+          return { status: 500, error: "folder_asset_cleanup_failed" };
+        }
+      }
       const deletedSet = new Set(deletedAssets.map((item) => item.id));
       await mutateLibraryAssetsState({ store }, (state) => {
         state.assets = state.assets.filter((item) => !deletedSet.has(item.id));
       });
-      for (const asset of deletedAssets) {
-        await store.deletePath(`library/assets/${asset.id}`, { recursive: true }).catch(() => {});
+    }
+
+    if (folder.coverPath) {
+      const key = toStorageKey(folder.coverPath);
+      if (key) {
+        try {
+          await store.deletePath(key);
+        } catch {
+          return { status: 500, error: "folder_cover_cleanup_failed" };
+        }
       }
     }
 
     await mutateLibraryFoldersState({ store }, (state) => {
       state.folders = state.folders.filter((item) => item.id !== folder.id);
     });
-
-    if (folder.coverPath) {
-      const key = toStorageKey(folder.coverPath);
-      if (key) await store.deletePath(key).catch(() => {});
-    }
 
     return { ok: true };
   }

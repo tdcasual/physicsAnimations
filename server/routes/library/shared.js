@@ -1,6 +1,14 @@
+function normalizeErrorStatus(value) {
+  const status = Number(value);
+  if (!Number.isFinite(status)) return 500;
+  const code = Math.trunc(status);
+  if (code < 400 || code > 599) return 500;
+  return code;
+}
+
 function sendServiceResult(res, result, okBody) {
   if (result?.error) {
-    res.status(Number(result.status || 500)).json({ error: result.error });
+    res.status(normalizeErrorStatus(result.status)).json({ error: result.error });
     return true;
   }
   res.json(okBody(result));

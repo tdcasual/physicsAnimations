@@ -15,7 +15,7 @@ function applyIncomingWebdav(current, incoming) {
   }
   if (typeof incoming.username === "string") nextWebdav.username = incoming.username.trim();
   if (typeof incoming.scanRemote === "boolean") nextWebdav.scanRemote = incoming.scanRemote;
-  if (typeof incoming.password === "string" && incoming.password) {
+  if (typeof incoming.password === "string") {
     nextWebdav.password = incoming.password;
   }
 
@@ -23,8 +23,11 @@ function applyIncomingWebdav(current, incoming) {
     nextWebdav.timeoutMs = Math.max(1000, Math.trunc(incoming.timeoutMs));
   }
   if (typeof incoming.timeoutMs === "string" && incoming.timeoutMs.trim()) {
-    const parsed = Number.parseInt(incoming.timeoutMs.trim(), 10);
-    if (Number.isFinite(parsed)) nextWebdav.timeoutMs = Math.max(1000, parsed);
+    const rawTimeout = incoming.timeoutMs.trim();
+    if (/^\d+$/.test(rawTimeout)) {
+      const parsed = Number.parseInt(rawTimeout, 10);
+      if (Number.isFinite(parsed)) nextWebdav.timeoutMs = Math.max(1000, parsed);
+    }
   }
 
   return nextWebdav;
@@ -106,8 +109,14 @@ function createSystemRouter({ authConfig, store, taskQueue, rootDir, updateStore
     try {
       const payload = req.body || {};
       const rawMode = typeof payload.mode === "string" ? payload.mode : "";
+      const hasModeInput = typeof payload.mode === "string" && payload.mode.trim() !== "";
       const requestedMode = normalizeMode(rawMode);
       const sync = payload.sync === true;
+
+      if (hasModeInput && !requestedMode) {
+        res.status(400).json({ error: "invalid_storage_mode" });
+        return;
+      }
 
       const updateResult = await mutateSystemState({ rootDir }, (state) => {
         const nextStorage = { ...(state.storage || {}) };

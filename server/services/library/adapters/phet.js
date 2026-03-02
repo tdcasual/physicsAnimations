@@ -16,20 +16,31 @@ function hasPhETMarkers(fileBuffer) {
   return false;
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildEmbedHtml({ assetPublicFileUrl, title }) {
+  const safeTitle = escapeHtml(String(title || "PhET 演示"));
+  const safeSrc = escapeHtml(String(assetPublicFileUrl || ""));
   return `<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${String(title || "PhET 演示")}</title>
+    <title>${safeTitle}</title>
     <style>
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #f8fafc; }
       .stage { width: 100%; height: 100%; border: 0; }
     </style>
   </head>
   <body>
-    <iframe class="stage" src="${String(assetPublicFileUrl || "")}" title="${String(title || "PhET 演示")}" loading="eager"></iframe>
+    <iframe class="stage" src="${safeSrc}" title="${safeTitle}" loading="eager"></iframe>
   </body>
 </html>
 `;

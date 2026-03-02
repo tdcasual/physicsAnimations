@@ -7,6 +7,7 @@ const {
   filePathToUrl: defaultFilePathToUrl,
 } = require("../../lib/screenshot");
 const { assertPublicHttpUrl: defaultAssertPublicHttpUrl } = require("../../lib/ssrf");
+const { normalizeZipPath } = require("./uploadIngestUtils");
 const logger = require("../../lib/logger");
 
 function createWarnScreenshotDeps() {
@@ -18,18 +19,6 @@ function createWarnScreenshotDeps() {
       hint: "run `npm run install-playwright-deps`",
     });
   };
-}
-
-function normalizeZipPath(zipPath) {
-  const raw = String(zipPath || "").replace(/\\/g, "/");
-  const normalized = path.posix.normalize(raw);
-  const trimmed = normalized.replace(/^\/+/, "");
-  const parts = trimmed.split("/").filter(Boolean);
-  if (!parts.length) return null;
-  if (parts.some((p) => p === "." || p === "..")) return null;
-  if (parts.some((p) => p.includes(":"))) return null;
-  if (trimmed.startsWith("../")) return null;
-  return parts.join("/");
 }
 
 function createScreenshotService({ rootDir, store, deps = {} }) {
@@ -119,13 +108,19 @@ function createScreenshotService({ rootDir, store, deps = {} }) {
       const png = fs.readFileSync(outputPath);
       await store.writeBuffer(`thumbnails/${id}.png`, png, { contentType: "image/png" });
 
-      const thumbnail = await mutateItemsState({ store }, (state) => {
-        const found = state.items.find((it) => it.id === id);
-        if (!found) return noSave(null);
-        found.thumbnail = `content/thumbnails/${id}.png`;
-        found.updatedAt = now;
-        return found.thumbnail;
-      });
+      let thumbnail = "";
+      try {
+        thumbnail = await mutateItemsState({ store }, (state) => {
+          const found = state.items.find((it) => it.id === id);
+          if (!found) return noSave(null);
+          found.thumbnail = `content/thumbnails/${id}.png`;
+          found.updatedAt = now;
+          return found.thumbnail;
+        });
+      } catch (err) {
+        await store.deletePath(`thumbnails/${id}.png`).catch(() => {});
+        throw err;
+      }
 
       if (!thumbnail) {
         await store.deletePath(`thumbnails/${id}.png`).catch(() => {});

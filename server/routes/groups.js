@@ -10,27 +10,39 @@ const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
 const logger = require("../lib/logger");
 
+const FORBIDDEN_TAXONOMY_IDS = new Set(["__proto__", "prototype", "constructor"]);
+const { hasOwnProperty } = Object.prototype;
+
+function isSafeTaxonomyId(value) {
+  return !FORBIDDEN_TAXONOMY_IDS.has(String(value || "").toLowerCase());
+}
+
 function createGroupsRouter({ rootDir, authConfig, store }) {
   const router = express.Router();
   const authRequired = requireAuth({ authConfig });
   const authOptional = optionalAuth({ authConfig });
 
+  const orderSchema = z
+    .union([z.number(), z.string().trim().regex(/^-?\d+$/)])
+    .pipe(z.coerce.number().int().min(-100000).max(100000));
+
   const groupIdSchema = z
     .string()
     .min(1)
     .max(64)
-    .regex(/^[a-z][a-z0-9_-]*$/i);
+    .regex(/^[a-z][a-z0-9_-]*$/i)
+    .refine(isSafeTaxonomyId);
 
   const createGroupSchema = z.object({
     id: groupIdSchema,
-    title: z.string().min(1).max(128),
-    order: z.coerce.number().int().min(-100000).max(100000).optional().default(0),
+    title: z.string().trim().min(1).max(128),
+    order: orderSchema.optional().default(0),
     hidden: z.boolean().optional().default(false),
   });
 
   const updateGroupSchema = z.object({
-    title: z.string().max(128).optional(),
-    order: z.coerce.number().int().min(-100000).max(100000).optional(),
+    title: z.string().trim().min(1).max(128).optional(),
+    order: orderSchema.optional(),
     hidden: z.boolean().optional(),
   });
 
@@ -75,7 +87,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
 
       try {
         const created = await mutateCategoriesState({ store }, (state) => {
-          if (state.groups?.[id]) return noSave({ __kind: "already_exists" });
+          if (hasOwnProperty.call(state.groups || {}, id)) return noSave({ __kind: "already_exists" });
           if (!state.groups) state.groups = {};
           state.groups[id] = {
             id,
@@ -117,7 +129,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
       try {
         const updated = await mutateCategoriesState({ store }, (state) => {
           if (!state.groups) state.groups = {};
-          if (!state.groups[id]) return noSave({ __kind: "not_found" });
+          if (!hasOwnProperty.call(state.groups, id)) return noSave({ __kind: "not_found" });
 
           if (body.title !== undefined) state.groups[id].title = body.title.trim();
           if (body.order !== undefined) state.groups[id].order = body.order;
@@ -148,7 +160,7 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
       const id = parseWithSchema(groupIdSchema, req.params.id).toLowerCase();
       try {
         const result = await mutateCategoriesState({ store }, (state) => {
-          if (!state.groups?.[id]) return noSave({ ok: true, deleted: false });
+          if (!hasOwnProperty.call(state.groups || {}, id)) return noSave({ ok: true, deleted: false });
 
           if (id !== DEFAULT_GROUP_ID) {
             const hasCategory = Object.values(state.categories || {}).some((c) => c?.groupId === id);

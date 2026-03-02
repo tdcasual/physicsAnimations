@@ -39,6 +39,26 @@ function dedupeSources(sources) {
   return out;
 }
 
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function serializeForInlineScript(value) {
+  const encoded = JSON.stringify(value);
+  if (encoded === undefined) return "null";
+  return encoded
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 function buildScriptSources(options = {}) {
   const selfHostedScriptUrl = normalizeUrl(
     options.selfHostedScriptUrl ?? process.env.LIBRARY_GGB_SELF_HOST_SCRIPT_URL ?? DEFAULT_SELF_HOST_SCRIPT_URL,
@@ -81,6 +101,7 @@ function buildScriptSources(options = {}) {
 }
 
 function buildEmbedHtml({ assetPublicFileUrl, title, scriptSources }) {
+  const safeTitle = escapeHtml(String(title || "GeoGebra"));
   const appletConfig = {
     appName: "classic",
     filename: String(assetPublicFileUrl || ""),
@@ -95,7 +116,7 @@ function buildEmbedHtml({ assetPublicFileUrl, title, scriptSources }) {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${String(title || "GeoGebra")}</title>
+    <title>${safeTitle}</title>
     <style>
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #f8fafc; }
       .ggb-host { width: 100%; height: 100%; }
@@ -107,11 +128,11 @@ function buildEmbedHtml({ assetPublicFileUrl, title, scriptSources }) {
     <div id="ggb-host" class="ggb-host"></div>
     <script>
       (function () {
-        var appletConfig = ${JSON.stringify(appletConfig)};
-        var scriptSources = ${JSON.stringify(scriptSources || [])};
+        var appletConfig = ${serializeForInlineScript(appletConfig)};
+        var scriptSources = ${serializeForInlineScript(scriptSources || [])};
         var hostId = "ggb-host";
         var errorText = "GeoGebra 资源加载失败，请稍后重试或下载原文件。";
-        var assetFileUrl = ${JSON.stringify(String(assetPublicFileUrl || ""))};
+        var assetFileUrl = ${serializeForInlineScript(String(assetPublicFileUrl || ""))};
 
         function renderFailure() {
           var host = document.getElementById(hostId);

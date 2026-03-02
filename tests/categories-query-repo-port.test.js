@@ -31,13 +31,21 @@ test("buildCategoriesPayloadWithSql uses injected taxonomyQueryRepo", async () =
     isAdmin: false,
     taxonomyQueryRepo: {
       async queryDynamicCategoryCounts() {
-        return { byCategory: { customx: 2 } };
+        const byCategory = Object.create(null);
+        byCategory.customx = 2;
+        byCategory.__proto__ = 3;
+        return { byCategory };
       },
     },
   });
 
-  const ids = new Set((payload.categories || []).map((c) => c.id));
+  const categories = payload.categories || [];
+  const ids = new Set(categories.map((c) => c.id));
   assert.equal(ids.has("customx"), true);
+  assert.equal(ids.has("other"), true);
+
+  const otherCategory = categories.find((category) => category.id === "other");
+  assert.equal(otherCategory?.dynamicCount, 3);
 
   fs.rmSync(rootDir, { recursive: true, force: true });
 });

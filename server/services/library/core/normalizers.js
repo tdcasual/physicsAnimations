@@ -8,6 +8,8 @@ const IMAGE_EXT_BY_MIME = new Map([
   ["image/svg+xml", ".svg"],
 ]);
 
+const FORBIDDEN_JSON_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
 function normalizeOpenMode(value) {
   const mode = String(value || "").trim().toLowerCase();
   if (!mode) return "embed";
@@ -52,6 +54,7 @@ function sanitizeJsonValue(value, depth = 0) {
   for (const [rawKey, item] of Object.entries(value)) {
     const key = String(rawKey || "").trim();
     if (!key) continue;
+    if (FORBIDDEN_JSON_KEYS.has(key)) continue;
     const sanitized = sanitizeJsonValue(item, depth + 1);
     if (sanitized !== undefined) out[key] = sanitized;
   }

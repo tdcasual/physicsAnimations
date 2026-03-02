@@ -1,3 +1,5 @@
+const FORBIDDEN_CATEGORY_IDS = new Set(["__proto__", "prototype", "constructor"]);
+
 function safeText(text) {
   if (typeof text !== "string") return "";
   return text;
@@ -6,6 +8,7 @@ function safeText(text) {
 function normalizeCategoryId(categoryId) {
   if (typeof categoryId !== "string") return "other";
   const trimmed = categoryId.trim();
+  if (FORBIDDEN_CATEGORY_IDS.has(trimmed)) return "other";
   return trimmed || "other";
 }
 

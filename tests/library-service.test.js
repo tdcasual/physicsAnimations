@@ -174,6 +174,71 @@ test("syncEmbedProfile refreshes local mirrored bundle", async () => {
   assert.match(mirrored.toString("utf8"), /ElectricFieldApp/);
 });
 
+test("syncEmbedProfile fails when required viewer dependency cannot be mirrored", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const store = createMemoryStore();
+  const fetcher = async (url) => {
+    const key = String(url || "");
+    if (key.endsWith("/embed/embed.js")) {
+      return new Response('console.log("embed");', {
+        status: 200,
+        headers: { "content-type": "application/javascript" },
+      });
+    }
+    if (key.endsWith("/embed/viewer.html")) {
+      return new Response('<script src="./assets/main.js"></script>', {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      });
+    }
+    return new Response("not found", { status: 404, headers: { "content-type": "text/plain" } });
+  };
+
+  const service = createLibraryService({
+    store,
+    deps: { fetcher },
+  });
+  const created = await service.createEmbedProfile({
+    name: "Broken Viewer",
+    scriptUrl: "https://field.infinitas.fun/embed/embed.js",
+    viewerPath: "https://field.infinitas.fun/embed/viewer.html",
+  });
+  assert.equal(created.ok, true);
+
+  const synced = await service.syncEmbedProfile({ profileId: created.profile.id });
+  assert.equal(synced?.status, 502);
+  assert.equal(synced?.error, "embed_profile_sync_failed");
+});
+
+test("updateEmbedProfile does not partially mutate profile when validation fails", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const service = createLibraryService({
+    store: createMemoryStore(),
+    deps: { fetcher: createMockEmbedFetcher() },
+  });
+
+  const created = await service.createEmbedProfile({
+    name: "Original Name",
+    scriptUrl: "https://field.infinitas.fun/embed/embed.js",
+    viewerPath: "https://field.infinitas.fun/embed/viewer.html",
+    constructorName: "ElectricFieldApp",
+  });
+  assert.equal(created.ok, true);
+
+  const failed = await service.updateEmbedProfile({
+    profileId: created.profile.id,
+    name: "Changed Name",
+    constructorName: "1InvalidConstructor",
+  });
+  assert.equal(failed?.status, 400);
+  assert.equal(failed?.error, "invalid_profile_constructor_name");
+
+  const refreshed = await service.getEmbedProfileById({ profileId: created.profile.id });
+  assert.ok(refreshed);
+  assert.equal(refreshed.name, "Original Name");
+  assert.equal(refreshed.constructorName, "ElectricFieldApp");
+});
+
 test("createLibraryService creates folder with blank cover by default", async () => {
   const { createLibraryService } = require("../server/services/library/libraryService");
   const service = createLibraryService({ store: createMemoryStore() });
@@ -489,6 +554,47 @@ test("deleteFolder rejects non-empty folder with folder_not_empty", async () => 
 
   const deleted = await service.deleteFolder({ folderId: folder.id });
   assert.equal(deleted?.ok, true);
+});
+
+test("deleteFolder reports cleanup error when deleting recycled asset files fails", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const store = createMemoryStore();
+  const service = createLibraryService({
+    store,
+    deps: {
+      adapterRegistry: createTestAdapterRegistry(),
+    },
+  });
+  const folder = await service.createFolder({ name: "Cleanup", categoryId: "other" });
+
+  const uploaded = await service.uploadAsset({
+    folderId: folder.id,
+    fileBuffer: Buffer.from("GGBDATA"),
+    originalName: "cleanup-demo.ggb",
+    openMode: "embed",
+  });
+  assert.equal(uploaded.ok, true);
+
+  const removed = await service.deleteAsset({ assetId: uploaded.asset.id });
+  assert.equal(removed?.ok, true);
+
+  const originalDeletePath = store.deletePath;
+  store.deletePath = async (prefix, options) => {
+    if (String(prefix || "").startsWith("library/assets/")) {
+      throw new Error("cleanup_failed");
+    }
+    return originalDeletePath(prefix, options);
+  };
+
+  const failed = await service.deleteFolder({ folderId: folder.id });
+  assert.equal(failed?.status, 500);
+  assert.equal(failed?.error, "folder_asset_cleanup_failed");
+
+  const folders = await service.listFolders();
+  assert.equal(folders.some((item) => item.id === folder.id), true);
+  const deletedAssets = await service.listDeletedAssets({ folderId: folder.id });
+  assert.equal(deletedAssets.length, 1);
+  assert.equal(deletedAssets[0].id, uploaded.asset.id);
 });
 
 test("deleteAsset marks resource as deleted and restoreAsset recovers it", async () => {

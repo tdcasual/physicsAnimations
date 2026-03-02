@@ -11,7 +11,13 @@ const DEFAULT_SCREENSHOT_TIMEOUT_MS = 30000;
 const DEFAULT_SCREENSHOT_FILE_TIMEOUT_MS = 5000;
 
 function parsePositiveTimeout(value) {
-  const parsed = Number.parseInt(String(value || ""), 10);
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const normalized = Math.trunc(value);
+    return normalized > 0 ? normalized : null;
+  }
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return null;
+  const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed <= 0) return null;
   return parsed;
 }
@@ -66,6 +72,7 @@ async function captureScreenshot({ rootDir, targetUrl, outputPath, allowedFileRo
     const hostnameCache = new Map();
     const mainTarget = parseUrl(targetUrl);
     const blockHttpRequests = mainTarget?.protocol === "file:";
+    const resolvedAllowedFileRoot = allowedFileRoot ? path.resolve(String(allowedFileRoot)) : "";
 
     await page.route("**/*", async (route) => {
       const requestUrl = route.request().url();
@@ -82,12 +89,15 @@ async function captureScreenshot({ rootDir, targetUrl, outputPath, allowedFileRo
 
       let ok = await shouldAllowRequestUrl(requestUrl, hostnameCache);
 
-      if (ok && allowedFileRoot) {
-        if (parsedRequestUrl?.protocol === "file:") {
+      if (ok && parsedRequestUrl?.protocol === "file:") {
+        if (!resolvedAllowedFileRoot) {
+          ok = false;
+        } else {
           const requestedPath = fileUrlPath(parsedRequestUrl);
-          const root = path.resolve(String(allowedFileRoot));
           const full = path.resolve(requestedPath);
-          ok = full === root || full.startsWith(`${root}${path.sep}`);
+          ok =
+            full === resolvedAllowedFileRoot ||
+            full.startsWith(`${resolvedAllowedFileRoot}${path.sep}`);
         }
       }
       if (!ok) {

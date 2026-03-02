@@ -30,12 +30,12 @@ function defaultStateDbInfo() {
 }
 
 function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
-  const normalizedMode = normalizeStateDbMode(mode || process.env.STATE_DB_MODE);
+  const normalizedMode = normalizeStateDbMode(mode ?? process.env.STATE_DB_MODE);
   if (normalizedMode !== "sqlite") {
     return { store, info: defaultStateDbInfo() };
   }
 
-  const mirror = createSqliteMirror({ rootDir, dbPath: dbPath || process.env.STATE_DB_PATH });
+  const mirror = createSqliteMirror({ rootDir, dbPath: dbPath ?? process.env.STATE_DB_PATH });
   if (!mirror) {
     logger.warn("state_db_sqlite_unavailable", {
       mode: "sqlite",
@@ -98,14 +98,25 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
     if (dynamicIndexedReady) return;
     ensureUsable();
 
-    let raw = runMirrorOperation("mirror.readBuffer(items.json)", () => mirror.readBuffer("items.json"));
-    if (!raw) {
+    let raw = null;
+    let sourceReadError = null;
+    try {
       raw = await store.readBuffer("items.json");
-      if (raw) {
+    } catch (err) {
+      sourceReadError = err;
+    }
+
+    if (raw) {
+      try {
         runMirrorOperation("mirror.writeBuffer(items.json)", () => {
           mirror.writeBuffer("items.json", raw);
         });
+      } catch {
+        // Keep source-of-truth data path available even if mirror write-through fails.
       }
+    } else if (sourceReadError) {
+      raw = runMirrorOperation("mirror.readBuffer(items.json)", () => mirror.readBuffer("items.json"));
+      if (!raw) throw sourceReadError;
     }
 
     if (raw) {
@@ -129,17 +140,27 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
 
     ensureUsable();
 
-    let raw = runMirrorOperation(`mirror.readBuffer(${BUILTIN_ITEMS_STATE_KEY})`, () =>
-      mirror.readBuffer(BUILTIN_ITEMS_STATE_KEY),
-    );
-
-    if (!raw) {
+    let raw = null;
+    let sourceReadError = null;
+    try {
       raw = await store.readBuffer(BUILTIN_ITEMS_STATE_KEY);
-      if (raw) {
+    } catch (err) {
+      sourceReadError = err;
+    }
+
+    if (raw) {
+      try {
         runMirrorOperation(`mirror.writeBuffer(${BUILTIN_ITEMS_STATE_KEY})`, () => {
           mirror.writeBuffer(BUILTIN_ITEMS_STATE_KEY, raw);
         });
+      } catch {
+        // Keep source-of-truth data path available even if mirror write-through fails.
       }
+    } else if (sourceReadError) {
+      raw = runMirrorOperation(`mirror.readBuffer(${BUILTIN_ITEMS_STATE_KEY})`, () =>
+        mirror.readBuffer(BUILTIN_ITEMS_STATE_KEY),
+      );
+      if (!raw) throw sourceReadError;
     }
 
     runMirrorOperation("mirror.syncBuiltinItems", () => {

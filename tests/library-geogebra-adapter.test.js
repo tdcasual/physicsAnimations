@@ -84,3 +84,40 @@ test("createGeogebraAdapter skips viewer generation in download mode", async () 
   assert.equal(out.generated, false);
   assert.equal(out.html, "");
 });
+
+test("createGeogebraAdapter escapes unsafe html in title", async () => {
+  const { createGeogebraAdapter } = require("../server/services/library/adapters/geogebra");
+  const adapter = createGeogebraAdapter();
+
+  const payload = "</title><script>window.__xss_ggb=1</script><title>";
+  const out = await adapter.buildViewer({
+    openMode: "embed",
+    assetPublicFileUrl: "/content/library/assets/a1/source/demo.ggb",
+    title: payload,
+  });
+
+  assert.equal(out.generated, true);
+  assert.equal(out.html.includes(payload), false);
+  assert.equal(out.html.includes("<script>window.__xss_ggb=1</script>"), false);
+  assert.match(out.html, /&lt;\/title&gt;&lt;script&gt;window\.__xss_ggb=1&lt;\/script&gt;&lt;title&gt;/);
+});
+
+test("createGeogebraAdapter escapes script-breaker payloads in inline script sources", async () => {
+  const { createGeogebraAdapter } = require("../server/services/library/adapters/geogebra");
+  const payload = "</script><script>window.__xss_ggb_src=1</script>";
+  const adapter = createGeogebraAdapter({
+    selfHostedScriptUrl: payload,
+    enableOnlineFallback: false,
+  });
+
+  const out = await adapter.buildViewer({
+    openMode: "embed",
+    assetPublicFileUrl: "/content/library/assets/a1/source/demo.ggb",
+    title: "Demo",
+  });
+
+  assert.equal(out.generated, true);
+  assert.equal(out.html.includes(payload), false);
+  assert.equal(out.html.includes("<script>window.__xss_ggb_src=1</script>"), false);
+  assert.match(out.html, /\\u003c\/script\\u003e\\u003cscript\\u003ewindow\.__xss_ggb_src=1\\u003c\/script\\u003e/);
+});

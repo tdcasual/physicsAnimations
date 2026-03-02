@@ -108,9 +108,14 @@ function createEmbedProfilesService({
       };
     }
 
-    await mutateLibraryEmbedProfilesState({ store }, (state) => {
-      state.profiles.push(syncedProfile);
-    });
+    try {
+      await mutateLibraryEmbedProfilesState({ store }, (state) => {
+        state.profiles.push(syncedProfile);
+      });
+    } catch (err) {
+      await store.deletePath(`library/vendor/embed-profiles/${profile.id}`, { recursive: true }).catch(() => {});
+      throw err;
+    }
 
     return { ok: true, profile: syncedProfile };
   }
@@ -212,10 +217,15 @@ function createEmbedProfilesService({
       return { status: 409, error: "embed_profile_in_use" };
     }
 
+    try {
+      await store.deletePath(`library/vendor/embed-profiles/${profile.id}`, { recursive: true });
+    } catch {
+      return { status: 500, error: "embed_profile_cleanup_failed" };
+    }
+
     await mutateLibraryEmbedProfilesState({ store }, (state) => {
       state.profiles = state.profiles.filter((item) => item.id !== profile.id);
     });
-    await store.deletePath(`library/vendor/embed-profiles/${profile.id}`, { recursive: true }).catch(() => {});
     return { ok: true };
   }
 

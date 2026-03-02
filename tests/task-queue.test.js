@@ -32,6 +32,15 @@ test("task queue runs handler and stores result", async () => {
   assert.equal(done.result?.value, 42);
 });
 
+test("task queue preserves falsy handler result values", async () => {
+  const queue = createTaskQueue({ concurrency: 1, maxQueue: 20, maxTasks: 100 });
+  queue.registerHandler("count", async () => 0);
+
+  const task = queue.enqueueTask({ type: "count", payload: {}, maxAttempts: 1 });
+  const done = await waitForStatus(queue, task.id, "succeeded");
+  assert.equal(done.result, 0);
+});
+
 test("task queue supports retry after failure", async () => {
   const queue = createTaskQueue({ concurrency: 1, maxQueue: 20, maxTasks: 100 });
 
@@ -134,4 +143,52 @@ test("task queue enforces execution timeout", async () => {
   const task = queue.enqueueTask({ type: "slow", payload: {}, maxAttempts: 1 });
   const failed = await waitForStatus(queue, task.id, "failed", { timeoutMs: 2000 });
   assert.equal(failed.lastError, "task_timeout");
+});
+
+test("task queue invalid explicit numeric options do not fall through to env vars", async () => {
+  const prevConcurrency = process.env.TASK_QUEUE_CONCURRENCY;
+  const prevMaxQueue = process.env.TASK_QUEUE_MAX;
+  const prevMaxTasks = process.env.TASKS_MAX;
+  const prevTimeout = process.env.TASK_TIMEOUT_MS;
+  process.env.TASK_QUEUE_CONCURRENCY = "9";
+  process.env.TASK_QUEUE_MAX = "99";
+  process.env.TASKS_MAX = "999";
+  process.env.TASK_TIMEOUT_MS = "3333";
+
+  try {
+    const queue = createTaskQueue({
+      concurrency: 0,
+      maxQueue: 0,
+      maxTasks: 0,
+      timeoutMs: 0,
+    });
+    const stats = queue.getStats();
+    assert.equal(stats.concurrency, 1);
+    assert.equal(stats.maxQueue, 200);
+    assert.equal(stats.maxTasks, 2000);
+    assert.equal(stats.timeoutMs, 90 * 1000);
+  } finally {
+    if (prevConcurrency === undefined) delete process.env.TASK_QUEUE_CONCURRENCY;
+    else process.env.TASK_QUEUE_CONCURRENCY = prevConcurrency;
+    if (prevMaxQueue === undefined) delete process.env.TASK_QUEUE_MAX;
+    else process.env.TASK_QUEUE_MAX = prevMaxQueue;
+    if (prevMaxTasks === undefined) delete process.env.TASKS_MAX;
+    else process.env.TASKS_MAX = prevMaxTasks;
+    if (prevTimeout === undefined) delete process.env.TASK_TIMEOUT_MS;
+    else process.env.TASK_TIMEOUT_MS = prevTimeout;
+  }
+});
+
+test("task queue ignores suffixed env timeout and falls back to default", async () => {
+  const prevTimeout = process.env.TASK_TIMEOUT_MS;
+  process.env.TASK_TIMEOUT_MS = "90s";
+
+  try {
+    const queue = createTaskQueue();
+    const stats = queue.getStats();
+    assert.equal(stats.timeoutMs, 90 * 1000);
+  } finally {
+    if (prevTimeout === undefined) delete process.env.TASK_TIMEOUT_MS;
+    else process.env.TASK_TIMEOUT_MS = prevTimeout;
+  }
 });

@@ -17,6 +17,18 @@ function parseOptionalEnvString(name) {
   return raw.trim();
 }
 
+function parseTokenTtlSeconds(value, fallback = 28800) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const normalized = Math.trunc(value);
+    return normalized > 0 ? normalized : fallback;
+  }
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
 function generateRandomCredentialPart(byteLength = 9) {
   return crypto.randomBytes(byteLength).toString("base64url");
 }
@@ -131,7 +143,7 @@ function getAuthConfig({ rootDir } = {}) {
 
   const jwtIssuer = process.env.JWT_ISSUER || "physicsAnimations";
   const jwtAudience = process.env.JWT_AUDIENCE || "physicsAnimations-web";
-  const tokenTtlSeconds = Number.parseInt(process.env.JWT_TTL_SECONDS || "28800", 10);
+  const tokenTtlSeconds = parseTokenTtlSeconds(process.env.JWT_TTL_SECONDS, 28800);
 
   return {
     adminUsername,

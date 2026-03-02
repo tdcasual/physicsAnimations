@@ -27,7 +27,15 @@ function createHybridStore({ rootDir, webdavConfig }) {
     local,
 
     async readBuffer(key) {
-      const localBuf = await local.readBuffer(key);
+      let localBuf = null;
+      try {
+        localBuf = await local.readBuffer(key);
+      } catch (err) {
+        logger.warn("hybrid_local_read_failed", {
+          operation: `read ${key}`,
+          error: err,
+        });
+      }
       if (localBuf) return localBuf;
       const remoteBuf = await webdav.readBuffer(key);
       if (remoteBuf) {
@@ -47,7 +55,15 @@ function createHybridStore({ rootDir, webdavConfig }) {
     },
 
     async createReadStream(key) {
-      const localStream = await local.createReadStream(key);
+      let localStream = null;
+      try {
+        localStream = await local.createReadStream(key);
+      } catch (err) {
+        logger.warn("hybrid_local_read_failed", {
+          operation: `stream ${key}`,
+          error: err,
+        });
+      }
       if (localStream) return localStream;
       return webdav.createReadStream(key);
     },

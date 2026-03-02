@@ -16,9 +16,13 @@ function createItemsWriteService({ store, deps }) {
       if (!dynamicItem) return noSave(null);
       if (patch.deleted !== undefined) return noSave({ __kind: "unsupported_change" });
 
-      if (patch.title !== undefined) dynamicItem.title = patch.title;
-      if (patch.description !== undefined) dynamicItem.description = patch.description;
-      if (patch.categoryId !== undefined) dynamicItem.categoryId = normalizeCategoryId(patch.categoryId);
+      if (patch.title !== undefined) {
+        const nextTitle = String(patch.title || "").trim();
+        if (!nextTitle) return noSave({ __kind: "invalid_title" });
+        dynamicItem.title = nextTitle;
+      }
+      if (patch.description !== undefined) dynamicItem.description = String(patch.description || "").trim();
+      if (patch.categoryId !== undefined) dynamicItem.categoryId = normalizeCategoryId(String(patch.categoryId || "").trim());
       if (patch.order !== undefined) dynamicItem.order = patch.order;
       if (patch.published !== undefined) dynamicItem.published = patch.published;
       if (patch.hidden !== undefined) dynamicItem.hidden = patch.hidden;
@@ -27,6 +31,9 @@ function createItemsWriteService({ store, deps }) {
       return dynamicItem;
     });
 
+    if (dynamicResult?.__kind === "invalid_title") {
+      return { status: 400, error: "invalid_title" };
+    }
     if (dynamicResult?.__kind === "unsupported_change") {
       return { status: 400, error: "unsupported_change" };
     }
@@ -39,6 +46,12 @@ function createItemsWriteService({ store, deps }) {
       return { status: 404, error: "not_found" };
     }
 
+    const builtinTitleProvided = patch.title !== undefined;
+    const nextBuiltinTitle = builtinTitleProvided ? String(patch.title || "").trim() : "";
+    if (builtinTitleProvided && !nextBuiltinTitle) {
+      return { status: 400, error: "invalid_title" };
+    }
+
     await mutateBuiltinItemsState({ store }, (builtinState) => {
       if (!builtinState.items) builtinState.items = {};
       const current =
@@ -46,11 +59,7 @@ function createItemsWriteService({ store, deps }) {
           ? { ...builtinState.items[id] }
           : {};
 
-      if (patch.title !== undefined) {
-        const title = String(patch.title || "").trim();
-        if (!title) delete current.title;
-        else current.title = title;
-      }
+      if (builtinTitleProvided) current.title = nextBuiltinTitle;
       if (patch.description !== undefined) {
         const desc = String(patch.description || "");
         if (!desc.trim()) delete current.description;
@@ -88,10 +97,9 @@ function createItemsWriteService({ store, deps }) {
     const deletedAt = new Date().toISOString();
 
     const deleted = await mutateItemsState({ store }, async (state) => {
-      const before = state.items.length;
       const item = state.items.find((it) => it.id === id);
       state.items = state.items.filter((it) => it.id !== id);
-      if (!item || state.items.length === before) return noSave(null);
+      if (!item) return noSave(null);
 
       if (item.type === "upload") {
         await store.deletePath(`uploads/${id}`, { recursive: true });
@@ -104,10 +112,14 @@ function createItemsWriteService({ store, deps }) {
     });
 
     if (deleted) {
-      await mutateItemTombstonesState({ store }, (tombstones) => {
-        if (!tombstones.tombstones) tombstones.tombstones = {};
-        tombstones.tombstones[id] = { deletedAt };
-      }).catch(() => {});
+      try {
+        await mutateItemTombstonesState({ store }, (tombstones) => {
+          if (!tombstones.tombstones) tombstones.tombstones = {};
+          tombstones.tombstones[id] = { deletedAt };
+        });
+      } catch {
+        return { status: 500, error: "tombstone_persist_failed" };
+      }
       return { ok: true };
     }
 
@@ -140,4 +152,3 @@ function createItemsWriteService({ store, deps }) {
 module.exports = {
   createItemsWriteService,
 };
-

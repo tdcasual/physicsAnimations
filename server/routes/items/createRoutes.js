@@ -32,6 +32,14 @@ function registerItemsCreateRoutes({
       next();
     },
     asyncHandler(async (req, res) => {
+      const contentType = String(req.headers?.["content-type"] || "").toLowerCase();
+      const isMultipart = req.is("multipart/form-data") || contentType.includes("multipart/form-data");
+
+      if (isMultipart && !req.file?.buffer?.length) {
+        res.status(400).json({ error: "missing_file" });
+        return;
+      }
+
       if (req.file?.buffer?.length) {
         const { categoryId, title, description, allowRiskyHtml } = parseUploadFields(
           req,

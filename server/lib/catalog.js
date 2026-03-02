@@ -8,8 +8,11 @@ const {
   applyGroupConfig,
   ensureCategory,
   getDefaultGroupTitle,
+  normalizeCategoryId,
+  normalizeGroupId,
   safeText,
 } = require("./catalog/helpers");
+const { hasOwnProperty } = Object.prototype;
 
 async function loadCatalog({
   rootDir,
@@ -35,12 +38,13 @@ async function loadCatalog({
   });
   const categoryState = await loadCategoriesState({ store });
 
-  const categories = { ...builtin.categories };
+  const categories = Object.assign(Object.create(null), builtin.categories || {});
 
   if (includeConfigCategories) {
-    for (const [categoryId, config] of Object.entries(categoryState.categories || {})) {
-      if (categories[categoryId]) continue;
-      const groupId = typeof config?.groupId === "string" && config.groupId.trim() ? config.groupId.trim() : DEFAULT_GROUP_ID;
+    for (const [rawCategoryId, config] of Object.entries(categoryState.categories || {})) {
+      const categoryId = normalizeCategoryId(rawCategoryId);
+      if (hasOwnProperty.call(categories, categoryId)) continue;
+      const groupId = normalizeGroupId(config?.groupId);
       categories[categoryId] = {
         id: categoryId,
         groupId,
@@ -66,7 +70,7 @@ async function loadCatalog({
     category.items.push({
       id: item.id,
       type: item.type,
-      categoryId: item.categoryId,
+      categoryId: category.id,
       title: safeText(item.title),
       description: safeText(item.description),
       href,
@@ -82,31 +86,32 @@ async function loadCatalog({
     applyCategoryConfig(category, categoryState.categories?.[category.id]);
   }
 
-  const groups = {};
+  const groups = Object.create(null);
   for (const category of Object.values(categories)) {
-    const groupId = safeText(category.groupId || DEFAULT_GROUP_ID) || DEFAULT_GROUP_ID;
+    const groupId = normalizeGroupId(category.groupId || DEFAULT_GROUP_ID);
     category.groupId = groupId;
-    if (!groups[groupId]) {
+    if (!hasOwnProperty.call(groups, groupId)) {
       groups[groupId] = {
         id: groupId,
         title: getDefaultGroupTitle(groupId),
         order: 0,
         hidden: false,
-        categories: {},
+        categories: Object.create(null),
       };
     }
     groups[groupId].categories[category.id] = category;
   }
 
   if (includeConfigCategories) {
-    for (const [groupId, config] of Object.entries(categoryState.groups || {})) {
-      if (!groups[groupId]) {
+    for (const [rawGroupId, config] of Object.entries(categoryState.groups || {})) {
+      const groupId = normalizeGroupId(rawGroupId);
+      if (!hasOwnProperty.call(groups, groupId)) {
         groups[groupId] = {
           id: groupId,
           title: getDefaultGroupTitle(groupId),
           order: 0,
           hidden: false,
-          categories: {},
+          categories: Object.create(null),
         };
       }
       applyGroupConfig(groups[groupId], config);

@@ -13,7 +13,7 @@ function createAuthRouter({ authConfig, store }) {
   const authRequired = requireAuth({ authConfig });
 
   const loginSchema = z.object({
-    username: z.string().min(1).max(128),
+    username: z.string().trim().min(1).max(128),
     password: z.string().min(1).max(256),
   });
 
@@ -51,8 +51,21 @@ function createAuthRouter({ authConfig, store }) {
     rateLimit({ key: "account_update", windowMs: 10 * 60 * 1000, max: 20 }),
     asyncHandler(async (req, res) => {
       const body = parseWithSchema(accountSchema, req.body);
-      const hasNewUsername = typeof body.newUsername === "string" && body.newUsername.trim();
-      const hasNewPassword = typeof body.newPassword === "string" && body.newPassword;
+      const newUsernameProvided = typeof body.newUsername === "string";
+      const normalizedNewUsername = newUsernameProvided ? body.newUsername.trim() : "";
+      const hasNewUsername = Boolean(normalizedNewUsername);
+      const newPasswordProvided = typeof body.newPassword === "string";
+      const normalizedNewPassword = newPasswordProvided ? body.newPassword.trim() : "";
+      const hasNewPassword = Boolean(body.newPassword);
+
+      if (newUsernameProvided && !normalizedNewUsername) {
+        res.status(400).json({ error: "invalid_username" });
+        return;
+      }
+      if (newPasswordProvided && !normalizedNewPassword) {
+        res.status(400).json({ error: "invalid_password" });
+        return;
+      }
 
       if (!hasNewUsername && !hasNewPassword) {
         res.status(400).json({ error: "no_changes" });
@@ -66,7 +79,7 @@ function createAuthRouter({ authConfig, store }) {
         return;
       }
 
-      const nextUsername = hasNewUsername ? body.newUsername.trim() : current.username;
+      const nextUsername = hasNewUsername ? normalizedNewUsername : current.username;
       if (!nextUsername) {
         res.status(400).json({ error: "invalid_username" });
         return;

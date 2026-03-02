@@ -9,20 +9,13 @@ function loadBuiltinCatalog({
   includeUnpublishedItems = false,
 } = {}) {
   const data = readAnimationsJson({ rootDir });
-  if (!data) return { categories: {} };
+  if (!data) return { categories: Object.create(null) };
   const overrides = builtinState?.items && typeof builtinState.items === "object" ? builtinState.items : {};
-  const categories = {};
+  const categories = Object.create(null);
 
   for (const [categoryId, category] of Object.entries(data)) {
-    const title = safeText(category?.title || CATEGORY_TITLES[categoryId] || categoryId);
-    categories[categoryId] = {
-      id: categoryId,
-      groupId: DEFAULT_GROUP_ID,
-      title,
-      order: 0,
-      hidden: false,
-      items: [],
-    };
+    const categoryEntry = ensureCategory(categories, { id: categoryId, groupId: DEFAULT_GROUP_ID });
+    categoryEntry.title = safeText(category?.title || CATEGORY_TITLES[categoryEntry.id] || categoryEntry.id);
   }
 
   for (const [categoryId, category] of Object.entries(data)) {
@@ -52,14 +45,15 @@ function loadBuiltinCatalog({
       const merged = applyBuiltinOverride(baseItem, overrides[file]);
       if (!merged) continue;
       const finalCategoryId = merged.categoryId || categoryId;
-      merged.categoryId = finalCategoryId;
 
       const published = merged.published !== false;
       const hidden = merged.hidden === true;
       if (!includeUnpublishedItems && !published) continue;
       if (!includeHiddenItems && hidden) continue;
 
-      ensureCategory(categories, { id: finalCategoryId, groupId: DEFAULT_GROUP_ID }).items.push(merged);
+      const categoryEntry = ensureCategory(categories, { id: finalCategoryId, groupId: DEFAULT_GROUP_ID });
+      merged.categoryId = categoryEntry.id;
+      categoryEntry.items.push(merged);
     }
   }
 

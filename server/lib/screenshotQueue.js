@@ -1,5 +1,16 @@
-const DEFAULT_CONCURRENCY = Math.max(1, Number.parseInt(process.env.SCREENSHOT_CONCURRENCY || "1", 10) || 1);
-const DEFAULT_MAX_QUEUE = Math.max(1, Number.parseInt(process.env.SCREENSHOT_QUEUE_MAX || "50", 10) || 50);
+function toPositiveInt(value, fallback) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return Math.max(1, Math.trunc(value));
+  }
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+}
+
+const DEFAULT_CONCURRENCY = toPositiveInt(process.env.SCREENSHOT_CONCURRENCY, 1);
+const DEFAULT_MAX_QUEUE = toPositiveInt(process.env.SCREENSHOT_QUEUE_MAX, 50);
 
 const queue = [];
 let active = 0;
@@ -54,7 +65,7 @@ function enqueue(task) {
       return;
     }
 
-    queue.push({ task, resolve, reject, enqueuedAt: Date.now() });
+    queue.push({ task, resolve, reject });
     pump();
   });
 }

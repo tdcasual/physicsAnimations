@@ -6,9 +6,41 @@ const { createError } = require("../errors");
 function createReadOnlyLocalStore({ rootDir, reason = "" } = {}) {
   const baseDir = path.join(rootDir || process.cwd(), "content");
 
+  function normalizeStorageKey(key, { allowEmpty = false } = {}) {
+    const raw = String(key || "");
+    if (raw.includes("?") || raw.includes("#")) {
+      throw createError("invalid_storage_key", 400, { key: raw });
+    }
+    const cleaned = raw.replace(/\\/g, "/").replace(/^\/+/, "");
+    for (const part of cleaned.split("/")) {
+      if (!part) continue;
+      let decoded = part;
+      try {
+        decoded = decodeURIComponent(part);
+      } catch {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+      if (decoded.includes("/") || decoded.includes("\\")) {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+      if (decoded.includes("?") || decoded.includes("#")) {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+    }
+    const normalized = path.posix.normalize(cleaned).replace(/^\/+/, "");
+    if (!normalized || normalized === ".") {
+      if (allowEmpty) return "";
+      throw createError("invalid_storage_key", 400, { key: raw });
+    }
+    if (normalized.startsWith("..") || normalized.includes("/../")) {
+      throw createError("invalid_storage_key", 400, { key: raw });
+    }
+    return normalized;
+  }
+
   function resolveKey(key) {
-    const cleaned = String(key || "").replace(/^\/+/, "");
-    return path.join(baseDir, cleaned);
+    const normalized = normalizeStorageKey(key);
+    return path.join(baseDir, normalized);
   }
 
   function throwReadOnly() {
@@ -47,12 +79,44 @@ function createReadOnlyLocalStore({ rootDir, reason = "" } = {}) {
 }
 
 function createLocalStore({ rootDir }) {
-  const baseDir = path.join(rootDir, "content");
+  const baseDir = path.join(rootDir || process.cwd(), "content");
   fs.mkdirSync(baseDir, { recursive: true });
 
+  function normalizeStorageKey(key, { allowEmpty = false } = {}) {
+    const raw = String(key || "");
+    if (raw.includes("?") || raw.includes("#")) {
+      throw createError("invalid_storage_key", 400, { key: raw });
+    }
+    const cleaned = raw.replace(/\\/g, "/").replace(/^\/+/, "");
+    for (const part of cleaned.split("/")) {
+      if (!part) continue;
+      let decoded = part;
+      try {
+        decoded = decodeURIComponent(part);
+      } catch {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+      if (decoded.includes("/") || decoded.includes("\\")) {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+      if (decoded.includes("?") || decoded.includes("#")) {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+    }
+    const normalized = path.posix.normalize(cleaned).replace(/^\/+/, "");
+    if (!normalized || normalized === ".") {
+      if (allowEmpty) return "";
+      throw createError("invalid_storage_key", 400, { key: raw });
+    }
+    if (normalized.startsWith("..") || normalized.includes("/../")) {
+      throw createError("invalid_storage_key", 400, { key: raw });
+    }
+    return normalized;
+  }
+
   function resolveKey(key) {
-    const cleaned = String(key || "").replace(/^\/+/, "");
-    return path.join(baseDir, cleaned);
+    const normalized = normalizeStorageKey(key);
+    return path.join(baseDir, normalized);
   }
 
   return {

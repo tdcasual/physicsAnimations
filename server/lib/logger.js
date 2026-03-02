@@ -6,6 +6,7 @@ const LEVEL_PRIORITY = {
   warn: 30,
   error: 40,
 };
+const RESERVED_LOG_KEYS = new Set(["ts", "level", "msg", "requestId"]);
 
 const SENSITIVE_KEY_RE = /(password|token|secret|authorization|cookie|api[_-]?key|jwt)/i;
 
@@ -62,6 +63,7 @@ function normalizeMeta(meta) {
   if (!meta || typeof meta !== "object") return {};
   const out = {};
   for (const [key, value] of Object.entries(meta)) {
+    if (RESERVED_LOG_KEYS.has(String(key || ""))) continue;
     if (value === undefined) continue;
     if (value instanceof Error) {
       out[key] = redactValue(toErrorObject(value), key);
@@ -75,11 +77,12 @@ function normalizeMeta(meta) {
 function write(level, msg, meta = {}) {
   if (!shouldWrite(level)) return;
 
+  const normalizedMeta = normalizeMeta(meta);
   const entry = {
+    ...normalizedMeta,
     ts: new Date().toISOString(),
     level,
     msg,
-    ...normalizeMeta(meta),
   };
   const requestId = getRequestId();
   if (requestId) entry.requestId = requestId;
@@ -114,7 +117,11 @@ function error(msg, err, meta = {}) {
     return;
   }
   if (err && typeof err === "object") {
-    write("error", msg, { ...meta, ...err });
+    write("error", msg, { ...meta, error: err });
+    return;
+  }
+  if (err !== undefined && err !== null) {
+    write("error", msg, { ...meta, error: err });
     return;
   }
   write("error", msg, meta);

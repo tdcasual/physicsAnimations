@@ -38,8 +38,8 @@ function registerFolderRoutes({
     writeRateLimit,
     asyncHandler(async (req, res) => {
       const body = parseWithSchema(createFolderSchema, req.body);
-      const folder = await service.createFolder(body);
-      res.json({ ok: true, folder });
+      const result = await service.createFolder(body);
+      if (sendServiceResult(res, result, (value) => ({ ok: true, folder: value }))) return;
     }),
   );
 
@@ -71,6 +71,10 @@ function registerFolderRoutes({
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
       const body = parseWithSchema(updateFolderSchema, req.body);
+      if (body.name === undefined && body.categoryId === undefined) {
+        res.status(400).json({ error: "no_changes" });
+        return;
+      }
       const result = await service.updateFolder({
         folderId: id,
         name: body.name,

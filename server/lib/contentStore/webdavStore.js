@@ -1,4 +1,5 @@
 const { Readable } = require("stream");
+const { createError } = require("../errors");
 
 const {
   createBasicAuthHeader,
@@ -7,29 +8,96 @@ const {
   joinUrlPath,
 } = require("./utils");
 
+function normalizeTimeoutMs(rawValue, fallback = 15000) {
+  let parsed = Number.NaN;
+  if (typeof rawValue === "number") {
+    parsed = Number.isFinite(rawValue) ? Math.trunc(rawValue) : Number.NaN;
+  } else {
+    const raw = String(rawValue ?? "").trim();
+    if (!raw || !/^\d+$/.test(raw)) return fallback;
+    parsed = Number.parseInt(raw, 10);
+  }
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(1000, parsed);
+}
+
+function normalizeBasePath(rawValue, fallback = "physicsAnimations") {
+  const raw = String(rawValue || "").trim();
+  const source = raw || fallback;
+  const parts = source
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean);
+  if (!parts.length) return "";
+  for (const part of parts) {
+    if (part === "." || part === "..") {
+      throw new Error("invalid_webdav_base_path");
+    }
+  }
+  return parts.join("/");
+}
+
 function createWebdavStore(options = {}) {
-  const rawUrl = options.url || process.env.WEBDAV_URL || "";
+  const rawUrl = options.url ?? process.env.WEBDAV_URL ?? "";
   if (!rawUrl) {
     throw new Error("WEBDAV_URL is required when STORAGE_MODE=webdav");
   }
 
-  const timeoutMs = Number.parseInt(
-    options.timeoutMs || process.env.WEBDAV_TIMEOUT_MS || "15000",
-    10,
-  );
-  const basePath = options.basePath || process.env.WEBDAV_BASE_PATH || "physicsAnimations";
+  const timeoutMs = normalizeTimeoutMs(options.timeoutMs ?? process.env.WEBDAV_TIMEOUT_MS, 15000);
+  const basePath = normalizeBasePath(options.basePath ?? process.env.WEBDAV_BASE_PATH, "physicsAnimations");
 
-  const username = options.username || process.env.WEBDAV_USERNAME || "";
-  const password = options.password || process.env.WEBDAV_PASSWORD || "";
-  const authHeader = username && password ? createBasicAuthHeader(username, password) : "";
+  const username = options.username ?? process.env.WEBDAV_USERNAME ?? "";
+  const password = options.password ?? process.env.WEBDAV_PASSWORD ?? "";
+  const authHeader =
+    String(username).length > 0 || String(password).length > 0
+      ? createBasicAuthHeader(username, password)
+      : "";
 
   const baseUrl = ensureTrailingSlash(rawUrl);
   const basePathSegments = String(basePath || "")
     .split("/")
     .filter(Boolean);
 
-  function urlForKey(key, { isDir = false } = {}) {
-    const rel = joinUrlPath(basePath, key);
+  function normalizeStorageKey(key, { allowEmpty = false } = {}) {
+    const raw = String(key || "");
+    const cleaned = raw.replace(/\\/g, "/").replace(/^\/+/, "");
+    const normalized = cleaned ? cleaned.split("/").filter(Boolean).join("/") : "";
+    if (!normalized) {
+      if (allowEmpty) return "";
+      throw createError("invalid_storage_key", 400, { key: raw });
+    }
+    const parts = normalized.split("/");
+    for (const part of parts) {
+      if (!part) {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+      let decoded = "";
+      try {
+        decoded = decodeURIComponent(part);
+      } catch {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+      if (
+        part === "." ||
+        part === ".." ||
+        decoded === "." ||
+        decoded === ".." ||
+        part.includes("?") ||
+        part.includes("#") ||
+        decoded.includes("?") ||
+        decoded.includes("#") ||
+        decoded.includes("/") ||
+        decoded.includes("\\")
+      ) {
+        throw createError("invalid_storage_key", 400, { key: raw });
+      }
+    }
+    return parts.join("/");
+  }
+
+  function urlForKey(key, { isDir = false, allowEmpty = false } = {}) {
+    const safeKey = normalizeStorageKey(key, { allowEmpty });
+    const rel = joinUrlPath(basePath, safeKey);
     const url = new URL(rel, baseUrl);
     if (isDir && !url.pathname.endsWith("/")) url.pathname += "/";
     return url.toString();
@@ -74,8 +142,15 @@ function createWebdavStore(options = {}) {
     }
 
     const segments = String(dirKey || "")
+      .replace(/\\/g, "/")
       .split("/")
       .filter(Boolean);
+
+    for (const segment of segments) {
+      if (segment === "." || segment === "..") {
+        throw createError("invalid_storage_key", 400, { key: dirKey });
+      }
+    }
 
     let current = "";
     for (const segment of segments) {
@@ -96,7 +171,7 @@ function createWebdavStore(options = {}) {
     basePath,
 
     async listDir(dirKey, { depth = 1 } = {}) {
-      const dirUrl = urlForKey(dirKey, { isDir: true });
+      const dirUrl = urlForKey(dirKey, { isDir: true, allowEmpty: true });
       const body =
         '<?xml version="1.0" encoding="utf-8"?>\n<d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>';
       const headers = {

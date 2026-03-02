@@ -1,8 +1,31 @@
 const { DEFAULT_GROUP_ID, GROUP_TITLES, CATEGORY_TITLES } = require("../categories");
+const { hasOwnProperty } = Object.prototype;
+
+const FORBIDDEN_MAP_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 function safeText(text) {
   if (typeof text !== "string") return "";
   return text;
+}
+
+function isForbiddenMapKey(value) {
+  return FORBIDDEN_MAP_KEYS.has(String(value || ""));
+}
+
+function normalizeCategoryId(categoryId) {
+  if (typeof categoryId !== "string") return "other";
+  const trimmed = categoryId.trim();
+  if (!trimmed) return "other";
+  if (isForbiddenMapKey(trimmed)) return "other";
+  return trimmed;
+}
+
+function normalizeGroupId(groupId) {
+  if (typeof groupId !== "string") return DEFAULT_GROUP_ID;
+  const trimmed = groupId.trim();
+  if (!trimmed) return DEFAULT_GROUP_ID;
+  if (isForbiddenMapKey(trimmed)) return DEFAULT_GROUP_ID;
+  return trimmed;
 }
 
 function applyBuiltinOverride(item, override) {
@@ -18,8 +41,7 @@ function applyBuiltinOverride(item, override) {
     out.description = safeText(override.description);
   }
   if (typeof override.categoryId === "string") {
-    const categoryId = override.categoryId.trim();
-    if (categoryId) out.categoryId = safeText(categoryId);
+    out.categoryId = normalizeCategoryId(override.categoryId);
   }
   if (Number.isFinite(override.order)) out.order = Math.trunc(override.order);
   if (typeof override.published === "boolean") out.published = override.published;
@@ -38,16 +60,17 @@ function getDefaultGroupTitle(groupId) {
 }
 
 function ensureCategory(categories, { id, groupId }) {
-  if (categories[id]) return categories[id];
-  categories[id] = {
-    id,
-    groupId: groupId || DEFAULT_GROUP_ID,
-    title: getDefaultCategoryTitle(id),
+  const categoryId = normalizeCategoryId(id);
+  if (hasOwnProperty.call(categories, categoryId)) return categories[categoryId];
+  categories[categoryId] = {
+    id: categoryId,
+    groupId: normalizeGroupId(groupId),
+    title: getDefaultCategoryTitle(categoryId),
     order: 0,
     hidden: false,
     items: [],
   };
-  return categories[id];
+  return categories[categoryId];
 }
 
 function applyCategoryConfig(category, config) {
@@ -56,7 +79,7 @@ function applyCategoryConfig(category, config) {
   if (maybeTitle) category.title = safeText(maybeTitle);
   if (Number.isFinite(config.order)) category.order = Math.trunc(config.order);
   if (typeof config.hidden === "boolean") category.hidden = config.hidden;
-  if (typeof config.groupId === "string" && config.groupId.trim()) category.groupId = config.groupId.trim();
+  if (typeof config.groupId === "string" && config.groupId.trim()) category.groupId = normalizeGroupId(config.groupId);
 }
 
 function applyGroupConfig(group, config) {
@@ -70,6 +93,8 @@ function applyGroupConfig(group, config) {
 module.exports = {
   safeText,
   applyBuiltinOverride,
+  normalizeCategoryId,
+  normalizeGroupId,
   getDefaultCategoryTitle,
   getDefaultGroupTitle,
   ensureCategory,

@@ -61,3 +61,19 @@ test("createStateDbStore returns wrapped object shape", () => {
   assert.equal(wrapped.store, store);
   assert.equal(wrapped.info.enabled, false);
 });
+
+test("createStateDbStore explicit empty mode does not fall through to env mode", () => {
+  const prevMode = process.env.STATE_DB_MODE;
+  process.env.STATE_DB_MODE = "sqlite";
+  try {
+    const wrapped = createStateDbStore({
+      rootDir: process.cwd(),
+      store: createStoreStub(),
+      mode: "",
+    });
+    assert.equal(wrapped.info.enabled, false);
+  } finally {
+    if (prevMode === undefined) delete process.env.STATE_DB_MODE;
+    else process.env.STATE_DB_MODE = prevMode;
+  }
+});

@@ -29,3 +29,32 @@ test("sqliteMirror delegates transaction and query concerns to submodules", () =
   assert.equal(typeof withImmediateTransaction, "function");
   assert.equal(typeof createQueryRunner, "function");
 });
+
+test("queryDynamicCategoryCounts normalizes dangerous category ids", () => {
+  const runner = createQueryRunner({
+    prepareQuery() {
+      return {
+        all() {
+          return [
+            { category_id: "mechanics", total: 2 },
+            { category_id: "__proto__", total: 3 },
+            { category_id: "constructor", total: 4 },
+            { category_id: "", total: 1 },
+          ];
+        },
+      };
+    },
+    mapDynamicItemRow(row) {
+      return row;
+    },
+    mapBuiltinItemRow(row) {
+      return row;
+    },
+  });
+
+  const out = runner.queryDynamicCategoryCounts({ isAdmin: true });
+  assert.equal(Object.getPrototypeOf(out.byCategory), null);
+  assert.equal(out.byCategory.mechanics, 2);
+  assert.equal(out.byCategory.other, 8);
+  assert.equal(out.byCategory.__proto__, undefined);
+});

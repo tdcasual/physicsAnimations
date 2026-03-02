@@ -22,6 +22,9 @@ test("normalizeCategoryId and safeText keep fallback behavior", async () => {
   assert.equal(normalizeCategoryId(undefined), "other");
   assert.equal(normalizeCategoryId(""), "other");
   assert.equal(normalizeCategoryId(" optics "), "optics");
+  assert.equal(normalizeCategoryId("__proto__"), "other");
+  assert.equal(normalizeCategoryId("prototype"), "other");
+  assert.equal(normalizeCategoryId("constructor"), "other");
   assert.equal(safeText("ok"), "ok");
   assert.equal(safeText(123), "");
 });

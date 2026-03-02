@@ -1,43 +1,67 @@
 const { extractHtmlTitleAndDescription, normalizeRemotePath, parseJsonBuffer } = require("./fileUtils");
-const { toTimeMs } = require("./stateMerge");
 
-async function scanRemoteUploads({ webdav, existingIds }) {
+function isSafeUploadDirName(value) {
+  const id = String(value || "").trim();
+  if (!id || !id.startsWith("u_")) return false;
+  if (id.includes("/") || id.includes("\\")) return false;
+  return true;
+}
+
+function isValidTimestamp(value) {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim();
+  if (!normalized) return false;
+  const ms = Date.parse(normalized);
+  return Number.isFinite(ms);
+}
+
+async function scanRemoteUploads({ webdav, existingIds, tombstoneIds = new Set() }) {
   const entries = await webdav.listDir("uploads");
   const imported = [];
 
   for (const entry of entries) {
     if (!entry?.isDir) continue;
     const id = String(entry.name || "").trim();
-    if (!id) continue;
-    if (!id.startsWith("u_")) continue;
+    if (!isSafeUploadDirName(id)) continue;
     if (existingIds.has(id)) continue;
+    if (tombstoneIds.has(id)) continue;
 
-    const manifestBuf = await webdav.readBuffer(`uploads/${id}/manifest.json`);
+    let manifestBuf = null;
+    try {
+      manifestBuf = await webdav.readBuffer(`uploads/${id}/manifest.json`);
+    } catch {
+      continue;
+    }
     if (!manifestBuf) continue;
     const manifest = parseJsonBuffer(manifestBuf);
     if (!manifest || typeof manifest !== "object") continue;
 
     const entryRaw = typeof manifest.entry === "string" ? manifest.entry : "index.html";
     const entryRel = normalizeRemotePath(entryRaw) || "index.html";
+    if (!/\.html?$/i.test(entryRel)) continue;
 
+    let htmlBuf = null;
     let title = "";
     let description = "";
     try {
-      const htmlBuf = await webdav.readBuffer(`uploads/${id}/${entryRel}`);
-      if (htmlBuf) {
-        const meta = extractHtmlTitleAndDescription(htmlBuf.toString("utf8"));
-        title = meta.title || "";
-        description = meta.description || "";
-      }
+      htmlBuf = await webdav.readBuffer(`uploads/${id}/${entryRel}`);
     } catch {
-      // ignore
+      continue;
     }
+    if (!htmlBuf) continue;
 
-    const createdAt =
-      typeof manifest.createdAt === "string" && toTimeMs(manifest.createdAt) ? manifest.createdAt : new Date().toISOString();
+    const meta = extractHtmlTitleAndDescription(htmlBuf.toString("utf8"));
+    title = meta.title || "";
+    description = meta.description || "";
 
-    const files = Array.isArray(manifest.files) ? manifest.files.map((f) => String(f || "")) : [];
-    const uploadKind = files.some((f) => f && !f.startsWith("deps/") && f !== "index.html") ? "zip" : "html";
+    const createdAt = isValidTimestamp(manifest.createdAt) ? manifest.createdAt.trim() : new Date().toISOString();
+
+    const files = Array.isArray(manifest.files)
+      ? manifest.files
+          .map((f) => normalizeRemotePath(String(f || "")))
+          .filter(Boolean)
+      : [];
+    const uploadKind = files.some((f) => !f.startsWith("deps/") && f !== entryRel) ? "zip" : "html";
 
     imported.push({
       id,

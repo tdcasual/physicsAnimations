@@ -26,6 +26,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
     const id = `l_${crypto.randomUUID()}`;
 
     let thumbnail = "";
+    let thumbnailKey = "";
     let tmpDir = "";
     try {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-shot-"));
@@ -36,31 +37,39 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
         outputPath,
       });
       const png = fs.readFileSync(outputPath);
-      await store.writeBuffer(`thumbnails/${id}.png`, png, { contentType: "image/png" });
-      thumbnail = `content/thumbnails/${id}.png`;
+      thumbnailKey = `thumbnails/${id}.png`;
+      await store.writeBuffer(thumbnailKey, png, { contentType: "image/png" });
+      thumbnail = `content/${thumbnailKey}`;
     } catch (err) {
       warnScreenshotDeps(err);
     } finally {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 
-    await mutateItemsState({ store }, (state) => {
-      state.items.push({
-        id,
-        type: "link",
-        categoryId: normalizeCategoryId(categoryId),
-        url: parsedUrl.toString(),
-        title: title || parsedUrl.hostname,
-        description,
-        thumbnail,
-        order: 0,
-        published: true,
-        hidden: false,
-        uploadKind: "html",
-        createdAt: now,
-        updatedAt: now,
+    try {
+      await mutateItemsState({ store }, (state) => {
+        state.items.push({
+          id,
+          type: "link",
+          categoryId: normalizeCategoryId(categoryId),
+          url: parsedUrl.toString(),
+          title: title || parsedUrl.hostname,
+          description,
+          thumbnail,
+          order: 0,
+          published: true,
+          hidden: false,
+          uploadKind: "html",
+          createdAt: now,
+          updatedAt: now,
+        });
       });
-    });
+    } catch (err) {
+      if (thumbnailKey) {
+        await store.deletePath(thumbnailKey).catch(() => {});
+      }
+      throw err;
+    }
 
     return { ok: true, id, thumbnail };
   }

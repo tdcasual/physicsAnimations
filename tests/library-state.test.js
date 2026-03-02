@@ -158,6 +158,61 @@ test("libraryState mutate helpers persist updates", async () => {
   assert.equal(folders.folders[0].id, "f1");
   assert.equal(assets.assets.length, 1);
   assert.equal(assets.assets[0].id, "a1");
+  assert.equal(assets.assets[0].openMode, "embed");
   assert.equal(profiles.profiles.length, 1);
   assert.equal(profiles.profiles[0].id, "ep_1");
+});
+
+test("libraryState sanitizers strip prototype-pollution keys in json option fields", async () => {
+  const {
+    saveLibraryAssetsState,
+    loadLibraryAssetsState,
+    saveLibraryEmbedProfilesState,
+    loadLibraryEmbedProfilesState,
+  } = require("../server/lib/libraryState");
+  const store = createMemoryStore();
+
+  await saveLibraryAssetsState({
+    store,
+    state: {
+      assets: [
+        {
+          id: "a_pp",
+          folderId: "f1",
+          adapterKey: "embed:ep_1",
+          fileName: "scene.json",
+          filePath: "content/library/assets/a_pp/source/scene.json",
+          embedOptions: JSON.parse('{"__proto__":{"polluted":true},"safe":1}'),
+        },
+      ],
+    },
+  });
+
+  await saveLibraryEmbedProfilesState({
+    store,
+    state: {
+      profiles: [
+        {
+          id: "ep_pp",
+          name: "Safe",
+          scriptUrl: "/content/library/vendor/x/embed.js",
+          viewerPath: "/content/library/vendor/x/viewer.html",
+          defaultOptions: JSON.parse('{"constructor":{"prototype":{"x":1}},"ok":1}'),
+        },
+      ],
+    },
+  });
+
+  const assets = await loadLibraryAssetsState({ store });
+  const profiles = await loadLibraryEmbedProfilesState({ store });
+  const embedOptions = assets.assets[0].embedOptions;
+  const defaultOptions = profiles.profiles[0].defaultOptions;
+
+  assert.equal(embedOptions.safe, 1);
+  assert.equal(embedOptions.polluted, undefined);
+  assert.equal(Object.getPrototypeOf(embedOptions).polluted, undefined);
+
+  assert.equal(defaultOptions.ok, 1);
+  assert.equal(defaultOptions.x, undefined);
+  assert.equal(Object.prototype.hasOwnProperty.call(defaultOptions, "constructor"), false);
 });

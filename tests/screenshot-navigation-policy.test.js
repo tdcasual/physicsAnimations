@@ -30,3 +30,15 @@ test("resolveScreenshotNavigationOptions supports timeout overrides", () => {
   });
   assert.equal(webOptions.timeout, 15000);
 });
+
+test("resolveScreenshotNavigationOptions ignores suffixed timeout env values", () => {
+  const fileOptions = resolveScreenshotNavigationOptions("file:///tmp/index.html", {
+    PA_SCREENSHOT_FILE_TIMEOUT_MS: "1200ms",
+  });
+  assert.equal(fileOptions.timeout, 5000);
+
+  const webOptions = resolveScreenshotNavigationOptions("https://example.com/demo", {
+    PA_SCREENSHOT_TIMEOUT_MS: "15s",
+  });
+  assert.equal(webOptions.timeout, 30000);
+});

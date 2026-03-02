@@ -50,3 +50,20 @@ test("createPhETAdapter skips viewer generation for download mode", async () => 
   assert.equal(out.generated, false);
   assert.equal(out.html, "");
 });
+
+test("createPhETAdapter escapes unsafe html in title", async () => {
+  const { createPhETAdapter } = require("../server/services/library/adapters/phet");
+  const adapter = createPhETAdapter();
+
+  const payload = '</title><script>window.__xss_phet=1</script><title data-x="';
+  const out = await adapter.buildViewer({
+    openMode: "embed",
+    assetPublicFileUrl: "/content/library/assets/a1/source/projectile-motion.phet.html",
+    title: payload,
+  });
+
+  assert.equal(out.generated, true);
+  assert.equal(out.html.includes(payload), false);
+  assert.equal(out.html.includes("<script>window.__xss_phet=1</script>"), false);
+  assert.match(out.html, /&lt;\/title&gt;&lt;script&gt;window\.__xss_phet=1&lt;\/script&gt;&lt;title data-x=&quot;/);
+});

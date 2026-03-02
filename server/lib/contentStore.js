@@ -18,17 +18,17 @@ function normalizeMode(raw) {
 
 function resolveWebdavConfig(config) {
   return {
-    url: config?.storage?.webdav?.url || process.env.WEBDAV_URL || "",
+    url: config?.storage?.webdav?.url ?? process.env.WEBDAV_URL ?? "",
     basePath:
-      config?.storage?.webdav?.basePath || process.env.WEBDAV_BASE_PATH || "physicsAnimations",
-    username: config?.storage?.webdav?.username || process.env.WEBDAV_USERNAME || "",
-    password: config?.storage?.webdav?.password || process.env.WEBDAV_PASSWORD || "",
-    timeoutMs: config?.storage?.webdav?.timeoutMs || process.env.WEBDAV_TIMEOUT_MS || "15000",
+      config?.storage?.webdav?.basePath ?? process.env.WEBDAV_BASE_PATH ?? "physicsAnimations",
+    username: config?.storage?.webdav?.username ?? process.env.WEBDAV_USERNAME ?? "",
+    password: config?.storage?.webdav?.password ?? process.env.WEBDAV_PASSWORD ?? "",
+    timeoutMs: config?.storage?.webdav?.timeoutMs ?? process.env.WEBDAV_TIMEOUT_MS ?? "15000",
   };
 }
 
 function createContentStore({ rootDir, config } = {}) {
-  const rawMode = config?.storage?.mode || process.env.STORAGE_MODE || "";
+  const rawMode = config?.storage?.mode ?? process.env.STORAGE_MODE ?? "";
   const mode = normalizeMode(rawMode);
   const webdavConfig = resolveWebdavConfig(config);
   const hasWebdav = Boolean(webdavConfig.url);

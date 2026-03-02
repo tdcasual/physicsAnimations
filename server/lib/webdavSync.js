@@ -24,13 +24,14 @@ async function syncWithWebdav({
   webdavConfig,
   scanRemote = false,
 } = {}) {
-  const contentDir = path.join(rootDir, "content");
+  const resolvedRootDir = typeof rootDir === "string" && rootDir.trim() ? rootDir : process.cwd();
+  const contentDir = path.join(resolvedRootDir, "content");
   const webdav = createWebdavStore(webdavConfig);
 
-  const localItems = parseJsonBuffer(readLocalBuffer({ rootDir, key: ITEMS_STATE_KEY }));
-  const localCategories = parseJsonBuffer(readLocalBuffer({ rootDir, key: CATEGORIES_STATE_KEY }));
-  const localBuiltin = parseJsonBuffer(readLocalBuffer({ rootDir, key: BUILTIN_ITEMS_STATE_KEY }));
-  const localTomb = parseJsonBuffer(readLocalBuffer({ rootDir, key: ITEM_TOMBSTONES_KEY }));
+  const localItems = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: ITEMS_STATE_KEY }));
+  const localCategories = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: CATEGORIES_STATE_KEY }));
+  const localBuiltin = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: BUILTIN_ITEMS_STATE_KEY }));
+  const localTomb = parseJsonBuffer(readLocalBuffer({ rootDir: resolvedRootDir, key: ITEM_TOMBSTONES_KEY }));
 
   const remoteItems = parseJsonBuffer(await webdav.readBuffer(ITEMS_STATE_KEY));
   const remoteCategories = parseJsonBuffer(await webdav.readBuffer(CATEGORIES_STATE_KEY));
@@ -48,7 +49,8 @@ async function syncWithWebdav({
   if (scanRemote) {
     try {
       const existingIds = new Set(mergedItems.items.map((it) => String(it.id || "")).filter(Boolean));
-      const importedItems = await scanRemoteUploads({ webdav, existingIds });
+      const tombstoneIds = new Set(Object.keys(mergedTombstones.tombstones || {}));
+      const importedItems = await scanRemoteUploads({ webdav, existingIds, tombstoneIds });
       scanResult.found = importedItems.length;
       if (importedItems.length) {
         mergedItems = {
@@ -56,13 +58,6 @@ async function syncWithWebdav({
           items: [...mergedItems.items, ...importedItems],
         };
         scanResult.imported = importedItems.length;
-
-        for (const item of importedItems) {
-          if (!item?.id) continue;
-          if (mergedTombstones.tombstones[item.id]) {
-            delete mergedTombstones.tombstones[item.id];
-          }
-        }
 
         mergedItems.items.sort((a, b) => {
           const timeDiff = String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
@@ -81,11 +76,12 @@ async function syncWithWebdav({
     { key: BUILTIN_ITEMS_STATE_KEY, value: mergedBuiltin },
     { key: ITEM_TOMBSTONES_KEY, value: mergedTombstones },
   ];
+  const stateFileKeys = new Set(outFiles.map((file) => file.key));
 
   for (const file of outFiles) {
     const buf = serializeJson(file.value);
     try {
-      writeLocalBuffer({ rootDir, key: file.key, buffer: buf });
+      writeLocalBuffer({ rootDir: resolvedRootDir, key: file.key, buffer: buf });
     } catch {
       // ignore local write errors (e.g., read-only env)
     }
@@ -98,7 +94,7 @@ async function syncWithWebdav({
 
   for (const filePath of files) {
     const rel = path.relative(contentDir, filePath).split(path.sep).join("/");
-    if (!rel || shouldSkip(rel)) {
+    if (!rel || stateFileKeys.has(rel) || shouldSkip(rel)) {
       skipped += 1;
       continue;
     }

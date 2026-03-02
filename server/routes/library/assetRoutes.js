@@ -29,7 +29,8 @@ function registerAssetRoutes({
     "/library/deleted-assets",
     authRequired,
     asyncHandler(async (req, res) => {
-      const folderId = String(req.query?.folderId || "").trim();
+      const folderIdInput = String(req.query?.folderId || "").trim();
+      const folderId = folderIdInput ? parseWithSchema(idSchema, folderIdInput) : "";
       const assets = await service.listDeletedAssets({ folderId: folderId || undefined });
       res.json({ assets });
     }),
@@ -80,6 +81,16 @@ function registerAssetRoutes({
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
       const body = parseWithSchema(updateAssetSchema, req.body);
+      if (
+        body.displayName === undefined &&
+        body.openMode === undefined &&
+        body.folderId === undefined &&
+        body.embedProfileId === undefined &&
+        body.embedOptions === undefined
+      ) {
+        res.status(400).json({ error: "no_changes" });
+        return;
+      }
       const result = await service.updateAsset({
         assetId: id,
         displayName: body.displayName,

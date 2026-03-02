@@ -12,7 +12,7 @@ function rateLimit({ key, windowMs, max }) {
 
     const existing = rateLimitState.get(bucketKey);
     let bucket = existing;
-    if (!bucket || now > bucket.resetAt) {
+    if (!bucket || now >= bucket.resetAt) {
       bucket = { count: 0, resetAt: now + windowMs };
     }
 
@@ -21,7 +21,7 @@ function rateLimit({ key, windowMs, max }) {
 
     if (rateLimitState.size > 5000) {
       for (const [k, v] of rateLimitState.entries()) {
-        if (now > v.resetAt) rateLimitState.delete(k);
+        if (now >= v.resetAt) rateLimitState.delete(k);
       }
     }
 

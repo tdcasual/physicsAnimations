@@ -98,10 +98,15 @@ test("webdav content routes block traversal and allow valid paths", async () => 
     }
 
     const traversal2 = await fetch(`${baseUrl}/content/uploads/%2e%2e%2fitems.json`);
-    assert.ok([400, 404].includes(traversal2.status));
+    assert.equal(traversal2.status, 400);
+    assert.deepEqual(await traversal2.json(), { error: "invalid_path" });
 
     const traversal3 = await fetch(`${baseUrl}/content/thumbnails/../items.json`);
     assert.ok([400, 404].includes(traversal3.status));
+
+    const traversal4 = await fetch(`${baseUrl}/content/thumbnails/%2e%2e%2fitems.json`);
+    assert.equal(traversal4.status, 400);
+    assert.deepEqual(await traversal4.json(), { error: "invalid_path" });
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });
@@ -124,6 +129,17 @@ test("upload rejects missing file and invalid file types", async () => {
     assert.equal(missing.status, 400);
     const missingBody = await missing.json();
     assert.equal(missingBody.error, "missing_file");
+
+    const genericMissingForm = new FormData();
+    genericMissingForm.append("categoryId", "other");
+    const genericMissing = await fetch(`${baseUrl}/api/items`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: genericMissingForm,
+    });
+    assert.equal(genericMissing.status, 400);
+    const genericMissingBody = await genericMissing.json();
+    assert.equal(genericMissingBody.error, "missing_file");
 
     const badForm = new FormData();
     badForm.append("file", new Blob([Buffer.from("nope")]), "file.exe");

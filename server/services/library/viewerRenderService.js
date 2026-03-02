@@ -1,5 +1,25 @@
 const { normalizeUrlLike, deriveViewerPath, normalizeJsonObject, toPublicPath } = require("./core/normalizers");
 
+function serializeForInlineScript(value) {
+  const encoded = JSON.stringify(value);
+  if (encoded === undefined) return "null";
+  return encoded
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function buildCustomEmbedHtml({ profile, assetPublicFileUrl, title, embedOptions }) {
   const scriptSources = [normalizeUrlLike(profile?.scriptUrl), normalizeUrlLike(profile?.fallbackScriptUrl)]
     .filter(Boolean)
@@ -9,6 +29,7 @@ function buildCustomEmbedHtml({ profile, assetPublicFileUrl, title, embedOptions
   const assetUrlOptionKey = String(profile?.assetUrlOptionKey || "sceneUrl").trim() || "sceneUrl";
   const defaults = normalizeJsonObject(profile?.defaultOptions) || {};
   const overrides = normalizeJsonObject(embedOptions) || {};
+  const safeTitle = escapeHtml(String(title || "演示"));
   const runtimeOptions = {
     ...defaults,
     ...overrides,
@@ -25,7 +46,7 @@ function buildCustomEmbedHtml({ profile, assetPublicFileUrl, title, embedOptions
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${String(title || "演示")}</title>
+    <title>${safeTitle}</title>
     <style>
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: #f8fafc; }
       #embed-host { width: 100%; height: 100%; }
@@ -38,10 +59,10 @@ function buildCustomEmbedHtml({ profile, assetPublicFileUrl, title, embedOptions
     <script>
       (function () {
         var hostId = "embed-host";
-        var ctorName = ${JSON.stringify(constructorName)};
-        var scriptSources = ${JSON.stringify(scriptSources)};
-        var options = ${JSON.stringify(runtimeOptions)};
-        var assetFileUrl = ${JSON.stringify(String(assetPublicFileUrl || ""))};
+        var ctorName = ${serializeForInlineScript(constructorName)};
+        var scriptSources = ${serializeForInlineScript(scriptSources)};
+        var options = ${serializeForInlineScript(runtimeOptions)};
+        var assetFileUrl = ${serializeForInlineScript(String(assetPublicFileUrl || ""))};
         var errorText = "演示资源加载失败，请稍后重试或下载原文件。";
 
         function renderFailure(detail) {

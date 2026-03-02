@@ -12,15 +12,19 @@ const createLinkSchema = z.object({
   type: z.literal("link").optional().default("link"),
   url: z.string().min(1).max(2048),
   categoryId: z.string().optional().default("other"),
-  title: z.string().optional().default(""),
-  description: z.string().optional().default(""),
+  title: z.string().trim().optional().default(""),
+  description: z.string().trim().optional().default(""),
 });
+
+const itemOrderSchema = z
+  .union([z.number(), z.string().trim().regex(/^-?\d+$/)])
+  .pipe(z.coerce.number().int().min(-100000).max(100000));
 
 const updateItemSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
   categoryId: z.string().optional(),
-  order: z.coerce.number().int().min(-100000).max(100000).optional(),
+  order: itemOrderSchema.optional(),
   published: z.boolean().optional(),
   hidden: z.boolean().optional(),
   deleted: z.boolean().optional(),
@@ -36,9 +40,17 @@ function parseBooleanFlag(value, fallback = false) {
   return fallback;
 }
 
+function normalizeErrorStatus(value) {
+  const status = Number(value);
+  if (!Number.isFinite(status)) return 500;
+  const code = Math.trunc(status);
+  if (code < 400 || code > 599) return 500;
+  return code;
+}
+
 function respondWithServiceResult(res, result) {
   if (result?.error) {
-    res.status(Number(result.status || 500)).json({ error: result.error });
+    res.status(normalizeErrorStatus(result.status)).json({ error: result.error });
     return true;
   }
   return false;

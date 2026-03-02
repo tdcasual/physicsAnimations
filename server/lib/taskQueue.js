@@ -4,10 +4,10 @@ const { createTaskQueuePersistence } = require("./taskQueue/persistence");
 const { nowIso, taskErrorMessage, toPositiveInt, toTaskView } = require("./taskQueue/shared");
 
 function createTaskQueue({ concurrency, maxQueue, maxTasks, timeoutMs, stateFile } = {}) {
-  const queueConcurrency = toPositiveInt(concurrency || process.env.TASK_QUEUE_CONCURRENCY, 1);
-  const queueMax = toPositiveInt(maxQueue || process.env.TASK_QUEUE_MAX, 200);
-  const tasksMax = toPositiveInt(maxTasks || process.env.TASKS_MAX, 2000);
-  const taskTimeoutMs = toPositiveInt(timeoutMs || process.env.TASK_TIMEOUT_MS, 90 * 1000);
+  const queueConcurrency = toPositiveInt(concurrency ?? process.env.TASK_QUEUE_CONCURRENCY, 1);
+  const queueMax = toPositiveInt(maxQueue ?? process.env.TASK_QUEUE_MAX, 200);
+  const tasksMax = toPositiveInt(maxTasks ?? process.env.TASKS_MAX, 2000);
+  const taskTimeoutMs = toPositiveInt(timeoutMs ?? process.env.TASK_TIMEOUT_MS, 90 * 1000);
 
   const handlers = new Map();
   const tasks = new Map();
@@ -87,7 +87,7 @@ function createTaskQueue({ concurrency, maxQueue, maxTasks, timeoutMs, stateFile
       )
         .then((result) => {
           task.status = "succeeded";
-          task.result = result || null;
+          task.result = result ?? null;
           task.lastError = "";
           task.attempts += 1;
           task.finishedAt = nowIso();

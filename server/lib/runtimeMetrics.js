@@ -54,7 +54,8 @@ function createRuntimeMetrics({ maxLatencySamples = 2000 } = {}) {
   }
 
   function middleware(req, res, next) {
-    if (!String(req.path || "").startsWith("/api/")) {
+    const path = String(req.path || "");
+    if (!(path === "/api" || path.startsWith("/api/"))) {
       next();
       return;
     }

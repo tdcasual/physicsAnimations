@@ -1,9 +1,54 @@
+const FORBIDDEN_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
 function toTimeMs(value) {
   if (typeof value !== "string" || !value.trim()) return 0;
   const date = new Date(value);
   const ms = date.getTime();
   if (Number.isNaN(ms)) return 0;
   return ms;
+}
+
+function hasValidTime(value) {
+  if (typeof value !== "string") return false;
+  const normalized = value.trim();
+  if (!normalized) return false;
+  return Number.isFinite(Date.parse(normalized));
+}
+
+function resolveItemTimeMs(item) {
+  if (hasValidTime(item?.updatedAt)) return toTimeMs(item.updatedAt);
+  if (hasValidTime(item?.createdAt)) return toTimeMs(item.createdAt);
+  return 0;
+}
+
+function keepNewerItemById(map, item) {
+  const id = typeof item?.id === "string" ? item.id : "";
+  if (!id) return;
+  const current = map.get(id);
+  if (!current) {
+    map.set(id, item);
+    return;
+  }
+  if (resolveItemTimeMs(item) > resolveItemTimeMs(current)) {
+    map.set(id, item);
+  }
+}
+
+function isSafeMapKey(value) {
+  const key = String(value || "");
+  if (!key) return false;
+  if (FORBIDDEN_OBJECT_KEYS.has(key)) return false;
+  return true;
+}
+
+function sanitizeObjectMap(rawMap) {
+  const source = rawMap && typeof rawMap === "object" ? rawMap : {};
+  const out = Object.create(null);
+  for (const [id, value] of Object.entries(source)) {
+    if (!isSafeMapKey(id)) continue;
+    out[id] = value;
+  }
+  return out;
 }
 
 function normalizeItemsState(raw) {
@@ -13,28 +58,28 @@ function normalizeItemsState(raw) {
 }
 
 function normalizeBuiltinItemsState(raw) {
-  if (!raw || typeof raw !== "object") return { version: 1, items: {} };
-  const items = raw.items && typeof raw.items === "object" ? raw.items : {};
+  if (!raw || typeof raw !== "object") return { version: 1, items: Object.create(null) };
+  const items = sanitizeObjectMap(raw.items);
   return { version: 1, items };
 }
 
 function normalizeCategoriesState(raw) {
-  if (!raw || typeof raw !== "object") return { version: 2, groups: {}, categories: {} };
-  const groups = raw.groups && typeof raw.groups === "object" ? raw.groups : {};
-  const categories = raw.categories && typeof raw.categories === "object" ? raw.categories : {};
+  if (!raw || typeof raw !== "object") return { version: 2, groups: Object.create(null), categories: Object.create(null) };
+  const groups = sanitizeObjectMap(raw.groups);
+  const categories = sanitizeObjectMap(raw.categories);
   return { version: 2, groups, categories };
 }
 
 function normalizeTombstonesState(raw) {
-  if (!raw || typeof raw !== "object") return { version: 1, tombstones: {} };
-  const tombstones = raw.tombstones && typeof raw.tombstones === "object" ? raw.tombstones : {};
+  if (!raw || typeof raw !== "object") return { version: 1, tombstones: Object.create(null) };
+  const tombstones = sanitizeObjectMap(raw.tombstones);
   return { version: 1, tombstones };
 }
 
 function mergeBuiltinItems(localRaw, remoteRaw) {
   const local = normalizeBuiltinItemsState(localRaw);
   const remote = normalizeBuiltinItemsState(remoteRaw);
-  const out = {};
+  const out = Object.create(null);
 
   const ids = new Set([...Object.keys(remote.items || {}), ...Object.keys(local.items || {})]);
   for (const id of ids) {
@@ -50,7 +95,9 @@ function mergeBuiltinItems(localRaw, remoteRaw) {
       continue;
     }
     if (!localEntry && !remoteEntry) continue;
-    out[id] = localEntry;
+    const localTime = toTimeMs(localEntry?.updatedAt);
+    const remoteTime = toTimeMs(remoteEntry?.updatedAt);
+    out[id] = remoteTime > localTime ? remoteEntry : localEntry;
   }
 
   return { version: 1, items: out };
@@ -61,7 +108,7 @@ function mergeCategories(localRaw, remoteRaw) {
   const remote = normalizeCategoriesState(remoteRaw);
 
   function mergeConfigMap(localMap, remoteMap) {
-    const out = {};
+    const out = Object.create(null);
     const ids = new Set([...Object.keys(remoteMap || {}), ...Object.keys(localMap || {})]);
     for (const id of ids) {
       const localEntry = localMap?.[id] && typeof localMap[id] === "object" ? localMap[id] : null;
@@ -76,7 +123,9 @@ function mergeCategories(localRaw, remoteRaw) {
         continue;
       }
       if (!localEntry && !remoteEntry) continue;
-      out[id] = localEntry;
+      const localTime = toTimeMs(localEntry?.updatedAt);
+      const remoteTime = toTimeMs(remoteEntry?.updatedAt);
+      out[id] = remoteTime > localTime ? remoteEntry : localEntry;
     }
     return out;
   }
@@ -94,7 +143,7 @@ function mergeItemsAndTombstones(localItemsRaw, remoteItemsRaw, localTombRaw, re
   const localTomb = normalizeTombstonesState(localTombRaw);
   const remoteTomb = normalizeTombstonesState(remoteTombRaw);
 
-  const mergedTombstones = {};
+  const mergedTombstones = Object.create(null);
   const tombIds = new Set([...Object.keys(remoteTomb.tombstones || {}), ...Object.keys(localTomb.tombstones || {})]);
   for (const id of tombIds) {
     const localEntry = localTomb.tombstones?.[id] && typeof localTomb.tombstones[id] === "object" ? localTomb.tombstones[id] : null;
@@ -109,18 +158,16 @@ function mergeItemsAndTombstones(localItemsRaw, remoteItemsRaw, localTombRaw, re
 
   const localById = new Map();
   for (const item of localState.items) {
-    const id = typeof item.id === "string" ? item.id : "";
-    if (id) localById.set(id, item);
+    keepNewerItemById(localById, item);
   }
   const remoteById = new Map();
   for (const item of remoteState.items) {
-    const id = typeof item.id === "string" ? item.id : "";
-    if (id) remoteById.set(id, item);
+    keepNewerItemById(remoteById, item);
   }
 
   const ids = new Set([...localById.keys(), ...remoteById.keys(), ...Object.keys(mergedTombstones)]);
   const mergedItems = [];
-  const nextTombstones = {};
+  const nextTombstones = Object.create(null);
   let deleted = 0;
   const conflicts = [];
 
@@ -129,28 +176,32 @@ function mergeItemsAndTombstones(localItemsRaw, remoteItemsRaw, localTombRaw, re
     const remoteItem = remoteById.get(id) || null;
     const tomb = mergedTombstones[id] || null;
 
-    const localTime = toTimeMs(localItem?.updatedAt) || toTimeMs(localItem?.createdAt);
-    const remoteTime = toTimeMs(remoteItem?.updatedAt) || toTimeMs(remoteItem?.createdAt);
-    const deletedTime = toTimeMs(tomb?.deletedAt);
+    const localTime = resolveItemTimeMs(localItem);
+    const remoteTime = resolveItemTimeMs(remoteItem);
+    const deletedAt = tomb?.deletedAt;
+    const deletedTime = toTimeMs(deletedAt);
 
-    if (deletedTime && deletedTime >= localTime && deletedTime >= remoteTime) {
+    if (hasValidTime(deletedAt) && deletedTime >= localTime && deletedTime >= remoteTime) {
       deleted += 1;
       nextTombstones[id] = { deletedAt: tomb.deletedAt };
       continue;
     }
 
+    let resolved = null;
     if (localItem && remoteItem) {
       const localType = String(localItem.type || "");
       const remoteType = String(remoteItem.type || "");
       if (localType && remoteType && localType !== remoteType) {
         conflicts.push({ id, kind: "type_mismatch", localType, remoteType });
       }
-    }
-    if (localItem) {
-      mergedItems.push(localItem);
+      resolved = remoteTime > localTime ? remoteItem : localItem;
+    } else if (localItem) {
+      resolved = localItem;
     } else if (remoteItem) {
-      mergedItems.push(remoteItem);
+      resolved = remoteItem;
     }
+
+    if (resolved) mergedItems.push(resolved);
   }
 
   mergedItems.sort((a, b) => {

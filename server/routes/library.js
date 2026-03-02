@@ -43,7 +43,7 @@ function createLibraryRouter({ authConfig, store }) {
   const writeRateLimit = rateLimit({ key: "library_write", windowMs: 60 * 60 * 1000, max: 120 });
 
   const createFolderSchema = z.object({
-    name: z.string().min(1).max(128),
+    name: z.string().trim().min(1).max(128),
     categoryId: z.string().optional().default("other"),
     coverType: z.enum(["blank", "image"]).optional().default("blank"),
   });

@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const express = require("express");
 const packageJson = require("../package.json");
+const logger = require("./lib/logger");
 
 const { getAuthConfig, requireAuth } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
@@ -27,10 +28,13 @@ function parseTrustProxy(value) {
   if (value === undefined) return undefined;
   const raw = String(value).trim();
   if (!raw) return undefined;
-  if (raw === "true") return true;
-  if (raw === "false") return false;
-  const n = Number.parseInt(raw, 10);
-  if (Number.isFinite(n) && String(n) === raw) return n;
+  const normalized = raw.toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  if (/^\d+$/.test(raw)) return Number.parseInt(raw, 10);
+  if (normalized === "loopback" || normalized === "linklocal" || normalized === "uniquelocal") {
+    return normalized;
+  }
   return raw;
 }
 
@@ -76,7 +80,20 @@ function guessContentType(filePath) {
 
 function safeContentKey(reqPath, prefix) {
   const raw = String(reqPath || "").replace(/^\/content\//, "");
-  const normalized = path.posix.normalize(raw).replace(/^\/+/, "");
+  const cleaned = raw.replace(/\\/g, "/").replace(/^\/+/, "");
+  const parts = cleaned.split("/").filter(Boolean);
+  for (const part of parts) {
+    let decoded = "";
+    try {
+      decoded = decodeURIComponent(part);
+    } catch {
+      return null;
+    }
+    if (decoded === "." || decoded === "..") return null;
+    if (decoded.includes("/") || decoded.includes("\\")) return null;
+    if (decoded.includes("?") || decoded.includes("#")) return null;
+  }
+  const normalized = path.posix.normalize(cleaned).replace(/^\/+/, "");
   if (!normalized || normalized === ".") return null;
   if (normalized.startsWith("..") || normalized.includes("/../")) return null;
   if (!normalized.startsWith(`${prefix}/`)) return null;
@@ -99,7 +116,7 @@ function shouldServeSpaRoute(reqPath) {
 }
 
 function createApp({
-  rootDir,
+  rootDir = path.join(__dirname, ".."),
   store: overrideStore,
   authConfig: overrideAuthConfig,
   metricsPublic: overrideMetricsPublic,
@@ -114,7 +131,15 @@ function createApp({
 
   const trustProxy = parseTrustProxy(process.env.TRUST_PROXY);
   if (trustProxy !== undefined) {
-    app.set("trust proxy", trustProxy);
+    try {
+      app.set("trust proxy", trustProxy);
+    } catch (err) {
+      app.set("trust proxy", false);
+      logger.warn("invalid_trust_proxy_config", {
+        value: String(process.env.TRUST_PROXY || ""),
+        error: err?.message || "invalid_trust_proxy",
+      });
+    }
   } else if (process.env.VERCEL) {
     // Vercel runs behind an edge proxy; without this, all requests may share the same IP
     // and rate limiting would become global. Prefer explicit TRUST_PROXY in self-hosted setups.

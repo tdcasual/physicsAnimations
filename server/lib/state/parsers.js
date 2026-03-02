@@ -1,4 +1,5 @@
 const { DEFAULT_GROUP_ID, TAXONOMY_VERSION } = require("./constants");
+const FORBIDDEN_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 function toInt(value, fallback = 0) {
   const n = Number(value);
@@ -8,6 +9,13 @@ function toInt(value, fallback = 0) {
 
 function emptyItemsState() {
   return { version: 2, items: [] };
+}
+
+function isSafeMapKey(value) {
+  const key = String(value || "");
+  if (!key) return false;
+  if (FORBIDDEN_OBJECT_KEYS.has(key)) return false;
+  return true;
 }
 
 function parseItemsState(parsed) {
@@ -74,7 +82,7 @@ function parseCategoriesState(parsed) {
   }
 
   for (const [id, group] of Object.entries(rawGroups)) {
-    if (typeof id !== "string" || !id) continue;
+    if (!isSafeMapKey(id)) continue;
     if (!group || typeof group !== "object") continue;
 
     const title = typeof group.title === "string" ? group.title : "";
@@ -84,7 +92,7 @@ function parseCategoriesState(parsed) {
   }
 
   for (const [id, category] of Object.entries(rawCategories)) {
-    if (typeof id !== "string" || !id) continue;
+    if (!isSafeMapKey(id)) continue;
     if (!category || typeof category !== "object") continue;
 
     const title = typeof category.title === "string" ? category.title : "";
@@ -108,7 +116,7 @@ function parseBuiltinItemsState(parsed) {
 
   const items = {};
   for (const [id, value] of Object.entries(parsed.items)) {
-    if (typeof id !== "string" || !id) continue;
+    if (!isSafeMapKey(id)) continue;
     if (!value || typeof value !== "object") continue;
 
     const entry = {};
@@ -138,7 +146,7 @@ function parseItemTombstonesState(parsed) {
 
   const tombstones = {};
   for (const [id, value] of Object.entries(parsed.tombstones)) {
-    if (typeof id !== "string" || !id) continue;
+    if (!isSafeMapKey(id)) continue;
     if (!value || typeof value !== "object") continue;
     if (typeof value.deletedAt !== "string" || !value.deletedAt) continue;
     tombstones[id] = { deletedAt: value.deletedAt };

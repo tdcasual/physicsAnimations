@@ -310,3 +310,76 @@ test("state db queryItems applies stable tie-break ordering across dynamic and b
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("state db queryItems tolerates duplicate dynamic ids and keeps newest row", async () => {
+  if (!hasNodeSqlite()) return;
+
+  const rootDir = makeTempRoot();
+  const baseStore = makeInMemoryStore({
+    itemsState: {
+      version: 2,
+      items: [
+        {
+          id: "d_dup",
+          type: "link",
+          categoryId: "other",
+          url: "https://example.com/new",
+          title: "Newest",
+          description: "",
+          thumbnail: "",
+          order: 0,
+          published: true,
+          hidden: false,
+          uploadKind: "html",
+          createdAt: "2026-01-02T00:00:00.000Z",
+          updatedAt: "2026-01-03T00:00:00.000Z",
+        },
+        {
+          id: "d_dup",
+          type: "link",
+          categoryId: "other",
+          url: "https://example.com/old",
+          title: "Old",
+          description: "",
+          thumbnail: "",
+          order: 0,
+          published: true,
+          hidden: false,
+          uploadKind: "html",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    },
+    builtinState: {
+      version: 1,
+      items: {},
+    },
+  });
+
+  const wrapped = createStateDbStore({
+    rootDir,
+    store: baseStore,
+    mode: "sqlite",
+    dbPath: path.join(rootDir, "content", "state.sqlite"),
+  });
+
+  try {
+    const out = await wrapped.store.stateDbQuery.queryItems({
+      isAdmin: true,
+      includeDeleted: true,
+      q: "",
+      categoryId: "",
+      type: "",
+      offset: 0,
+      limit: 20,
+    });
+
+    assert.equal(wrapped.info.circuitOpen, false);
+    assert.equal(out.total, 2);
+    assert.equal(out.items?.[0]?.id, "d_dup");
+    assert.equal(out.items?.[0]?.title, "Newest");
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

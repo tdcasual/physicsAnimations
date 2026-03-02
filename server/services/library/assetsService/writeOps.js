@@ -93,9 +93,14 @@ function createAssetsWriteOps({
       updatedAt: now,
     };
 
-    await mutateLibraryAssetsState({ store }, (state) => {
-      state.assets.push(asset);
-    });
+    try {
+      await mutateLibraryAssetsState({ store }, (state) => {
+        state.assets.push(asset);
+      });
+    } catch (err) {
+      await store.deletePath(`library/assets/${assetId}`, { recursive: true }).catch(() => {});
+      throw err;
+    }
 
     return { ok: true, asset };
   }
@@ -228,6 +233,12 @@ function createAssetsWriteOps({
     if (!asset) return { status: 404, error: "asset_not_found" };
     if (asset.deleted !== true) return { status: 409, error: "asset_not_deleted" };
 
+    try {
+      await store.deletePath(`library/assets/${asset.id}`, { recursive: true });
+    } catch {
+      return { status: 500, error: "asset_cleanup_failed" };
+    }
+
     let removed = null;
     await mutateLibraryAssetsState({ store }, (state) => {
       const index = state.assets.findIndex((item) => item.id === asset.id);
@@ -236,7 +247,6 @@ function createAssetsWriteOps({
       state.assets.splice(index, 1);
     });
     if (!removed) return { status: 404, error: "asset_not_found" };
-    await store.deletePath(`library/assets/${asset.id}`, { recursive: true }).catch(() => {});
     return { ok: true, asset: removed, permanent: true };
   }
 

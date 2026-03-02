@@ -5,6 +5,15 @@ const {
   buildDynamicCatalogWhereClause,
 } = require("./sqlBuilders");
 
+const FORBIDDEN_CATEGORY_IDS = new Set(["__proto__", "prototype", "constructor"]);
+
+function normalizeCategoryId(value) {
+  const categoryId = toText(value, "other").trim();
+  if (!categoryId) return "other";
+  if (FORBIDDEN_CATEGORY_IDS.has(categoryId)) return "other";
+  return categoryId;
+}
+
 function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow }) {
   function queryDynamicItems({ isAdmin = false, q = "", categoryId = "", type = "", offset = 0, limit = 24 } = {}) {
     const { whereSql, params } = buildDynamicWhereClause({ isAdmin, q, categoryId, type });
@@ -258,10 +267,10 @@ function createQueryRunner({ prepareQuery, mapDynamicItemRow, mapBuiltinItemRow 
       `,
     ).all();
 
-    const byCategory = {};
+    const byCategory = Object.create(null);
     for (const row of rows) {
-      const categoryId = toText(row?.category_id, "other").trim() || "other";
-      byCategory[categoryId] = (byCategory[categoryId] || 0) + Math.max(0, toInt(row?.total, 0));
+      const categoryId = normalizeCategoryId(row?.category_id);
+      byCategory[categoryId] = Math.max(0, toInt(byCategory[categoryId], 0)) + Math.max(0, toInt(row?.total, 0));
     }
 
     return { byCategory };

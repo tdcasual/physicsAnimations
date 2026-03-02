@@ -11,36 +11,49 @@ const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
 const logger = require("../lib/logger");
 
+const FORBIDDEN_TAXONOMY_IDS = new Set(["__proto__", "prototype", "constructor"]);
+const { hasOwnProperty } = Object.prototype;
+
+function isSafeTaxonomyId(value) {
+  return !FORBIDDEN_TAXONOMY_IDS.has(String(value || "").toLowerCase());
+}
+
 function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
   const router = express.Router();
   const authRequired = requireAuth({ authConfig });
   const authOptional = optionalAuth({ authConfig });
   const taxonomyQueryRepo = queryRepos?.taxonomyQueryRepo;
 
+  const orderSchema = z
+    .union([z.number(), z.string().trim().regex(/^-?\d+$/)])
+    .pipe(z.coerce.number().int().min(-100000).max(100000));
+
   const groupIdSchema = z
     .string()
     .min(1)
     .max(64)
-    .regex(/^[a-z][a-z0-9_-]*$/i);
+    .regex(/^[a-z][a-z0-9_-]*$/i)
+    .refine(isSafeTaxonomyId);
 
   const categoryIdSchema = z
     .string()
     .min(1)
     .max(64)
-    .regex(/^[a-z][a-z0-9_-]*$/i);
+    .regex(/^[a-z][a-z0-9_-]*$/i)
+    .refine(isSafeTaxonomyId);
 
   const createCategorySchema = z.object({
     id: categoryIdSchema,
     groupId: groupIdSchema.optional().default(DEFAULT_GROUP_ID),
-    title: z.string().min(1).max(128),
-    order: z.coerce.number().int().min(-100000).max(100000).optional().default(0),
+    title: z.string().trim().min(1).max(128),
+    order: orderSchema.optional().default(0),
     hidden: z.boolean().optional().default(false),
   });
 
   const updateCategorySchema = z.object({
     groupId: groupIdSchema.optional(),
-    title: z.string().max(128).optional(),
-    order: z.coerce.number().int().min(-100000).max(100000).optional(),
+    title: z.string().trim().min(1).max(128).optional(),
+    order: orderSchema.optional(),
     hidden: z.boolean().optional(),
   });
 
@@ -96,10 +109,11 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
 
       try {
         const created = await mutateCategoriesState({ store }, (state) => {
-          if (state.categories[id]) return noSave({ __kind: "already_exists" });
-          if (groupId !== DEFAULT_GROUP_ID && !state.groups?.[groupId]) {
+          if (hasOwnProperty.call(state.categories || {}, id)) return noSave({ __kind: "already_exists" });
+          if (groupId !== DEFAULT_GROUP_ID && !hasOwnProperty.call(state.groups || {}, groupId)) {
             return noSave({ __kind: "unknown_group" });
           }
+          if (!state.categories || typeof state.categories !== "object") state.categories = {};
           state.categories[id] = {
             id,
             groupId,
@@ -149,13 +163,13 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
 
       try {
         const updated = await mutateCategoriesState({ store }, (state) => {
-          if (!state.categories[id]) {
+          if (!hasOwnProperty.call(state.categories || {}, id)) {
             return noSave({ __kind: "not_found" });
           }
 
           if (body.groupId !== undefined) {
             const nextGroupId = String(body.groupId || DEFAULT_GROUP_ID).toLowerCase();
-            if (nextGroupId !== DEFAULT_GROUP_ID && !state.groups?.[nextGroupId]) {
+            if (nextGroupId !== DEFAULT_GROUP_ID && !hasOwnProperty.call(state.groups || {}, nextGroupId)) {
               return noSave({ __kind: "unknown_group" });
             }
             state.categories[id].groupId = nextGroupId;
@@ -198,7 +212,7 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
       const id = parseWithSchema(categoryIdSchema, req.params.id).toLowerCase();
       try {
         await mutateCategoriesState({ store }, (state) => {
-          if (!state.categories[id]) return noSave(null);
+          if (!hasOwnProperty.call(state.categories || {}, id)) return noSave(null);
           delete state.categories[id];
           return true;
         });

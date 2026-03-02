@@ -16,10 +16,9 @@ function parseWithSchema(schema, value) {
   throw createError("invalid_input", 400, { issues: formatZodIssues(result.error) });
 }
 
-const idSchema = z.string().min(1).max(128);
+const idSchema = z.string().trim().min(1).max(128);
 
 module.exports = {
   parseWithSchema,
   idSchema,
 };
-

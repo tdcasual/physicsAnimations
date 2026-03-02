@@ -57,13 +57,56 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
         return store.readBuffer(normalizedKey);
       }
 
+      let raw = null;
+      let sourceError = null;
+      try {
+        raw = await store.readBuffer(normalizedKey);
+      } catch (err) {
+        sourceError = err;
+      }
+
+      if (raw) {
+        try {
+          runMirrorOperation(`mirror.writeBuffer(${normalizedKey})`, () => {
+            mirror.writeBuffer(normalizedKey, raw);
+          });
+
+          if (normalizedKey === "items.json") {
+            runMirrorOperation("mirror.syncDynamicItemsFromBuffer(readThrough)", () => {
+              mirror.syncDynamicItemsFromBuffer(raw);
+            });
+            setDynamicIndexedReady(true);
+          }
+
+          if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
+            runMirrorOperation("mirror.syncBuiltinItems(readThrough)", () => {
+              mirror.syncBuiltinItems({ rootDir, builtinOverridesBuffer: raw });
+            });
+            setBuiltinIndexedReady(true);
+            setBuiltinOverridesDirty(false);
+            setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
+          }
+        } catch {
+          if (normalizedKey === "items.json") {
+            setDynamicIndexedReady(false);
+          }
+          if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
+            setBuiltinOverridesDirty(true);
+          }
+        }
+        return raw;
+      }
+
+      if (!sourceError) {
+        return null;
+      }
+
       let cached = null;
       try {
         cached = runMirrorOperation(`mirror.readBuffer(${normalizedKey})`, () => mirror.readBuffer(normalizedKey));
       } catch {
-        return store.readBuffer(normalizedKey);
+        cached = null;
       }
-
       if (cached) {
         if (normalizedKey === "items.json" && !getDynamicIndexedReady() && isUsable()) {
           try {
@@ -89,37 +132,7 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
         }
         return cached;
       }
-
-      const raw = await store.readBuffer(normalizedKey);
-      if (raw && isUsable()) {
-        try {
-          runMirrorOperation(`mirror.writeBuffer(${normalizedKey})`, () => {
-            mirror.writeBuffer(normalizedKey, raw);
-          });
-
-          if (normalizedKey === "items.json") {
-            runMirrorOperation("mirror.syncDynamicItemsFromBuffer(readThrough)", () => {
-              mirror.syncDynamicItemsFromBuffer(raw);
-            });
-            setDynamicIndexedReady(true);
-          }
-
-          if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-            runMirrorOperation("mirror.syncBuiltinItems(readThrough)", () => {
-              mirror.syncBuiltinItems({ rootDir, builtinOverridesBuffer: raw });
-            });
-            setBuiltinIndexedReady(true);
-            setBuiltinOverridesDirty(false);
-            setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
-          }
-        } catch {
-          if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
-            setBuiltinOverridesDirty(true);
-          }
-        }
-      }
-
-      return raw;
+      throw sourceError;
     },
 
     async writeBuffer(key, buffer, options) {
@@ -148,6 +161,9 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
           setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
         }
       } catch {
+        if (normalizedKey === "items.json") {
+          setDynamicIndexedReady(false);
+        }
         if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
           setBuiltinOverridesDirty(true);
         }
@@ -180,6 +196,9 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
           setBuiltinAnimationsSignature(getAnimationsSignature({ rootDir }));
         }
       } catch {
+        if (normalizedKey === "items.json") {
+          setDynamicIndexedReady(false);
+        }
         if (normalizedKey === BUILTIN_ITEMS_STATE_KEY) {
           setBuiltinOverridesDirty(true);
         }
@@ -190,19 +209,9 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
       const normalizedKey = normalizeKey(key);
       if (!isStateBlobKey(normalizedKey)) return store.createReadStream(normalizedKey);
       if (!isUsable()) return store.createReadStream(normalizedKey);
-
-      try {
-        const cached = runMirrorOperation(`mirror.readBuffer(${normalizedKey})`, () =>
-          mirror.readBuffer(normalizedKey),
-        );
-        if (cached) {
-          return Readable.from([cached]);
-        }
-      } catch {
-        // Best-effort mirror read: fallback to backing store stream below.
-      }
-
-      return store.createReadStream(normalizedKey);
+      const raw = await this.readBuffer(normalizedKey);
+      if (!raw) return null;
+      return Readable.from([raw]);
     },
   };
 }

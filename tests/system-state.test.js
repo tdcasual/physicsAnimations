@@ -189,6 +189,34 @@ test("system storage validate requires webdav url", async () => {
   }
 });
 
+test("system storage rejects invalid mode values instead of silently ignoring", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+    const res = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "not-a-real-mode",
+        sync: false,
+      }),
+    });
+
+    assert.equal(res.status, 400);
+    const data = await res.json();
+    assert.equal(data?.error, "invalid_storage_mode");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("system storage local mode does not trigger sync", async () => {
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();
@@ -233,6 +261,109 @@ test("system storage local mode does not trigger sync", async () => {
     const systemData = await systemRes.json();
     assert.equal(systemData?.storage?.mode, "local");
     assert.equal(systemData?.storage?.lastSyncedAt || "", "");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("system storage allows clearing persisted webdav password with explicit empty string", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const presetRes = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        webdav: {
+          url: "https://dav.example.com/root",
+          username: "user",
+          password: "secret",
+        },
+        sync: false,
+      }),
+    });
+    assert.equal(presetRes.status, 200);
+
+    const clearRes = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        webdav: {
+          password: "",
+        },
+        sync: false,
+      }),
+    });
+    assert.equal(clearRes.status, 200);
+    const cleared = await clearRes.json();
+    assert.equal(cleared?.storage?.webdav?.hasPassword, false);
+
+    const systemRes = await fetch(`${baseUrl}/api/system`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(systemRes.status, 200);
+    const system = await systemRes.json();
+    assert.equal(system?.storage?.webdav?.hasPassword, false);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("system storage ignores non-numeric timeout string values", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const presetRes = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        webdav: {
+          timeoutMs: 18000,
+        },
+        sync: false,
+      }),
+    });
+    assert.equal(presetRes.status, 200);
+
+    const updateRes = await fetch(`${baseUrl}/api/system/storage`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mode: "local",
+        webdav: {
+          timeoutMs: "3000ms",
+        },
+        sync: false,
+      }),
+    });
+    assert.equal(updateRes.status, 200);
+    const updated = await updateRes.json();
+    assert.equal(updated?.storage?.webdav?.timeoutMs, 18000);
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

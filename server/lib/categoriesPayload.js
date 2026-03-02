@@ -3,6 +3,7 @@ const { loadCatalog } = require("./catalog");
 const { loadCategoriesState } = require("./state");
 
 const EMPTY_ITEMS_STATE_BUFFER = Buffer.from('{"version":2,"items":[]}\n', "utf8");
+const FORBIDDEN_MAP_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 function safeText(text) {
   if (typeof text !== "string") return "";
@@ -23,13 +24,27 @@ function getDefaultGroupTitle(groupId) {
   return safeText(GROUP_TITLES[groupId] || groupId);
 }
 
+function normalizeCategoryId(categoryId) {
+  const id = safeText(categoryId).trim();
+  if (!id) return "other";
+  if (FORBIDDEN_MAP_KEYS.has(id)) return "other";
+  return id;
+}
+
+function normalizeGroupId(groupId) {
+  const id = safeText(groupId).trim();
+  if (!id) return DEFAULT_GROUP_ID;
+  if (FORBIDDEN_MAP_KEYS.has(id)) return DEFAULT_GROUP_ID;
+  return id;
+}
+
 function applyCategoryConfig(category, config) {
   if (!config || typeof config !== "object") return;
   const maybeTitle = typeof config.title === "string" ? config.title.trim() : "";
   if (maybeTitle) category.title = safeText(maybeTitle);
   if (Number.isFinite(config.order)) category.order = Math.trunc(config.order);
   if (typeof config.hidden === "boolean") category.hidden = config.hidden;
-  if (typeof config.groupId === "string" && config.groupId.trim()) category.groupId = config.groupId.trim();
+  if (typeof config.groupId === "string" && config.groupId.trim()) category.groupId = normalizeGroupId(config.groupId);
 }
 
 function applyGroupConfig(group, config) {
@@ -41,11 +56,13 @@ function applyGroupConfig(group, config) {
 }
 
 function normalizeDynamicCountMap(rawMap) {
-  if (!rawMap || typeof rawMap !== "object") return {};
-  const out = {};
+  if (!rawMap || typeof rawMap !== "object") return Object.create(null);
+  const out = Object.create(null);
   for (const [categoryId, value] of Object.entries(rawMap)) {
     if (typeof categoryId !== "string" || !categoryId) continue;
-    out[categoryId] = Math.max(0, toInt(value, 0));
+    const normalizedCategoryId = normalizeCategoryId(categoryId);
+    out[normalizedCategoryId] =
+      Math.max(0, toInt(out[normalizedCategoryId], 0)) + Math.max(0, toInt(value, 0));
   }
   return out;
 }
@@ -155,11 +172,13 @@ async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomy
 
   const dynamicCountMap = normalizeDynamicCountMap(dynamicResult?.byCategory);
 
-  const groups = {};
+  const groups = Object.create(null);
   for (const [groupId, group] of Object.entries(baseCatalog.groups || {})) {
-    groups[groupId] = {
+    const normalizedGroupId = normalizeGroupId(groupId);
+    groups[normalizedGroupId] = {
       ...group,
-      categories: { ...(group.categories || {}) },
+      id: normalizedGroupId,
+      categories: Object.assign(Object.create(null), group.categories || {}),
     };
   }
 
@@ -174,17 +193,18 @@ async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomy
     if (dynamicCount <= 0) continue;
     if (categoryMap.has(categoryId)) continue;
 
+    const normalizedCategoryId = normalizeCategoryId(categoryId);
     const category = {
-      id: categoryId,
+      id: normalizedCategoryId,
       groupId: DEFAULT_GROUP_ID,
-      title: getDefaultCategoryTitle(categoryId),
+      title: getDefaultCategoryTitle(normalizedCategoryId),
       order: 0,
       hidden: false,
       items: [],
     };
     applyCategoryConfig(category, categoryState.categories?.[categoryId]);
 
-    const groupId = safeText(category.groupId || DEFAULT_GROUP_ID) || DEFAULT_GROUP_ID;
+    const groupId = normalizeGroupId(category.groupId || DEFAULT_GROUP_ID);
     category.groupId = groupId;
 
     if (!groups[groupId]) {
@@ -193,7 +213,7 @@ async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomy
         title: getDefaultGroupTitle(groupId),
         order: 0,
         hidden: false,
-        categories: {},
+        categories: Object.create(null),
       };
       applyGroupConfig(group, categoryState.groups?.[groupId]);
       groups[groupId] = group;
@@ -204,8 +224,8 @@ async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomy
       continue;
     }
 
-    group.categories[categoryId] = category;
-    categoryMap.set(categoryId, category);
+    group.categories[category.id] = category;
+    categoryMap.set(category.id, category);
   }
 
   if (!isAdmin) {

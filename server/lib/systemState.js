@@ -28,9 +28,25 @@ function withStateLock(key, fn) {
 }
 
 function toInt(value, fallback) {
-  const parsed = Number.parseInt(String(value || ""), 10);
+  const parsed = Number.parseInt(String(value ?? ""), 10);
   if (!Number.isFinite(parsed)) return fallback;
   return parsed;
+}
+
+function normalizeTimeoutMs(value, fallback = 15000) {
+  let parsed = fallback;
+  if (typeof value === "number") {
+    parsed = Number.isFinite(value) ? Math.trunc(value) : fallback;
+  } else if (typeof value === "string") {
+    const raw = value.trim();
+    if (/^\d+$/.test(raw)) {
+      parsed = Number.parseInt(raw, 10);
+    }
+  } else {
+    parsed = toInt(value, fallback);
+  }
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(1000, parsed);
 }
 
 function normalizeMode(raw) {
@@ -61,7 +77,7 @@ function buildEnvDefaults() {
         basePath: String(process.env.WEBDAV_BASE_PATH || "physicsAnimations"),
         username: String(process.env.WEBDAV_USERNAME || ""),
         password: String(process.env.WEBDAV_PASSWORD || ""),
-        timeoutMs: toInt(process.env.WEBDAV_TIMEOUT_MS || "15000", 15000),
+        timeoutMs: normalizeTimeoutMs(process.env.WEBDAV_TIMEOUT_MS || "15000", 15000),
         scanRemote: false,
       },
     },
@@ -86,9 +102,7 @@ function normalizeState(raw, fallback) {
         basePath: typeof webdav.basePath === "string" ? webdav.basePath : base.storage.webdav.basePath,
         username: typeof webdav.username === "string" ? webdav.username : base.storage.webdav.username,
         password: typeof webdav.password === "string" ? webdav.password : base.storage.webdav.password,
-        timeoutMs: Number.isFinite(webdav.timeoutMs)
-          ? toInt(webdav.timeoutMs, base.storage.webdav.timeoutMs)
-          : base.storage.webdav.timeoutMs,
+        timeoutMs: normalizeTimeoutMs(webdav.timeoutMs, base.storage.webdav.timeoutMs),
         scanRemote: typeof webdav.scanRemote === "boolean" ? webdav.scanRemote : base.storage.webdav.scanRemote,
       },
     },

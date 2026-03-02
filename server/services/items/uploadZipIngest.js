@@ -80,6 +80,7 @@ async function ingestZipUpload({
   const htmlCandidates = [];
   const htmlMetaByPath = new Map();
   const riskFindings = [];
+  const pendingStoreWrites = [];
 
   for (const file of files) {
     const rel = normalizeZipPath(file.path);
@@ -92,18 +93,16 @@ async function ingestZipUpload({
       throw err;
     }
 
-    const size = Number(file.uncompressedSize || file.size || 0);
-    total += size;
-    if (total > MAX_TOTAL_BYTES) {
-      const err = new Error("zip_too_large");
-      err.status = 400;
-      throw err;
-    }
-
     const buf = await file.buffer();
     if (buf.length > MAX_FILE_BYTES) {
       const err = new Error("file_too_large");
       err.status = 413;
+      throw err;
+    }
+    total += buf.length;
+    if (total > MAX_TOTAL_BYTES) {
+      const err = new Error("zip_too_large");
+      err.status = 400;
       throw err;
     }
 
@@ -130,12 +129,20 @@ async function ingestZipUpload({
     }
 
     fs.writeFileSync(localPath, outBuf);
-    await writeUploadBuffer(`uploads/${id}/${rel}`, outBuf, { contentType });
+    pendingStoreWrites.push({
+      key: `uploads/${id}/${rel}`,
+      buffer: outBuf,
+      contentType,
+    });
     extracted.push(rel);
   }
 
   if (riskFindings.length > 0 && !allowRiskyHtml) {
     throw createRiskConfirmationError(riskFindings);
+  }
+
+  for (const write of pendingStoreWrites) {
+    await writeUploadBuffer(write.key, write.buffer, { contentType: write.contentType });
   }
 
   const indexCandidates = htmlCandidates

@@ -48,6 +48,20 @@ function registerEmbedProfileRoutes({
     asyncHandler(async (req, res) => {
       const id = parseWithSchema(idSchema, req.params.id);
       const body = parseWithSchema(updateEmbedProfileSchema, req.body);
+      if (
+        body.name === undefined &&
+        body.scriptUrl === undefined &&
+        body.fallbackScriptUrl === undefined &&
+        body.viewerPath === undefined &&
+        body.constructorName === undefined &&
+        body.assetUrlOptionKey === undefined &&
+        body.matchExtensions === undefined &&
+        body.defaultOptions === undefined &&
+        body.enabled === undefined
+      ) {
+        res.status(400).json({ error: "no_changes" });
+        return;
+      }
       const result = await service.updateEmbedProfile({
         profileId: id,
         ...body,

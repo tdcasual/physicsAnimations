@@ -1,5 +1,12 @@
 function toPositiveInt(value, fallback) {
-  const parsed = Number.parseInt(String(value || ""), 10);
+  let parsed = Number.NaN;
+  if (typeof value === "number") {
+    parsed = Number.isFinite(value) ? Math.trunc(value) : Number.NaN;
+  } else {
+    const raw = String(value ?? "").trim();
+    if (!raw || !/^\d+$/.test(raw)) return fallback;
+    parsed = Number.parseInt(raw, 10);
+  }
   if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
   return parsed;
 }

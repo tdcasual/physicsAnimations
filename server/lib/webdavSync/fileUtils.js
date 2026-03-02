@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { extractHtmlTitleAndDescription } = require("../htmlMeta");
 
 const SKIP_FILES = new Set([".jwt_secret", "system.json"]);
 
@@ -52,10 +53,16 @@ function guessContentType(filePath) {
 }
 
 function shouldSkip(relPath) {
-  const normalized = relPath.split(path.sep).join("/");
-  const baseName = path.basename(normalized);
+  const normalized = String(relPath || "").split(path.sep).join("/").replace(/^\/+/, "");
+  const segments = normalized.split("/").filter(Boolean);
+  const baseName = segments.length ? segments[segments.length - 1] : path.basename(normalized);
+
+  for (const segment of segments) {
+    if (segment.startsWith(".") && segment !== ".well-known") return true;
+  }
+
   if (SKIP_FILES.has(baseName)) return true;
-  if (baseName.startsWith(".") && baseName !== ".well-known") return true;
+  if (/^state\.sqlite(?:-(?:wal|shm|journal))?$/i.test(baseName)) return true;
   return false;
 }
 
@@ -89,24 +96,13 @@ function serializeJson(value) {
 }
 
 function normalizeRemotePath(value) {
-  const cleaned = String(value || "").replace(/^\/+/, "");
+  const cleaned = String(value || "")
+    .replace(/\\/g, "/")
+    .replace(/^\/+/, "");
   const normalized = path.posix.normalize(cleaned).replace(/^\/+/, "");
   if (!normalized || normalized === ".") return "";
   if (normalized.startsWith("..") || normalized.includes("/../")) return "";
   return normalized;
-}
-
-function extractHtmlTitleAndDescription(html) {
-  const text = String(html || "");
-  const titleMatch = text.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const rawTitle = titleMatch ? String(titleMatch[1] || "").trim() : "";
-
-  const descMatch =
-    text.match(/<meta[^>]+name=[\"']description[\"'][^>]*content=[\"']([^\"']*)[\"'][^>]*>/i) ||
-    text.match(/<meta[^>]+content=[\"']([^\"']*)[\"'][^>]*name=[\"']description[\"'][^>]*>/i);
-  const rawDesc = descMatch ? String(descMatch[1] || "").trim() : "";
-
-  return { title: rawTitle, description: rawDesc };
 }
 
 module.exports = {

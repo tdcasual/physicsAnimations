@@ -64,29 +64,32 @@ function createEmbedProfileSync({ store, fetcher, getEmbedProfileById, mutateLib
     const downloadedByUrl = new Map();
     const pendingQueue = [];
     const maxFiles = 120;
+    const requiredViewerRefs = new Set();
 
     function enqueueFromRef(baseUrl, refValue) {
       const ref = String(refValue || "").trim();
-      if (!ref || shouldSkipRef(ref)) return;
+      if (!ref || shouldSkipRef(ref)) return null;
       let resolved = null;
       try {
         resolved = new URL(ref, baseUrl);
       } catch {
-        return;
+        return null;
       }
-      if (!["http:", "https:"].includes(resolved.protocol)) return;
-      if (resolved.origin !== viewerUrlObject.origin) return;
+      if (!["http:", "https:"].includes(resolved.protocol)) return null;
+      if (resolved.origin !== viewerUrlObject.origin) return null;
 
       const rel = toMirrorRelativePath(viewerBaseDir, resolved);
-      if (!rel || downloadedByUrl.has(resolved.toString())) return;
+      if (!rel || downloadedByUrl.has(resolved.toString())) return null;
       pendingQueue.push({
         absoluteUrl: resolved.toString(),
         relativePath: rel,
       });
+      return resolved.toString();
     }
 
     for (const ref of parseHtmlRefs(viewerHtml)) {
-      enqueueFromRef(viewerUrlObject, ref);
+      const resolved = enqueueFromRef(viewerUrlObject, ref);
+      if (resolved) requiredViewerRefs.add(resolved);
     }
     for (const ref of parseJsRefs(scriptFetch.buffer.toString("utf8"))) {
       enqueueFromRef(scriptUrlObject, ref);
@@ -101,6 +104,9 @@ function createEmbedProfileSync({ store, fetcher, getEmbedProfileById, mutateLib
       try {
         downloaded = await fetchRemoteBuffer(next.absoluteUrl);
       } catch {
+        if (requiredViewerRefs.has(next.absoluteUrl)) {
+          throw new Error(`required_viewer_dependency_fetch_failed:${next.absoluteUrl}`);
+        }
         continue;
       }
       downloadedByUrl.set(next.absoluteUrl, {
@@ -145,7 +151,7 @@ function createEmbedProfileSync({ store, fetcher, getEmbedProfileById, mutateLib
       );
     }
 
-    await store.deletePath(mirrorPrefix, { recursive: true }).catch(() => {});
+    await store.deletePath(mirrorPrefix, { recursive: true });
     await store.writeBuffer(`${mirrorPrefix}/embed.js`, scriptFetch.buffer, {
       contentType: scriptFetch.contentType || "application/javascript; charset=utf-8",
     });

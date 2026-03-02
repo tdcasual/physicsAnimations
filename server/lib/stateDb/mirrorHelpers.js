@@ -10,6 +10,7 @@ const STATE_BLOB_KEYS = new Set([
 ]);
 
 const BUILTIN_ITEMS_STATE_KEY = "builtin_items.json";
+const FORBIDDEN_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 function toInt(value, fallback = 0) {
   const n = Number(value);
@@ -24,6 +25,37 @@ function toBool(value, fallback = false) {
 
 function toText(value, fallback = "") {
   return typeof value === "string" ? value : fallback;
+}
+
+function isSafeMapKey(value) {
+  const key = String(value || "");
+  if (!key) return false;
+  if (FORBIDDEN_OBJECT_KEYS.has(key)) return false;
+  return true;
+}
+
+function normalizeCategoryId(value) {
+  const categoryId = toText(value, "other").trim();
+  if (!categoryId) return "other";
+  if (FORBIDDEN_OBJECT_KEYS.has(categoryId)) return "other";
+  return categoryId;
+}
+
+function parseTimeMs(value) {
+  if (typeof value !== "string") return { valid: false, ms: 0 };
+  const normalized = value.trim();
+  if (!normalized) return { valid: false, ms: 0 };
+  const ms = Date.parse(normalized);
+  if (!Number.isFinite(ms)) return { valid: false, ms: 0 };
+  return { valid: true, ms };
+}
+
+function dynamicRowTimeMs(row) {
+  const updated = parseTimeMs(row?.updatedAt);
+  if (updated.valid) return updated.ms;
+  const created = parseTimeMs(row?.createdAt);
+  if (created.valid) return created.ms;
+  return 0;
 }
 
 function parseDynamicItemsFromBuffer(buffer) {
@@ -47,7 +79,7 @@ function parseDynamicItemsFromBuffer(buffer) {
     rows.push({
       id,
       type,
-      categoryId: toText(item.categoryId, "other") || "other",
+      categoryId: normalizeCategoryId(item.categoryId),
       title: toText(item.title),
       description: toText(item.description),
       url: type === "link" ? toText(item.url) : "",
@@ -61,29 +93,42 @@ function parseDynamicItemsFromBuffer(buffer) {
       updatedAt: toText(item.updatedAt),
     });
   }
-  return rows;
+
+  const deduped = new Map();
+  for (const row of rows) {
+    const current = deduped.get(row.id);
+    if (!current) {
+      deduped.set(row.id, row);
+      continue;
+    }
+    if (dynamicRowTimeMs(row) > dynamicRowTimeMs(current)) {
+      deduped.set(row.id, row);
+    }
+  }
+
+  return [...deduped.values()];
 }
 
 function parseBuiltinOverridesFromBuffer(buffer) {
-  if (!buffer) return {};
+  if (!buffer) return Object.create(null);
   let parsed = null;
   try {
     parsed = JSON.parse(Buffer.isBuffer(buffer) ? buffer.toString("utf8") : String(buffer));
   } catch {
-    return {};
+    return Object.create(null);
   }
 
   const source = parsed?.items && typeof parsed.items === "object" ? parsed.items : {};
-  const overrides = {};
+  const overrides = Object.create(null);
 
   for (const [id, value] of Object.entries(source)) {
-    if (typeof id !== "string" || !id) continue;
+    if (!isSafeMapKey(id)) continue;
     if (!value || typeof value !== "object") continue;
 
     const out = {};
     if (typeof value.title === "string" && value.title.trim()) out.title = value.title.trim();
     if (typeof value.description === "string") out.description = value.description;
-    if (typeof value.categoryId === "string" && value.categoryId.trim()) out.categoryId = value.categoryId.trim();
+    if (typeof value.categoryId === "string" && value.categoryId.trim()) out.categoryId = normalizeCategoryId(value.categoryId);
     if (Number.isFinite(value.order)) out.order = Math.trunc(value.order);
     if (typeof value.published === "boolean") out.published = value.published;
     if (typeof value.hidden === "boolean") out.hidden = value.hidden;
@@ -113,7 +158,7 @@ function loadBuiltinBaseRows({ rootDir }) {
 
       rows.push({
         id,
-        categoryId: toText(categoryId, "other") || "other",
+        categoryId: normalizeCategoryId(categoryId),
         title: toText(item?.title, id.replace(/\.html$/i, "")),
         description: toText(item?.description),
         thumbnail: toText(item?.thumbnail),

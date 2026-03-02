@@ -1,4 +1,5 @@
 const LIBRARY_STATE_VERSION = 1;
+const FORBIDDEN_JSON_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 function toInt(value, fallback = 0) {
   const n = Number(value);
@@ -39,6 +40,7 @@ function sanitizeJsonValue(value, depth = 0) {
   for (const [rawKey, item] of Object.entries(value)) {
     const key = toText(rawKey).trim();
     if (!key) continue;
+    if (FORBIDDEN_JSON_KEYS.has(key)) continue;
     const sanitized = sanitizeJsonValue(item, depth + 1);
     if (sanitized !== undefined) out[key] = sanitized;
   }
@@ -98,7 +100,7 @@ function sanitizeAssetEntry(value) {
   const id = toText(value.id).trim();
   if (!id) return null;
 
-  const openMode = toText(value.openMode).trim() === "embed" ? "embed" : "download";
+  const openMode = toText(value.openMode).trim() === "download" ? "download" : "embed";
   const status = toText(value.status).trim() === "failed" ? "failed" : "ready";
   const deleted = toBool(value.deleted, false);
 

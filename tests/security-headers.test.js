@@ -47,6 +47,10 @@ test("api routes set defensive security headers", async () => {
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
   try {
+    const apiRootRes = await fetch(`${baseUrl}/api`);
+    assert.equal(apiRootRes.status, 404);
+    assertApiSecurityHeaders(apiRootRes);
+
     const healthRes = await fetch(`${baseUrl}/api/health`);
     assert.equal(healthRes.status, 200);
     assertApiSecurityHeaders(healthRes);

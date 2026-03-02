@@ -93,3 +93,59 @@ test("logger includes requestId from async request context", () => {
   const parsed = JSON.parse(calls.log[0]);
   assert.equal(parsed.requestId, "req-test-1");
 });
+
+test("logger.error keeps reserved fields immutable when plain object errors are logged", () => {
+  const originalLevel = process.env.LOG_LEVEL;
+  process.env.LOG_LEVEL = "error";
+  const logger = loadFreshLogger();
+
+  const calls = captureConsoleCalls(() => {
+    logger.error("request_failed", {
+      ts: "evil-ts",
+      level: "info",
+      msg: "forged-message",
+      code: "E_FAIL",
+    });
+  });
+
+  if (originalLevel === undefined) delete process.env.LOG_LEVEL;
+  else process.env.LOG_LEVEL = originalLevel;
+
+  assert.equal(calls.error.length, 1);
+  const parsed = JSON.parse(calls.error[0]);
+  assert.equal(parsed.msg, "request_failed");
+  assert.equal(parsed.level, "error");
+  assert.equal(typeof parsed.ts, "string");
+  assert.deepEqual(parsed.error, {
+    ts: "evil-ts",
+    level: "info",
+    msg: "forged-message",
+    code: "E_FAIL",
+  });
+});
+
+test("logger ignores reserved metadata keys in normal log calls", () => {
+  const originalLevel = process.env.LOG_LEVEL;
+  process.env.LOG_LEVEL = "info";
+  const logger = loadFreshLogger();
+
+  const calls = captureConsoleCalls(() => {
+    logger.info("hello", {
+      ts: "evil-ts",
+      level: "warn",
+      msg: "evil-msg",
+      requestId: "evil-request-id",
+      safe: "ok",
+    });
+  });
+
+  if (originalLevel === undefined) delete process.env.LOG_LEVEL;
+  else process.env.LOG_LEVEL = originalLevel;
+
+  assert.equal(calls.log.length, 1);
+  const parsed = JSON.parse(calls.log[0]);
+  assert.equal(parsed.msg, "hello");
+  assert.equal(parsed.level, "info");
+  assert.equal(parsed.safe, "ok");
+  assert.equal(parsed.requestId, undefined);
+});

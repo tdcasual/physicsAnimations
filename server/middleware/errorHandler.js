@@ -1,6 +1,8 @@
 const logger = require("../lib/logger");
 
 function errorHandler(err, req, res, _next) {
+  // Keep 4-arg signature so Express treats this as error middleware.
+  void _next;
   if (res.headersSent) return;
 
   if (err?.code === "LIMIT_FILE_SIZE") {
@@ -8,12 +10,13 @@ function errorHandler(err, req, res, _next) {
     return;
   }
 
-  const status = Number.isInteger(err?.status) ? err.status : 500;
+  const statusCandidate = Number.isInteger(err?.status) ? err.status : 500;
+  const status = statusCandidate >= 400 && statusCandidate <= 599 ? statusCandidate : 500;
   const code =
-    typeof err?.message === "string" && /^[a-z0-9_]+$/.test(err.message)
-      ? err.message
-      : status >= 500
-        ? "server_error"
+    status >= 500
+      ? "server_error"
+      : typeof err?.message === "string" && /^[a-z0-9_]+$/.test(err.message)
+        ? err.message
         : "bad_request";
 
   const payload = { error: code };
