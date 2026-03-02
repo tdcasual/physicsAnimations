@@ -28,7 +28,8 @@ function parseItemsState(parsed) {
     if (!item || typeof item !== "object") continue;
     if (typeof item.id !== "string" || !item.id) continue;
 
-    const type = item.type === "upload" ? "upload" : item.type === "link" ? "link" : "link";
+    const type = item.type === "upload" ? "upload" : item.type === "link" ? "link" : "";
+    if (!type) continue;
     const base = {
       id: item.id,
       type,
