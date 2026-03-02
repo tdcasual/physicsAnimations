@@ -13,10 +13,11 @@ const {
 } = require("./webdavSync/fileUtils");
 const { mergeCategories, mergeItemsAndTombstones } = require("./webdavSync/stateMerge");
 const { scanRemoteUploads } = require("./webdavSync/remoteScan");
-
-const ITEMS_STATE_KEY = "items.json";
-const CATEGORIES_STATE_KEY = "categories.json";
-const ITEM_TOMBSTONES_KEY = "items_tombstones.json";
+const {
+  ITEMS_STATE_KEY,
+  CATEGORIES_STATE_KEY,
+  ITEM_TOMBSTONES_KEY,
+} = require("./state/constants");
 
 async function syncWithWebdav({
   rootDir,
