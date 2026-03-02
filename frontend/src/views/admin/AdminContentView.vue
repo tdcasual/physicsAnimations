@@ -43,7 +43,6 @@ const vm = reactive(useContentAdmin());
           @update:query="vm.query = $event"
           @begin-edit="vm.beginEdit"
           @remove-item="vm.removeItem"
-          @restore-item="vm.restoreItem"
           @load-more="vm.reloadItems({ reset: false })"
         />
       </div>

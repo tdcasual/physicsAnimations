@@ -14,7 +14,6 @@ export interface TaxonomyCategory {
   order?: number;
   hidden?: boolean;
   count?: number;
-  builtinCount?: number;
   dynamicCount?: number;
 }
 

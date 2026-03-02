@@ -111,7 +111,7 @@ export function useContentAdmin() {
     }
   }
 
-  const { reloadTaxonomy, reloadItems, saveEdit, removeItem, restoreItem } = createContentAdminActions({
+  const { reloadTaxonomy, reloadItems, saveEdit, removeItem } = createContentAdminActions({
     loading,
     saving,
     errorText,
@@ -222,6 +222,5 @@ export function useContentAdmin() {
     submitLink,
     saveEdit,
     removeItem,
-    restoreItem,
   };
 }

@@ -230,11 +230,9 @@ test("/api/categories keeps taxonomy semantics with SQL dynamic counts", async (
     assert.equal(publicCategories.has("ghostcat"), false);
     assert.equal(publicCategories.has("emptyonly"), false);
 
-    assert.equal(publicCategories.get("mechanics")?.builtinCount, 0);
     assert.equal(publicCategories.get("mechanics")?.dynamicCount, 1);
     assert.equal(publicCategories.get("mechanics")?.count, 1);
 
-    assert.equal(publicCategories.get("algebra")?.builtinCount, 0);
     assert.equal(publicCategories.get("algebra")?.dynamicCount, 1);
 
     const publicGroups = new Map((publicData.groups || []).map((group) => [group.id, group]));
@@ -259,7 +257,6 @@ test("/api/categories keeps taxonomy semantics with SQL dynamic counts", async (
     assert.equal(adminCategories.has("ghostcat"), true);
     assert.equal(adminCategories.has("emptyonly"), true);
 
-    assert.equal(adminCategories.get("mechanics")?.builtinCount, 0);
     assert.equal(adminCategories.get("mechanics")?.dynamicCount, 3);
     assert.equal(adminCategories.get("mechanics")?.count, 3);
 
@@ -268,7 +265,6 @@ test("/api/categories keeps taxonomy semantics with SQL dynamic counts", async (
     assert.equal(adminCategories.get("ghostcat")?.groupId, "ghost");
 
     assert.equal(adminCategories.get("emptyonly")?.count, 0);
-    assert.equal(adminCategories.get("emptyonly")?.builtinCount, 0);
     assert.equal(adminCategories.get("emptyonly")?.dynamicCount, 0);
 
     const adminGroups = new Map((adminData.groups || []).map((group) => [group.id, group]));

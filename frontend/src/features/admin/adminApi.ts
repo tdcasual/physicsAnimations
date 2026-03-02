@@ -107,14 +107,6 @@ export async function deleteAdminItem(id: string): Promise<any> {
   return apiFetch(`/api/items/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
-export async function restoreBuiltinItem(id: string): Promise<any> {
-  return apiFetch(`/api/items/${encodeURIComponent(id)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ deleted: false }),
-  });
-}
-
 export async function createGroup(payload: {
   id: string;
   title: string;
@@ -233,7 +225,6 @@ export interface DashboardStats {
   dynamicTotal: number;
   uploadTotal: number;
   linkTotal: number;
-  builtinTotal: number;
   categoryTotal: number;
   total: number;
 }
@@ -246,10 +237,6 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
   ]);
 
   const categories = Array.isArray(taxonomy?.categories) ? taxonomy.categories : [];
-  const builtinTotal = categories.reduce((sum: number, category: any) => {
-    const count = Number(category?.builtinCount || 0);
-    return sum + (Number.isFinite(count) ? count : 0);
-  }, 0);
 
   const uploadTotal = Number(uploads?.total || 0);
   const linkTotal = Number(links?.total || 0);
@@ -260,8 +247,7 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     dynamicTotal,
     uploadTotal,
     linkTotal,
-    builtinTotal,
     categoryTotal,
-    total: dynamicTotal + builtinTotal,
+    total: dynamicTotal,
   };
 }

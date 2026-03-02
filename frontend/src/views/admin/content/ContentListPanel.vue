@@ -17,7 +17,6 @@ const emit = defineEmits<{
   "update:query": [value: string];
   "begin-edit": [item: AdminItemRow];
   "remove-item": [id: string];
-  "restore-item": [id: string];
   "load-more": [];
 }>();
 </script>
@@ -51,31 +50,16 @@ const emit = defineEmits<{
       <div>
         <div class="item-title">{{ item.title || item.id }}</div>
         <div class="item-meta">
-          {{ item.categoryId }} · {{ item.type }} · {{ item.deleted ? "已删除" : "正常" }} ·
-          {{ item.hidden ? "隐藏" : "可见" }} · {{ item.published === false ? "草稿" : "已发布" }}
+          {{ item.categoryId }} · {{ item.type }} · {{ item.hidden ? "隐藏" : "可见" }} ·
+          {{ item.published === false ? "草稿" : "已发布" }}
         </div>
       </div>
       <div class="item-actions">
         <a class="btn btn-ghost" :href="props.previewHref(item)" target="_blank" rel="noreferrer">预览</a>
-        <button
-          v-if="item.deleted"
-          type="button"
-          class="btn btn-primary"
-          :disabled="props.saving"
-          @click="emit('restore-item', item.id)"
-        >
-          恢复
-        </button>
         <button type="button" class="btn btn-ghost" @click="emit('begin-edit', item)">
           {{ props.editingId === item.id ? "已选中" : "编辑" }}
         </button>
-        <button
-          v-if="!item.deleted"
-          type="button"
-          class="btn btn-danger"
-          :disabled="props.saving"
-          @click="emit('remove-item', item.id)"
-        >
+        <button type="button" class="btn btn-danger" :disabled="props.saving" @click="emit('remove-item', item.id)">
           删除
         </button>
       </div>

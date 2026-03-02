@@ -1,5 +1,5 @@
 import type { Ref } from "vue";
-import { deleteAdminItem, listAdminItems, listTaxonomy, restoreBuiltinItem, updateAdminItem, type AdminItemRow } from "../adminApi";
+import { deleteAdminItem, listAdminItems, listTaxonomy, updateAdminItem, type AdminItemRow } from "../adminApi";
 
 type GroupRow = {
   id: string;
@@ -152,27 +152,10 @@ export function createContentAdminActions(ctx: ContentAdminActionParams) {
     }
   }
 
-  async function restoreItem(id: string) {
-    ctx.saving.value = true;
-    ctx.setActionFeedback("");
-
-    try {
-      await restoreBuiltinItem(id);
-      await reloadItems({ reset: true });
-      ctx.setActionFeedback("内容已恢复。", false);
-    } catch (err) {
-      const e = err as { status?: number };
-      ctx.setActionFeedback(resolveAuthError(e?.status, "恢复失败。"), true);
-    } finally {
-      ctx.saving.value = false;
-    }
-  }
-
   return {
     reloadTaxonomy,
     reloadItems,
     saveEdit,
     removeItem,
-    restoreItem,
   };
 }

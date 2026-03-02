@@ -30,8 +30,8 @@ describe("fetchDashboardStats", () => {
         return jsonResponse({
           groups: [],
           categories: [
-            { id: "a", builtinCount: 4 },
-            { id: "b", builtinCount: 1 },
+            { id: "a" },
+            { id: "b" },
           ],
         });
       }
@@ -44,9 +44,8 @@ describe("fetchDashboardStats", () => {
     expect(stats.dynamicTotal).toBe(5);
     expect(stats.uploadTotal).toBe(3);
     expect(stats.linkTotal).toBe(2);
-    expect(stats.builtinTotal).toBe(5);
     expect(stats.categoryTotal).toBe(2);
-    expect(stats.total).toBe(10);
+    expect(stats.total).toBe(5);
     expect(fetchMock.mock.calls.some((args) => String(args[0]).includes("/api/items?") && !String(args[0]).includes("type="))).toBe(false);
   });
 
@@ -62,7 +61,7 @@ describe("fetchDashboardStats", () => {
       if (url.includes("/api/categories")) {
         return jsonResponse({
           groups: [],
-          categories: [{ id: "a", builtinCount: "x" }],
+          categories: [{ id: "a" }],
         });
       }
       return jsonResponse({}, 404);
@@ -74,7 +73,6 @@ describe("fetchDashboardStats", () => {
     expect(stats.uploadTotal).toBe(0);
     expect(stats.linkTotal).toBe(0);
     expect(stats.dynamicTotal).toBe(0);
-    expect(stats.builtinTotal).toBe(0);
     expect(stats.total).toBe(0);
   });
 });

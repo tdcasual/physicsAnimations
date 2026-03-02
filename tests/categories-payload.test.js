@@ -70,13 +70,11 @@ test("buildCategoriesPayload uses dynamic count map and keeps stable sorting", (
   );
 
   const mechanics = payload.categories.find((c) => c.id === "mechanics");
-  assert.equal(mechanics.builtinCount, 0);
   assert.equal(mechanics.dynamicCount, 4);
   assert.equal(mechanics.count, 4);
 
   const physics = payload.groups.find((g) => g.id === "physics");
   assert.equal(physics.categoryCount, 2);
-  assert.equal(physics.builtinCount, 0);
   assert.equal(physics.dynamicCount, 4);
   assert.equal(physics.count, 4);
 });

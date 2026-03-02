@@ -46,8 +46,7 @@ const categoryFormHiddenModel = computed({
   <div class="panel admin-card">
     <h3>二级分类：{{ selectedCategory.title || selectedCategory.id }} ({{ selectedCategory.id }})</h3>
     <div class="meta-line">
-      内容 {{ Number(selectedCategory.count || 0) }} · 内置 {{ Number(selectedCategory.builtinCount || 0) }} · 新增
-      {{ Number(selectedCategory.dynamicCount || 0) }}
+      内容 {{ Number(selectedCategory.count || 0) }} · 新增 {{ Number(selectedCategory.dynamicCount || 0) }}
     </div>
 
     <div class="form-grid">

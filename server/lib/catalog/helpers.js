@@ -28,29 +28,6 @@ function normalizeGroupId(groupId) {
   return trimmed;
 }
 
-function applyBuiltinOverride(item, override) {
-  const out = { ...item };
-  if (!override || typeof override !== "object") return out;
-  if (override.deleted === true) return null;
-
-  if (typeof override.title === "string") {
-    const title = override.title.trim();
-    if (title) out.title = safeText(title);
-  }
-  if (typeof override.description === "string") {
-    out.description = safeText(override.description);
-  }
-  if (typeof override.categoryId === "string") {
-    out.categoryId = normalizeCategoryId(override.categoryId);
-  }
-  if (Number.isFinite(override.order)) out.order = Math.trunc(override.order);
-  if (typeof override.published === "boolean") out.published = override.published;
-  if (typeof override.hidden === "boolean") out.hidden = override.hidden;
-  if (typeof override.updatedAt === "string") out.updatedAt = override.updatedAt;
-
-  return out;
-}
-
 function getDefaultCategoryTitle(categoryId) {
   return safeText(CATEGORY_TITLES[categoryId] || categoryId);
 }
@@ -92,7 +69,6 @@ function applyGroupConfig(group, config) {
 
 module.exports = {
   safeText,
-  applyBuiltinOverride,
   normalizeCategoryId,
   normalizeGroupId,
   getDefaultCategoryTitle,

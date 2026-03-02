@@ -19,20 +19,20 @@ describe("catalog link selection", () => {
     expect(getCatalogItemHref(item)).toBe("/viewer/link-1");
   });
 
-  it("prefers viewer route for builtin items when href is provided", () => {
+  it("prefers viewer route for upload items when href is provided", () => {
     const item: CatalogItem = {
-      id: "builtin-1",
-      type: "builtin",
+      id: "upload-2",
+      type: "upload",
       categoryId: "other",
-      title: "内置",
+      title: "上传",
       description: "",
-      href: "/viewer/builtin-1",
-      src: "animations/builtin-1.html",
+      href: "/viewer/upload-2",
+      src: "uploads/upload-2.html",
       thumbnail: "",
       order: 0,
     };
 
-    expect(getCatalogItemHref(item)).toBe("/viewer/builtin-1");
+    expect(getCatalogItemHref(item)).toBe("/viewer/upload-2");
   });
 
   it("falls back to original source when viewer href is missing", () => {

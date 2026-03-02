@@ -9,7 +9,6 @@ const stats = ref<DashboardStats>({
   dynamicTotal: 0,
   uploadTotal: 0,
   linkTotal: 0,
-  builtinTotal: 0,
   categoryTotal: 0,
   total: 0,
 });
@@ -61,10 +60,6 @@ onMounted(async () => {
       <article class="stat-card">
         <div class="label">外链内容</div>
         <div class="value">{{ stats.linkTotal }}</div>
-      </article>
-      <article class="stat-card">
-        <div class="label">内置内容</div>
-        <div class="value">{{ stats.builtinTotal }}</div>
       </article>
       <article class="stat-card">
         <div class="label">二级分类</div>

@@ -227,7 +227,7 @@ export function useTaxonomyAdmin() {
   }
 
   function categoryMetaText(category: CategoryRow): string {
-    return `内容 ${Number(category.count || 0)} · 内置 ${Number(category.builtinCount || 0)} · 新增 ${Number(category.dynamicCount || 0)}`;
+    return `内容 ${Number(category.count || 0)} · 新增 ${Number(category.dynamicCount || 0)}`;
   }
 
   const {
