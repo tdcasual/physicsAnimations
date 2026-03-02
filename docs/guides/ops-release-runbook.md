@@ -13,6 +13,7 @@ npm run qa:release
 `qa:release` 会串行执行：
 - 文件体积门禁（`guard:file-size`）
 - 安全模式门禁（`guard:security`）
+- 依赖风险门禁（`guard:audit`，阻断 `high/critical` 漏洞）
 - 后端测试
 - 前端测试
 - 前端类型检查

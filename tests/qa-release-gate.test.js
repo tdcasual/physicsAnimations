@@ -6,6 +6,7 @@ test("qa gate script includes required verification commands", () => {
   const script = fs.readFileSync("scripts/qa_release_gate.sh", "utf8");
   assert.match(script, /npm run guard:file-size/);
   assert.match(script, /npm run guard:security/);
+  assert.match(script, /npm run guard:audit/);
   assert.match(script, /npm test/);
   assert.match(script, /npm --prefix frontend run test -- --run/);
   assert.match(script, /npm run typecheck:frontend/);

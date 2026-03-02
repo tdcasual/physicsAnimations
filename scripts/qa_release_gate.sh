@@ -3,6 +3,7 @@ set -euo pipefail
 
 npm run guard:file-size
 npm run guard:security
+npm run guard:audit
 npm run build:frontend
 npm test
 npm --prefix frontend run test -- --run
