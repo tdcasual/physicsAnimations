@@ -1,13 +1,14 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const http = require("node:http");
 const { Blob } = require("node:buffer");
 
 const bcrypt = require("bcryptjs");
 const { createApp } = require("../server/app");
+const { makeTempRoot, removeTempRoot } = require("./helpers/tempRoot");
+const { startServer, stopServer } = require("./helpers/testServer");
 
 test("library router composes domain route modules", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "server", "routes", "library.js"), "utf8");
@@ -16,32 +17,6 @@ test("library router composes domain route modules", () => {
   assert.match(source, /registerAssetRoutes/);
   assert.match(source, /registerEmbedProfileRoutes/);
 });
-
-function makeTempRoot() {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "pa-lib-test-"));
-  fs.mkdirSync(path.join(root, "assets"), { recursive: true });
-  fs.mkdirSync(path.join(root, "animations"), { recursive: true });
-  fs.mkdirSync(path.join(root, "content"), { recursive: true });
-  fs.writeFileSync(path.join(root, "animations.json"), "{}");
-  return root;
-}
-
-async function startServer(app) {
-  return new Promise((resolve) => {
-    const server = app.listen(0, "127.0.0.1", () => {
-      const { port } = server.address();
-      resolve({
-        server,
-        baseUrl: `http://127.0.0.1:${port}`,
-      });
-    });
-  });
-}
-
-async function stopServer(server) {
-  if (!server) return;
-  await new Promise((resolve) => { server.close(resolve); });
-}
 
 async function startMockEmbedServer() {
   const embedJs = `
@@ -163,7 +138,7 @@ test("library write endpoints require admin auth", async () => {
     assert.equal(upload.status, 401);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -216,7 +191,7 @@ test("library routes support folder create and ggb upload flow", async () => {
     assert.match(String(infoBody?.openUrl || ""), /\/content\/library\/assets\/.*\/viewer\/index\.html$/);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -280,7 +255,7 @@ test("library routes support updating asset displayName and openMode", async () 
     assert.match(String(switchedBody?.asset?.generatedEntryPath || ""), /viewer\/index\.html$/);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -311,7 +286,7 @@ test("GET /api/library/catalog returns folder summary for public", async () => {
     assert.equal(typeof body.folders[0].assetCount, "number");
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -355,7 +330,7 @@ test("GET /api/library/folders returns assetCount for admin folder list", async 
     assert.equal(body.folders[0].assetCount, 1);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -398,7 +373,7 @@ test("GET /api/library/folders/:id returns folder with assetCount", async () => 
     assert.equal(body?.folder?.assetCount, 1);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -438,7 +413,7 @@ test("content library route serves uploaded source file", async () => {
     assert.equal(text, "GGBDATA");
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -483,7 +458,7 @@ test("library routes support PhET html upload with embed open info", async () =>
     assert.match(String(infoBody?.openUrl || ""), /\/content\/library\/assets\/.*\/viewer\/index\.html$/);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -570,7 +545,7 @@ test("library routes support custom embed profile upload with json options", asy
   } finally {
     await stopServer(server);
     await stopServer(mockEmbed.server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -609,7 +584,7 @@ test("library routes support updating folder name and category", async () => {
     assert.equal(updatedBody?.folder?.categoryId, "mechanics");
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -711,7 +686,7 @@ test("library routes support updating asset folder/embed profile/embed options",
   } finally {
     await stopServer(server);
     await stopServer(mockEmbed.server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -784,7 +759,7 @@ test("library routes support deleted-assets listing and restore flow", async () 
     assert.equal(openBody?.ok, true);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
 
@@ -847,6 +822,6 @@ test("DELETE /api/library/assets/:id/permanent hard-deletes resource from recycl
     assert.equal(openInfo.status, 404);
   } finally {
     await stopServer(server);
-    fs.rmSync(rootDir, { recursive: true, force: true });
+    removeTempRoot(rootDir);
   }
 });
