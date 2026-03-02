@@ -65,3 +65,41 @@ test("syncWithWebdav skips local sqlite cache files under content/", async () =>
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("syncWithWebdav uploads .ggb files with geogebra content type", async () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-sync-ggb-type-"));
+  const contentDir = path.join(rootDir, "content");
+  fs.mkdirSync(path.join(contentDir, "uploads", "u_demo"), { recursive: true });
+  fs.writeFileSync(path.join(contentDir, "uploads", "u_demo", "model.ggb"), "ggb-binary", "utf8");
+
+  const writeCalls = [];
+  const loader = loadWebdavSyncWithMockedStore({
+    async readBuffer() {
+      return null;
+    },
+    async writeBuffer(key, _buffer, options) {
+      writeCalls.push({
+        key: String(key || ""),
+        contentType: String(options?.contentType || ""),
+      });
+    },
+    async listDir() {
+      return [];
+    },
+  });
+
+  try {
+    await loader.syncWithWebdav({
+      rootDir,
+      webdavConfig: {},
+      scanRemote: false,
+    });
+
+    const ggbCall = writeCalls.find((call) => call.key === "uploads/u_demo/model.ggb");
+    assert.ok(ggbCall, `expected ggb upload call, got: ${JSON.stringify(writeCalls)}`);
+    assert.equal(ggbCall.contentType, "application/vnd.geogebra.file");
+  } finally {
+    loader.restore();
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

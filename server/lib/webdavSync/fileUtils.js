@@ -48,6 +48,7 @@ function guessContentType(filePath) {
     ".mp3": "audio/mpeg",
     ".wasm": "application/wasm",
     ".txt": "text/plain; charset=utf-8",
+    ".ggb": "application/vnd.geogebra.file",
   };
   return map[ext] || "application/octet-stream";
 }

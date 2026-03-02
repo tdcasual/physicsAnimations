@@ -153,7 +153,10 @@ test("system storage persists scanRemote flag", async () => {
     assert.equal(res.status, 200);
     const system = await res.json();
     assert.equal(system?.storage?.webdav?.scanRemote, true);
-    assert.equal(system?.storage?.stateDb?.enabled, false);
+    assert.equal(system?.storage?.stateDb?.enabled, hasNodeSqlite());
+    if (hasNodeSqlite()) {
+      assert.equal(system?.storage?.stateDb?.mode, "sqlite");
+    }
     assert.equal(typeof system?.taskQueue, "object");
     assert.equal(typeof system?.taskQueue?.concurrency, "number");
   } finally {

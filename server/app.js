@@ -159,10 +159,14 @@ function createApp({
     ? { store: overrideStore, setConfig: () => {} }
     : createStoreManager({ rootDir, config: systemState });
   const storeBase = storeManager.store;
+  const resolvedStateDbMode =
+    overrideStateDbMode ??
+    process.env.STATE_DB_MODE ??
+    (overrideStore ? "off" : "sqlite");
   const stateDbWrapped = createStateDbStore({
     rootDir,
     store: storeBase,
-    mode: overrideStateDbMode,
+    mode: resolvedStateDbMode,
     dbPath: overrideStateDbPath,
     maxErrors: overrideStateDbMaxErrors,
   });

@@ -200,3 +200,49 @@ test("/api/items uses SQL-backed dynamic query when state db enabled", async () 
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("/api/items uses SQL-backed query by default when state db mode is not set", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+
+  writeItems(rootDir, [
+    {
+      id: "default_sql_item_1",
+      type: "link",
+      categoryId: "other",
+      url: "https://example.com/default-sql",
+      title: "Default SQL",
+      description: "default",
+      thumbnail: "",
+      order: 0,
+      published: true,
+      hidden: false,
+      uploadKind: "html",
+      createdAt: "2026-01-03T00:00:00.000Z",
+      updatedAt: "2026-01-03T00:00:00.000Z",
+    },
+  ]);
+
+  const app = createApp({
+    rootDir,
+    authConfig,
+    stateDbPath: path.join(rootDir, "content", "state.sqlite"),
+  });
+  const { server, baseUrl } = await startServer(app);
+
+  try {
+    const listRes = await fetch(`${baseUrl}/api/items?page=1&pageSize=10`);
+    assert.equal(listRes.status, 200);
+    const listData = await listRes.json();
+    assert.equal(Array.isArray(listData?.items), true);
+    assert.equal(listData.items.some((item) => item.id === "default_sql_item_1"), true);
+
+    const detailRes = await fetch(`${baseUrl}/api/items/default_sql_item_1`);
+    assert.equal(detailRes.status, 200);
+    const detailData = await detailRes.json();
+    assert.equal(detailData?.item?.id, "default_sql_item_1");
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
