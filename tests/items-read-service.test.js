@@ -156,3 +156,40 @@ test("listItems returns state_db_unavailable when merged SQL query is missing", 
 
   assert.deepEqual(out, { status: 503, error: "state_db_unavailable" });
 });
+
+test("getItemById prefers unified queryItemById port", async () => {
+  const { createItemsReadService } = require("../server/services/items/readService");
+
+  const service = createItemsReadService({
+    store: {},
+    itemsQueryRepo: {
+      async queryItemById({ id, isAdmin, includeDeleted }) {
+        assert.equal(id, "dyn_1");
+        assert.equal(isAdmin, false);
+        assert.equal(includeDeleted, false);
+        return {
+          id: "dyn_1",
+          type: "link",
+          title: "Unified",
+          categoryId: "other",
+          published: true,
+          hidden: false,
+          deleted: false,
+        };
+      },
+      async queryDynamicItemById() {
+        throw new Error("queryDynamicItemById should not be called");
+      },
+      async queryBuiltinItemById() {
+        throw new Error("queryBuiltinItemById should not be called");
+      },
+    },
+    deps: {
+      toApiItem: (item) => item,
+    },
+  });
+
+  const out = await service.getItemById({ id: "dyn_1", isAdmin: false });
+  assert.equal(out?.id, "dyn_1");
+  assert.equal(out?.title, "Unified");
+});

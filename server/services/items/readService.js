@@ -1,19 +1,33 @@
 const logger = require("../../lib/logger");
 
+function createQueryItemByIdAdapter(repo) {
+  if (!repo || typeof repo !== "object") return null;
+  const dynamicLookup =
+    typeof repo.queryDynamicItemById === "function" ? (options) => repo.queryDynamicItemById(options) : null;
+  const builtinLookup =
+    typeof repo.queryBuiltinItemById === "function" ? (options) => repo.queryBuiltinItemById(options) : null;
+  if (!dynamicLookup && !builtinLookup) return null;
+
+  return async ({ id, isAdmin, includeDeleted }) => {
+    if (dynamicLookup) {
+      const dynamicItem = await dynamicLookup({ id, isAdmin });
+      if (dynamicItem) return dynamicItem;
+    }
+    if (builtinLookup) return builtinLookup({ id, isAdmin, includeDeleted });
+    return null;
+  };
+}
+
 function createItemsReadService({ store, itemsQueryRepo, deps }) {
   const { toApiItem } = deps;
-  const repo =
+  const sourceRepo =
     itemsQueryRepo ||
     {
       queryItems:
         typeof store?.stateDbQuery?.queryItems === "function" ? (options) => store.stateDbQuery.queryItems(options) : null,
-      queryDynamicItems:
-        typeof store?.stateDbQuery?.queryDynamicItems === "function"
-          ? (options) => store.stateDbQuery.queryDynamicItems(options)
-          : null,
-      queryBuiltinItems:
-        typeof store?.stateDbQuery?.queryBuiltinItems === "function"
-          ? (options) => store.stateDbQuery.queryBuiltinItems(options)
+      queryItemById:
+        typeof store?.stateDbQuery?.queryItemById === "function"
+          ? (options) => store.stateDbQuery.queryItemById(options)
           : null,
       queryDynamicItemById:
         typeof store?.stateDbQuery?.queryDynamicItemById === "function"
@@ -24,6 +38,13 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
           ? (options) => store.stateDbQuery.queryBuiltinItemById(options)
           : null,
     };
+  const repo = {
+    queryItems: typeof sourceRepo?.queryItems === "function" ? (options) => sourceRepo.queryItems(options) : null,
+    queryItemById:
+      typeof sourceRepo?.queryItemById === "function"
+        ? (options) => sourceRepo.queryItemById(options)
+        : createQueryItemByIdAdapter(sourceRepo),
+  };
 
   async function listItems({ isAdmin, query }) {
     const q = (query.q || "").trim().toLowerCase();
@@ -64,43 +85,26 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
   }
 
   async function getItemById({ id, isAdmin }) {
-    const supportsSqlDynamicItemLookup = typeof repo?.queryDynamicItemById === "function";
-    const supportsSqlBuiltinItemLookup = typeof repo?.queryBuiltinItemById === "function";
-    if (!supportsSqlDynamicItemLookup && !supportsSqlBuiltinItemLookup) {
+    const supportsItemLookup = typeof repo?.queryItemById === "function";
+    if (!supportsItemLookup) {
       return { status: 503, error: "state_db_unavailable" };
     }
 
-    if (supportsSqlDynamicItemLookup) {
-      try {
-        const sqlItem = await repo.queryDynamicItemById({ id, isAdmin });
-        if (sqlItem) return toApiItem(sqlItem);
-      } catch (sqlErr) {
-        logger.warn("items_sql_dynamic_item_lookup_failed", {
-          fallback: "state_db_unavailable",
-          error: sqlErr,
-        });
-        return { status: 503, error: "state_db_unavailable" };
-      }
+    try {
+      const sqlItem = await repo.queryItemById({
+        id,
+        isAdmin,
+        includeDeleted: isAdmin,
+      });
+      if (sqlItem) return toApiItem(sqlItem);
+      return null;
+    } catch (sqlErr) {
+      logger.warn("items_sql_item_lookup_failed", {
+        fallback: "state_db_unavailable",
+        error: sqlErr,
+      });
+      return { status: 503, error: "state_db_unavailable" };
     }
-
-    if (supportsSqlBuiltinItemLookup) {
-      try {
-        const sqlBuiltin = await repo.queryBuiltinItemById({
-          id,
-          isAdmin,
-          includeDeleted: isAdmin,
-        });
-        if (sqlBuiltin) return toApiItem(sqlBuiltin);
-      } catch (sqlErr) {
-        logger.warn("items_sql_builtin_item_lookup_failed", {
-          fallback: "state_db_unavailable",
-          error: sqlErr,
-        });
-        return { status: 503, error: "state_db_unavailable" };
-      }
-    }
-
-    return null;
   }
 
   return {
