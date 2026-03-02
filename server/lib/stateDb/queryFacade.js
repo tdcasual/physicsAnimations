@@ -39,6 +39,24 @@ function createStateDbQueryFacade({
       await ensureBuiltinItemsIndexed();
       return runMirrorOperation("mirror.queryItems", () => mirror.queryItems(options));
     },
+    async queryItemById(options = {}) {
+      ensureUsable();
+      await ensureDynamicItemsIndexed();
+      await ensureBuiltinItemsIndexed();
+
+      const id = String(options.id || "");
+      const isAdmin = options.isAdmin === true;
+      const includeDeleted = options.includeDeleted === true;
+
+      const dynamicItem = runMirrorOperation("mirror.queryDynamicItemById", () =>
+        mirror.queryDynamicItemById({ id, isAdmin }),
+      );
+      if (dynamicItem) return dynamicItem;
+
+      return runMirrorOperation("mirror.queryBuiltinItemById", () =>
+        mirror.queryBuiltinItemById({ id, isAdmin, includeDeleted }),
+      );
+    },
     async queryDynamicCategoryCounts(options = {}) {
       ensureUsable();
       await ensureDynamicItemsIndexed();

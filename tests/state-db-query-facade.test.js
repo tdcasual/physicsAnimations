@@ -27,3 +27,35 @@ test("query facade delegates through ensure+run wrappers", async () => {
   await facade.queryItems({});
   assert.deepEqual(calls, ["ensureUsable", "ensureDynamic", "ensureBuiltin", "mirror.queryItems"]);
 });
+
+test("query facade exposes unified queryItemById and prefers dynamic item", async () => {
+  const calls = [];
+  const facade = createStateDbQueryFacade({
+    mirror: {
+      queryDynamicItemById: ({ id }) => (id === "dyn_1" ? { id: "dyn_1", type: "link" } : null),
+      queryBuiltinItemById: () => ({ id: "builtin_1", type: "builtin" }),
+    },
+    ensureDynamicItemsIndexed: async () => {
+      calls.push("ensureDynamic");
+    },
+    ensureBuiltinItemsIndexed: async () => {
+      calls.push("ensureBuiltin");
+    },
+    runMirrorOperation: (operation, fn) => {
+      calls.push(operation);
+      return fn();
+    },
+    ensureUsable: () => {
+      calls.push("ensureUsable");
+    },
+  });
+
+  const item = await facade.queryItemById({ id: "dyn_1", isAdmin: false, includeDeleted: false });
+  assert.equal(item?.id, "dyn_1");
+  assert.deepEqual(calls, [
+    "ensureUsable",
+    "ensureDynamic",
+    "ensureBuiltin",
+    "mirror.queryDynamicItemById",
+  ]);
+});
