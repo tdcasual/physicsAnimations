@@ -49,9 +49,14 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `STATE_DB_MODE` | `off` | 可选 `off` / `sqlite` |
+| `STATE_DB_MODE` | `sqlite` | 可选 `off` / `sqlite` |
 | `STATE_DB_PATH` | `content/state.sqlite` | SQLite 文件路径 |
 | `STATE_DB_MAX_ERRORS` | `3` | 连续错误熔断阈值 |
+
+说明：
+
+- 当前运行时默认启用 `sqlite` 状态数据库镜像（未设置 `STATE_DB_MODE` 时生效）。
+- 如需关闭状态数据库镜像，请显式设置 `STATE_DB_MODE=off`。
 
 ## 任务队列与截图
 
