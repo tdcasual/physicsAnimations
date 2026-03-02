@@ -420,7 +420,7 @@ test("state db sqlite mirrors state writes", async () => {
   try {
     const token = await login(baseUrl, authConfig);
 
-    const createRes = await fetch(`${baseUrl}/api/items/link`, {
+    const createRes = await fetch(`${baseUrl}/api/items`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

@@ -83,9 +83,7 @@ describe("adminApi", () => {
     await deleteAdminItem("l_1");
     await listTaxonomy();
 
-    const authCalls = fetchMock.mock.calls.filter((call) =>
-      String(call[0]).includes("/api/items/") || String(call[0]).includes("/api/items/link"),
-    );
+    const authCalls = fetchMock.mock.calls.filter((call) => String(call[0]).includes("/api/items"));
     expect(authCalls.length).toBeGreaterThan(0);
     for (const call of authCalls) {
       const options = ((call as unknown as [RequestInfo | URL, RequestInit?])[1] || {}) as RequestInit;
@@ -108,7 +106,7 @@ describe("adminApi", () => {
     });
 
     const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
-    expect(url).toBe("/api/items/upload");
+    expect(url).toBe("/api/items");
     expect(options?.method).toBe("POST");
     expect(options?.body).toBeInstanceOf(FormData);
   });

@@ -1,17 +1,8 @@
 const logger = require("../../lib/logger");
 
-function createItemsReadService({ store, itemsQueryRepo, deps }) {
+function createItemsReadService({ itemsQueryRepo, deps }) {
   const { toApiItem } = deps;
-  const repo =
-    itemsQueryRepo ||
-    {
-      queryItems:
-        typeof store?.stateDbQuery?.queryItems === "function" ? (options) => store.stateDbQuery.queryItems(options) : null,
-      queryItemById:
-        typeof store?.stateDbQuery?.queryItemById === "function"
-          ? (options) => store.stateDbQuery.queryItemById(options)
-          : null,
-    };
+  const repo = itemsQueryRepo || {};
 
   async function listItems({ isAdmin, query }) {
     const q = (query.q || "").trim().toLowerCase();
@@ -45,7 +36,7 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
       };
     } catch (sqlErr) {
       logger.warn("items_sql_merged_query_failed", {
-        fallback: "state_db_unavailable",
+        failureStage: "queryItems",
         error: sqlErr,
       });
       return { status: 503, error: "state_db_unavailable" };
@@ -68,7 +59,7 @@ function createItemsReadService({ store, itemsQueryRepo, deps }) {
       return toApiItem(sqlItem);
     } catch (sqlErr) {
       logger.warn("items_sql_item_lookup_failed", {
-        fallback: "state_db_unavailable",
+        failureStage: "queryItemById",
         error: sqlErr,
       });
       return { status: 503, error: "state_db_unavailable" };

@@ -37,20 +37,10 @@ npm run smoke:spa-public
 - `/<frontend-route>`（history fallback，例如 `/viewer/:id`、`/admin/*`）
 - `/assets/*`（前端静态资源）
 
-## Legacy 路由策略
-
-- 以下旧入口已下线，统一返回 `404`：
-  - `/index.html`
-  - `/viewer.html`
-  - `/app` 与 `/app/*`
-
 ## 常见排查
 
 1. `/` 返回 `503 service_unavailable`  
 通常是还没构建前端，先执行 `npm run build:frontend`。
-
-2. 访问旧链接（如 `/viewer.html?id=...`）报 `404`  
-这是硬切换后的预期行为，请改用 `/viewer/:id` 路由。
 
 ## 前端 API 契约边界（Extensibility Phase 1）
 

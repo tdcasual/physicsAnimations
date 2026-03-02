@@ -21,30 +21,28 @@ test("listItems prefers merged SQL query when available", async () => {
   const { createItemsReadService } = require("../server/services/items/readService");
 
   const service = createItemsReadService({
-    store: {
-      stateDbQuery: {
-        async queryItems(options = {}) {
-          receivedOptions = options;
-          return {
-            total: 1,
-            items: [
-              {
-                id: "merged_1",
-                type: "link",
-                categoryId: "other",
-                title: "Merged",
-                description: "",
-                url: "https://example.com",
-                thumbnail: "",
-                order: 0,
-                published: true,
-                hidden: false,
-                createdAt: "2026-01-01T00:00:00.000Z",
-                updatedAt: "2026-01-01T00:00:00.000Z",
-              },
-            ],
-          };
-        },
+    itemsQueryRepo: {
+      async queryItems(options = {}) {
+        receivedOptions = options;
+        return {
+          total: 1,
+          items: [
+            {
+              id: "merged_1",
+              type: "link",
+              categoryId: "other",
+              title: "Merged",
+              description: "",
+              url: "https://example.com",
+              thumbnail: "",
+              order: 0,
+              published: true,
+              hidden: false,
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        };
       },
     },
     deps: {

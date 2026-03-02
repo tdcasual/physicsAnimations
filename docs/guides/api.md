@@ -67,11 +67,6 @@
 | `PUT` | `/api/categories/:id` | 更新二级分类 |
 | `DELETE` | `/api/categories/:id` | 删除二级分类 |
 
-## 额外入口（非兼容承诺）
-
-- `POST /api/items/link`
-- `POST /api/items/upload`
-
 上传风险确认说明：
 
 - 对 HTML/ZIP 上传会执行风险扫描。

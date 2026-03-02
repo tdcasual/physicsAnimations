@@ -66,10 +66,13 @@ export async function createLinkItem(payload: {
   title: string;
   description: string;
 }): Promise<any> {
-  return apiFetch("/api/items/link", {
+  return apiFetch("/api/items", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      type: "link",
+      ...payload,
+    }),
   });
 }
 
@@ -89,7 +92,7 @@ export async function uploadHtmlItem(payload: {
     formData.append("allowRiskyHtml", "true");
   }
 
-  return apiFetch("/api/items/upload", {
+  return apiFetch("/api/items", {
     method: "POST",
     body: formData,
   });

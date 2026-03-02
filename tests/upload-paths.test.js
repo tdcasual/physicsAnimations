@@ -122,13 +122,27 @@ test("upload rejects missing file and invalid file types", async () => {
   try {
     const token = await login(baseUrl, authConfig);
 
-    const missing = await fetch(`${baseUrl}/api/items/upload`, {
+    const legacyUpload = await fetch(`${baseUrl}/api/items/upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
-    assert.equal(missing.status, 400);
-    const missingBody = await missing.json();
-    assert.equal(missingBody.error, "missing_file");
+    assert.equal(legacyUpload.status, 404);
+    const legacyUploadBody = await legacyUpload.json();
+    assert.equal(legacyUploadBody.error, "not_found");
+
+    const legacyLink = await fetch(`${baseUrl}/api/items/link`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: "https://example.com",
+      }),
+    });
+    assert.equal(legacyLink.status, 404);
+    const legacyLinkBody = await legacyLink.json();
+    assert.equal(legacyLinkBody.error, "not_found");
 
     const genericMissingForm = new FormData();
     genericMissingForm.append("categoryId", "other");
@@ -143,7 +157,7 @@ test("upload rejects missing file and invalid file types", async () => {
 
     const badForm = new FormData();
     badForm.append("file", new Blob([Buffer.from("nope")]), "file.exe");
-    const bad = await fetch(`${baseUrl}/api/items/upload`, {
+    const bad = await fetch(`${baseUrl}/api/items`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: badForm,
@@ -172,7 +186,7 @@ test("upload cleans up store after zip missing index.html", async () => {
 
     const form = new FormData();
     form.append("file", new Blob([zipBuffer]), "missing-index.zip");
-    const response = await fetch(`${baseUrl}/api/items/upload`, {
+    const response = await fetch(`${baseUrl}/api/items`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: form,
@@ -210,7 +224,7 @@ test("zip upload ignores traversal entries and does not escape uploads", async (
     const form = new FormData();
     form.append("file", new Blob([zipBuffer]), "ok.zip");
     form.append("categoryId", "other");
-    const response = await fetch(`${baseUrl}/api/items/upload`, {
+    const response = await fetch(`${baseUrl}/api/items`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: form,
@@ -243,7 +257,7 @@ test("html upload with risky content requires confirmation and preserves origina
     const firstForm = new FormData();
     firstForm.append("file", new Blob([riskyHtml]), "risky.html");
     firstForm.append("categoryId", "other");
-    const firstResponse = await fetch(`${baseUrl}/api/items/upload`, {
+    const firstResponse = await fetch(`${baseUrl}/api/items`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: firstForm,
@@ -259,7 +273,7 @@ test("html upload with risky content requires confirmation and preserves origina
     secondForm.append("categoryId", "other");
     secondForm.append("allowRiskyHtml", "true");
     const secondUploadStart = Date.now();
-    const secondResponse = await fetch(`${baseUrl}/api/items/upload`, {
+    const secondResponse = await fetch(`${baseUrl}/api/items`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: secondForm,

@@ -108,3 +108,77 @@ test("createContentStore does not infer remote mode from WEBDAV_URL when mode is
     else process.env.STORAGE_MODE = prevMode;
   }
 });
+
+test("createContentStore does not downgrade to local_readonly fallback when local dir is not writable", () => {
+  const contentStorePath = require.resolve("../server/lib/contentStore");
+  const localStorePath = require.resolve("../server/lib/contentStore/localStore");
+  const utilsPath = require.resolve("../server/lib/contentStore/utils");
+
+  const localStoreOriginal = require(localStorePath);
+  const utilsOriginal = require(utilsPath);
+
+  let localCalls = 0;
+  let readonlyCalls = 0;
+
+  require.cache[localStorePath].exports = {
+    ...localStoreOriginal,
+    createLocalStore() {
+      localCalls += 1;
+      return {
+        mode: "local",
+        readOnly: false,
+        async readBuffer() {
+          return null;
+        },
+        async writeBuffer() {},
+        async deletePath() {},
+        async createReadStream() {
+          return null;
+        },
+      };
+    },
+    createReadOnlyLocalStore() {
+      readonlyCalls += 1;
+      return {
+        mode: "local_readonly",
+        readOnly: true,
+        async readBuffer() {
+          return null;
+        },
+        async writeBuffer() {},
+        async deletePath() {},
+        async createReadStream() {
+          return null;
+        },
+      };
+    },
+  };
+
+  require.cache[utilsPath].exports = {
+    ...utilsOriginal,
+    canWriteDir() {
+      return false;
+    },
+  };
+
+  delete require.cache[contentStorePath];
+  const { createContentStore } = require(contentStorePath);
+
+  try {
+    const store = createContentStore({
+      rootDir: process.cwd(),
+      config: {
+        storage: {
+          mode: "local",
+        },
+      },
+    });
+    assert.equal(store.mode, "local");
+    assert.equal(localCalls, 1);
+    assert.equal(readonlyCalls, 0);
+  } finally {
+    require.cache[localStorePath].exports = localStoreOriginal;
+    require.cache[utilsPath].exports = utilsOriginal;
+    delete require.cache[contentStorePath];
+  }
+});

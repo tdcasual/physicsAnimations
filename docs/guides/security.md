@@ -51,7 +51,6 @@
 
 4. 确保持久化目录可靠
 - Docker/Compose 场景挂载 `content/`
-- Serverless 场景优先使用 WebDAV
 
 5. 公网部署时额外加固
 - 在反向代理层增加访问控制

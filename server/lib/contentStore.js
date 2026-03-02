@@ -1,8 +1,6 @@
 const path = require("path");
 
-const logger = require("./logger");
-const { createLocalStore, createReadOnlyLocalStore } = require("./contentStore/localStore");
-const { canWriteDir } = require("./contentStore/utils");
+const { createLocalStore } = require("./contentStore/localStore");
 const { createWebdavStore } = require("./contentStore/webdavStore");
 
 function normalizeMode(raw) {
@@ -28,7 +26,6 @@ function createContentStore({ rootDir, config } = {}) {
   const hasModeInput = typeof rawMode === "string" && rawMode.trim() !== "";
   const mode = normalizeMode(rawMode);
   const webdavConfig = resolveWebdavConfig(config);
-  const hasWebdav = Boolean(String(webdavConfig.url || "").trim());
   const effectiveMode = mode || "local";
 
   if (hasModeInput && !mode) {
@@ -36,21 +33,13 @@ function createContentStore({ rootDir, config } = {}) {
   }
 
   if (effectiveMode === "webdav") {
-    if (!hasWebdav) {
+    if (!String(webdavConfig.url || "").trim()) {
       throw new Error("webdav_missing_url");
     }
     return createWebdavStore(webdavConfig);
   }
 
-  const baseDir = path.join(rootDir || process.cwd(), "content");
-  const localWritable = canWriteDir(baseDir);
-
-  if (localWritable) return createLocalStore({ rootDir });
-
-  logger.warn("storage_local_not_writable", {
-    fallback: "local_readonly",
-  });
-  return createReadOnlyLocalStore({ rootDir, reason: "content_dir_not_writable" });
+  return createLocalStore({ rootDir: rootDir || process.cwd() });
 }
 
 function createStoreManager({ rootDir, config } = {}) {
