@@ -22,6 +22,7 @@
     "smoke:spa-library-admin": "node scripts/smoke_spa_library_admin.js",
     "smoke:spa-public": "node scripts/smoke_spa_public.js",
     "qa:release": "bash ./scripts/qa_release_gate.sh",
+    "cleanup:embed-vendor": "node scripts/cleanup_embed_profile_vendor_duplicates.js",
     "backup:webdav": "node scripts/backup_to_webdav.js",
     "prepare": "node scripts/prepare.js",
     "test": "node --test tests/*.test.js"

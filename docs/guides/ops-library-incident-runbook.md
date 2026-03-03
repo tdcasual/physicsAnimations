@@ -54,6 +54,13 @@ curl -sf http://127.0.0.1:4173/api/health
 1. 将受影响资源切换为“仅下载”
 2. 确认学生端可访问原文件，保障课堂不中断
 
+若怀疑 vendor 目录有重复脏文件（如 `assets 2`、`embed 2.js`、`viewer 2.html`）：
+
+1. 先执行 dry-run 预览：
+   - `npm run cleanup:embed-vendor -- --dry-run`
+2. 确认输出仅包含重复副本后再执行清理：
+   - `npm run cleanup:embed-vendor -- --apply`
+
 ## 6. 恢复与验证清单
 
 恢复后必须验证：
