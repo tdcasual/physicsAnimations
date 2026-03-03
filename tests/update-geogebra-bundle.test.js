@@ -164,6 +164,26 @@ test("runUpdate aborts on sha256 mismatch and keeps existing current release", a
   }
 });
 
+test("runUpdate infers a sanitized version from redirected bundle URL when omitted", async () => {
+  const rootDir = makeTempRoot();
+  const releasesDir = path.join(rootDir, "content", "library", "vendor", "geogebra", "releases");
+
+  try {
+    const zip = await makeBundleZip("inferred-version");
+    const zipName = "geogebra-math-apps-bundle-2026+03+alpha.zip";
+    const { server, url } = await startBundleServer(zip, zipName);
+    try {
+      const result = await runUpdate({ rootDir, url, noLock: true });
+      assert.equal(result.version, "geogebra-math-apps-bundle-2026_03_alpha");
+      assert.equal(await pathExists(path.join(releasesDir, result.version, "manifest.json")), true);
+    } finally {
+      await new Promise((resolve) => { server.close(resolve); });
+    }
+  } finally {
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("runUpdate fails fast when updater lock exists", async () => {
   const rootDir = makeTempRoot();
   const vendorDir = path.join(rootDir, "content", "library", "vendor", "geogebra");
