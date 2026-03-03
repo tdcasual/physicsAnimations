@@ -4,7 +4,7 @@
 
 ## 1. 当前基线（可量化）
 
-### 1.0 基线刷新记录（2026-03-03，T1 收口）
+### 1.0 基线刷新记录（2026-03-03，T2 清债推进）
 
 本轮基线采集命令：
 
@@ -15,13 +15,13 @@
 
 - `npm --prefix frontend run test -- --run` 通过（`62` files / `195` tests）。
 - `npm run qa:release` 全绿通过，包含：
-  - `guard:file-size`：`checked 397 files; all within budget`
-  - `guard:security`：`checked 537 files; no blocked patterns found`
+  - `guard:file-size`：`checked 413 files; all within budget`
+  - `guard:security`：`checked 549 files; no blocked patterns found`
   - `guard:audit`：`high=0`, `critical=0`
-  - `npm test`：`326/326` 通过
+  - `npm test`：`335/335` 通过
   - smoke：`spa-public`、`spa-admin`、`spa-admin-write`、`spa-library-admin` 全通过
 - 当前读路径契约（已生效）：
-  - 读路径固定为 `READ_PATH_MODE=sql_only`。
+  - 读路径固定为内建 `sql_only`（非配置项）。
   - `/api/items`、`/api/items/:id`、`/api/catalog`、`/api/categories` 在 SQL query path 缺失或抛错时返回 `503 { error: "state_db_unavailable" }`。
 - 历史备注：T1 的读降级试验已结束，当前版本不再启用 JSON fallback 行为。
 - 风险画像更新：state-db SQL 故障回到“读接口不可用并返回明确 503 信号”，定位链路更直接。
@@ -45,7 +45,7 @@
 
 ### 1.2 测试覆盖规模
 
-- 后端测试文件：`131`
+- 后端测试文件：`137`
 - 前端测试文件：`62`
 
 ### 1.3 文件体积预算热点（guard:file-size）
@@ -54,9 +54,9 @@
 
 - `frontend/src/views/admin/library/AdminLibraryView.template.html`: `645/700`
 - `tests/system-state.test.js`: `477/880`
-- `scripts/update_geogebra_bundle.js`: `463/480`
-- `tests/items-read-service.test.js`: `457/880`
 - `tests/library-route-api.test.js`: `451/880`
+- `tests/library-service.test.js`: `425/880`
+- `tests/library-service-lifecycle.test.js`: `396/880`
 
 ### 1.4 性能预算（perf gate）
 

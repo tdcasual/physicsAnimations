@@ -4,7 +4,8 @@ const fs = require("node:fs");
 
 test("roadmap keeps current read-path contract as sql_only without active json fallback wording", () => {
   const source = fs.readFileSync("docs/guides/continuous-improvement-roadmap.md", "utf8");
-  assert.match(source, /READ_PATH_MODE=sql_only/);
+  assert.match(source, /内建.*sql_only|固定.*sql_only/);
+  assert.doesNotMatch(source, /READ_PATH_MODE=/);
   assert.doesNotMatch(source, /SQL query path 缺失或抛错时优先降级到 JSON 读路径/);
 });
 

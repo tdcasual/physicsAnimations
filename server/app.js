@@ -12,7 +12,6 @@ const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
 const { loadSystemState } = require("./lib/systemState");
 const { createStateDbStore } = require("./lib/stateDb");
 const { createTaskQueue } = require("./lib/taskQueue");
-const { parseReadPathMode } = require("./lib/readPathMode");
 const { createQueryReposFromStore } = require("./ports/queryRepos");
 const { errorHandler } = require("./middleware/errorHandler");
 const { requestContextMiddleware } = require("./middleware/requestContext");
@@ -83,7 +82,6 @@ function createApp({
   store: overrideStore,
   authConfig: overrideAuthConfig,
   metricsPublic: overrideMetricsPublic,
-  readPathMode: overrideReadPathMode,
   stateDbMode: overrideStateDbMode,
   stateDbPath: overrideStateDbPath,
   stateDbMaxErrors: overrideStateDbMaxErrors,
@@ -111,10 +109,6 @@ function createApp({
   }
 
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
-  const resolvedReadPathMode = parseReadPathMode(
-    overrideReadPathMode ?? process.env.READ_PATH_MODE,
-  );
-  app.locals.readPathMode = resolvedReadPathMode;
   const parsedMetricsPublic = parseBoolean(overrideMetricsPublic);
   const envMetricsPublic = parseBoolean(process.env.METRICS_PUBLIC);
   const metricsPublic = parsedMetricsPublic ?? envMetricsPublic ?? false;
