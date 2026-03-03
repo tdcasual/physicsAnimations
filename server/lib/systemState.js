@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { createError } = require("./errors");
+const { toInt } = require("./shared/normalizers");
 
 const SYSTEM_STATE_FILE = "system.json";
 const stateLocks = new Map();
@@ -25,12 +26,6 @@ function withStateLock(key, fn) {
       release();
       if (stateLocks.get(key) === current) stateLocks.delete(key);
     });
-}
-
-function toInt(value, fallback) {
-  const parsed = Number.parseInt(String(value ?? ""), 10);
-  if (!Number.isFinite(parsed)) return fallback;
-  return parsed;
 }
 
 function normalizeTimeoutMs(value, fallback = 15000) {

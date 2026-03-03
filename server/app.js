@@ -9,6 +9,7 @@ const { createStoreManager } = require("./lib/contentStore");
 const { guessContentType } = require("./lib/contentTypes");
 const { createRuntimeMetrics } = require("./lib/runtimeMetrics");
 const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
+const { parseBooleanLike } = require("./lib/shared/normalizers");
 const { loadSystemState } = require("./lib/systemState");
 const { createStateDbStore } = require("./lib/stateDb");
 const { createTaskQueue } = require("./lib/taskQueue");
@@ -37,13 +38,7 @@ function parseTrustProxy(value) {
 }
 
 function parseBoolean(value, fallback = undefined) {
-  if (value === undefined || value === null) return fallback;
-  if (typeof value === "boolean") return value;
-  const raw = String(value).trim().toLowerCase();
-  if (!raw) return fallback;
-  if (raw === "1" || raw === "true" || raw === "yes" || raw === "on") return true;
-  if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return false;
-  return fallback;
+  return parseBooleanLike(value, fallback);
 }
 
 function safeContentKey(reqPath, prefix) {

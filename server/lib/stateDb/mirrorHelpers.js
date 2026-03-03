@@ -1,4 +1,5 @@
 const path = require("path");
+const { toInt, toText, toBooleanStrict } = require("../shared/normalizers");
 
 const STATE_BLOB_KEYS = new Set([
   "items.json",
@@ -8,19 +9,8 @@ const STATE_BLOB_KEYS = new Set([
 ]);
 const FORBIDDEN_OBJECT_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
-function toInt(value, fallback = 0) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.trunc(n);
-}
-
 function toBool(value, fallback = false) {
-  if (typeof value === "boolean") return value;
-  return fallback;
-}
-
-function toText(value, fallback = "") {
-  return typeof value === "string" ? value : fallback;
+  return toBooleanStrict(value, fallback);
 }
 
 function normalizeCategoryId(value) {

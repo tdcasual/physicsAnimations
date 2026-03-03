@@ -1,24 +1,9 @@
 const LIBRARY_STATE_VERSION = 1;
 const FORBIDDEN_JSON_KEYS = new Set(["__proto__", "prototype", "constructor"]);
-
-function toInt(value, fallback = 0) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return fallback;
-  return Math.trunc(n);
-}
-
-function toText(value, fallback = "") {
-  return typeof value === "string" ? value : fallback;
-}
+const { toInt, toText, toBooleanLoose } = require("../shared/normalizers");
 
 function toBool(value, fallback = false) {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value !== 0;
-  const text = toText(value).trim().toLowerCase();
-  if (!text) return fallback;
-  if (text === "1" || text === "true" || text === "yes" || text === "on") return true;
-  if (text === "0" || text === "false" || text === "no" || text === "off") return false;
-  return fallback;
+  return toBooleanLoose(value, fallback);
 }
 
 function sanitizeJsonValue(value, depth = 0) {
