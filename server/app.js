@@ -77,6 +77,14 @@ function shouldServeSpaRoute(reqPath) {
   return true;
 }
 
+function isHardCutLegacySpaPath(reqPath) {
+  const p = String(reqPath || "");
+  if (p === "/index.html" || p === "/viewer.html") return true;
+  if (p === "/app" || p.startsWith("/app/")) return true;
+  if (p === "/animations" || p === "/animations.json" || p.startsWith("/animations/")) return true;
+  return false;
+}
+
 function createApp({
   rootDir = path.join(__dirname, ".."),
   store: overrideStore,
@@ -304,6 +312,10 @@ function createApp({
   });
 
   app.get(/^\/.*/, (req, res, next) => {
+    if (isHardCutLegacySpaPath(req.path)) {
+      res.status(404).json({ error: "not_found" });
+      return;
+    }
     if (shouldServeSpaRoute(req.path)) {
       sendSpaEntry(req, res);
       return;

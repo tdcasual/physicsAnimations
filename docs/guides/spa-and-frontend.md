@@ -37,6 +37,15 @@ npm run smoke:spa-public
 - `/<frontend-route>`（history fallback，例如 `/viewer/:id`、`/admin/*`）
 - `/assets/*`（前端静态资源）
 
+当前版本对历史入口做了硬切，不再兼容以下路径：
+
+- `/index.html`
+- `/viewer.html`
+- `/app`、`/app/*`
+- `/animations.json`、`/animations/*`
+
+上述路径统一返回 `404 {"error":"not_found"}`。
+
 ## 常见排查
 
 1. `/` 返回 `503 service_unavailable`  

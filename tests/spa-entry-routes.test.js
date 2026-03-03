@@ -47,7 +47,7 @@ test("root routes serve SPA entry and static assets", async () => {
   }
 });
 
-test("legacy frontend entry points are treated as SPA routes", async () => {
+test("legacy frontend entry points return hard-cut 404", async () => {
   const rootDir = makeTempRoot({
     prefix: "pa-spa-test-",
     animationsJson: "{}",
@@ -72,8 +72,8 @@ test("legacy frontend entry points are treated as SPA routes", async () => {
     ];
     for (const urlPath of urls) {
       const response = await fetch(`${baseUrl}${urlPath}`);
-      assert.equal(response.status, 200, `${urlPath} should resolve to SPA entry`);
-      assert.match(await response.text(), /cutover/);
+      assert.equal(response.status, 404, `${urlPath} should return not_found`);
+      assert.deepEqual(await response.json(), { error: "not_found" });
     }
   } finally {
     await stopServer(server);
