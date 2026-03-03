@@ -102,7 +102,9 @@ function normalizeStateDbMode(raw) {
   const mode = String(raw || "").trim().toLowerCase();
   if (!mode || mode === "off" || mode === "disabled" || mode === "false") return "off";
   if (mode === "sqlite") return "sqlite";
-  return "off";
+  const err = new Error("invalid_state_db_mode");
+  err.code = "INVALID_STATE_DB_MODE";
+  throw err;
 }
 
 function normalizeKey(key) {
