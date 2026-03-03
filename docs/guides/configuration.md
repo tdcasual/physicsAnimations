@@ -85,6 +85,11 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 
 > 适用于 `library` 中 `.ggb` 的 `embed` 打开模式。默认会先走内网自托管，再在线兜底。
 
+兼容边界说明：
+
+- 当前版本仅保留资源库 `embed` 场景的双源 fallback（自托管 + 在线兜底）。
+- 除此之外不再保留其他历史兼容路径（如旧入口、旧模式别名、旧读路径回退）。
+
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
 | `LIBRARY_GGB_SELF_HOST_SCRIPT_URL` | `/content/library/vendor/geogebra/current/deployggb.js` | 自托管 `deployggb.js` 地址 |
