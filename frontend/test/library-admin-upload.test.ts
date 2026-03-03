@@ -14,6 +14,10 @@ function readLibrarySources() {
   const draftState = read("src/features/library/useLibraryAdminDraftState.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
+  const embedProfileDeps = read("src/features/library/embedProfile/embedProfileActionDeps.ts");
+  const embedCreateActions = read("src/features/library/embedProfile/useEmbedProfileCreateActions.ts");
+  const embedEditActions = read("src/features/library/embedProfile/useEmbedProfileEditActions.ts");
+  const embedSyncActions = read("src/features/library/embedProfile/useEmbedProfileSyncActions.ts");
   const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
   const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
   const folderActions = read("src/features/library/useLibraryFolderActions.ts");
@@ -21,6 +25,8 @@ function readLibrarySources() {
   const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
   const panelSections = read("src/features/library/useLibraryPanelSections.ts");
   const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
+  const embedProfileCreatePanel = read("src/views/admin/library/panels/EmbedProfileCreatePanel.vue");
+  const embedProfileEditPanel = read("src/views/admin/library/panels/EmbedProfileEditPanel.vue");
   return {
     view,
     template,
@@ -29,6 +35,10 @@ function readLibrarySources() {
     draftState,
     feedback,
     embedActions,
+    embedProfileDeps,
+    embedCreateActions,
+    embedEditActions,
+    embedSyncActions,
     assetSelection,
     assetFilters,
     folderActions,
@@ -36,7 +46,9 @@ function readLibrarySources() {
     assetEditorActions,
     panelSections,
     adminLifecycle,
-    combined: `${view}\n${template}\n${style}\n${state}\n${draftState}\n${feedback}\n${embedActions}\n${assetSelection}\n${assetFilters}\n${folderActions}\n${assetCrudActions}\n${assetEditorActions}\n${panelSections}\n${adminLifecycle}`,
+    embedProfileCreatePanel,
+    embedProfileEditPanel,
+    combined: `${view}\n${template}\n${style}\n${state}\n${draftState}\n${feedback}\n${embedActions}\n${embedProfileDeps}\n${embedCreateActions}\n${embedEditActions}\n${embedSyncActions}\n${assetSelection}\n${assetFilters}\n${folderActions}\n${assetCrudActions}\n${assetEditorActions}\n${panelSections}\n${adminLifecycle}\n${embedProfileCreatePanel}\n${embedProfileEditPanel}`,
   };
 }
 

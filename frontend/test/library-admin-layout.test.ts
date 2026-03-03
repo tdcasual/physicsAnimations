@@ -28,6 +28,8 @@ function readLibrarySources() {
   const folderPanel = read("src/views/admin/library/panels/FolderPanel.vue");
   const assetPanel = read("src/views/admin/library/panels/AssetPanel.vue");
   const embedPanel = read("src/views/admin/library/panels/EmbedPanel.vue");
+  const embedProfileCreatePanel = read("src/views/admin/library/panels/EmbedProfileCreatePanel.vue");
+  const embedProfileEditPanel = read("src/views/admin/library/panels/EmbedProfileEditPanel.vue");
   const operationLogPanel = read("src/views/admin/library/panels/OperationLogPanel.vue");
   return {
     view,
@@ -51,6 +53,8 @@ function readLibrarySources() {
     folderPanel,
     assetPanel,
     embedPanel,
+    embedProfileCreatePanel,
+    embedProfileEditPanel,
     operationLogPanel,
     combined: [
       view,
@@ -74,6 +78,8 @@ function readLibrarySources() {
       folderPanel,
       assetPanel,
       embedPanel,
+      embedProfileCreatePanel,
+      embedProfileEditPanel,
       operationLogPanel,
     ].join("\n"),
   };
@@ -96,7 +102,19 @@ describe("admin library layout", () => {
   });
 
   it("composes workbench columns via dedicated column components", () => {
-    const { view, template, folderColumn, assetColumn, inspectorColumn, folderPanel, assetPanel, embedPanel, operationLogPanel } =
+    const {
+      view,
+      template,
+      folderColumn,
+      assetColumn,
+      inspectorColumn,
+      folderPanel,
+      assetPanel,
+      embedPanel,
+      embedProfileCreatePanel,
+      embedProfileEditPanel,
+      operationLogPanel,
+    } =
       readLibrarySources();
 
     expect(view).toMatch(/import LibraryFolderColumn/);
@@ -108,11 +126,17 @@ describe("admin library layout", () => {
     expect(view).toMatch(/import FolderPanel/);
     expect(view).toMatch(/import AssetPanel/);
     expect(view).toMatch(/import EmbedPanel/);
+    expect(view).toMatch(/import EmbedProfileCreatePanel/);
+    expect(view).toMatch(/import EmbedProfileEditPanel/);
     expect(view).toMatch(/import OperationLogPanel/);
     expect(template).toMatch(/<FolderPanel/);
     expect(template).toMatch(/<AssetPanel/);
     expect(template).toMatch(/<EmbedPanel/);
+    expect(template).toMatch(/<EmbedProfileCreatePanel/);
+    expect(template).toMatch(/<EmbedProfileEditPanel/);
     expect(template).toMatch(/<OperationLogPanel>/);
+    expect(template).not.toMatch(/v-model="vm\.drafts\.embedScriptUrl"/);
+    expect(template).not.toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"/);
 
     expect(folderColumn).toMatch(/library-column-left/);
     expect(assetColumn).toMatch(/library-column-middle/);
@@ -120,6 +144,10 @@ describe("admin library layout", () => {
     expect(folderPanel).toMatch(/panel-content/);
     expect(assetPanel).toMatch(/panel-content/);
     expect(embedPanel).toMatch(/panel-content/);
+    expect(embedProfileCreatePanel).toMatch(/新增平台/);
+    expect(embedProfileCreatePanel).toMatch(/createEmbedProfileEntry/);
+    expect(embedProfileEditPanel).toMatch(/编辑平台/);
+    expect(embedProfileEditPanel).toMatch(/saveEmbedProfileEdit/);
     expect(operationLogPanel).toMatch(/recent-action-log/);
   });
 
@@ -251,7 +279,7 @@ describe("admin library layout", () => {
   });
 
   it("renders inline field validation for key library admin forms", () => {
-    const { template, state, feedback } = readLibrarySources();
+    const { template, state, feedback, combined } = readLibrarySources();
     expect(state).toMatch(/useLibraryAdminFeedback/);
     expect(feedback).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
     expect(feedback).toMatch(/function setFieldError/);
@@ -262,8 +290,8 @@ describe("admin library layout", () => {
     expect(template).toMatch(/getFieldError\("createFolderName"\)/);
     expect(template).toMatch(/getFieldError\("uploadAssetFile"\)/);
     expect(template).toMatch(/getFieldError\("uploadAssetEmbedProfile"\)/);
-    expect(template).toMatch(/getFieldError\("createEmbedProfileName"\)/);
-    expect(template).toMatch(/getFieldError\("createEmbedScriptUrl"\)/);
+    expect(combined).toMatch(/getFieldError\("createEmbedProfileName"\)/);
+    expect(combined).toMatch(/getFieldError\("createEmbedScriptUrl"\)/);
   });
 
   it("prevents long names from breaking mobile row layout", () => {
@@ -276,12 +304,12 @@ describe("admin library layout", () => {
   });
 
   it("disables mobile auto-correct and auto-capitalization for embed URL fields", () => {
-    const { template } = readLibrarySources();
-    expect(template).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(template).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(template).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(template).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(template).toMatch(/v-model="vm\.drafts\.embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(template).toMatch(/v-model="vm\.drafts\.embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
+    const { combined } = readLibrarySources();
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocorrect="off"/);
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocorrect="off"/);
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
   });
 });
