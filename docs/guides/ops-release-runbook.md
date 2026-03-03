@@ -101,6 +101,7 @@ curl -sf http://127.0.0.1:4173/api/metrics | jq '.http'
 3. 检查宿主机磁盘空间、文件权限、IO 错误。
 4. 观察 `/api/metrics` 中 `http.latencyMs.p95` 与 `http.statusCounts.5xx` 是否持续恶化。
 5. 若故障持续，按回滚流程切回上一个稳定版本。
+6. 若服务启动阶段直接失败，优先检查 `STATE_DB_MODE` 是否为 `off` / `sqlite`，非法值会触发 `invalid_state_db_mode`。
 
 ## 6. READ_PATH_MODE 基线确认
 

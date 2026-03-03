@@ -20,11 +20,11 @@
   - `guard:audit`：`high=0`, `critical=0`
   - `npm test`：`326/326` 通过
   - smoke：`spa-public`、`spa-admin`、`spa-admin-write`、`spa-library-admin` 全通过
-- T1（state-db 读降级）行为变化已落地：
-  - `/api/items`、`/api/items/:id`、`/api/catalog`、`/api/categories` 在 SQL query path 缺失或抛错时优先降级到 JSON 读路径，fallback 可用时返回 `200`。
-  - 仅当 SQL 与 JSON fallback 同时失败时返回 `503 { error: "state_db_unavailable" }`。
-- 风险画像更新：state-db SQL 故障从“读接口硬不可用”降为“功能可用优先、性能可能退化并伴随告警日志”。
-- 已完成单轨硬切：读路径固定为 `READ_PATH_MODE=sql_only`，已移除 dual fallback 行为。
+- 当前读路径契约（已生效）：
+  - 读路径固定为 `READ_PATH_MODE=sql_only`。
+  - `/api/items`、`/api/items/:id`、`/api/catalog`、`/api/categories` 在 SQL query path 缺失或抛错时返回 `503 { error: "state_db_unavailable" }`。
+- 历史备注：T1 的读降级试验已结束，当前版本不再启用 JSON fallback 行为。
+- 风险画像更新：state-db SQL 故障回到“读接口不可用并返回明确 503 信号”，定位链路更直接。
 
 ### 1.1 质量门禁（发布前）
 

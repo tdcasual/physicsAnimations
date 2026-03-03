@@ -59,6 +59,7 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 
 - 当前运行时默认启用 `sqlite` 状态数据库镜像（未设置 `STATE_DB_MODE` 时生效）。
 - 如需关闭状态数据库镜像，请显式设置 `STATE_DB_MODE=off`。
+- `STATE_DB_MODE` 仅支持 `off` / `sqlite`；非法非空值会在启动阶段直接失败（`invalid_state_db_mode`）。
 - `STATE_DB_COOLDOWN_MS` 控制熔断打开后的自动恢复探测窗口；建议保持默认值并结合告警观察。
 - 当前版本为单轨 SQL 读路径：`READ_PATH_MODE=sql_only`。
 - SQL 读路径不可用时，读接口返回 `503 state_db_unavailable`，不再回退 JSON 读路径。
