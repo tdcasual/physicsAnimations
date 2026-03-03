@@ -7,11 +7,13 @@ function readFile(relPath: string): string {
 }
 
 describe("topbar responsive layout", () => {
-  it("defines a mobile breakpoint that allows topbar wrapping", () => {
+  it("defines a mobile breakpoint that keeps action buttons horizontally scrollable", () => {
     const css = readFile("src/styles.css");
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)/);
     expect(css).toMatch(/\.topbar-inner\s*\{[\s\S]*flex-wrap:\s*wrap/);
-    expect(css).toMatch(/\.actions\s*\{[\s\S]*flex-wrap:\s*wrap/);
+    expect(css).toMatch(/\.actions\s*\{[\s\S]*flex-wrap:\s*nowrap/);
+    expect(css).toMatch(/\.actions\s*\{[\s\S]*overflow-x:\s*auto/);
+    expect(css).toMatch(/\.actions\s*\{[\s\S]*-webkit-overflow-scrolling:\s*touch/);
   });
 
   it("uses dynamic viewport units to avoid iOS 100vh jump", () => {

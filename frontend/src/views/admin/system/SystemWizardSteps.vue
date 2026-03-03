@@ -133,7 +133,7 @@ function onModeChange() {
       <div v-if="saveDisabledHint" class="save-disabled-hint admin-feedback">{{ saveDisabledHint }}</div>
       <div v-if="continueDisabledHint" class="continue-disabled-hint admin-feedback">{{ continueDisabledHint }}</div>
 
-      <div class="actions admin-actions">
+      <div class="actions admin-actions wizard-step3-actions">
         <button type="button" class="btn btn-ghost" @click="emit('go-step', 2)">上一步</button>
         <button
           v-if="remoteMode"
@@ -181,15 +181,8 @@ function onModeChange() {
   gap: 10px;
 }
 
-h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-h4 {
-  margin: 0;
-  font-size: 15px;
-}
+h3 { margin: 0; font-size: 16px; }
+h4 { margin: 0; font-size: 15px; }
 
 .summary-grid span {
   color: var(--muted);
@@ -319,9 +312,23 @@ h4 {
   .step-list {
     grid-template-columns: 1fr;
   }
-
   .mode-grid {
     grid-template-columns: 1fr;
   }
+  .step-hint {
+    font-size: 13px;
+    line-height: 1.35;
+  }
+  .wizard-panel {
+    padding: 12px;
+  }
+  .actions {
+    justify-content: stretch;
+  }
+  .actions .btn {
+    flex: 1 1 calc(50% - 6px);
+  }
+  .wizard-step3-actions { display: grid; grid-template-columns: 1fr; }
+  .wizard-step3-actions .btn { width: 100%; flex: 1 1 auto; }
 }
 </style>

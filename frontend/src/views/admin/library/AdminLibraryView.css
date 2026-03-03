@@ -177,13 +177,17 @@
 
 .asset-list-head {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1fr) auto;
+  grid-template-columns: 52px minmax(0, 1fr);
   gap: 8px;
   padding: 0 8px;
   font-size: 12px;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
+}
+
+.asset-list-head > :nth-child(3) {
+  display: none;
 }
 
 .deleted-assets-list {
@@ -253,10 +257,39 @@
   border-radius: 10px;
   background: color-mix(in srgb, var(--surface) 92%, var(--bg));
   padding: 8px;
+  gap: 8px;
+}
+
+.folder-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+}
+
+.asset-item {
+  display: grid;
+}
+
+.asset-list > .asset-item {
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-areas:
+    "select main"
+    "select actions";
+  align-items: start;
+}
+
+.asset-list > .asset-item .asset-select-wrap {
+  grid-area: select;
+  align-self: center;
+}
+
+.asset-list > .asset-item .asset-main {
+  grid-area: main;
+}
+
+.asset-list > .asset-item .asset-actions-inline {
+  grid-area: actions;
+  justify-content: flex-start;
 }
 
 .asset-item.selected {
@@ -280,7 +313,6 @@
 .asset-main {
   display: grid;
   gap: 2px;
-  flex: 1;
   min-width: 0;
 }
 
@@ -289,6 +321,14 @@
   gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.deleted-assets-list .asset-item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.deleted-assets-list .asset-actions-inline {
+  justify-content: flex-start;
 }
 
 .btn-danger {

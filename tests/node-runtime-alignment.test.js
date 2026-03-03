@@ -9,12 +9,12 @@ function readUtf8(relPath) {
   return fs.readFileSync(path.join(ROOT_DIR, relPath), "utf8");
 }
 
-test("package.json and frontend/package.json declare Node 24 engines", () => {
+test("package.json and frontend/package.json declare Node >=24 engines", () => {
   const rootPkg = JSON.parse(readUtf8("package.json"));
   const frontendPkg = JSON.parse(readUtf8("frontend/package.json"));
 
-  assert.equal(rootPkg.engines?.node, ">=24 <25");
-  assert.equal(frontendPkg.engines?.node, ">=24 <25");
+  assert.equal(rootPkg.engines?.node, ">=24");
+  assert.equal(frontendPkg.engines?.node, ">=24");
 
   const nodeTypesVersion = String(frontendPkg.devDependencies?.["@types/node"] || "");
   assert.match(nodeTypesVersion, /^\^24(\.|$)/);

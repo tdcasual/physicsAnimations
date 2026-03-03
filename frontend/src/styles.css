@@ -2,7 +2,7 @@
   --bg: #f4f6fb;
   --surface: #ffffff;
   --text: #0f172a;
-  --muted: #64748b;
+  --muted: #475569;
   --border: #d1d5db;
   --primary: #2563eb;
   --primary-2: #1d4ed8;
@@ -141,6 +141,7 @@ a {
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
+  box-shadow: 0 10px 28px -22px rgba(15, 23, 42, 0.55);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -171,6 +172,10 @@ a {
   justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.admin-actions .btn-primary {
+  min-inline-size: 96px;
 }
 
 .admin-feedback {
@@ -287,12 +292,30 @@ input[type="radio"] {
 
   .actions {
     width: 100%;
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+  }
+
+  .actions .btn {
+    flex: 0 0 auto;
   }
 
   .app-main {
     width: calc(100% - 20px);
     margin-top: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .admin-actions {
+    justify-content: stretch;
+  }
+
+  .admin-actions .btn {
+    flex: 1 1 calc(50% - 6px);
   }
 }

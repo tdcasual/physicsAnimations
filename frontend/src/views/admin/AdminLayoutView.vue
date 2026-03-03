@@ -1,7 +1,42 @@
+<script setup lang="ts">
+import { nextTick, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
+const adminNavRef = ref<HTMLElement | null>(null);
+
+function scrollAdminNavLinkIntoView(target: HTMLElement | null) {
+  if (!target) return;
+  target.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+async function scrollActiveAdminLinkIntoView() {
+  await nextTick();
+  const nav = adminNavRef.value;
+  if (!nav) return;
+  const active = nav.querySelector<HTMLElement>(".admin-link.active, .admin-link.router-link-exact-active");
+  scrollAdminNavLinkIntoView(active);
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    void scrollActiveAdminLinkIntoView();
+  },
+  { immediate: true },
+);
+
+function onAdminNavFocusIn(event: FocusEvent) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement) || !target.classList.contains("admin-link")) return;
+  scrollAdminNavLinkIntoView(target);
+}
+</script>
+
 <template>
   <section class="admin-layout-view">
     <h1>管理后台</h1>
-    <nav class="admin-nav">
+    <nav ref="adminNavRef" class="admin-nav" @focusin="onAdminNavFocusIn">
       <RouterLink class="admin-link" to="/">主页面</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/dashboard">概览</RouterLink>
       <RouterLink class="admin-link" active-class="active" to="/admin/content">内容</RouterLink>
@@ -54,5 +89,19 @@ h1 {
 
 .admin-body {
   display: grid;
+}
+
+@media (max-width: 640px) {
+  .admin-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+  }
+
+  .admin-link {
+    flex: 0 0 auto;
+  }
 }
 </style>
