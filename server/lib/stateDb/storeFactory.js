@@ -43,6 +43,7 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
   }
 
   const normalizedMaxErrors = Math.max(1, toInt(maxErrors ?? process.env.STATE_DB_MAX_ERRORS, 3));
+  const normalizedCooldownMs = Math.max(1000, toInt(process.env.STATE_DB_COOLDOWN_MS, 30000));
   const info = {
     enabled: true,
     mode: "sqlite",
@@ -67,7 +68,11 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
     return err;
   }
 
-  const circuitState = createStateDbCircuitState({ info, logger });
+  const circuitState = createStateDbCircuitState({
+    info,
+    logger,
+    cooldownMs: normalizedCooldownMs,
+  });
 
   function isUsable() {
     return circuitState.isUsable();

@@ -1,7 +1,27 @@
-function createStateDbCircuitState({ info, now = () => new Date().toISOString(), logger = null }) {
+function createStateDbCircuitState({
+  info,
+  now = () => new Date().toISOString(),
+  nowMs = () => Date.now(),
+  cooldownMs = 30000,
+  logger = null,
+}) {
   let consecutiveErrors = Number(info?.consecutiveErrors || 0);
+  let openedAtMs = null;
+
+  function tryReopenAfterCooldown() {
+    if (!info.circuitOpen) return;
+    if (!Number.isFinite(openedAtMs)) return;
+    if (nowMs() - openedAtMs < cooldownMs) return;
+
+    info.circuitOpen = false;
+    info.healthy = false;
+    info.degraded = true;
+    consecutiveErrors = 0;
+    info.consecutiveErrors = 0;
+  }
 
   function isUsable() {
+    tryReopenAfterCooldown();
     return !info.circuitOpen;
   }
 
@@ -24,6 +44,7 @@ function createStateDbCircuitState({ info, now = () => new Date().toISOString(),
 
     if (consecutiveErrors >= info.maxErrors) {
       info.circuitOpen = true;
+      openedAtMs = nowMs();
       info.healthy = false;
       info.degraded = false;
     } else {

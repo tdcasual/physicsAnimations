@@ -60,3 +60,36 @@ test("markSuccess resets consecutive error fields when circuit is still closed",
   assert.equal(info.degraded, false);
   assert.equal(info.lastSuccessAt, "2026-02-27T00:00:05.000Z");
 });
+
+test("isUsable reopens circuit after cooldown window", () => {
+  let nowTick = 0;
+  const info = {
+    circuitOpen: false,
+    healthy: true,
+    degraded: false,
+    maxErrors: 1,
+    errorCount: 0,
+    consecutiveErrors: 0,
+    lastError: "",
+    lastErrorAt: "",
+    lastSuccessAt: "",
+  };
+
+  const state = createStateDbCircuitState({
+    info,
+    now: () => "2026-02-27T00:00:10.000Z",
+    nowMs: () => nowTick,
+    cooldownMs: 5000,
+  });
+
+  state.markFailure("query", new Error("boom"));
+  assert.equal(info.circuitOpen, true);
+  assert.equal(state.isUsable(), false);
+
+  nowTick = 5001;
+  assert.equal(state.isUsable(), true);
+  assert.equal(info.circuitOpen, false);
+  assert.equal(info.degraded, true);
+  assert.equal(info.healthy, false);
+  assert.equal(info.consecutiveErrors, 0);
+});
