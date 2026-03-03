@@ -106,15 +106,7 @@ function createStateDbStore({ rootDir, store, mode, dbPath, maxErrors }) {
       sourceReadError = err;
     }
 
-    if (raw) {
-      try {
-        runMirrorOperation("mirror.writeBuffer(items.json)", () => {
-          mirror.writeBuffer("items.json", raw);
-        });
-      } catch {
-        // Keep source-of-truth data path available even if mirror write-through fails.
-      }
-    } else if (sourceReadError) {
+    if (!raw && sourceReadError) {
       throw sourceReadError;
     }
 
