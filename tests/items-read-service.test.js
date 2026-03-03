@@ -1,11 +1,10 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-test("createItemsReadService exposes listItems and getItemById", async () => {
-  const { createItemsReadService } = require("../server/services/items/readService");
+const { createItemsReadService } = require("../server/services/items/readService");
 
+test("createItemsReadService exposes listItems and getItemById", async () => {
   const service = createItemsReadService({
-    store: {},
     deps: {
       toApiItem: (item) => item,
     },
@@ -18,7 +17,6 @@ test("createItemsReadService exposes listItems and getItemById", async () => {
 
 test("listItems uses queryItems port when available", async () => {
   let receivedOptions = null;
-  const { createItemsReadService } = require("../server/services/items/readService");
 
   const service = createItemsReadService({
     itemsQueryRepo: {
@@ -71,34 +69,8 @@ test("listItems uses queryItems port when available", async () => {
   assert.equal(out.items[0].id, "merged_1");
 });
 
-test("listItems uses injected itemsQueryRepo before touching in-memory loaders", async () => {
-  const { createItemsReadService } = require("../server/services/items/readService");
-
+test("listItems keeps unsupported type behavior as empty result", async () => {
   const service = createItemsReadService({
-    store: {},
-    itemsQueryRepo: {
-      async queryItems() {
-        return {
-          total: 1,
-          items: [
-            {
-              id: "repo_1",
-              type: "link",
-              categoryId: "other",
-              title: "Repo Item",
-              description: "",
-              url: "",
-              thumbnail: "",
-              order: 0,
-              published: true,
-              hidden: false,
-              createdAt: "",
-              updatedAt: "",
-            },
-          ],
-        };
-      },
-    },
     deps: {
       toApiItem: (item) => item,
     },
@@ -106,18 +78,37 @@ test("listItems uses injected itemsQueryRepo before touching in-memory loaders",
 
   const out = await service.listItems({
     isAdmin: false,
-    query: { page: 1, pageSize: 20, q: "", categoryId: "", type: "" },
+    query: { page: 1, pageSize: 24, q: "", categoryId: "", type: "legacy" },
   });
 
-  assert.equal(out.total, 1);
-  assert.equal(out.items[0].id, "repo_1");
+  assert.equal(out.page, 1);
+  assert.equal(out.pageSize, 24);
+  assert.equal(out.total, 0);
+  assert.deepEqual(out.items, []);
 });
 
 test("listItems returns state_db_unavailable when queryItems port is missing", async () => {
-  const { createItemsReadService } = require("../server/services/items/readService");
-
   const service = createItemsReadService({
-    store: {},
+    deps: {
+      toApiItem: (item) => item,
+    },
+  });
+
+  const out = await service.listItems({
+    isAdmin: false,
+    query: { page: 1, pageSize: 24, q: "", categoryId: "", type: "" },
+  });
+
+  assert.deepEqual(out, { status: 503, error: "state_db_unavailable" });
+});
+
+test("listItems returns state_db_unavailable when queryItems throws", async () => {
+  const service = createItemsReadService({
+    itemsQueryRepo: {
+      async queryItems() {
+        throw new Error("sql_items_query_failed");
+      },
+    },
     deps: {
       toApiItem: (item) => item,
     },
@@ -132,10 +123,7 @@ test("listItems returns state_db_unavailable when queryItems port is missing", a
 });
 
 test("getItemById prefers unified queryItemById port", async () => {
-  const { createItemsReadService } = require("../server/services/items/readService");
-
   const service = createItemsReadService({
-    store: {},
     itemsQueryRepo: {
       async queryItemById({ id, isAdmin, includeDeleted }) {
         assert.equal(id, "dyn_1");
@@ -151,9 +139,6 @@ test("getItemById prefers unified queryItemById port", async () => {
           deleted: false,
         };
       },
-      async queryDynamicItemById() {
-        throw new Error("queryDynamicItemById should not be called");
-      },
     },
     deps: {
       toApiItem: (item) => item,
@@ -163,4 +148,31 @@ test("getItemById prefers unified queryItemById port", async () => {
   const out = await service.getItemById({ id: "dyn_1", isAdmin: false });
   assert.equal(out?.id, "dyn_1");
   assert.equal(out?.title, "Unified");
+});
+
+test("getItemById returns state_db_unavailable when queryItemById port is missing", async () => {
+  const service = createItemsReadService({
+    deps: {
+      toApiItem: (item) => item,
+    },
+  });
+
+  const out = await service.getItemById({ id: "fallback_item_by_id", isAdmin: false });
+  assert.deepEqual(out, { status: 503, error: "state_db_unavailable" });
+});
+
+test("getItemById returns state_db_unavailable when queryItemById throws", async () => {
+  const service = createItemsReadService({
+    itemsQueryRepo: {
+      async queryItemById() {
+        throw new Error("sql_item_lookup_failed");
+      },
+    },
+    deps: {
+      toApiItem: (item) => item,
+    },
+  });
+
+  const out = await service.getItemById({ id: "dyn_2", isAdmin: false });
+  assert.deepEqual(out, { status: 503, error: "state_db_unavailable" });
 });

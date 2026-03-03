@@ -284,7 +284,10 @@ test("/api/categories returns state_db_unavailable when SQL category counts quer
   const store = {
     mode: "local",
     readOnly: false,
-    async readBuffer() {
+    async readBuffer(key) {
+      const normalized = String(key || "").replace(/^\/+/, "");
+      if (normalized === "items.json") return Buffer.from('{"version":2,"items":[]}\n', "utf8");
+      if (normalized === "categories.json") return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
       return null;
     },
     async writeBuffer() {},
@@ -312,8 +315,7 @@ test("/api/categories returns state_db_unavailable when SQL category counts quer
   try {
     const response = await fetch(`${baseUrl}/api/categories`);
     assert.equal(response.status, 503);
-    const data = await response.json();
-    assert.equal(data?.error, "state_db_unavailable");
+    assert.deepEqual(await response.json(), { error: "state_db_unavailable" });
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

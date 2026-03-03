@@ -42,7 +42,7 @@ test("Dockerfile uses Node 24 base images for all stages", () => {
 test("GitHub Actions setup-node uses Node 24", () => {
   const workflow = readUtf8(".github/workflows/docker-image.yml");
   const setupNodeMatches = [...workflow.matchAll(/node-version:\s*"?(\d+)"?/g)];
-  assert.ok(setupNodeMatches.length >= 2, "expected at least two setup-node version declarations");
+  assert.ok(setupNodeMatches.length >= 1, "expected at least one setup-node version declaration");
   for (const match of setupNodeMatches) {
     assert.equal(match[1], "24");
   }

@@ -120,6 +120,35 @@ describe("admin library layout", () => {
     expect(operationLogPanel).toMatch(/recent-action-log/);
   });
 
+  it("consumes library admin state via a single vm object in the view shell", () => {
+    const { view, template } = readLibrarySources();
+    expect(view).toMatch(/const vm = reactive\(useLibraryAdminState\(\)\);/);
+    expect(view).not.toMatch(/const\s*\{[\s\S]*\}\s*=\s*useLibraryAdminState\(\);/);
+    expect(template).toMatch(/vm\./);
+  });
+
+  it("binds template state through grouped vm buckets instead of flat fields", () => {
+    const { template } = readLibrarySources();
+    expect(template).toMatch(/vm\.ui\./);
+    expect(template).toMatch(/vm\.data\./);
+    expect(template).toMatch(/vm\.drafts\./);
+    expect(template).toMatch(/vm\.filters\./);
+    expect(template).toMatch(/vm\.selection\./);
+    expect(template).toMatch(/vm\.panels\./);
+    expect(template).toMatch(/vm\.logs\./);
+    expect(template).toMatch(/vm\.actions\./);
+
+    expect(template).not.toMatch(/\bvm\.savingAsset\b/);
+    expect(template).not.toMatch(/\bvm\.folderName\b/);
+    expect(template).not.toMatch(/\bvm\.filteredFolders\b/);
+    expect(template).not.toMatch(/\bvm\.assetBatchResult\b/);
+    expect(template).not.toMatch(/\bvm\.activePanelTab\b/);
+    expect(template).not.toMatch(/\bvm\.operationLogFilter\b/);
+    expect(template).not.toMatch(/\bvm\.setActivePanelTab\b/);
+    expect(template).not.toMatch(/\bvm\.getFieldError\b/);
+    expect(template).not.toMatch(/\bvm\.clearOperationLogs\b/);
+  });
+
   it("provides batch actions and advanced filters for asset management", () => {
     const { template, combined } = readLibrarySources();
     expect(template).toMatch(/asset-mode-filter/);
@@ -244,11 +273,11 @@ describe("admin library layout", () => {
 
   it("disables mobile auto-correct and auto-capitalization for embed URL fields", () => {
     const { template } = readLibrarySources();
-    expect(template).toMatch(/v-model="embedScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(template).toMatch(/v-model="embedScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(template).toMatch(/v-model="embedEditScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(template).toMatch(/v-model="embedEditScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(template).toMatch(/v-model="embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(template).toMatch(/v-model="embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(template).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(template).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocorrect="off"/);
+    expect(template).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(template).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocorrect="off"/);
+    expect(template).toMatch(/v-model="vm\.drafts\.embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
+    expect(template).toMatch(/v-model="vm\.drafts\.embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
   });
 });

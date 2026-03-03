@@ -4,27 +4,27 @@
 
 ## 1. 当前基线（可量化）
 
-### 1.0 基线刷新记录（2026-03-03）
+### 1.0 基线刷新记录（2026-03-03，T1 收口）
 
 本轮基线采集命令：
 
-1. `npm run qa:release`
-2. `npm run guard:file-size`
-3. `npm run guard:security`
-4. `npm audit --omit=dev --json`
-5. `npm --prefix frontend audit --omit=dev --json`
+1. `npm --prefix frontend run test -- --run`
+2. `npm run qa:release`
 
 采集结果：
 
-- `qa:release` 在 `smoke:spa-public` 阶段失败（当前工作区无可用 public category 测试数据），其余前置门禁均通过。
-- `guard:file-size` 通过；top5 热点仍为：
-  - `tests/system-state.test.js`: `477/880`
-  - `frontend/src/features/library/useLibraryAdminState.ts`: `451/455`
-  - `tests/library-route-api.test.js`: `451/880`
-  - `tests/library-service.test.js`: `425/880`
-  - `tests/library-service-lifecycle.test.js`: `396/880`
-- `guard:security` 通过（`checked 528 files`）。
-- `npm audit --omit=dev`（root/frontend）均为 `0 vulnerabilities`（`high=0`, `critical=0`）。
+- `npm --prefix frontend run test -- --run` 通过（`62` files / `195` tests）。
+- `npm run qa:release` 全绿通过，包含：
+  - `guard:file-size`：`checked 397 files; all within budget`
+  - `guard:security`：`checked 537 files; no blocked patterns found`
+  - `guard:audit`：`high=0`, `critical=0`
+  - `npm test`：`326/326` 通过
+  - smoke：`spa-public`、`spa-admin`、`spa-admin-write`、`spa-library-admin` 全通过
+- T1（state-db 读降级）行为变化已落地：
+  - `/api/items`、`/api/items/:id`、`/api/catalog`、`/api/categories` 在 SQL query path 缺失或抛错时优先降级到 JSON 读路径，fallback 可用时返回 `200`。
+  - 仅当 SQL 与 JSON fallback 同时失败时返回 `503 { error: "state_db_unavailable" }`。
+- 风险画像更新：state-db SQL 故障从“读接口硬不可用”降为“功能可用优先、性能可能退化并伴随告警日志”。
+- 已完成单轨硬切：读路径固定为 `READ_PATH_MODE=sql_only`，已移除 dual fallback 行为。
 
 ### 1.1 质量门禁（发布前）
 
@@ -32,29 +32,31 @@
 
 1. `npm run guard:file-size`
 2. `npm run guard:security`
-3. `npm test`
-4. `npm --prefix frontend run test`
-5. `npm run typecheck:frontend`
-6. `npm run build:frontend`
-7. `npm run smoke:spa-public`
-8. `npm run smoke:spa-admin`
-9. `npm run smoke:spa-admin-write`
-10. `npm run smoke:spa-library-admin`
+3. `npm run guard:audit`
+4. `npm run build:frontend`
+5. `npm test`
+6. `npm --prefix frontend run test -- --run`
+7. `npm run typecheck:frontend`
+8. `npm run test:e2e:admin-write`
+9. `npm run smoke:spa-public`
+10. `npm run smoke:spa-admin`
+11. `npm run smoke:spa-admin-write`
+12. `npm run smoke:spa-library-admin`
 
 ### 1.2 测试覆盖规模
 
-- 后端测试文件：`127`
-- 前端测试文件：`60`
+- 后端测试文件：`131`
+- 前端测试文件：`62`
 
 ### 1.3 文件体积预算热点（guard:file-size）
 
 当前最接近上限的文件：
 
-- `frontend/src/features/library/useLibraryAdminState.ts`: `450/455`
-- `frontend/src/views/CatalogView.vue`: `375/380`
-- `frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts`: `356/360`
-- `tests/library-route-api.test.js`: `450/880`（已拆分，原 800+ 风险已缓解）
-- `tests/library-service.test.js`: `424/880`（已拆分，原 700+ 风险已缓解）
+- `frontend/src/views/admin/library/AdminLibraryView.template.html`: `645/700`
+- `tests/system-state.test.js`: `477/880`
+- `scripts/update_geogebra_bundle.js`: `463/480`
+- `tests/items-read-service.test.js`: `457/880`
+- `tests/library-route-api.test.js`: `451/880`
 
 ### 1.4 性能预算（perf gate）
 

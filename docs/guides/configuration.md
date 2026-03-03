@@ -52,11 +52,15 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 | `STATE_DB_MODE` | `sqlite` | 可选 `off` / `sqlite` |
 | `STATE_DB_PATH` | `content/state.sqlite` | SQLite 文件路径 |
 | `STATE_DB_MAX_ERRORS` | `3` | 连续错误熔断阈值 |
+| `READ_PATH_MODE` | `sql_only` | 读路径策略（单轨 SQL 读路径） |
 
 说明：
 
 - 当前运行时默认启用 `sqlite` 状态数据库镜像（未设置 `STATE_DB_MODE` 时生效）。
 - 如需关闭状态数据库镜像，请显式设置 `STATE_DB_MODE=off`。
+- 当前版本为单轨 SQL 读路径：`READ_PATH_MODE=sql_only`。
+- SQL 读路径不可用时，读接口返回 `503 state_db_unavailable`，不再回退 JSON 读路径。
+- 回滚方式：回滚到上一版本镜像或回滚对应提交，不再支持通过 dual 模式回切。
 
 ## 任务队列与截图
 

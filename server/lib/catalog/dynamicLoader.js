@@ -1,4 +1,3 @@
-const { loadItemsState } = require("../state");
 const { createError } = require("../errors");
 
 async function loadDynamicCatalogItems({
@@ -14,20 +13,22 @@ async function loadDynamicCatalogItems({
         ? (options) => store.stateDbQuery.queryDynamicItemsForCatalog(options)
         : null;
 
-  if (queryDynamicItemsForCatalog) {
-    try {
-      const sqlResult = await queryDynamicItemsForCatalog({
-        includeHiddenItems,
-        includeUnpublishedItems,
-      });
-      if (sqlResult && Array.isArray(sqlResult.items)) {
-        return sqlResult;
-      }
-    } catch {}
+  if (!queryDynamicItemsForCatalog) {
     throw createError("state_db_unavailable", 503);
   }
 
-  return loadItemsState({ store });
+  try {
+    const sqlResult = await queryDynamicItemsForCatalog({
+      includeHiddenItems,
+      includeUnpublishedItems,
+    });
+    if (sqlResult && Array.isArray(sqlResult.items)) {
+      return sqlResult;
+    }
+    throw new Error("invalid_sql_dynamic_catalog_payload");
+  } catch {
+    throw createError("state_db_unavailable", 503);
+  }
 }
 
 module.exports = {

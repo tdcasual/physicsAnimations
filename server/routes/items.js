@@ -3,14 +3,12 @@ const multer = require("multer");
 
 const { requireAuth, optionalAuth } = require("../lib/auth");
 const {
-  loadItemsState,
   mutateItemsState,
   mutateItemTombstonesState,
   noSave,
 } = require("../lib/state");
 const { parseWithSchema, idSchema } = require("../lib/validation");
 const {
-  safeText,
   normalizeCategoryId,
   toApiItem,
 } = require("../services/items/itemModel");
@@ -35,12 +33,9 @@ function createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }
   const queue = taskQueue || null;
 
   const readService = createItemsReadService({
-    store,
     itemsQueryRepo: queryRepos?.itemsQueryRepo,
     deps: {
-      loadItemsState,
       toApiItem,
-      safeText,
     },
   });
 

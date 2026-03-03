@@ -16,6 +16,16 @@
       "maxLines": 380
     },
     {
+      "root": "frontend/src",
+      "extensions": [".html"],
+      "maxLines": 700
+    },
+    {
+      "root": "frontend/src",
+      "extensions": [".css"],
+      "maxLines": 420
+    },
+    {
       "root": "frontend/test",
       "extensions": [".ts"],
       "maxLines": 360

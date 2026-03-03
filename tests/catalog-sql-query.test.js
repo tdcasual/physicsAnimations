@@ -211,14 +211,17 @@ test("/api/catalog returns state_db_unavailable when SQL dynamic loader fails", 
     },
   };
 
-  const app = createApp({ rootDir, authConfig: makeAuthConfig(), store });
+  const app = createApp({
+    rootDir,
+    authConfig: makeAuthConfig(),
+    store,
+  });
   const { server, baseUrl } = await startServer(app);
 
   try {
     const response = await fetch(`${baseUrl}/api/catalog`);
     assert.equal(response.status, 503);
-    const data = await response.json();
-    assert.equal(data?.error, "state_db_unavailable");
+    assert.deepEqual(await response.json(), { error: "state_db_unavailable" });
   } finally {
     await stopServer(server);
     fs.rmSync(rootDir, { recursive: true, force: true });

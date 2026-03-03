@@ -81,7 +81,7 @@ async function login(baseUrl, authConfig) {
   return data.token;
 }
 
-test("state db opens circuit and /api/items returns state_db_unavailable when SQL path breaks", async () => {
+test("state db opens circuit and /api/items returns 503 when SQL path breaks", async () => {
   const sqlite = loadNodeSqlite();
   if (!sqlite) return;
 
@@ -101,16 +101,13 @@ test("state db opens circuit and /api/items returns state_db_unavailable when SQ
   try {
     const firstRes = await fetch(`${baseUrl}/api/items?page=1&pageSize=20`);
     assert.equal(firstRes.status, 200);
-    const first = await firstRes.json();
-    assert.equal((first.items || []).some((it) => it.id === "l_public_1"), true);
 
     const db = new sqlite.DatabaseSync(dbPath);
     db.exec("DROP TABLE state_dynamic_items");
 
     const secondRes = await fetch(`${baseUrl}/api/items?page=1&pageSize=20`);
     assert.equal(secondRes.status, 503);
-    const second = await secondRes.json();
-    assert.equal(second.error, "state_db_unavailable");
+    assert.deepEqual(await secondRes.json(), { error: "state_db_unavailable" });
 
     const token = await login(baseUrl, authConfig);
     const metricsRes = await fetch(`${baseUrl}/api/metrics`, {

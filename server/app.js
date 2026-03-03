@@ -3,7 +3,6 @@ const fs = require("fs");
 const express = require("express");
 const packageJson = require("../package.json");
 const logger = require("./lib/logger");
-
 const { getAuthConfig, requireAuth } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
 const { createStoreManager } = require("./lib/contentStore");
@@ -12,8 +11,8 @@ const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
 const { loadSystemState } = require("./lib/systemState");
 const { createStateDbStore } = require("./lib/stateDb");
 const { createTaskQueue } = require("./lib/taskQueue");
+const { parseReadPathMode } = require("./lib/readPathMode");
 const { createQueryReposFromStore } = require("./ports/queryRepos");
-
 const { errorHandler } = require("./middleware/errorHandler");
 const { requestContextMiddleware } = require("./middleware/requestContext");
 const { securityHeadersMiddleware } = require("./middleware/securityHeaders");
@@ -23,7 +22,6 @@ const { createCategoriesRouter } = require("./routes/categories");
 const { createItemsRouter } = require("./routes/items");
 const { createLibraryRouter } = require("./routes/library");
 const { createSystemRouter } = require("./routes/system");
-
 function parseTrustProxy(value) {
   if (value === undefined) return undefined;
   const raw = String(value).trim();
@@ -114,6 +112,7 @@ function createApp({
   store: overrideStore,
   authConfig: overrideAuthConfig,
   metricsPublic: overrideMetricsPublic,
+  readPathMode: overrideReadPathMode,
   stateDbMode: overrideStateDbMode,
   stateDbPath: overrideStateDbPath,
   stateDbMaxErrors: overrideStateDbMaxErrors,
@@ -141,6 +140,10 @@ function createApp({
   }
 
   const authConfig = overrideAuthConfig || getAuthConfig({ rootDir });
+  const resolvedReadPathMode = parseReadPathMode(
+    overrideReadPathMode ?? process.env.READ_PATH_MODE,
+  );
+  app.locals.readPathMode = resolvedReadPathMode;
   const parsedMetricsPublic = parseBoolean(overrideMetricsPublic);
   const envMetricsPublic = parseBoolean(process.env.METRICS_PUBLIC);
   const metricsPublic = parsedMetricsPublic ?? envMetricsPublic ?? false;
@@ -235,8 +238,25 @@ function createApp({
     }),
   );
   app.use("/api", createGroupsRouter({ rootDir, authConfig, store }));
-  app.use("/api", createCategoriesRouter({ rootDir, authConfig, store, queryRepos }));
-  app.use("/api", createItemsRouter({ rootDir, authConfig, store, taskQueue, queryRepos }));
+  app.use(
+    "/api",
+    createCategoriesRouter({
+      rootDir,
+      authConfig,
+      store,
+      queryRepos,
+    }),
+  );
+  app.use(
+    "/api",
+    createItemsRouter({
+      rootDir,
+      authConfig,
+      store,
+      taskQueue,
+      queryRepos,
+    }),
+  );
   app.use("/api", createLibraryRouter({ authConfig, store }));
 
   const spaDistDir = path.join(rootDir, "frontend", "dist");
@@ -265,15 +285,12 @@ function createApp({
         res.status(404).send("Not Found");
         return;
       }
-
       res.setHeader("Content-Type", guessContentType(key));
-
       if (key.toLowerCase().endsWith(".html") || key.toLowerCase().endsWith(".htm")) {
         res.setHeader("Referrer-Policy", "no-referrer");
         res.setHeader("X-Content-Type-Options", "nosniff");
         res.setHeader("Cache-Control", "no-store");
       }
-
       stream.on("error", next);
       stream.pipe(res);
     } catch (err) {
@@ -334,10 +351,8 @@ function createApp({
   });
 
   app.use(errorHandler);
-
   return app;
 }
-
 module.exports = {
   createApp,
 };

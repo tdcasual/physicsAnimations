@@ -149,10 +149,17 @@ async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomy
     throw new TypeError("buildCategoriesPayloadWithSql requires queryDynamicCategoryCounts");
   }
 
+  const emptyDynamicItemsQueryRepo = {
+    async queryDynamicItemsForCatalog() {
+      return { items: [] };
+    },
+  };
+
   const [baseCatalog, categoryState, dynamicResult] = await Promise.all([
     loadCatalog({
       rootDir,
       store: createCatalogStoreWithoutDynamicItems(store),
+      taxonomyQueryRepo: emptyDynamicItemsQueryRepo,
       includeHiddenCategories: isAdmin,
       includeHiddenItems: isAdmin,
       includeUnpublishedItems: isAdmin,

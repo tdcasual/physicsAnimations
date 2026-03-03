@@ -3,8 +3,7 @@ const { z } = require("zod");
 
 const { requireAuth, optionalAuth } = require("../lib/auth");
 const { DEFAULT_GROUP_ID } = require("../lib/categories");
-const { loadCatalog } = require("../lib/catalog");
-const { buildCategoriesPayload, buildCategoriesPayloadWithSql } = require("../lib/categoriesPayload");
+const { buildCategoriesPayloadWithSql } = require("../lib/categoriesPayload");
 const { mutateCategoriesState, noSave } = require("../lib/state");
 const { parseWithSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
@@ -62,39 +61,24 @@ function createCategoriesRouter({ rootDir, authConfig, store, queryRepos }) {
     const supportsSqlDynamicCategoryCounts =
       typeof taxonomyQueryRepo?.queryDynamicCategoryCounts === "function";
 
-    try {
-      if (supportsSqlDynamicCategoryCounts) {
-        try {
-          const sqlPayload = await buildCategoriesPayloadWithSql({
-            rootDir,
-            store,
-            isAdmin,
-            taxonomyQueryRepo,
-          });
-          res.json(sqlPayload);
-          return;
-        } catch (sqlErr) {
-          logger.warn("categories_sql_dynamic_counts_failed", {
-            error: sqlErr,
-          });
-          res.status(503).json({ error: "state_db_unavailable" });
-          return;
-        }
-      }
+    if (!supportsSqlDynamicCategoryCounts) {
+      res.status(503).json({ error: "state_db_unavailable" });
+      return;
+    }
 
-      const catalog = await loadCatalog({
+    try {
+      const sqlPayload = await buildCategoriesPayloadWithSql({
         rootDir,
         store,
-        includeHiddenCategories: isAdmin,
-        includeHiddenItems: isAdmin,
-        includeUnpublishedItems: isAdmin,
-        includeConfigCategories: isAdmin,
+        isAdmin,
+        taxonomyQueryRepo,
       });
-
-      res.json(buildCategoriesPayload(catalog));
-    } catch (err) {
-      res.status(500).json({ error: "server_error" });
-      logger.error("categories_list_failed", err, { route: "GET /categories" });
+      res.json(sqlPayload);
+    } catch (sqlErr) {
+      logger.warn("categories_sql_dynamic_counts_failed", {
+        error: sqlErr,
+      });
+      res.status(503).json({ error: "state_db_unavailable" });
     }
   });
 

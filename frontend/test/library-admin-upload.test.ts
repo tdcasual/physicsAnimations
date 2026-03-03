@@ -50,6 +50,7 @@ describe("admin library upload", () => {
   it("defaults upload mode to embed demo mode", () => {
     const { template, combined } = readLibrarySources();
     expect(combined).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/);
+    expect(template).toMatch(/<select v-model="vm\.drafts\.openMode" class="field-input">/);
     expect(template).toMatch(/<option value="embed">演示（默认）<\/option>/);
     expect(template).toMatch(/<option value="download">仅下载原文件<\/option>/);
   });
@@ -58,7 +59,8 @@ describe("admin library upload", () => {
     const { template, combined } = readLibrarySources();
     expect(combined).toMatch(/listTaxonomy/);
     expect(combined).toMatch(/groupedCategoryOptions/);
-    expect(template).toMatch(/<select v-model="folderCategoryId" class="field-input">/);
+    expect(template).toMatch(/<select v-model="vm\.drafts\.folderCategoryId" class="field-input">/);
+    expect(template).toMatch(/<option v-for="option in vm\.data\.groupedCategoryOptions" :key="option\.value" :value="option\.value">/);
   });
 
   it("supports optional cover during folder creation and keeps post-create cover update", () => {
@@ -90,6 +92,10 @@ describe("admin library upload", () => {
     expect(combined).toMatch(/assetParserMode/);
     expect(combined).toMatch(/assetEmbedProfileId/);
     expect(combined).toMatch(/assetEmbedOptionsJson/);
+    expect(template).toMatch(/<select v-model="vm\.drafts\.assetParserMode" class="field-input">/);
+    expect(template).toMatch(/v-if="vm\.drafts\.assetParserMode === 'profile'"/);
+    expect(template).toMatch(/<select v-model="vm\.drafts\.assetEmbedProfileId" class="field-input">/);
+    expect(template).toMatch(/v-model="vm\.drafts\.assetEmbedOptionsJson"/);
     expect(template).toMatch(/Embed 参数 JSON/);
     expect(combined).toMatch(/embedProfileId:\s*(?:deps\.)?assetParserMode\.value === "profile"/);
     expect(combined).toMatch(/embedOptionsJson:\s*(?:deps\.)?assetParserMode\.value === "profile"/);

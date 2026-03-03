@@ -25,6 +25,11 @@ npm run qa:release
 
 若任一步失败，禁止发布。
 
+读路径策略发布前确认：
+
+- 当前版本为单轨 SQL 读路径，固定使用 `READ_PATH_MODE=sql_only`。
+- 回滚路径为镜像/提交回滚，不再支持 dual 环境变量回切。
+
 ## 2. Release Steps
 
 1. 拉取镜像并更新容器
@@ -74,7 +79,41 @@ curl -sf http://127.0.0.1:4173/api/metrics | jq '.http'
 
 若超过阈值，先按阈值文档执行缓解动作，再决定是否回滚。
 
-## 5. Rollback
+## 5. State DB 故障判定（SQL 异常即不可用）
+
+当前读接口为单轨 SQL 路径。出现 SQL 故障时，以下接口会返回 `503`：
+
+- `/api/items`
+- `/api/items/:id`
+- `/api/catalog`
+- `/api/categories`
+
+若出现以下信号，按“SQL 读路径故障”处理：
+
+- 日志出现 `items_sql_merged_query_failed`
+- 日志出现 `categories_sql_dynamic_counts_failed`
+- 日志出现 state-db circuit/open 相关告警
+
+最小排查步骤：
+
+1. 先确认用户侧读接口是否已返回 `503 state_db_unavailable`。
+2. 检查 `content/state.sqlite`、`state.sqlite-wal`、`state.sqlite-shm` 是否异常增长或损坏。
+3. 检查宿主机磁盘空间、文件权限、IO 错误。
+4. 观察 `/api/metrics` 中 `http.latencyMs.p95` 与 `http.statusCounts.5xx` 是否持续恶化。
+5. 若故障持续，按回滚流程切回上一个稳定版本。
+
+## 6. READ_PATH_MODE 基线确认
+
+1. 配置确认：
+
+```env
+READ_PATH_MODE=sql_only
+```
+
+2. 验证 `items/catalog/categories` 读接口与 `/api/metrics` 指标。
+3. 若出现回归，直接执行镜像/提交回滚（见下一节）。
+
+## 7. Rollback
 
 触发条件：发布后健康检查失败、核心页面不可用、关键写路径异常。
 
@@ -95,7 +134,7 @@ curl -sf http://127.0.0.1:4173/api/health
 
 3. 记录回滚时间、原因、影响范围。
 
-## 6. Troubleshooting Quick Commands
+## 8. Troubleshooting Quick Commands
 
 ```bash
 docker ps
@@ -104,7 +143,7 @@ curl -i http://127.0.0.1:4173/api/health
 lsof -iTCP:4173 -sTCP:LISTEN -n -P
 ```
 
-## 7. Notes
+## 9. Notes
 
 - `content` 卷必须持久化挂载，否则上传资源与运行态配置会丢失。
 - GeoGebra 自托管更新与应用发布解耦，不应阻塞业务服务启动。

@@ -18,7 +18,7 @@ env:
   REGISTRY: ghcr.io
 
 jobs:
-  verify-tests:
+  verify-qa:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,52 +41,12 @@ jobs:
       - name: Install Playwright runtime dependencies
         run: npm run install-playwright-deps
 
-      - name: Frontend tests
-        run: npm run test:frontend -- --run
-
-      - name: Backend tests
-        run: npm test
-
-  verify-smoke:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        smoke_script:
-          - "smoke:spa-admin"
-          - "smoke:spa-admin-write"
-          - "smoke:spa-public"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install frontend dependencies
-        run: npm --prefix frontend ci
-
-      - name: Install Playwright runtime dependencies
-        run: npm run install-playwright-deps
-
-      - name: Build frontend bundle
-        run: npm run build:frontend
-
-      - name: Run smoke script
-        run: npm run ${{ matrix.smoke_script }}
+      - name: Run qa release gate
+        run: npm run qa:release
 
   build:
     needs:
-      - verify-tests
-      - verify-smoke
+      - verify-qa
     runs-on: ubuntu-latest
     permissions:
       contents: read

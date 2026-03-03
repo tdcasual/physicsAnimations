@@ -1,19 +1,43 @@
 const logger = require("../../lib/logger");
 
+function normalizeText(value) {
+  if (typeof value !== "string") return "";
+  return value;
+}
+
+function normalizeTypeFilter(value) {
+  const type = normalizeText(value).trim();
+  if (!type) return "dynamic";
+  if (type === "dynamic" || type === "link" || type === "upload") return type;
+  return "unsupported";
+}
+
+function unavailable() {
+  return { status: 503, error: "state_db_unavailable" };
+}
+
 function createItemsReadService({ itemsQueryRepo, deps }) {
   const { toApiItem } = deps;
   const repo = itemsQueryRepo || {};
 
   async function listItems({ isAdmin, query }) {
-    const q = (query.q || "").trim().toLowerCase();
-    const categoryId = (query.categoryId || "").trim();
-    const requestedType = (query.type || "").trim();
-    const type = requestedType || "dynamic";
-    const supportsSqlMergedQuery = typeof repo?.queryItems === "function";
+    const type = normalizeTypeFilter(query.type);
+    if (type === "unsupported") {
+      return {
+        items: [],
+        page: query.page,
+        pageSize: query.pageSize,
+        total: 0,
+      };
+    }
 
+    if (typeof repo?.queryItems !== "function") {
+      return unavailable();
+    }
+
+    const q = normalizeText(query.q).trim().toLowerCase();
+    const categoryId = normalizeText(query.categoryId).trim();
     const offset = (query.page - 1) * query.pageSize;
-
-    if (!supportsSqlMergedQuery) return { status: 503, error: "state_db_unavailable" };
 
     try {
       const sqlMerged = await repo.queryItems({
@@ -39,14 +63,13 @@ function createItemsReadService({ itemsQueryRepo, deps }) {
         failureStage: "queryItems",
         error: sqlErr,
       });
-      return { status: 503, error: "state_db_unavailable" };
+      return unavailable();
     }
   }
 
   async function getItemById({ id, isAdmin }) {
-    const supportsItemLookup = typeof repo?.queryItemById === "function";
-    if (!supportsItemLookup) {
-      return { status: 503, error: "state_db_unavailable" };
+    if (typeof repo?.queryItemById !== "function") {
+      return unavailable();
     }
 
     try {
@@ -62,7 +85,7 @@ function createItemsReadService({ itemsQueryRepo, deps }) {
         failureStage: "queryItemById",
         error: sqlErr,
       });
-      return { status: 503, error: "state_db_unavailable" };
+      return unavailable();
     }
   }
 

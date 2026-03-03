@@ -36,41 +36,35 @@ test("loadCatalog guards categoryId map keys against prototype pollution payload
       if (normalized === "categories.json") {
         return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
       }
-      if (normalized === "items.json") {
-        return Buffer.from(
-          `${JSON.stringify(
-            {
-              version: 2,
-              items: [
-                {
-                  id: "l1",
-                  type: "link",
-                  categoryId: "__proto__",
-                  url: "https://example.com",
-                  title: "Unsafe Category",
-                  description: "",
-                  thumbnail: "",
-                  order: 0,
-                  published: true,
-                  hidden: false,
-                  uploadKind: "html",
-                  createdAt: "",
-                  updatedAt: "",
-                },
-              ],
-            },
-            null,
-            2,
-          )}\n`,
-          "utf8",
-        );
-      }
       return null;
+    },
+  };
+  const taxonomyQueryRepo = {
+    async queryDynamicItemsForCatalog() {
+      return {
+        items: [
+          {
+            id: "l1",
+            type: "link",
+            categoryId: "__proto__",
+            url: "https://example.com",
+            title: "Unsafe Category",
+            description: "",
+            thumbnail: "",
+            order: 0,
+            published: true,
+            hidden: false,
+            uploadKind: "html",
+            createdAt: "",
+            updatedAt: "",
+          },
+        ],
+      };
     },
   };
 
   try {
-    const catalog = await loadCatalog({ rootDir, store });
+    const catalog = await loadCatalog({ rootDir, store, taxonomyQueryRepo });
     assert.equal(Object.prototype.items, originalProtoItems);
 
     const physicsGroup = catalog.groups.physics;
