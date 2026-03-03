@@ -138,12 +138,9 @@ function createCatalogStoreWithoutDynamicItems(store) {
 
 async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomyQueryRepo } = {}) {
   const queryDynamicCategoryCounts =
-    (typeof taxonomyQueryRepo?.queryDynamicCategoryCounts === "function"
+    typeof taxonomyQueryRepo?.queryDynamicCategoryCounts === "function"
       ? taxonomyQueryRepo.queryDynamicCategoryCounts.bind(taxonomyQueryRepo)
-      : null) ||
-    (typeof store?.stateDbQuery?.queryDynamicCategoryCounts === "function"
-      ? store.stateDbQuery.queryDynamicCategoryCounts.bind(store.stateDbQuery)
-      : null);
+      : null;
 
   if (!queryDynamicCategoryCounts) {
     throw new TypeError("buildCategoriesPayloadWithSql requires queryDynamicCategoryCounts");

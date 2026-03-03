@@ -1,17 +1,15 @@
 const { createError } = require("../errors");
 
 async function loadDynamicCatalogItems({
-  store,
+  store: _store,
   taxonomyQueryRepo,
   includeHiddenItems = false,
   includeUnpublishedItems = false,
 } = {}) {
   const queryDynamicItemsForCatalog =
     typeof taxonomyQueryRepo?.queryDynamicItemsForCatalog === "function"
-      ? (options) => taxonomyQueryRepo.queryDynamicItemsForCatalog(options)
-      : typeof store?.stateDbQuery?.queryDynamicItemsForCatalog === "function"
-        ? (options) => store.stateDbQuery.queryDynamicItemsForCatalog(options)
-        : null;
+      ? taxonomyQueryRepo.queryDynamicItemsForCatalog.bind(taxonomyQueryRepo)
+      : null;
 
   if (!queryDynamicItemsForCatalog) {
     throw createError("state_db_unavailable", 503);
