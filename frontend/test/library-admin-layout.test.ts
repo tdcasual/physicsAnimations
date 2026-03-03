@@ -11,6 +11,7 @@ function readLibrarySources() {
   const template = read("src/views/admin/library/AdminLibraryView.template.html");
   const style = read("src/views/admin/library/AdminLibraryView.css");
   const state = read("src/features/library/useLibraryAdminState.ts");
+  const actionWiring = read("src/features/library/useLibraryAdminActionWiring.ts");
   const dataActions = read("src/features/library/useLibraryAdminDataActions.ts");
   const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
   const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
@@ -33,6 +34,7 @@ function readLibrarySources() {
     template,
     style,
     state,
+    actionWiring,
     dataActions,
     feedback,
     embedActions,
@@ -55,6 +57,7 @@ function readLibrarySources() {
       template,
       style,
       state,
+      actionWiring,
       dataActions,
       feedback,
       embedActions,
@@ -220,12 +223,13 @@ describe("admin library layout", () => {
   });
 
   it("guards folder asset reload against race conditions and unhandled errors", () => {
-    const { state, dataActions } = readLibrarySources();
-    expect(state).toMatch(/useLibraryAdminDataActions/);
+    const { state, actionWiring, dataActions } = readLibrarySources();
+    expect(state).toMatch(/useLibraryAdminActionWiring/);
+    expect(actionWiring).toMatch(/useLibraryAdminDataActions/);
     expect(dataActions).toMatch(/folderAssetsLoadSeq/);
     expect(dataActions).toMatch(/const requestId = deps\.folderAssetsLoadSeq\.value \+ 1/);
     expect(dataActions).toMatch(/requestId !== deps\.folderAssetsLoadSeq\.value \|\| deps\.selectedFolderId\.value !== folderId/);
-    expect(state).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/);
+    expect(actionWiring).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/);
     expect(dataActions).toMatch(/加载文件夹资源失败/);
   });
 

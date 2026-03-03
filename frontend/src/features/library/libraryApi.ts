@@ -1,4 +1,5 @@
 import { clearToken, getToken } from "../auth/authApi";
+import { apiFetchJson } from "../shared/httpClient";
 import type {
   LibraryCatalogResponse,
   LibraryEmbedProfile,
@@ -27,15 +28,6 @@ interface LibraryApiError extends Error {
   data?: any;
 }
 
-function withAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
-  const token = getToken();
-  if (!token) return headers;
-  return {
-    ...headers,
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 function toApiError(status: number, data: any): LibraryApiError {
   const code = typeof data?.error === "string" ? data.error : "request_failed";
   const err = new Error(code) as LibraryApiError;
@@ -46,28 +38,18 @@ function toApiError(status: number, data: any): LibraryApiError {
 }
 
 async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(path, {
-    ...options,
-    headers: withAuthHeaders({
-      Accept: "application/json",
-      ...(options.headers as Record<string, string> | undefined),
-    }),
+  return apiFetchJson<T>({
+    path,
+    options,
+    token: getToken(),
+    onUnauthorized: () => {
+      clearToken();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("pa-auth-expired"));
+      }
+    },
+    toError: (status, data) => toApiError(status, data),
   });
-
-  const contentType = response.headers.get("content-type") || "";
-  const data = contentType.includes("application/json")
-    ? await response.json().catch(() => null)
-    : null;
-
-  if (response.status === 401) {
-    clearToken();
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("pa-auth-expired"));
-    }
-  }
-
-  if (response.ok) return data as T;
-  throw toApiError(response.status, data);
 }
 
 export async function listLibraryCatalog(): Promise<LibraryCatalogResponse> {

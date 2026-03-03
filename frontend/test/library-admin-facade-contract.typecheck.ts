@@ -29,42 +29,60 @@ type IsEqual<A, B> = (
 
 type Input = Parameters<typeof createLibraryAdminStateFacade>[0];
 
-type _inputLoading = Assert<IsEqual<Input["loading"], Ref<boolean>>>;
-type _inputSaving = Assert<IsEqual<Input["saving"], ComputedRef<boolean>>>;
-type _inputFeedback = Assert<IsEqual<Input["feedback"], Ref<string>>>;
-type _inputFieldErrors = Assert<IsEqual<Input["fieldErrors"], Ref<Record<string, string>>>>;
+type _inputTopKeys = Assert<
+  IsEqual<keyof Input, "ui" | "data" | "drafts" | "filters" | "selection" | "panels" | "logs" | "actions">
+>;
+type _inputLoading = Assert<IsEqual<Input["ui"]["loading"], Ref<boolean>>>;
+type _inputSaving = Assert<IsEqual<Input["ui"]["saving"], ComputedRef<boolean>>>;
+type _inputFeedback = Assert<IsEqual<Input["ui"]["feedback"], Ref<string>>>;
+type _inputFieldErrors = Assert<IsEqual<Input["ui"]["fieldErrors"], Ref<Record<string, string>>>>;
 
-type _inputFolders = Assert<IsEqual<Input["folders"], Ref<LibraryFolder[]>>>;
-type _inputFolderAssets = Assert<IsEqual<Input["folderAssets"], Ref<LibraryAsset[]>>>;
-type _inputEmbedProfiles = Assert<IsEqual<Input["embedProfiles"], Ref<LibraryEmbedProfile[]>>>;
-type _inputCategories = Assert<IsEqual<Input["categories"], Ref<CategoryRow[]>>>;
-type _inputGroups = Assert<IsEqual<Input["groups"], Ref<GroupRow[]>>>;
-type _inputModeFilter = Assert<IsEqual<Input["assetModeFilter"], Ref<"all" | LibraryOpenMode>>>;
-type _inputSortMode = Assert<IsEqual<Input["assetSortMode"], Ref<AssetSortMode>>>;
+type _inputFolders = Assert<IsEqual<Input["data"]["folders"], Ref<LibraryFolder[]>>>;
+type _inputFolderAssets = Assert<IsEqual<Input["data"]["folderAssets"], Ref<LibraryAsset[]>>>;
+type _inputEmbedProfiles = Assert<IsEqual<Input["data"]["embedProfiles"], Ref<LibraryEmbedProfile[]>>>;
+type _inputCategories = Assert<IsEqual<Input["data"]["categories"], Ref<CategoryRow[]>>>;
+type _inputGroups = Assert<IsEqual<Input["data"]["groups"], Ref<GroupRow[]>>>;
+type _inputEditingAsset = Assert<IsEqual<Input["data"]["editingAsset"], ComputedRef<LibraryAsset | null>>>;
 
-type _inputAssetFile = Assert<IsEqual<Input["assetFile"], Ref<File | null>>>;
-type _inputOpenMode = Assert<IsEqual<Input["openMode"], Ref<LibraryOpenMode>>>;
-type _inputParserMode = Assert<IsEqual<Input["assetParserMode"], Ref<"auto" | "profile">>>;
-type _inputEditParserMode = Assert<IsEqual<Input["assetEditParserMode"], Ref<"auto" | "profile">>>;
-type _inputEmbedEnabled = Assert<IsEqual<Input["embedEnabled"], Ref<boolean>>>;
+type _inputAssetFile = Assert<IsEqual<Input["drafts"]["assetFile"], Ref<File | null>>>;
+type _inputOpenMode = Assert<IsEqual<Input["drafts"]["openMode"], Ref<LibraryOpenMode>>>;
+type _inputParserMode = Assert<IsEqual<Input["drafts"]["assetParserMode"], Ref<"auto" | "profile">>>;
+type _inputEditParserMode = Assert<IsEqual<Input["drafts"]["assetEditParserMode"], Ref<"auto" | "profile">>>;
+type _inputEmbedEnabled = Assert<IsEqual<Input["drafts"]["embedEnabled"], Ref<boolean>>>;
+
+type _inputModeFilter = Assert<IsEqual<Input["filters"]["assetModeFilter"], Ref<"all" | LibraryOpenMode>>>;
+type _inputSortMode = Assert<IsEqual<Input["filters"]["assetSortMode"], Ref<AssetSortMode>>>;
+type _inputFilteredAssets = Assert<IsEqual<Input["filters"]["filteredFolderAssets"], ComputedRef<LibraryAsset[]>>>;
+
+type _inputSelectedIds = Assert<IsEqual<Input["selection"]["selectedAssetIds"], Ref<string[]>>>;
+type _inputSelectedCount = Assert<IsEqual<Input["selection"]["selectedAssetCount"], ComputedRef<number>>>;
+type _inputBatchResult = Assert<IsEqual<Input["selection"]["assetBatchResult"], Ref<AssetBatchResult | null>>>;
+
+type _inputPanelTab = Assert<IsEqual<Input["panels"]["activePanelTab"], Ref<LibraryPanelTab>>>;
+type _inputOperationLogFilter = Assert<IsEqual<Input["panels"]["operationLogFilter"], Ref<"all" | OperationLogLevel>>>;
+
+type _inputOperationLogs = Assert<IsEqual<Input["logs"]["operationLogs"], Ref<OperationLogEntry[]>>>;
+type _inputLogPush = Assert<IsEqual<Input["logs"]["pushOperationLog"], (message: string, level?: OperationLogLevel) => void>>;
 
 type _inputParseJson = Assert<
-  IsEqual<Input["parseJsonObjectInput"], (raw: string, fieldLabel: string, fieldKey?: string) => JsonObjectParseResult>
+  IsEqual<Input["actions"]["parseJsonObjectInput"], (raw: string, fieldLabel: string, fieldKey?: string) => JsonObjectParseResult>
 >;
-type _inputSetFeedback = Assert<IsEqual<Input["setFeedback"], (text: string, isError?: boolean) => void>>;
-type _inputSetActiveTab = Assert<IsEqual<Input["setActivePanelTab"], (tab: LibraryPanelTab) => void>>;
-type _inputBatchOpen = Assert<IsEqual<Input["runAssetBatchOpenMode"], (mode: LibraryOpenMode) => Promise<void>>>;
-type _inputStartEditAsset = Assert<IsEqual<Input["startEditAsset"], (asset: LibraryAsset) => void>>;
-type _inputStartEditProfile = Assert<IsEqual<Input["startEditEmbedProfile"], (profile: LibraryEmbedProfile) => void>>;
-type _inputSyncProfile = Assert<IsEqual<Input["syncEmbedProfileEntry"], (profileId: string) => Promise<void>>>;
-type _inputRemoveAsset = Assert<IsEqual<Input["removeAsset"], (assetId: string) => Promise<void>>>;
-type _inputRemoveFolder = Assert<IsEqual<Input["removeFolder"], (folderId: string) => Promise<void>>>;
-type _inputApiErrorBoundary = Assert<IsEqual<Input["getApiErrorCode"], (err: unknown) => string>>;
+type _inputSetFeedback = Assert<IsEqual<Input["actions"]["setFeedback"], (text: string, isError?: boolean) => void>>;
+type _inputSetActiveTab = Assert<IsEqual<Input["actions"]["setActivePanelTab"], (tab: LibraryPanelTab) => void>>;
+type _inputBatchOpen = Assert<IsEqual<Input["actions"]["runAssetBatchOpenMode"], (mode: LibraryOpenMode) => Promise<void>>>;
+type _inputStartEditAsset = Assert<IsEqual<Input["actions"]["startEditAsset"], (asset: LibraryAsset) => void>>;
+type _inputStartEditProfile = Assert<IsEqual<Input["actions"]["startEditEmbedProfile"], (profile: LibraryEmbedProfile) => void>>;
+type _inputSyncProfile = Assert<IsEqual<Input["actions"]["syncEmbedProfileEntry"], (profileId: string) => Promise<void>>>;
+type _inputRemoveAsset = Assert<IsEqual<Input["actions"]["removeAsset"], (assetId: string) => Promise<void>>>;
+type _inputRemoveFolder = Assert<IsEqual<Input["actions"]["removeFolder"], (folderId: string) => Promise<void>>>;
+type _inputApiErrorBoundary = Assert<IsEqual<Input["actions"]["getApiErrorCode"], (err: unknown) => string>>;
 
 declare const input: Input;
 const facade = createLibraryAdminStateFacade(input);
 
-type _facadeTopKeys = Assert<IsEqual<keyof typeof facade, "ui" | "data" | "drafts" | "filters" | "selection" | "panels" | "logs" | "actions">>;
+type _facadeTopKeys = Assert<
+  IsEqual<keyof typeof facade, "ui" | "data" | "drafts" | "filters" | "selection" | "panels" | "logs" | "actions">
+>;
 type _facadeUiLoading = Assert<IsEqual<typeof facade.ui.loading, Ref<boolean>>>;
 type _facadeDataFolders = Assert<IsEqual<typeof facade.data.folders, Ref<LibraryFolder[]>>>;
 type _facadeDraftFile = Assert<IsEqual<typeof facade.drafts.assetFile, Ref<File | null>>>;

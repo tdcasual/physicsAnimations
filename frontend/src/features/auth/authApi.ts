@@ -1,3 +1,5 @@
+import { apiFetchJson } from "../shared/httpClient";
+
 const TOKEN_KEY = "pa_admin_token";
 
 export interface ApiError extends Error {
@@ -24,32 +26,13 @@ export function clearToken(): void {
   sessionStorage.removeItem(TOKEN_KEY);
 }
 
-function withAuthHeaders(headers: HeadersInit): HeadersInit {
-  const token = getToken();
-  if (!token) return headers;
-  return {
-    ...(headers || {}),
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
-  const response = await fetch(path, {
-    ...options,
-    headers: withAuthHeaders({
-      Accept: "application/json",
-      ...(options.headers || {}),
-    }),
+  return apiFetchJson({
+    path,
+    options,
+    token: getToken(),
+    toError: (status, data) => toApiError(data?.error || "request_failed", status, data),
   });
-
-  const contentType = response.headers.get("content-type") || "";
-  const data = contentType.includes("application/json")
-    ? await response.json().catch(() => null)
-    : null;
-
-  if (response.ok) return data;
-
-  throw toApiError(data?.error || "request_failed", response.status, data);
 }
 
 export async function login(params: { username: string; password: string }): Promise<any> {

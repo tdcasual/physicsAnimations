@@ -102,9 +102,10 @@ test("wrapped store marks dynamic index dirty when mirror write fails on items.j
   assert.deepEqual(dynamicReadyUpdates, [false]);
 });
 
-test("wrapped store marks dynamic index dirty when mirror write-through fails on items.json read", async () => {
+test("wrapped store readBuffer for items.json does not perform mirror write-through", async () => {
   const dynamicReadyUpdates = [];
   const raw = Buffer.from('{"version":2,"items":[{"id":"x"}]}');
+  const mirrorWrites = [];
 
   const baseStore = {
     mode: "local",
@@ -123,8 +124,8 @@ test("wrapped store marks dynamic index dirty when mirror write-through fails on
     baseStore,
     mirror: {
       readBuffer: () => null,
-      writeBuffer: () => {
-        throw new Error("mirror_write_failed");
+      writeBuffer: (key) => {
+        mirrorWrites.push(String(key || ""));
       },
       syncDynamicItemsFromBuffer: () => {},
       deletePath: () => {},
@@ -138,7 +139,8 @@ test("wrapped store marks dynamic index dirty when mirror write-through fails on
   const out = await wrapped.readBuffer("items.json");
 
   assert.equal(out, raw);
-  assert.deepEqual(dynamicReadyUpdates, [false]);
+  assert.deepEqual(dynamicReadyUpdates, []);
+  assert.deepEqual(mirrorWrites, []);
 });
 
 test("wrapped store prefers source state blob over stale mirror cache after write-through failure", async () => {

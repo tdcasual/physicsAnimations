@@ -27,7 +27,7 @@ npm run qa:release
 
 读路径策略发布前确认：
 
-- 当前版本为单轨 SQL 读路径，固定使用 `READ_PATH_MODE=sql_only`。
+- 当前版本为单轨 SQL 读路径，固定内建 `sql_only`（非配置项）。
 - 回滚路径为镜像/提交回滚，不再支持 dual 环境变量回切。
 
 ## 2. Release Steps
@@ -103,18 +103,7 @@ curl -sf http://127.0.0.1:4173/api/metrics | jq '.http'
 5. 若故障持续，按回滚流程切回上一个稳定版本。
 6. 若服务启动阶段直接失败，优先检查 `STATE_DB_MODE` 是否为 `off` / `sqlite`，非法值会触发 `invalid_state_db_mode`。
 
-## 6. READ_PATH_MODE 基线确认
-
-1. 配置确认：
-
-```env
-READ_PATH_MODE=sql_only
-```
-
-2. 验证 `items/catalog/categories` 读接口与 `/api/metrics` 指标。
-3. 若出现回归，直接执行镜像/提交回滚（见下一节）。
-
-## 7. Rollback
+## 6. Rollback
 
 触发条件：发布后健康检查失败、核心页面不可用、关键写路径异常。
 
@@ -135,7 +124,7 @@ curl -sf http://127.0.0.1:4173/api/health
 
 3. 记录回滚时间、原因、影响范围。
 
-## 8. Troubleshooting Quick Commands
+## 7. Troubleshooting Quick Commands
 
 ```bash
 docker ps
@@ -144,7 +133,7 @@ curl -i http://127.0.0.1:4173/api/health
 lsof -iTCP:4173 -sTCP:LISTEN -n -P
 ```
 
-## 9. Notes
+## 8. Notes
 
 - `content` 卷必须持久化挂载，否则上传资源与运行态配置会丢失。
 - GeoGebra 自托管更新与应用发布解耦，不应阻塞业务服务启动。

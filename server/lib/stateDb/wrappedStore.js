@@ -1,5 +1,3 @@
-const { Readable } = require("stream");
-
 function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
   const {
     isStateBlobKey,
@@ -41,46 +39,7 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
 
     async readBuffer(key) {
       const normalizedKey = normalizeKey(key);
-      if (!isStateBlobKey(normalizedKey)) {
-        return store.readBuffer(normalizedKey);
-      }
-
-      if (!isUsable()) {
-        return store.readBuffer(normalizedKey);
-      }
-
-      let raw = null;
-      let sourceError = null;
-      try {
-        raw = await store.readBuffer(normalizedKey);
-      } catch (err) {
-        sourceError = err;
-      }
-
-      if (raw) {
-        try {
-          runMirrorOperation(`mirror.writeBuffer(${normalizedKey})`, () => {
-            mirror.writeBuffer(normalizedKey, raw);
-          });
-
-          if (normalizedKey === "items.json") {
-            runMirrorOperation("mirror.syncDynamicItemsFromBuffer(readThrough)", () => {
-              mirror.syncDynamicItemsFromBuffer(raw);
-            });
-            setDynamicIndexedReady(true);
-          }
-        } catch {
-          if (normalizedKey === "items.json") {
-            setDynamicIndexedReady(false);
-          }
-        }
-        return raw;
-      }
-
-      if (!sourceError) {
-        return null;
-      }
-      throw sourceError;
+      return store.readBuffer(normalizedKey);
     },
 
     async writeBuffer(key, buffer, options) {
@@ -131,11 +90,7 @@ function createStateDbWrappedStore({ store, info, stateDbQuery, mirrorOps }) {
 
     async createReadStream(key) {
       const normalizedKey = normalizeKey(key);
-      if (!isStateBlobKey(normalizedKey)) return store.createReadStream(normalizedKey);
-      if (!isUsable()) return store.createReadStream(normalizedKey);
-      const raw = await this.readBuffer(normalizedKey);
-      if (!raw) return null;
-      return Readable.from([raw]);
+      return store.createReadStream(normalizedKey);
     },
   };
 }
