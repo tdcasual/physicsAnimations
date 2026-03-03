@@ -1,41 +1,23 @@
 import { clearToken, getToken } from "../auth/authApi";
+import { apiFetchJson } from "../shared/httpClient";
 import { parseAdminItemsResponse, toApiError } from "./adminContracts";
 import type { AdminItemsResponse } from "./adminTypes";
 
 export type { AdminApiError, AdminItemRow, AdminItemsResponse } from "./adminTypes";
 
-function withAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
-  const token = getToken();
-  if (!token) return headers;
-  return {
-    ...headers,
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(path, {
-    ...options,
-    headers: withAuthHeaders({
-      Accept: "application/json",
-      ...(options.headers as Record<string, string> | undefined),
-    }),
+  return apiFetchJson<T>({
+    path,
+    options,
+    token: getToken(),
+    onUnauthorized: () => {
+      clearToken();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("pa-auth-expired"));
+      }
+    },
+    toError: (status, data) => toApiError(status, data),
   });
-
-  const contentType = response.headers.get("content-type") || "";
-  const data = contentType.includes("application/json")
-    ? await response.json().catch(() => null)
-    : null;
-
-  if (response.status === 401) {
-    clearToken();
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("pa-auth-expired"));
-    }
-  }
-
-  if (response.ok) return data as T;
-  throw toApiError(response.status, data);
 }
 
 export interface AdminListParams {
