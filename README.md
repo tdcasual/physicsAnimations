@@ -44,9 +44,6 @@ npm run install-playwright-deps
 # 启动服务
 npm start
 
-# 重新生成 animations.json + 缩略图
-npm run build-catalog
-
 # 前端开发 / 构建 / 测试
 npm run dev:frontend
 npm run build:frontend
