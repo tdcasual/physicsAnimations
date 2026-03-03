@@ -1,346 +1,60 @@
-import { computed, ref, watch } from "vue";
-import { useLibraryAdminFeedback } from "./useLibraryAdminFeedback";
-import { useLibraryAssetCrudActions } from "./useLibraryAssetCrudActions";
-import { useLibraryAssetEditorActions } from "./useLibraryAssetEditorActions";
-import { useLibraryAssetFilters } from "./useLibraryAssetFilters";
-import { useLibraryAdminLifecycle } from "./useLibraryAdminLifecycle";
-import { useLibraryFolderActions } from "./useLibraryFolderActions";
-import { useLibraryPanelSections } from "./useLibraryPanelSections";
-import { useLibraryAssetSelection } from "./useLibraryAssetSelection";
-import { useLibraryEmbedProfileActions } from "./useLibraryEmbedProfileActions";
-import { useLibraryAdminDataActions } from "./useLibraryAdminDataActions";
-import { useLibraryAdminDraftState } from "./useLibraryAdminDraftState";
+import { computed, ref } from "vue";
 import { createJsonObjectInputParser } from "./createJsonObjectInputParser";
+import { buildLibraryAdminFacadeInput } from "./buildLibraryAdminFacadeInput";
+import { useLibraryAdminActionWiring } from "./useLibraryAdminActionWiring";
+import { useLibraryAdminDraftState } from "./useLibraryAdminDraftState";
+import { useLibraryAdminFeedback } from "./useLibraryAdminFeedback";
+import { useLibraryAssetFilters } from "./useLibraryAssetFilters";
+import { useLibraryPanelSections } from "./useLibraryPanelSections";
 import { createLibraryAdminStateFacade } from "./useLibraryAdminStateFacade";
+
 export function useLibraryAdminState() {
   const loading = ref(false);
   const savingFolder = ref(false);
   const savingAsset = ref(false);
   const savingEmbed = ref(false);
   const saving = computed(() => savingFolder.value || savingAsset.value || savingEmbed.value);
-  const {
-    feedback,
-    feedbackError,
-    fieldErrors,
-    operationLogs,
-    operationLogFilter,
-    filteredOperationLogs,
-    setFeedback,
-    setFieldError,
-    clearFieldErrors,
-    getFieldError,
-    formatOperationTime,
-    pushOperationLog,
-    clearOperationLogs,
-    getApiErrorCode,
-  } = useLibraryAdminFeedback();
-  const {
-    folders,
-    selectedFolderId,
-    folderAssets,
-    deletedAssets,
-    embedProfiles,
-    assetFile,
-    assetDisplayName,
-    openMode,
-    assetParserMode,
-    assetEmbedProfileId,
-    assetEmbedOptionsJson,
-    editingAssetId,
-    assetEditDisplayName,
-    assetEditFolderId,
-    assetEditOpenMode,
-    assetEditParserMode,
-    assetEditEmbedProfileId,
-    assetEditEmbedOptionsJson,
-    embedProfileName,
-    embedScriptUrl,
-    embedFallbackScriptUrl,
-    embedViewerPath,
-    embedConstructorName,
-    embedAssetUrlOptionKey,
-    embedExtensionsText,
-    embedDefaultOptionsJson,
-    embedEnabled,
-    editingEmbedProfileId,
-    embedEditName,
-    embedEditScriptUrl,
-    embedEditFallbackScriptUrl,
-    embedEditViewerPath,
-    embedEditConstructorName,
-    embedEditAssetUrlOptionKey,
-    embedEditExtensionsText,
-    embedEditDefaultOptionsJson,
-    embedEditEnabled,
-    folderAssetsLoadSeq,
-    folderListLoadSeq,
-    selectedFolder,
-    editingAsset,
-  } = useLibraryAdminDraftState();
+
+  const feedbackState = useLibraryAdminFeedback();
+  const draftState = useLibraryAdminDraftState();
   const assetFilters = useLibraryAssetFilters({
-    folders,
-    folderAssets,
-    embedProfiles,
-    selectedFolder,
+    folders: draftState.folders,
+    folderAssets: draftState.folderAssets,
+    embedProfiles: draftState.embedProfiles,
+    selectedFolder: draftState.selectedFolder,
   });
-  const {
-    folderSearchQuery,
-    assetSearchQuery,
-    profileSearchQuery,
-    assetModeFilter,
-    assetEmbedProfileFilter,
-    assetSortMode,
-    selectableEmbedProfiles,
-    selectedFolderAssetCount,
-    filteredFolders,
-    filteredFolderAssets,
-    sortedFilteredFolderAssets,
-    filteredEmbedProfiles,
-  } = assetFilters;
+  const panelState = useLibraryPanelSections();
 
-  let reloadFolders: () => Promise<void> = async () => {};
-  let reloadFolderAssets: () => Promise<void> = async () => {};
-  let syncFolderEditDraft = () => {};
-  let cancelAssetEdit = () => {};
-
-  const assetSelection = useLibraryAssetSelection({
-    savingAsset,
-    selectedFolderId,
-    filteredFolderAssets,
-    sortedFilteredFolderAssets,
-    reloadFolders: () => reloadFolders(),
-    reloadFolderAssets: () => reloadFolderAssets(),
-    setFeedback,
-    getApiErrorCode,
-  });
-
-  const {
-    selectedAssetIds,
-    assetBatchMoveFolderId,
-    assetBatchResult,
-    undoAssetIds,
-    selectedAssetCount,
-    hasSelectedAssets,
-    hasUndoAssets,
-    allFilteredAssetsSelected,
-    clearSelectedAssets,
-    isAssetSelected,
-    toggleAssetSelection,
-    onAssetSelectChange,
-    onSelectAllFilteredAssetsChange,
-    runAssetBatchOpenMode,
-    runAssetBatchMove,
-    runAssetBatchDelete,
-    runAssetBatchUndo,
-    removeAsset,
-  } = assetSelection;
-  
   const parseJsonObjectInput = createJsonObjectInputParser({
-    setFeedback,
-    setFieldError,
+    setFeedback: feedbackState.setFeedback,
+    setFieldError: feedbackState.setFieldError,
   });
 
-  const {
-    activePanelTab,
-    panelSections,
-    isPanelSectionOpen,
-    togglePanelSection,
-    ensurePanelSectionOpen,
-    setActivePanelTab,
-  } = useLibraryPanelSections();
-
-  const {
-    cancelEmbedProfileEdit,
-    reloadEmbedProfiles,
-    createEmbedProfileEntry,
-    startEditEmbedProfile,
-    saveEmbedProfileEdit,
-    removeEmbedProfile,
-    syncEmbedProfileEntry,
-  } = useLibraryEmbedProfileActions({
-    savingEmbed,
-    embedProfiles,
-    assetEmbedProfileId,
-    assetEditParserMode,
-    assetEditEmbedProfileId,
-    embedProfileName,
-    embedScriptUrl,
-    embedFallbackScriptUrl,
-    embedViewerPath,
-    embedConstructorName,
-    embedAssetUrlOptionKey,
-    embedExtensionsText,
-    embedDefaultOptionsJson,
-    embedEnabled,
-    editingEmbedProfileId,
-    embedEditName,
-    embedEditScriptUrl,
-    embedEditFallbackScriptUrl,
-    embedEditViewerPath,
-    embedEditConstructorName,
-    embedEditAssetUrlOptionKey,
-    embedEditExtensionsText,
-    embedEditDefaultOptionsJson,
-    embedEditEnabled,
-    setFeedback,
-    setFieldError,
-    clearFieldErrors,
-    setActivePanelTab,
-    ensurePanelSectionOpen,
-    parseJsonObjectInput,
-  });
-
-  const dataActions = useLibraryAdminDataActions({
-    folders,
-    selectedFolderId,
-    folderAssets,
-    deletedAssets,
-    folderListLoadSeq,
-    folderAssetsLoadSeq,
-    selectedAssetIds,
-    undoAssetIds,
-    editingAssetId,
-    clearSelectedAssets,
-    cancelAssetEdit: () => cancelAssetEdit(),
-    syncFolderEditDraft: () => syncFolderEditDraft(),
-    setFeedback,
-  });
-  reloadFolders = dataActions.reloadFolders;
-  reloadFolderAssets = dataActions.reloadFolderAssets;
-
-  const {
-    categories,
-    groups,
-    folderName,
-    folderCategoryId,
-    createCoverFile,
-    folderEditName,
-    folderEditCategoryId,
-    coverFile,
-    groupedCategoryOptions,
-    syncFolderEditDraft: syncFolderEditDraftAction,
-    syncCategorySelection,
-    syncFolderEditCategorySelection,
-    reloadTaxonomy,
-    onCreateCoverFileChange,
-    onCoverFileChange,
-    createFolderEntry,
-    saveFolderMeta,
-    uploadCover,
-    removeFolder,
-  } = useLibraryFolderActions({
-    savingFolder,
-    selectedFolderId,
-    selectedFolder,
-    reloadFolders,
-    reloadFolderAssets,
-    setActivePanelTab,
-    setFeedback,
-    setFieldError,
-    clearFieldErrors,
-  });
-  syncFolderEditDraft = syncFolderEditDraftAction;
-
-  const {
-    onAssetFileChange,
-    uploadAssetEntry,
-    switchAssetOpenMode,
-    restoreDeletedAsset,
-    removeDeletedAssetPermanently,
-  } = useLibraryAssetCrudActions({
-    savingAsset,
-    selectedFolderId,
-    assetFile,
-    assetDisplayName,
-    openMode,
-    assetParserMode,
-    assetEmbedProfileId,
-    assetEmbedOptionsJson,
-    reloadFolders,
-    reloadFolderAssets,
-    setActivePanelTab,
-    setFeedback,
-    setFieldError,
-    clearFieldErrors,
-    parseJsonObjectInput,
-  });
-
-  const {
-    cancelAssetEdit: cancelAssetEditAction,
-    startEditAsset,
-    saveAssetEdit,
-    renameAssetDisplayName,
-  } = useLibraryAssetEditorActions({
-    savingAsset,
-    selectedFolderId,
-    editingAssetId,
-    assetEditDisplayName,
-    assetEditFolderId,
-    assetEditOpenMode,
-    assetEditParserMode,
-    assetEditEmbedProfileId,
-    assetEditEmbedOptionsJson,
-    reloadFolders,
-    reloadFolderAssets,
-    setActivePanelTab,
-    ensurePanelSectionOpen,
-    setFeedback,
-    setFieldError,
-    clearFieldErrors,
-    parseJsonObjectInput,
-  });
-  cancelAssetEdit = cancelAssetEditAction;
-  
-  watch(selectedFolderId, () => {
-    syncFolderEditDraft();
-    void reloadFolderAssets().catch(() => {});
-  });
-
-  useLibraryAdminLifecycle({
+  const actionWiring = useLibraryAdminActionWiring({
     loading,
-    assetParserMode,
-    assetEmbedProfileId,
-    assetEmbedOptionsJson,
-    assetEditParserMode,
-    assetEditEmbedProfileId,
-    assetEditEmbedOptionsJson,
-    selectableEmbedProfiles,
-    clearFieldErrors,
-    reloadTaxonomy,
-    reloadEmbedProfiles,
-    reloadFolders,
-    reloadFolderAssets,
-    setFeedback,
+    savingFolder,
+    savingAsset,
+    savingEmbed,
+    feedback: feedbackState,
+    draft: draftState,
+    filters: assetFilters,
+    panels: panelState,
+    parseJsonObjectInput,
   });
 
-  return createLibraryAdminStateFacade({
-    loading, savingFolder, savingAsset, savingEmbed, saving, feedback, feedbackError, fieldErrors,
-    folders, selectedFolderId, folderAssets, deletedAssets, embedProfiles, categories, groups,
-    folderName, folderCategoryId, createCoverFile, folderEditName, folderEditCategoryId, coverFile,
-    assetFile, assetDisplayName, openMode, assetParserMode, assetEmbedProfileId, assetEmbedOptionsJson,
-    editingAssetId, assetEditDisplayName, assetEditFolderId, assetEditOpenMode, assetEditParserMode,
-    assetEditEmbedProfileId, assetEditEmbedOptionsJson,
-    embedProfileName, embedScriptUrl, embedFallbackScriptUrl, embedViewerPath, embedConstructorName,
-    embedAssetUrlOptionKey, embedExtensionsText, embedDefaultOptionsJson, embedEnabled, editingEmbedProfileId,
-    embedEditName, embedEditScriptUrl, embedEditFallbackScriptUrl, embedEditViewerPath, embedEditConstructorName,
-    embedEditAssetUrlOptionKey, embedEditExtensionsText, embedEditDefaultOptionsJson, embedEditEnabled,
-    activePanelTab, folderSearchQuery, assetSearchQuery, profileSearchQuery, assetModeFilter,
-    assetEmbedProfileFilter, assetSortMode, assetBatchMoveFolderId, selectedAssetIds, assetBatchResult,
-    undoAssetIds, operationLogs, operationLogFilter, folderAssetsLoadSeq, panelSections, selectedFolder,
-    groupedCategoryOptions, selectableEmbedProfiles, editingAsset, selectedFolderAssetCount, filteredFolders,
-    filteredFolderAssets, sortedFilteredFolderAssets, filteredEmbedProfiles, selectedAssetCount, hasSelectedAssets,
-    hasUndoAssets, filteredOperationLogs, allFilteredAssetsSelected, parseJsonObjectInput,
-    syncFolderEditDraft: syncFolderEditDraftAction, cancelAssetEdit: cancelAssetEditAction,
-    clearSelectedAssets, isAssetSelected, toggleAssetSelection, onAssetSelectChange, onSelectAllFilteredAssetsChange,
-    cancelEmbedProfileEdit, setFeedback, setFieldError, clearFieldErrors, getFieldError, setActivePanelTab,
-    isPanelSectionOpen, togglePanelSection, ensurePanelSectionOpen,
-    formatOperationTime, pushOperationLog, clearOperationLogs, getApiErrorCode,
-    onCreateCoverFileChange, onCoverFileChange, onAssetFileChange, reloadFolders,
-    syncCategorySelection, syncFolderEditCategorySelection, reloadTaxonomy, reloadFolderAssets, reloadEmbedProfiles,
-    createFolderEntry, saveFolderMeta, uploadCover, uploadAssetEntry, switchAssetOpenMode,
-    runAssetBatchOpenMode, runAssetBatchMove, runAssetBatchDelete, runAssetBatchUndo,
-    restoreDeletedAsset, removeDeletedAssetPermanently, startEditAsset, saveAssetEdit,
-    createEmbedProfileEntry, startEditEmbedProfile, saveEmbedProfileEdit, removeEmbedProfile, syncEmbedProfileEntry,
-    renameAssetDisplayName, removeAsset, removeFolder,
+  const facadeInput = buildLibraryAdminFacadeInput({
+    loading,
+    saving,
+    savingFolder,
+    savingAsset,
+    savingEmbed,
+    feedback: feedbackState,
+    draft: draftState,
+    filters: assetFilters,
+    panels: panelState,
+    actions: actionWiring,
+    parseJsonObjectInput,
   });
+
+  return createLibraryAdminStateFacade(facadeInput);
 }

@@ -9,13 +9,14 @@ function read(relPath: string): string {
 describe("library admin asset CRUD composable split", () => {
   it("moves upload and asset lifecycle actions into useLibraryAssetCrudActions", () => {
     const state = read("src/features/library/useLibraryAdminState.ts");
+    const wiring = read("src/features/library/useLibraryAdminActionWiring.ts");
     const crud = read("src/features/library/useLibraryAssetCrudActions.ts");
 
     expect(state).not.toMatch(/async function uploadAssetEntry/);
     expect(state).not.toMatch(/async function switchAssetOpenMode/);
     expect(state).not.toMatch(/async function restoreDeletedAsset/);
     expect(state).not.toMatch(/async function removeDeletedAssetPermanently/);
-    expect(state).toMatch(/useLibraryAssetCrudActions/);
+    expect([state, wiring].join("\n")).toMatch(/useLibraryAssetCrudActions/);
 
     expect(crud).toMatch(/export function useLibraryAssetCrudActions/);
     expect(crud).toMatch(/async function uploadAssetEntry/);

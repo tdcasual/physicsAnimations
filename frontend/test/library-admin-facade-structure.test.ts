@@ -4,9 +4,9 @@ import { readStateFacade } from "./library-admin-facade-test-utils";
 describe("library admin facade structure", () => {
   it("builds grouped facade buckets for ui and action domains", () => {
     const stateFacade = readStateFacade();
-    expect(stateFacade).toMatch(/\bui:\s*\{/);
-    expect(stateFacade).toMatch(/\bactions:\s*\{/);
-    expect(stateFacade).toMatch(/\bfilters:\s*\{/);
+    expect(stateFacade).toMatch(/\bui:\s*T\["ui"\]/);
+    expect(stateFacade).toMatch(/\bactions:\s*T\["actions"\]/);
+    expect(stateFacade).toMatch(/\bfilters:\s*T\["filters"\]/);
   });
 
   it("exposes grouped-only facade surface without flat passthrough", () => {

@@ -9,12 +9,13 @@ function read(relPath: string): string {
 describe("library admin asset editor composable split", () => {
   it("moves edit flow actions into useLibraryAssetEditorActions", () => {
     const state = read("src/features/library/useLibraryAdminState.ts");
+    const wiring = read("src/features/library/useLibraryAdminActionWiring.ts");
     const editor = read("src/features/library/useLibraryAssetEditorActions.ts");
 
     expect(state).not.toMatch(/function startEditAsset/);
     expect(state).not.toMatch(/async function saveAssetEdit/);
     expect(state).not.toMatch(/async function renameAssetDisplayName/);
-    expect(state).toMatch(/useLibraryAssetEditorActions/);
+    expect([state, wiring].join("\n")).toMatch(/useLibraryAssetEditorActions/);
 
     expect(editor).toMatch(/export function useLibraryAssetEditorActions/);
     expect(editor).toMatch(/function cancelAssetEdit/);
