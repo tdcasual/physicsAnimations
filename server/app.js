@@ -6,6 +6,7 @@ const logger = require("./lib/logger");
 const { getAuthConfig, requireAuth } = require("./lib/auth");
 const { loadCatalog } = require("./lib/catalog");
 const { createStoreManager } = require("./lib/contentStore");
+const { guessContentType } = require("./lib/contentTypes");
 const { createRuntimeMetrics } = require("./lib/runtimeMetrics");
 const { getScreenshotQueueStats } = require("./lib/screenshotQueue");
 const { loadSystemState } = require("./lib/systemState");
@@ -44,36 +45,6 @@ function parseBoolean(value, fallback = undefined) {
   if (raw === "1" || raw === "true" || raw === "yes" || raw === "on") return true;
   if (raw === "0" || raw === "false" || raw === "no" || raw === "off") return false;
   return fallback;
-}
-
-function guessContentType(filePath) {
-  const ext = path.extname(String(filePath || "")).toLowerCase();
-  const map = {
-    ".html": "text/html; charset=utf-8",
-    ".htm": "text/html; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".js": "text/javascript; charset=utf-8",
-    ".mjs": "text/javascript; charset=utf-8",
-    ".json": "application/json; charset=utf-8",
-    ".map": "application/json; charset=utf-8",
-    ".png": "image/png",
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".gif": "image/gif",
-    ".svg": "image/svg+xml",
-    ".webp": "image/webp",
-    ".ico": "image/x-icon",
-    ".woff": "font/woff",
-    ".woff2": "font/woff2",
-    ".ttf": "font/ttf",
-    ".otf": "font/otf",
-    ".mp4": "video/mp4",
-    ".mp3": "audio/mpeg",
-    ".wasm": "application/wasm",
-    ".txt": "text/plain; charset=utf-8",
-    ".ggb": "application/vnd.geogebra.file",
-  };
-  return map[ext] || "application/octet-stream";
 }
 
 function safeContentKey(reqPath, prefix) {
