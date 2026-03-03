@@ -37,8 +37,14 @@ function createAssetsReadOps({ store, loadLibraryAssetsState }) {
   async function getAssetOpenInfo({ assetId }) {
     const asset = await getAssetById({ assetId });
     if (!asset) return { status: 404, error: "asset_not_found" };
+    if (asset.openMode !== "embed" && asset.openMode !== "download") {
+      return { status: 500, error: "invalid_open_mode" };
+    }
+    if (asset.openMode === "embed" && !String(asset.generatedEntryPath || "").trim()) {
+      return { status: 409, error: "asset_embed_entry_missing" };
+    }
 
-    const mode = asset.openMode === "embed" && asset.generatedEntryPath ? "embed" : "download";
+    const mode = asset.openMode;
     const openPath = mode === "embed" ? asset.generatedEntryPath : asset.filePath;
     const openUrl = `/${String(openPath || "").replace(/^\/+/, "")}`;
     const downloadUrl = `/${String(asset.filePath || "").replace(/^\/+/, "")}`;

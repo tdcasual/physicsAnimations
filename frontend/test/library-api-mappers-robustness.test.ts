@@ -21,18 +21,29 @@ describe("libraryApiMappers robustness", () => {
       id: "a_1",
       folderId: "f_1",
       fileSize: "not-a-number",
+      openMode: "embed",
     } as any);
 
     expect(asset.fileSize).toBe(0);
   });
 
-  it("toAsset should default openMode to embed for legacy payloads without openMode", () => {
-    const asset = toAsset({
-      id: "a_legacy",
-      folderId: "f_1",
-    } as any);
+  it("toAsset should reject payloads without openMode under strict contract", () => {
+    expect(() =>
+      toAsset({
+        id: "a_legacy",
+        folderId: "f_1",
+      } as any),
+    ).toThrow("invalid_open_mode");
+  });
 
-    expect(asset.openMode).toBe("embed");
+  it("toAsset should reject payloads with unsupported openMode", () => {
+    expect(() =>
+      toAsset({
+        id: "a_bad_mode",
+        folderId: "f_1",
+        openMode: "preview",
+      } as any),
+    ).toThrow("invalid_open_mode");
   });
 
   it("toEmbedProfile should not expose deprecated syncMode field", () => {

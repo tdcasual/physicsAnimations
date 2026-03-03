@@ -234,7 +234,7 @@ test("deleteAssetPermanently hard-deletes soft-deleted resource and files", asyn
   assert.equal(keys.some((key) => key.startsWith(keyPrefix)), false);
 });
 
-test("restoreAsset falls back to download when referenced embed profile has been removed", async () => {
+test("restoreAsset fails when referenced embed profile has been removed", async () => {
   const { createLibraryService } = require("../server/services/library/libraryService");
   const service = createLibraryService({
     store: createMemoryStore(),
@@ -271,16 +271,12 @@ test("restoreAsset falls back to download when referenced embed profile has been
   assert.equal(removedProfile?.ok, true);
 
   const restored = await service.restoreAsset({ assetId: uploaded.asset.id });
-  assert.equal(restored?.ok, true);
-  assert.equal(restored?.asset?.deleted, false);
-  assert.equal(restored?.asset?.openMode, "download");
-  assert.equal(restored?.asset?.embedProfileId, "");
-  assert.equal(restored?.asset?.generatedEntryPath, "");
+  assert.equal(restored?.status, 409);
+  assert.equal(restored?.error, "embed_profile_not_found");
 
-  const info = await service.getAssetOpenInfo({ assetId: uploaded.asset.id });
-  assert.equal(info?.ok, true);
-  assert.equal(info?.mode, "download");
-  assert.match(info?.openUrl || "", /\/content\/library\/assets\/.*\/source\/field-scene\.json$/);
+  const current = await service.getAssetById({ assetId: uploaded.asset.id, includeDeleted: true });
+  assert.equal(current?.deleted, true);
+  assert.equal(current?.embedProfileId, profile.profile.id);
 });
 
 test("getFolderById includes live assetCount for admin refresh flow", async () => {

@@ -145,7 +145,7 @@ test("libraryState mutate helpers persist updates", async () => {
     state.folders.push({ id: "f1", name: "Folder 1" });
   });
   await mutateLibraryAssetsState({ store }, (state) => {
-    state.assets.push({ id: "a1", folderId: "f1", adapterKey: "geogebra", fileName: "demo.ggb" });
+    state.assets.push({ id: "a1", folderId: "f1", adapterKey: "geogebra", fileName: "demo.ggb", openMode: "embed" });
   });
   await mutateLibraryEmbedProfilesState({ store }, (state) => {
     state.profiles.push({ id: "ep_1", name: "Embed" });
@@ -183,6 +183,7 @@ test("libraryState sanitizers strip prototype-pollution keys in json option fiel
           adapterKey: "embed:ep_1",
           fileName: "scene.json",
           filePath: "content/library/assets/a_pp/source/scene.json",
+          openMode: "embed",
           embedOptions: JSON.parse('{"__proto__":{"polluted":true},"safe":1}'),
         },
       ],

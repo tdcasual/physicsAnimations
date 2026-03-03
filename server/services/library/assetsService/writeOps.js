@@ -112,6 +112,8 @@ function createAssetsWriteOps({
     const openModeInputProvided = openMode !== undefined;
     const normalizedOpenMode = openModeInputProvided ? normalizeOpenMode(openMode) : "";
     if (openModeInputProvided && !normalizedOpenMode) return { status: 400, error: "invalid_open_mode" };
+    const currentOpenMode = normalizeOpenMode(asset.openMode);
+    if (!currentOpenMode) return { status: 409, error: "invalid_open_mode" };
 
     const displayNameInputProvided = displayName !== undefined;
     const folderInputProvided = folderId !== undefined;
@@ -123,7 +125,7 @@ function createAssetsWriteOps({
     let nextAdapterKey = asset.adapterKey || "";
     let nextEmbedProfileId = asset.embedProfileId || "";
     let nextEmbedOptions = normalizeJsonObject(asset.embedOptions) || {};
-    let nextOpenMode = asset.openMode;
+    let nextOpenMode = currentOpenMode;
     let nextGeneratedEntryPath = asset.generatedEntryPath || "";
 
     if (folderInputProvided) {
@@ -258,7 +260,8 @@ function createAssetsWriteOps({
     let nextAdapterKey = String(asset.adapterKey || "");
     let nextEmbedProfileId = String(asset.embedProfileId || "");
     let nextEmbedOptions = normalizeJsonObject(asset.embedOptions) || {};
-    let nextOpenMode = asset.openMode === "download" ? "download" : "embed";
+    let nextOpenMode = normalizeOpenMode(asset.openMode);
+    if (!nextOpenMode) return { status: 409, error: "invalid_open_mode" };
     let nextGeneratedEntryPath = String(asset.generatedEntryPath || "");
 
     if (nextOpenMode === "embed") {
@@ -266,31 +269,17 @@ function createAssetsWriteOps({
       if (nextEmbedProfileId) {
         const profile = await getEmbedProfileById({ profileId: nextEmbedProfileId });
         if (!profile || profile.enabled === false) {
-          const fallbackAdapter = adapterRegistry.findForFile({ fileName: String(asset.fileName || "") });
-          if (fallbackAdapter) {
-            nextAdapterKey = fallbackAdapter.key;
-            nextEmbedProfileId = "";
-            nextEmbedOptions = {};
-            shouldRegenerateViewer = true;
-          } else {
-            nextAdapterKey = "";
-            nextEmbedProfileId = "";
-            nextEmbedOptions = {};
-            nextOpenMode = "download";
-            nextGeneratedEntryPath = "";
-            shouldRegenerateViewer = false;
+          return { status: 409, error: "embed_profile_not_found" };
+        }
+        const ext = path.extname(String(asset.fileName || "")).replace(/^\./, "").toLowerCase();
+        if (Array.isArray(profile.matchExtensions) && profile.matchExtensions.length > 0) {
+          if (!profile.matchExtensions.includes(ext)) {
+            return { status: 409, error: "embed_profile_extension_mismatch" };
           }
         }
+        nextAdapterKey = `embed:${profile.id}`;
       } else if (!nextAdapterKey) {
-        const fallbackAdapter = adapterRegistry.findForFile({ fileName: String(asset.fileName || "") });
-        if (fallbackAdapter) {
-          nextAdapterKey = fallbackAdapter.key;
-          shouldRegenerateViewer = true;
-        } else {
-          nextOpenMode = "download";
-          nextGeneratedEntryPath = "";
-          shouldRegenerateViewer = false;
-        }
+        return { status: 409, error: "adapter_not_found" };
       }
 
       if (nextOpenMode === "embed" && shouldRegenerateViewer) {
@@ -303,21 +292,10 @@ function createAssetsWriteOps({
             embedProfileId: nextEmbedProfileId,
             embedOptions: nextEmbedOptions,
           });
-          if (renderResult?.error) {
-            nextAdapterKey = "";
-            nextEmbedProfileId = "";
-            nextEmbedOptions = {};
-            nextOpenMode = "download";
-            nextGeneratedEntryPath = "";
-          } else {
-            nextGeneratedEntryPath = renderResult.generatedEntryPath;
-          }
+          if (renderResult?.error) return renderResult;
+          nextGeneratedEntryPath = renderResult.generatedEntryPath;
         } catch {
-          nextAdapterKey = "";
-          nextEmbedProfileId = "";
-          nextEmbedOptions = {};
-          nextOpenMode = "download";
-          nextGeneratedEntryPath = "";
+          return { status: 500, error: "adapter_render_failed" };
         }
       }
     }

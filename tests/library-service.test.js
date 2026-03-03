@@ -266,7 +266,7 @@ test("uploadAsset in download mode skips viewer generation", async () => {
   assert.match(openInfo.openUrl, /\/content\/library\/assets\/.*\/source\/only-download\.ggb$/);
 });
 
-test("uploadAsset defaults to embed mode when openMode is omitted", async () => {
+test("uploadAsset rejects when openMode is omitted", async () => {
   const { createLibraryService } = require("../server/services/library/libraryService");
   const store = createMemoryStore();
   const service = createLibraryService({
@@ -283,9 +283,8 @@ test("uploadAsset defaults to embed mode when openMode is omitted", async () => 
     originalName: "default-embed.ggb",
   });
 
-  assert.equal(uploaded.ok, true);
-  assert.equal(uploaded.asset.openMode, "embed");
-  assert.match(uploaded.asset.generatedEntryPath, /\/viewer\/index\.html$/);
+  assert.equal(uploaded?.status, 400);
+  assert.equal(uploaded?.error, "invalid_open_mode");
 });
 
 test("updateAsset updates displayName and persists updatedAt", async () => {
@@ -344,6 +343,106 @@ test("updateAsset can switch a download asset to embed mode", async () => {
   const openInfo = await service.getAssetOpenInfo({ assetId: uploaded.asset.id });
   assert.equal(openInfo.mode, "embed");
   assert.match(openInfo.openUrl, /\/content\/library\/assets\/.*\/viewer\/index\.html$/);
+});
+
+test("getAssetOpenInfo fails for embed assets missing generated entry", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const { mutateLibraryAssetsState } = require("../server/lib/libraryState");
+  const store = createMemoryStore();
+  const service = createLibraryService({
+    store,
+    deps: {
+      adapterRegistry: createTestAdapterRegistry(),
+    },
+  });
+  const folder = await service.createFolder({ name: "Broken Embed", categoryId: "other" });
+  const uploaded = await service.uploadAsset({
+    folderId: folder.id,
+    fileBuffer: Buffer.from("GGBDATA"),
+    originalName: "broken-embed.ggb",
+    openMode: "embed",
+  });
+  assert.equal(uploaded.ok, true);
+
+  await mutateLibraryAssetsState({ store }, (state) => {
+    const target = state.assets.find((item) => item.id === uploaded.asset.id);
+    if (!target) return;
+    target.generatedEntryPath = "";
+  });
+
+  const info = await service.getAssetOpenInfo({ assetId: uploaded.asset.id });
+  assert.equal(info?.status, 409);
+  assert.equal(info?.error, "asset_embed_entry_missing");
+});
+
+test("writeOps updateAsset rejects invalid persisted openMode before mutation", async () => {
+  const { createAssetsWriteOps } = require("../server/services/library/assetsService/writeOps");
+
+  let mutated = false;
+  const writeOps = createAssetsWriteOps({
+    store: createMemoryStore(),
+    adapterRegistry: createTestAdapterRegistry(),
+    mutateLibraryAssetsState: async () => {
+      mutated = true;
+    },
+    getFolderById: async () => ({ id: "f_1" }),
+    getEmbedProfileById: async () => null,
+    generateViewerFromAssetMeta: async () => ({ ok: true, generatedEntryPath: "content/library/assets/a_1/viewer/index.html" }),
+    getAssetById: async () => ({
+      id: "a_1",
+      folderId: "f_1",
+      adapterKey: "geogebra",
+      displayName: "",
+      fileName: "demo.ggb",
+      embedProfileId: "",
+      embedOptions: {},
+      openMode: "legacy",
+      generatedEntryPath: "",
+      deleted: false,
+    }),
+  });
+
+  const updated = await writeOps.updateAsset({
+    assetId: "a_1",
+    displayName: "should-fail",
+  });
+  assert.equal(updated?.status, 409);
+  assert.equal(updated?.error, "invalid_open_mode");
+  assert.equal(mutated, false);
+});
+
+test("writeOps restoreAsset rejects invalid persisted openMode before mutation", async () => {
+  const { createAssetsWriteOps } = require("../server/services/library/assetsService/writeOps");
+
+  let mutated = false;
+  const writeOps = createAssetsWriteOps({
+    store: createMemoryStore(),
+    adapterRegistry: createTestAdapterRegistry(),
+    mutateLibraryAssetsState: async () => {
+      mutated = true;
+    },
+    getFolderById: async () => ({ id: "f_1" }),
+    getEmbedProfileById: async () => null,
+    generateViewerFromAssetMeta: async () => ({ ok: true, generatedEntryPath: "content/library/assets/a_1/viewer/index.html" }),
+    getAssetById: async () => ({
+      id: "a_1",
+      folderId: "f_1",
+      adapterKey: "geogebra",
+      displayName: "",
+      fileName: "demo.ggb",
+      filePath: "content/library/assets/a_1/source/demo.ggb",
+      embedProfileId: "",
+      embedOptions: {},
+      openMode: "legacy",
+      generatedEntryPath: "",
+      deleted: true,
+    }),
+  });
+
+  const restored = await writeOps.restoreAsset({ assetId: "a_1" });
+  assert.equal(restored?.status, 409);
+  assert.equal(restored?.error, "invalid_open_mode");
+  assert.equal(mutated, false);
 });
 
 test("uploadAsset supports PhET html and generates embed wrapper", async () => {

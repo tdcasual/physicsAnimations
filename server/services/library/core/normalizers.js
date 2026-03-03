@@ -12,7 +12,6 @@ const FORBIDDEN_JSON_KEYS = new Set(["__proto__", "prototype", "constructor"]);
 
 function normalizeOpenMode(value) {
   const mode = String(value || "").trim().toLowerCase();
-  if (!mode) return "embed";
   if (mode === "embed") return "embed";
   if (mode === "download") return "download";
   return "";

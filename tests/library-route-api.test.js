@@ -5,6 +5,7 @@ const path = require("node:path");
 const { Blob } = require("node:buffer");
 
 const { createApp } = require("../server/app");
+const { createLibraryRouter } = require("../server/routes/library");
 const { makeTempRoot, removeTempRoot } = require("./helpers/tempRoot");
 const { startServer, stopServer } = require("./helpers/testServer");
 const { startMockEmbedServer, makeAuthConfig, login } = require("./helpers/libraryRouteApiFixtures");
@@ -15,6 +16,24 @@ test("library router composes domain route modules", () => {
   assert.match(source, /registerFolderRoutes/);
   assert.match(source, /registerAssetRoutes/);
   assert.match(source, /registerEmbedProfileRoutes/);
+});
+
+test("library router rejects invalid store contract", () => {
+  const authConfig = makeAuthConfig();
+  assert.throws(() => createLibraryRouter({ authConfig, store: null }), /createLibraryRouter requires a valid store/);
+  assert.throws(
+    () =>
+      createLibraryRouter({
+        authConfig,
+        store: {
+          async readBuffer() {
+            return null;
+          },
+          async writeBuffer() {},
+        },
+      }),
+    /createLibraryRouter requires a valid store/,
+  );
 });
 
 test("library write endpoints require admin auth", async () => {
@@ -88,6 +107,45 @@ test("library routes support folder create and ggb upload flow", async () => {
     assert.equal(infoBody?.mode, "embed");
     assert.equal(infoBody?.asset?.displayName, "斜抛演示");
     assert.match(String(infoBody?.openUrl || ""), /\/content\/library\/assets\/.*\/viewer\/index\.html$/);
+  } finally {
+    await stopServer(server);
+    removeTempRoot(rootDir);
+  }
+});
+
+test("library routes reject asset upload when openMode is missing", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+
+  try {
+    const token = await login(baseUrl, authConfig);
+    const createFolder = await fetch(`${baseUrl}/api/library/folders`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Strict Mode Folder",
+        categoryId: "other",
+      }),
+    });
+    assert.equal(createFolder.status, 200);
+    const folderBody = await createFolder.json();
+    assert.ok(folderBody?.folder?.id);
+
+    const form = new FormData();
+    form.append("file", new Blob([Buffer.from("GGBDATA")]), "missing-mode.ggb");
+    const upload = await fetch(`${baseUrl}/api/library/folders/${encodeURIComponent(folderBody.folder.id)}/assets`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    assert.equal(upload.status, 400);
+    const body = await upload.json();
+    assert.equal(body?.error, "invalid_open_mode");
   } finally {
     await stopServer(server);
     removeTempRoot(rootDir);
@@ -447,4 +505,3 @@ test("library routes support custom embed profile upload with json options", asy
     removeTempRoot(rootDir);
   }
 });
-

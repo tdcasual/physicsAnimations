@@ -68,9 +68,12 @@ export function buildUpdateLibraryFolderBody(patch: UpdateLibraryFolderPatch): R
 }
 
 export function buildUploadLibraryAssetFormData(payload: UploadLibraryAssetPayload): FormData {
+  if (payload.openMode !== "embed" && payload.openMode !== "download") {
+    throw new Error("invalid_open_mode");
+  }
   const formData = new FormData();
   formData.append("file", payload.file);
-  formData.append("openMode", payload.openMode || "embed");
+  formData.append("openMode", payload.openMode);
   formData.append("displayName", String(payload.displayName || "").trim());
   if (payload.embedProfileId) {
     formData.append("embedProfileId", String(payload.embedProfileId || "").trim());
@@ -121,7 +124,10 @@ export function buildUpdateLibraryAssetBody(patch: UpdateLibraryAssetPatch): Rec
     body.displayName = String(patch.displayName || "");
   }
   if (patch?.openMode !== undefined) {
-    body.openMode = patch.openMode === "embed" ? "embed" : "download";
+    if (patch.openMode !== "embed" && patch.openMode !== "download") {
+      throw new Error("invalid_open_mode");
+    }
+    body.openMode = patch.openMode;
   }
   if (patch?.folderId !== undefined) {
     body.folderId = String(patch.folderId || "").trim();

@@ -81,22 +81,16 @@ describe("libraryApi", () => {
     expect(formData.get("openMode")).toBe("download");
   });
 
-  it("uploadLibraryAsset defaults openMode to embed when omitted", async () => {
+  it("uploadLibraryAsset rejects when openMode is omitted", async () => {
     sessionStorage.setItem("pa_admin_token", "token-lib-1");
-    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, asset: { id: "a_2" } }));
-    globalThis.fetch = fetchMock as typeof fetch;
-
     const file = new File(["GGBDATA"], "demo.ggb", { type: "application/vnd.geogebra.file" });
-    await uploadLibraryAsset({
-      folderId: "f_1",
-      file,
-      openMode: undefined as any,
-    });
-
-    const [, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
-    expect(options?.body).toBeInstanceOf(FormData);
-    const formData = options?.body as FormData;
-    expect(formData.get("openMode")).toBe("embed");
+    await expect(
+      uploadLibraryAsset({
+        folderId: "f_1",
+        file,
+        openMode: undefined as any,
+      }),
+    ).rejects.toThrow("invalid_open_mode");
   });
 
   it("uploadLibraryAsset sends displayName when provided", async () => {
@@ -287,7 +281,9 @@ describe("libraryApi", () => {
 
   it("listLibraryDeletedAssets requests deleted list endpoint", async () => {
     sessionStorage.setItem("pa_admin_token", "token-lib-1");
-    const fetchMock = vi.fn(async () => jsonResponse({ assets: [{ id: "a_del", deleted: true }] }));
+    const fetchMock = vi.fn(async () =>
+      jsonResponse({ assets: [{ id: "a_del", deleted: true, openMode: "embed" }] }),
+    );
     globalThis.fetch = fetchMock as typeof fetch;
 
     const data = await listLibraryDeletedAssets("f_1");

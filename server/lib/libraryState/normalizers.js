@@ -100,7 +100,11 @@ function sanitizeAssetEntry(value) {
   const id = toText(value.id).trim();
   if (!id) return null;
 
-  const openMode = toText(value.openMode).trim() === "download" ? "download" : "embed";
+  const openModeRaw = toText(value.openMode)
+    .trim()
+    .toLowerCase();
+  if (openModeRaw !== "embed" && openModeRaw !== "download") return null;
+  const openMode = openModeRaw;
   const status = toText(value.status).trim() === "failed" ? "failed" : "ready";
   const deleted = toBool(value.deleted, false);
 

@@ -88,6 +88,10 @@ test("/api/catalog uses SQL-backed dynamic loader when available", async () => {
       }
       return null;
     },
+    async writeBuffer() {
+      throw new Error("write_not_supported_in_test");
+    },
+    async deletePath() {},
     stateDbQuery: {
       async queryDynamicItemsForCatalog(options = {}) {
         sqlCalls += 1;
@@ -204,6 +208,10 @@ test("/api/catalog returns state_db_unavailable when SQL dynamic loader fails", 
       if (normalized === "categories.json") return Buffer.from('{"version":2,"groups":{},"categories":{}}\n', "utf8");
       return null;
     },
+    async writeBuffer() {
+      throw new Error("write_not_supported_in_test");
+    },
+    async deletePath() {},
     stateDbQuery: {
       async queryDynamicItemsForCatalog() {
         throw new Error("sql_dynamic_query_failed");

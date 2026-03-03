@@ -11,6 +11,14 @@ function toOptionalId(value: unknown): string | null {
   return text ? text : null;
 }
 
+function toOpenMode(value: unknown): "embed" | "download" {
+  const mode = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (mode === "embed" || mode === "download") return mode;
+  throw new Error("invalid_open_mode");
+}
+
 export function toFolder(value: any): LibraryFolder {
   return {
     id: String(value?.id || ""),
@@ -36,7 +44,7 @@ export function toAsset(value: any): LibraryAsset {
     fileName: String(value?.fileName || ""),
     filePath: String(value?.filePath || ""),
     fileSize: toFiniteNumber(value?.fileSize, 0),
-    openMode: value?.openMode === "download" ? "download" : "embed",
+    openMode: toOpenMode(value?.openMode),
     generatedEntryPath: String(value?.generatedEntryPath || ""),
     embedProfileId: String(value?.embedProfileId || ""),
     embedOptions:
