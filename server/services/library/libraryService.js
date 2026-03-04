@@ -43,9 +43,9 @@ function createLibraryService({ store, deps = {} }) {
     loadLibraryAssetsState,
     mirrorEmbedProfileResources: embedProfileSyncService.mirrorEmbedProfileResources,
   });
-  const { listEmbedProfiles, getEmbedProfileById, createEmbedProfile, updateEmbedProfile, deleteEmbedProfile } =
+  const { listEmbedProfiles, getEmbedProfileById, createEmbedProfile, updateEmbedProfile, rollbackEmbedProfile, deleteEmbedProfile } =
     embedProfilesService;
-  const { syncEmbedProfile } = embedProfileSyncService;
+  const { syncEmbedProfile, cancelEmbedProfileSync } = embedProfileSyncService;
 
   const { generateViewerFromAssetMeta } = createViewerRenderService({
     store,
@@ -89,6 +89,8 @@ function createLibraryService({ store, deps = {} }) {
     createEmbedProfile,
     updateEmbedProfile,
     syncEmbedProfile,
+    cancelEmbedProfileSync,
+    rollbackEmbedProfile,
     deleteEmbedProfile,
     createFolder,
     updateFolder,

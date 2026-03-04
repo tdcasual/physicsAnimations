@@ -9,6 +9,16 @@ const IMAGE_EXT_BY_MIME = new Map([
 ]);
 
 const FORBIDDEN_JSON_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+const SYNC_OPTION_NUMERIC_RANGES = {
+  maxFiles: { min: 1, max: 2000 },
+  maxTotalBytes: { min: 16 * 1024, max: 512 * 1024 * 1024 },
+  maxFileBytes: { min: 1024, max: 128 * 1024 * 1024 },
+  timeoutMs: { min: 10, max: 120000 },
+  concurrency: { min: 1, max: 16 },
+  keepReleases: { min: 1, max: 20 },
+  retryMaxAttempts: { min: 1, max: 8 },
+  retryBaseDelayMs: { min: 1, max: 10000 },
+};
 
 function normalizeOpenMode(value) {
   const mode = String(value || "").trim().toLowerCase();
@@ -96,6 +106,30 @@ function normalizeBoolean(value, fallback = true) {
   if (text === "1" || text === "true" || text === "yes" || text === "on") return true;
   if (text === "0" || text === "false" || text === "no" || text === "off") return false;
   return fallback;
+}
+
+function toIntInRange(value, { min, max }, fallback) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  const normalized = Math.trunc(parsed);
+  if (!Number.isFinite(normalized)) return fallback;
+  if (normalized < min || normalized > max) return fallback;
+  return normalized;
+}
+
+function normalizeSyncOptions(value, fallback = {}) {
+  if (value === undefined || value === null || value === "") return { ...fallback };
+  if (!value || typeof value !== "object" || Array.isArray(value)) return { ...fallback };
+
+  const out = { ...fallback };
+  for (const [key, range] of Object.entries(SYNC_OPTION_NUMERIC_RANGES)) {
+    if (value[key] === undefined) continue;
+    out[key] = toIntInRange(value[key], range, fallback[key]);
+  }
+  if (value.strictSelfCheck !== undefined) {
+    out.strictSelfCheck = normalizeBoolean(value.strictSelfCheck, fallback.strictSelfCheck !== false);
+  }
+  return out;
 }
 
 function normalizeUrlLike(value) {
@@ -191,6 +225,68 @@ function parseHtmlRefs(html) {
   return out;
 }
 
+function parseSrcsetRefs(value) {
+  const out = [];
+  const text = String(value || "").trim();
+  if (!text) return out;
+  for (const candidate of text.split(",")) {
+    const part = String(candidate || "").trim();
+    if (!part) continue;
+    const firstWs = part.search(/\s/);
+    const ref = (firstWs === -1 ? part : part.slice(0, firstWs)).trim();
+    if (!ref) continue;
+    out.push(ref);
+  }
+  return out;
+}
+
+function parseHtmlMediaRefs(html) {
+  const out = [];
+  const text = String(html || "");
+  const tagRegex = /<(?:img|source|video|audio|track)\b[^>]*>/gi;
+  let tagMatch = null;
+  while ((tagMatch = tagRegex.exec(text))) {
+    const tag = String(tagMatch[0] || "");
+    if (!tag) continue;
+
+    const attrRegex = /\b(?:src|poster)\s*=\s*["']([^"']+)["']/gi;
+    let attrMatch = null;
+    while ((attrMatch = attrRegex.exec(tag))) {
+      const ref = String(attrMatch[1] || "").trim();
+      if (!ref) continue;
+      out.push(ref);
+    }
+
+    const srcsetRegex = /\bsrcset\s*=\s*["']([^"']+)["']/gi;
+    let srcsetMatch = null;
+    while ((srcsetMatch = srcsetRegex.exec(tag))) {
+      for (const ref of parseSrcsetRefs(srcsetMatch[1])) {
+        out.push(ref);
+      }
+    }
+  }
+  return out;
+}
+
+function parseHtmlInlineStyleRefs(html) {
+  const out = [];
+  const text = String(html || "");
+
+  const styleTagRegex = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
+  let styleTagMatch = null;
+  while ((styleTagMatch = styleTagRegex.exec(text))) {
+    for (const ref of parseCssRefs(styleTagMatch[1])) out.push(ref);
+  }
+
+  const styleAttrRegex = /\bstyle\s*=\s*["']([^"']+)["']/gi;
+  let styleAttrMatch = null;
+  while ((styleAttrMatch = styleAttrRegex.exec(text))) {
+    for (const ref of parseCssRefs(styleAttrMatch[1])) out.push(ref);
+  }
+
+  return out;
+}
+
 function parseJsRefs(jsText) {
   const out = [];
   const text = String(jsText || "");
@@ -205,20 +301,164 @@ function parseJsRefs(jsText) {
       out.push(ref);
     }
   }
+  // Fallback scanner: captures dynamic imports with options, e.g. import("./x.js", {...})
+  for (let i = 0; i < text.length; i += 1) {
+    if (!text.startsWith("import", i)) continue;
+    const prev = i > 0 ? text[i - 1] : "";
+    if (/[a-zA-Z0-9_$]/.test(prev)) continue;
+    let j = i + "import".length;
+    while (j < text.length && /\s/.test(text[j])) j += 1;
+    if (text[j] !== "(") continue;
+    j += 1;
+    while (j < text.length && /\s/.test(text[j])) j += 1;
+    const quote = text[j];
+    if (quote !== "'" && quote !== '"') continue;
+    j += 1;
+    let value = "";
+    while (j < text.length) {
+      const ch = text[j];
+      if (ch === "\\") {
+        const next = text[j + 1] || "";
+        value += next;
+        j += 2;
+        continue;
+      }
+      if (ch === quote) break;
+      value += ch;
+      j += 1;
+    }
+    if (value.trim()) out.push(value.trim());
+  }
   return out;
+}
+
+function collectCssFuncArg(text, startIndex) {
+  let i = startIndex;
+  while (i < text.length && /\s/.test(text[i])) i += 1;
+  if (text[i] !== "(") return { value: "", nextIndex: startIndex };
+  i += 1;
+  let value = "";
+  let quote = "";
+  while (i < text.length) {
+    const ch = text[i];
+    if (quote) {
+      if (ch === "\\") {
+        const next = text[i + 1] || "";
+        value += ch + next;
+        i += 2;
+        continue;
+      }
+      if (ch === quote) {
+        quote = "";
+        value += ch;
+        i += 1;
+        continue;
+      }
+      value += ch;
+      i += 1;
+      continue;
+    }
+    if (ch === "'" || ch === '"') {
+      quote = ch;
+      value += ch;
+      i += 1;
+      continue;
+    }
+    if (ch === ")") {
+      i += 1;
+      break;
+    }
+    value += ch;
+    i += 1;
+  }
+  return { value: value.trim(), nextIndex: i };
+}
+
+function unwrapCssString(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const quote = text[0];
+  if ((quote === "'" || quote === '"') && text[text.length - 1] === quote) {
+    return text.slice(1, -1).trim();
+  }
+  return text;
 }
 
 function parseCssRefs(cssText) {
   const out = [];
   const text = String(cssText || "");
-  const regex = /url\(\s*['"]?([^'")]+)['"]?\s*\)/g;
+  const quotedUrlRegex = /url\(\s*(['"])([^"']+)\1\s*\)/gi;
   let match = null;
-  while ((match = regex.exec(text))) {
-    const ref = String(match[1] || "").trim();
+  while ((match = quotedUrlRegex.exec(text))) {
+    const ref = String(match[2] || "").trim();
     if (!ref) continue;
     out.push(ref);
   }
-  return out;
+  const plainUrlRegex = /url\(\s*([^"'()\s][^()]*?)\s*\)/gi;
+  let plainMatch = null;
+  while ((plainMatch = plainUrlRegex.exec(text))) {
+    const ref = String(plainMatch[1] || "").trim();
+    if (!ref) continue;
+    out.push(ref);
+  }
+  const importRegex = /@import\s+(?:url\(\s*)?['"]([^'"]+)['"]\s*\)?/gi;
+  let importMatch = null;
+  while ((importMatch = importRegex.exec(text))) {
+    const ref = String(importMatch[1] || "").trim();
+    if (!ref) continue;
+    out.push(ref);
+  }
+  const importUrlRegex = /@import\s+url\(\s*([^'")\s][^)]*)\s*\)/gi;
+  let importUrlMatch = null;
+  while ((importUrlMatch = importUrlRegex.exec(text))) {
+    const ref = String(importUrlMatch[1] || "").trim();
+    if (!ref) continue;
+    out.push(ref);
+  }
+  // Fallback scanner for complex url()/@import arguments that break simple regex.
+  for (let i = 0; i < text.length; i += 1) {
+    if (text.startsWith("url", i)) {
+      const { value, nextIndex } = collectCssFuncArg(text, i + 3);
+      const ref = unwrapCssString(value);
+      if (ref) out.push(ref);
+      if (nextIndex > i) i = nextIndex - 1;
+      continue;
+    }
+    if (!text.startsWith("@import", i)) continue;
+    let j = i + "@import".length;
+    while (j < text.length && /\s/.test(text[j])) j += 1;
+    if (text.startsWith("url", j)) {
+      const { value, nextIndex } = collectCssFuncArg(text, j + 3);
+      const ref = unwrapCssString(value);
+      if (ref) out.push(ref);
+      if (nextIndex > i) i = nextIndex - 1;
+      continue;
+    }
+    const quote = text[j];
+    if (quote !== "'" && quote !== '"') continue;
+    j += 1;
+    let ref = "";
+    while (j < text.length && text[j] !== quote) {
+      if (text[j] === "\\") {
+        const next = text[j + 1] || "";
+        ref += next;
+        j += 2;
+        continue;
+      }
+      ref += text[j];
+      j += 1;
+    }
+    if (ref.trim()) out.push(ref.trim());
+  }
+  const deduped = [];
+  const seen = new Set();
+  for (const item of out) {
+    const ref = String(item || "").trim();
+    if (!ref || seen.has(ref)) continue;
+    seen.add(ref);
+    deduped.push(ref);
+  }
+  return deduped;
 }
 
 function shouldSkipRef(value) {
@@ -240,6 +480,7 @@ module.exports = {
   normalizeJsonObject,
   normalizeExtensionList,
   normalizeBoolean,
+  normalizeSyncOptions,
   normalizeUrlLike,
   isAllowedScriptUrl,
   isAllowedViewerPath,
@@ -249,6 +490,8 @@ module.exports = {
   toMirrorRelativePath,
   toViewerRef,
   parseHtmlRefs,
+  parseHtmlMediaRefs,
+  parseHtmlInlineStyleRefs,
   parseJsRefs,
   parseCssRefs,
   shouldSkipRef,

@@ -7,6 +7,18 @@ const {
   createMockEmbedFetcher,
 } = require("./helpers/libraryServiceFixtures");
 
+function toStorageKeyFromPublicUrl(url) {
+  return String(url || "")
+    .replace(/^\/+/, "")
+    .replace(/^content\//, "");
+}
+
+function toReleasePrefixFromScriptUrl(scriptUrl) {
+  const key = toStorageKeyFromPublicUrl(scriptUrl);
+  const idx = key.lastIndexOf("/");
+  return idx >= 0 ? key.slice(0, idx) : key;
+}
+
 test("createAssetsService exposes stable asset operations", async () => {
   const { createAssetsService } = require("../server/services/library/assetsService");
   const service = createAssetsService({
@@ -39,6 +51,8 @@ test("createLibraryService exposes core folder and asset operations", async () =
   assert.equal(typeof service.createEmbedProfile, "function");
   assert.equal(typeof service.updateEmbedProfile, "function");
   assert.equal(typeof service.syncEmbedProfile, "function");
+  assert.equal(typeof service.cancelEmbedProfileSync, "function");
+  assert.equal(typeof service.rollbackEmbedProfile, "function");
   assert.equal(typeof service.deleteEmbedProfile, "function");
   assert.equal(typeof service.createFolder, "function");
   assert.equal(typeof service.listFolders, "function");
@@ -104,10 +118,180 @@ test("syncEmbedProfile refreshes local mirrored bundle", async () => {
   assert.equal(synced.profile.syncStatus, "ok");
   assert.match(synced.profile.scriptUrl, /\/content\/library\/vendor\/embed-profiles\//);
 
-  const embedJsKey = `library/vendor/embed-profiles/${created.profile.id}/current/embed.js`;
+  const embedJsKey = toStorageKeyFromPublicUrl(synced.profile.scriptUrl);
   const mirrored = await store.readBuffer(embedJsKey);
   assert.ok(mirrored);
   assert.match(mirrored.toString("utf8"), /ElectricFieldApp/);
+});
+
+test("createEmbedProfile mirrors viewer media refs for robust offline bundle", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const store = createMemoryStore();
+  const baseUrl = "https://complex.infinitas.fun";
+
+  const resources = new Map([
+    [
+      `${baseUrl}/embed/embed.js`,
+      {
+        body: 'window.ElectricFieldApp = function () { this.inject = function () {}; };',
+        contentType: "application/javascript",
+      },
+    ],
+    [
+      `${baseUrl}/embed/viewer.html`,
+      {
+        body: `
+          <!doctype html>
+          <html>
+            <head>
+              <script type="module" src="./assets/main.js"></script>
+              <link rel="stylesheet" href="./assets/main.css" />
+            </head>
+            <body>
+              <img src="./assets/logo.png" srcset="./assets/logo@1x.png 1x, ./assets/logo@2x.png 2x" />
+              <video controls poster="./assets/poster.jpg">
+                <source src="./assets/demo.mp4" type="video/mp4" />
+                <source srcset="./assets/trailer-480.mp4 480w, ./assets/trailer-720.mp4 720w" type="video/mp4" />
+              </video>
+              <audio controls src="./assets/sound.mp3"></audio>
+              <track src="./assets/captions.vtt" kind="captions" />
+            </body>
+          </html>
+        `,
+        contentType: "text/html; charset=utf-8",
+      },
+    ],
+    [`${baseUrl}/embed/assets/main.js`, { body: 'console.log("main");', contentType: "application/javascript" }],
+    [`${baseUrl}/embed/assets/main.css`, { body: "body{margin:0;}", contentType: "text/css" }],
+    [`${baseUrl}/embed/assets/logo.png`, { body: "PNG", contentType: "image/png" }],
+    [`${baseUrl}/embed/assets/logo@1x.png`, { body: "PNG1", contentType: "image/png" }],
+    [`${baseUrl}/embed/assets/logo@2x.png`, { body: "PNG2", contentType: "image/png" }],
+    [`${baseUrl}/embed/assets/poster.jpg`, { body: "JPG", contentType: "image/jpeg" }],
+    [`${baseUrl}/embed/assets/demo.mp4`, { body: "MP4", contentType: "video/mp4" }],
+    [`${baseUrl}/embed/assets/trailer-480.mp4`, { body: "MP4-480", contentType: "video/mp4" }],
+    [`${baseUrl}/embed/assets/trailer-720.mp4`, { body: "MP4-720", contentType: "video/mp4" }],
+    [`${baseUrl}/embed/assets/sound.mp3`, { body: "MP3", contentType: "audio/mpeg" }],
+    [`${baseUrl}/embed/assets/captions.vtt`, { body: "WEBVTT", contentType: "text/vtt" }],
+  ]);
+
+  const fetcher = async (url) => {
+    const key = String(url || "");
+    const item = resources.get(key);
+    if (!item) return new Response("not found", { status: 404, headers: { "content-type": "text/plain" } });
+    return new Response(item.body, { status: 200, headers: { "content-type": item.contentType } });
+  };
+
+  const service = createLibraryService({
+    store,
+    deps: { fetcher },
+  });
+
+  const created = await service.createEmbedProfile({
+    name: "Complex Viewer",
+    scriptUrl: `${baseUrl}/embed/embed.js`,
+    viewerPath: `${baseUrl}/embed/viewer.html`,
+  });
+  assert.equal(created.ok, true);
+
+  const prefix = toReleasePrefixFromScriptUrl(created.profile.scriptUrl);
+  const expectedMirroredKeys = [
+    `${prefix}/assets/logo.png`,
+    `${prefix}/assets/logo@1x.png`,
+    `${prefix}/assets/logo@2x.png`,
+    `${prefix}/assets/poster.jpg`,
+    `${prefix}/assets/demo.mp4`,
+    `${prefix}/assets/trailer-480.mp4`,
+    `${prefix}/assets/trailer-720.mp4`,
+    `${prefix}/assets/sound.mp3`,
+    `${prefix}/assets/captions.vtt`,
+  ];
+
+  for (const key of expectedMirroredKeys) {
+    const mirrored = await store.readBuffer(key);
+    assert.ok(mirrored, `expected mirrored dependency: ${key}`);
+  }
+});
+
+test("syncEmbedProfile mirrors css @import chain dependencies", async () => {
+  const { createLibraryService } = require("../server/services/library/libraryService");
+  const store = createMemoryStore();
+  const baseUrl = "https://css-chain.infinitas.fun";
+
+  const resources = new Map([
+    [
+      `${baseUrl}/embed/embed.js`,
+      {
+        body: 'window.ElectricFieldApp = function () { this.inject = function () {}; };',
+        contentType: "application/javascript",
+      },
+    ],
+    [
+      `${baseUrl}/embed/viewer.html`,
+      {
+        body: `
+          <!doctype html>
+          <html>
+            <head>
+              <script type="module" src="./assets/main.js"></script>
+              <link rel="stylesheet" href="./assets/main.css" />
+            </head>
+            <body><div id="root"></div></body>
+          </html>
+        `,
+        contentType: "text/html; charset=utf-8",
+      },
+    ],
+    [`${baseUrl}/embed/assets/main.js`, { body: 'console.log("main");', contentType: "application/javascript" }],
+    [
+      `${baseUrl}/embed/assets/main.css`,
+      { body: '@import "./theme/base.css"; .stage{background:url("./img/bg.png");}', contentType: "text/css" },
+    ],
+    [
+      `${baseUrl}/embed/assets/theme/base.css`,
+      { body: '@import "../fonts/fonts.css";', contentType: "text/css" },
+    ],
+    [
+      `${baseUrl}/embed/assets/fonts/fonts.css`,
+      { body: '@font-face { src: url("../font/demo.woff2") format("woff2"); }', contentType: "text/css" },
+    ],
+    [`${baseUrl}/embed/assets/img/bg.png`, { body: "PNG", contentType: "image/png" }],
+    [`${baseUrl}/embed/assets/font/demo.woff2`, { body: "FONT", contentType: "font/woff2" }],
+  ]);
+
+  const fetcher = async (url) => {
+    const key = String(url || "");
+    const item = resources.get(key);
+    if (!item) return new Response("not found", { status: 404, headers: { "content-type": "text/plain" } });
+    return new Response(item.body, { status: 200, headers: { "content-type": item.contentType } });
+  };
+
+  const service = createLibraryService({
+    store,
+    deps: { fetcher },
+  });
+
+  const created = await service.createEmbedProfile({
+    name: "CSS Chain",
+    scriptUrl: `${baseUrl}/embed/embed.js`,
+    viewerPath: `${baseUrl}/embed/viewer.html`,
+  });
+  assert.equal(created.ok, true);
+
+  const synced = await service.syncEmbedProfile({ profileId: created.profile.id });
+  assert.equal(synced.ok, true);
+
+  const prefix = toReleasePrefixFromScriptUrl(synced.profile.scriptUrl);
+  const expectedMirroredKeys = [
+    `${prefix}/assets/theme/base.css`,
+    `${prefix}/assets/fonts/fonts.css`,
+    `${prefix}/assets/font/demo.woff2`,
+    `${prefix}/assets/img/bg.png`,
+  ];
+
+  for (const key of expectedMirroredKeys) {
+    const mirrored = await store.readBuffer(key);
+    assert.ok(mirrored, `expected mirrored css-chain dependency: ${key}`);
+  }
 });
 
 test("syncEmbedProfile fails when required viewer dependency cannot be mirrored", async () => {

@@ -21,6 +21,7 @@ test("createLibraryService keeps stable method surface", () => {
   const service = createLibraryService({ store: createStoreStub() });
   const keys = Object.keys(service).sort();
   assert.deepEqual(keys, [
+    "cancelEmbedProfileSync",
     "createEmbedProfile",
     "createFolder",
     "deleteAsset",
@@ -37,6 +38,7 @@ test("createLibraryService keeps stable method surface", () => {
     "listFolderAssets",
     "listFolders",
     "restoreAsset",
+    "rollbackEmbedProfile",
     "syncEmbedProfile",
     "updateAsset",
     "updateEmbedProfile",

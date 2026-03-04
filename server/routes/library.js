@@ -48,6 +48,19 @@ function createLibraryRouter({ authConfig, store }) {
     embedProfileId: z.string().optional(),
     embedOptions: z.any().optional(),
   });
+  const syncOptionsSchema = z
+    .object({
+      maxFiles: z.number().int().min(1).max(2000).optional(),
+      maxTotalBytes: z.number().int().min(16 * 1024).max(512 * 1024 * 1024).optional(),
+      maxFileBytes: z.number().int().min(1024).max(128 * 1024 * 1024).optional(),
+      timeoutMs: z.number().int().min(10).max(120000).optional(),
+      concurrency: z.number().int().min(1).max(16).optional(),
+      keepReleases: z.number().int().min(1).max(20).optional(),
+      retryMaxAttempts: z.number().int().min(1).max(8).optional(),
+      retryBaseDelayMs: z.number().int().min(1).max(10000).optional(),
+      strictSelfCheck: z.boolean().optional(),
+    })
+    .strict();
   const createEmbedProfileSchema = z.object({
     name: z.string().min(1).max(128),
     scriptUrl: z.string().min(1).max(2048),
@@ -57,6 +70,7 @@ function createLibraryRouter({ authConfig, store }) {
     assetUrlOptionKey: z.string().max(128).optional().default("sceneUrl"),
     matchExtensions: z.array(z.string().max(24)).optional().default([]),
     defaultOptions: z.any().optional().default({}),
+    syncOptions: syncOptionsSchema.optional().default({}),
     enabled: z.boolean().optional().default(true),
   });
   const updateEmbedProfileSchema = z.object({
@@ -68,6 +82,7 @@ function createLibraryRouter({ authConfig, store }) {
     assetUrlOptionKey: z.string().max(128).optional(),
     matchExtensions: z.array(z.string().max(24)).optional(),
     defaultOptions: z.any().optional(),
+    syncOptions: syncOptionsSchema.optional(),
     enabled: z.boolean().optional(),
   });
 

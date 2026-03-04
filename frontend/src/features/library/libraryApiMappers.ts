@@ -19,6 +19,66 @@ function toOpenMode(value: unknown): "embed" | "download" {
   throw new Error("invalid_open_mode");
 }
 
+function toObjectRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function toOptionalNumber(value: unknown): number | undefined {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function toOptionalBoolean(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value;
+  return undefined;
+}
+
+function toSyncOptions(value: unknown): LibraryEmbedProfile["syncOptions"] {
+  const source = toObjectRecord(value);
+  const out: LibraryEmbedProfile["syncOptions"] = {};
+  const maxFiles = toOptionalNumber(source.maxFiles);
+  const maxTotalBytes = toOptionalNumber(source.maxTotalBytes);
+  const maxFileBytes = toOptionalNumber(source.maxFileBytes);
+  const timeoutMs = toOptionalNumber(source.timeoutMs);
+  const concurrency = toOptionalNumber(source.concurrency);
+  const keepReleases = toOptionalNumber(source.keepReleases);
+  const retryMaxAttempts = toOptionalNumber(source.retryMaxAttempts);
+  const retryBaseDelayMs = toOptionalNumber(source.retryBaseDelayMs);
+  const strictSelfCheck = toOptionalBoolean(source.strictSelfCheck);
+  if (maxFiles !== undefined) out.maxFiles = maxFiles;
+  if (maxTotalBytes !== undefined) out.maxTotalBytes = maxTotalBytes;
+  if (maxFileBytes !== undefined) out.maxFileBytes = maxFileBytes;
+  if (timeoutMs !== undefined) out.timeoutMs = timeoutMs;
+  if (concurrency !== undefined) out.concurrency = concurrency;
+  if (keepReleases !== undefined) out.keepReleases = keepReleases;
+  if (retryMaxAttempts !== undefined) out.retryMaxAttempts = retryMaxAttempts;
+  if (retryBaseDelayMs !== undefined) out.retryBaseDelayMs = retryBaseDelayMs;
+  if (strictSelfCheck !== undefined) out.strictSelfCheck = strictSelfCheck;
+  return out;
+}
+
+function toSyncReport(value: unknown): LibraryEmbedProfile["syncLastReport"] {
+  return toObjectRecord(value) as LibraryEmbedProfile["syncLastReport"];
+}
+
+function toSyncCache(value: unknown): LibraryEmbedProfile["syncCache"] {
+  const source = toObjectRecord(value);
+  const out: LibraryEmbedProfile["syncCache"] = {};
+  for (const [rawUrl, rawEntry] of Object.entries(source)) {
+    const url = String(rawUrl || "").trim();
+    if (!url) continue;
+    const entry = toObjectRecord(rawEntry);
+    out[url] = {
+      etag: String(entry.etag || ""),
+      lastModified: String(entry.lastModified || ""),
+      contentType: String(entry.contentType || ""),
+      relativePath: String(entry.relativePath || ""),
+    };
+  }
+  return out;
+}
+
 export function toFolder(value: any): LibraryFolder {
   return {
     id: String(value?.id || ""),
@@ -47,10 +107,7 @@ export function toAsset(value: any): LibraryAsset {
     openMode: toOpenMode(value?.openMode),
     generatedEntryPath: String(value?.generatedEntryPath || ""),
     embedProfileId: String(value?.embedProfileId || ""),
-    embedOptions:
-      value?.embedOptions && typeof value.embedOptions === "object" && !Array.isArray(value.embedOptions)
-        ? value.embedOptions
-        : {},
+    embedOptions: toObjectRecord(value?.embedOptions),
     status: value?.status === "failed" ? "failed" : "ready",
     deleted,
     deletedAt: deleted ? String(value?.deletedAt || "") : "",
@@ -76,10 +133,14 @@ export function toEmbedProfile(value: any): LibraryEmbedProfile {
     matchExtensions: Array.isArray(value?.matchExtensions)
       ? value.matchExtensions.map((item: unknown) => String(item || "").trim()).filter(Boolean)
       : [],
-    defaultOptions:
-      value?.defaultOptions && typeof value.defaultOptions === "object" && !Array.isArray(value.defaultOptions)
-        ? value.defaultOptions
-        : {},
+    defaultOptions: toObjectRecord(value?.defaultOptions),
+    syncOptions: toSyncOptions(value?.syncOptions),
+    syncLastReport: toSyncReport(value?.syncLastReport),
+    syncCache: toSyncCache(value?.syncCache),
+    activeReleaseId: String(value?.activeReleaseId || ""),
+    releaseHistory: Array.isArray(value?.releaseHistory)
+      ? value.releaseHistory.map((item: unknown) => String(item || "").trim()).filter(Boolean)
+      : [],
     enabled: value?.enabled !== false,
     createdAt: String(value?.createdAt || ""),
     updatedAt: String(value?.updatedAt || ""),

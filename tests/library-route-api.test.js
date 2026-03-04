@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const http = require("node:http");
 const path = require("node:path");
 const { Blob } = require("node:buffer");
 
@@ -9,6 +10,68 @@ const { createLibraryRouter } = require("../server/routes/library");
 const { makeTempRoot, removeTempRoot } = require("./helpers/tempRoot");
 const { startServer, stopServer } = require("./helpers/testServer");
 const { startMockEmbedServer, makeAuthConfig, login } = require("./helpers/libraryRouteApiFixtures");
+
+async function startVersionedEmbedServer() {
+  let version = 1;
+  let delayMs = 0;
+  const server = http.createServer((req, res) => {
+    const url = String(req.url || "");
+    const send = (status, contentType, body) => {
+      res.statusCode = status;
+      if (contentType) res.setHeader("Content-Type", contentType);
+      res.end(body);
+    };
+    if (url === "/embed/embed.js") {
+      if (version === 1) {
+        send(200, "application/javascript", 'import "./assets/main.js"; import "./assets/v1.js";');
+        return;
+      }
+      send(200, "application/javascript", 'import "./assets/main.js"; import "./assets/v2.js";');
+      return;
+    }
+    if (url === "/embed/viewer.html") {
+      send(
+        200,
+        "text/html; charset=utf-8",
+        '<!doctype html><html><head><script src="./assets/main.js"></script></head><body></body></html>',
+      );
+      return;
+    }
+    if (url === "/embed/assets/main.js") {
+      const body = 'console.log("main");';
+      if (delayMs > 0) {
+        setTimeout(() => send(200, "application/javascript", body), delayMs);
+        return;
+      }
+      send(200, "application/javascript", body);
+      return;
+    }
+    if (url === "/embed/assets/v1.js") {
+      send(200, "application/javascript", 'console.log("v1");');
+      return;
+    }
+    if (url === "/embed/assets/v2.js") {
+      send(200, "application/javascript", 'console.log("v2");');
+      return;
+    }
+    send(404, "text/plain", "not found");
+  });
+
+  await new Promise((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const { port } = server.address();
+  return {
+    server,
+    baseUrl: `http://127.0.0.1:${port}`,
+    setVersion(next) {
+      version = Number(next) === 2 ? 2 : 1;
+    },
+    setDelayMs(next) {
+      delayMs = Math.max(0, Number(next) || 0);
+    },
+  };
+}
 
 test("library router composes domain route modules", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "server", "routes", "library.js"), "utf8");
@@ -499,6 +562,146 @@ test("library routes support custom embed profile upload with json options", asy
     const viewerHtml = await viewerRes.text();
     assert.match(viewerHtml, /ElectricFieldApp/);
     assert.match(viewerHtml, /content\/library\/vendor\/embed-profiles/);
+  } finally {
+    await stopServer(server);
+    await stopServer(mockEmbed.server);
+    removeTempRoot(rootDir);
+  }
+});
+
+test("library routes support embed profile rollback to previous release", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  const mockEmbed = await startVersionedEmbedServer();
+
+  try {
+    const token = await login(baseUrl, authConfig);
+    const profileRes = await fetch(`${baseUrl}/api/library/embed-profiles`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Rollback Route",
+        scriptUrl: `${mockEmbed.baseUrl}/embed/embed.js`,
+        viewerPath: `${mockEmbed.baseUrl}/embed/viewer.html`,
+        constructorName: "ElectricFieldApp",
+        assetUrlOptionKey: "sceneUrl",
+      }),
+    });
+    assert.equal(profileRes.status, 200);
+    const profileBody = await profileRes.json();
+    assert.equal(profileBody?.ok, true);
+    const profileId = String(profileBody?.profile?.id || "");
+    const release1ScriptUrl = String(profileBody?.profile?.scriptUrl || "");
+    assert.ok(profileId);
+    assert.ok(release1ScriptUrl);
+
+    mockEmbed.setVersion(2);
+    const syncRes = await fetch(`${baseUrl}/api/library/embed-profiles/${encodeURIComponent(profileId)}/sync`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(syncRes.status, 200);
+    const syncBody = await syncRes.json();
+    assert.equal(syncBody?.ok, true);
+    assert.notEqual(String(syncBody?.profile?.scriptUrl || ""), release1ScriptUrl);
+
+    const rollbackRes = await fetch(`${baseUrl}/api/library/embed-profiles/${encodeURIComponent(profileId)}/rollback`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(rollbackRes.status, 200);
+    const rollbackBody = await rollbackRes.json();
+    assert.equal(rollbackBody?.ok, true);
+    assert.equal(String(rollbackBody?.profile?.scriptUrl || ""), release1ScriptUrl);
+    assert.equal(String(rollbackBody?.profile?.syncMessage || ""), "rollback_ok");
+
+    const scriptRes = await fetch(`${baseUrl}${release1ScriptUrl}`);
+    assert.equal(scriptRes.status, 200);
+    const scriptText = await scriptRes.text();
+    assert.match(scriptText, /v1\.js/);
+  } finally {
+    await stopServer(server);
+    await stopServer(mockEmbed.server);
+    removeTempRoot(rootDir);
+  }
+});
+
+test("library routes support cancelling an in-flight embed profile sync", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  const mockEmbed = await startVersionedEmbedServer();
+
+  try {
+    const token = await login(baseUrl, authConfig);
+    const profileRes = await fetch(`${baseUrl}/api/library/embed-profiles`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: "Cancel Route",
+        scriptUrl: `${mockEmbed.baseUrl}/embed/embed.js`,
+        viewerPath: `${mockEmbed.baseUrl}/embed/viewer.html`,
+        constructorName: "ElectricFieldApp",
+        assetUrlOptionKey: "sceneUrl",
+        syncOptions: {
+          retryMaxAttempts: 1,
+          retryBaseDelayMs: 5,
+          timeoutMs: 1000,
+        },
+      }),
+    });
+    assert.equal(profileRes.status, 200);
+    const profileBody = await profileRes.json();
+    const profileId = String(profileBody?.profile?.id || "");
+    assert.ok(profileId);
+
+    mockEmbed.setVersion(2);
+    mockEmbed.setDelayMs(120);
+
+    const syncPromise = fetch(`${baseUrl}/api/library/embed-profiles/${encodeURIComponent(profileId)}/sync`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    const cancelRes = await fetch(`${baseUrl}/api/library/embed-profiles/${encodeURIComponent(profileId)}/sync/cancel`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(cancelRes.status, 200);
+    const cancelBody = await cancelRes.json();
+    assert.equal(cancelBody?.ok, true);
+    assert.equal(cancelBody?.cancelled, true);
+
+    const syncRes = await syncPromise;
+    assert.equal(syncRes.status, 502);
+    const syncBody = await syncRes.json();
+    assert.equal(syncBody?.error, "embed_profile_sync_failed");
+
+    const listRes = await fetch(`${baseUrl}/api/library/embed-profiles`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(listRes.status, 200);
+    const listBody = await listRes.json();
+    const profile = (Array.isArray(listBody?.profiles) ? listBody.profiles : []).find((item) => item?.id === profileId);
+    assert.equal(String(profile?.syncMessage || ""), "sync_cancelled");
+
+    const secondCancelRes = await fetch(`${baseUrl}/api/library/embed-profiles/${encodeURIComponent(profileId)}/sync/cancel`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(secondCancelRes.status, 409);
+    const secondCancelBody = await secondCancelRes.json();
+    assert.equal(secondCancelBody?.error, "embed_profile_sync_not_running");
   } finally {
     await stopServer(server);
     await stopServer(mockEmbed.server);

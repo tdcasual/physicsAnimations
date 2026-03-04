@@ -51,7 +51,7 @@ function createMockEmbedFetcher(baseUrl = "https://field.infinitas.fun") {
   };
 }
 
-test("syncEmbedProfile fails when cleanup of previous mirror directory fails", async () => {
+test("syncEmbedProfile ignores legacy current cleanup failures and still succeeds", async () => {
   const store = createMemoryStore();
   const service = createLibraryService({
     store,
@@ -78,9 +78,8 @@ test("syncEmbedProfile fails when cleanup of previous mirror directory fails", a
   };
 
   const synced = await service.syncEmbedProfile({ profileId });
-  assert.equal(synced?.status, 502);
-  assert.equal(synced?.error, "embed_profile_sync_failed");
+  assert.equal(synced?.ok, true);
 
   const profile = await service.getEmbedProfileById({ profileId });
-  assert.equal(profile?.syncStatus, "failed");
+  assert.equal(profile?.syncStatus, "ok");
 });

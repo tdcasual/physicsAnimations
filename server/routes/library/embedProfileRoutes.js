@@ -41,6 +41,28 @@ function registerEmbedProfileRoutes({
     }),
   );
 
+  router.post(
+    "/library/embed-profiles/:id/sync/cancel",
+    authRequired,
+    writeRateLimit,
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const result = await service.cancelEmbedProfileSync({ profileId: id });
+      if (sendServiceResult(res, result, (value) => ({ ok: true, cancelled: value.cancelled === true }))) return;
+    }),
+  );
+
+  router.post(
+    "/library/embed-profiles/:id/rollback",
+    authRequired,
+    writeRateLimit,
+    asyncHandler(async (req, res) => {
+      const id = parseWithSchema(idSchema, req.params.id);
+      const result = await service.rollbackEmbedProfile({ profileId: id });
+      if (sendServiceResult(res, result, (value) => ({ ok: true, profile: value.profile }))) return;
+    }),
+  );
+
   router.put(
     "/library/embed-profiles/:id",
     authRequired,
@@ -57,6 +79,7 @@ function registerEmbedProfileRoutes({
         body.assetUrlOptionKey === undefined &&
         body.matchExtensions === undefined &&
         body.defaultOptions === undefined &&
+        body.syncOptions === undefined &&
         body.enabled === undefined
       ) {
         res.status(400).json({ error: "no_changes" });

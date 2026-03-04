@@ -7,8 +7,12 @@ const {
   normalizeJsonObject,
   normalizeExtensionList,
   normalizeBoolean,
+  normalizeSyncOptions,
   isHttpUrl,
+  toPublicPath,
 } = require("./core/normalizers");
+
+const RELEASE_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{2,63}$/i;
 
 function createEmbedProfilesService({
   store,
@@ -39,6 +43,7 @@ function createEmbedProfilesService({
     assetUrlOptionKey,
     matchExtensions,
     defaultOptions,
+    syncOptions,
     enabled,
   } = {}) {
     const cleanName = String(name || "").trim();
@@ -62,6 +67,7 @@ function createEmbedProfilesService({
     const cleanDefaultOptions = normalizeJsonObject(defaultOptions);
     if (cleanDefaultOptions === null) return { status: 400, error: "invalid_profile_default_options" };
     const cleanExtensions = normalizeExtensionList(matchExtensions);
+    const cleanSyncOptions = normalizeSyncOptions(syncOptions, {});
     const cleanEnabled = normalizeBoolean(enabled, true);
 
     const now = new Date().toISOString();
@@ -80,6 +86,11 @@ function createEmbedProfilesService({
       assetUrlOptionKey: cleanAssetUrlOptionKey,
       matchExtensions: cleanExtensions,
       defaultOptions: cleanDefaultOptions,
+      syncOptions: cleanSyncOptions,
+      syncLastReport: {},
+      syncCache: {},
+      activeReleaseId: "",
+      releaseHistory: [],
       enabled: cleanEnabled,
       createdAt: now,
       updatedAt: now,
@@ -97,6 +108,10 @@ function createEmbedProfilesService({
         lastSyncAt: now,
         scriptUrl: mirrored.ok ? mirrored.scriptUrl : profile.scriptUrl,
         viewerPath: mirrored.ok ? mirrored.viewerPath : profile.viewerPath,
+        syncLastReport: mirrored.ok ? mirrored.report || {} : {},
+        syncCache: mirrored.ok ? mirrored.syncCache || {} : {},
+        activeReleaseId: mirrored.ok ? String(mirrored.activeReleaseId || "") : "",
+        releaseHistory: mirrored.ok && Array.isArray(mirrored.releaseHistory) ? mirrored.releaseHistory.slice() : [],
       };
     } else {
       syncedProfile = {
@@ -104,6 +119,10 @@ function createEmbedProfilesService({
         syncStatus: "ok",
         syncMessage: "local_source",
         lastSyncAt: now,
+        syncLastReport: {},
+        syncCache: {},
+        activeReleaseId: "",
+        releaseHistory: [],
       };
     }
 
@@ -129,6 +148,7 @@ function createEmbedProfilesService({
     assetUrlOptionKey,
     matchExtensions,
     defaultOptions,
+    syncOptions,
     enabled,
   } = {}) {
     const profile = await getEmbedProfileById({ profileId });
@@ -194,6 +214,10 @@ function createEmbedProfilesService({
       if (cleanDefaultOptions === null) return { status: 400, error: "invalid_profile_default_options" };
       profile.defaultOptions = cleanDefaultOptions;
     }
+    if (syncOptions !== undefined) {
+      profile.syncOptions = normalizeSyncOptions(syncOptions, normalizeSyncOptions(profile.syncOptions, {}));
+      requiresResync = true;
+    }
     if (enabled !== undefined) {
       profile.enabled = normalizeBoolean(enabled, true);
     }
@@ -236,11 +260,51 @@ function createEmbedProfilesService({
     return { ok: true };
   }
 
+  async function rollbackEmbedProfile({ profileId } = {}) {
+    const profile = await getEmbedProfileById({ profileId });
+    if (!profile) return { status: 404, error: "embed_profile_not_found" };
+
+    const profilePrefix = `library/vendor/embed-profiles/${profile.id}/releases`;
+    const history = Array.isArray(profile.releaseHistory)
+      ? profile.releaseHistory
+          .map((item) => String(item || "").trim())
+          .filter((item) => RELEASE_ID_PATTERN.test(item))
+      : [];
+    const activeReleaseId = String(profile.activeReleaseId || "").trim();
+    const previousReleaseId = history.find((item) => item && item !== activeReleaseId) || "";
+    if (!previousReleaseId) return { status: 409, error: "embed_profile_no_previous_release" };
+
+    const scriptKey = `${profilePrefix}/${previousReleaseId}/embed.js`;
+    const viewerKey = `${profilePrefix}/${previousReleaseId}/viewer.html`;
+    const [scriptBuffer, viewerBuffer] = await Promise.all([store.readBuffer(scriptKey), store.readBuffer(viewerKey)]);
+    if (!scriptBuffer || !viewerBuffer) return { status: 409, error: "embed_profile_release_not_found" };
+
+    const now = new Date().toISOString();
+    const nextHistory = [previousReleaseId, ...history.filter((item) => item !== previousReleaseId)];
+    let updated = null;
+    await mutateLibraryEmbedProfilesState({ store }, (state) => {
+      const target = state.profiles.find((item) => item.id === profile.id);
+      if (!target) return;
+      target.activeReleaseId = previousReleaseId;
+      target.releaseHistory = nextHistory;
+      target.scriptUrl = `/${toPublicPath(scriptKey)}`;
+      target.viewerPath = `/${toPublicPath(viewerKey)}`;
+      target.syncStatus = "ok";
+      target.syncMessage = "rollback_ok";
+      target.lastSyncAt = now;
+      target.updatedAt = now;
+      updated = { ...target };
+    });
+    if (!updated) return { status: 404, error: "embed_profile_not_found" };
+    return { ok: true, profile: updated };
+  }
+
   return {
     listEmbedProfiles,
     getEmbedProfileById,
     createEmbedProfile,
     updateEmbedProfile,
+    rollbackEmbedProfile,
     deleteEmbedProfile,
   };
 }

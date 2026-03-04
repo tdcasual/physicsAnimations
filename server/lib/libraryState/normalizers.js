@@ -1,5 +1,16 @@
 const LIBRARY_STATE_VERSION = 1;
 const FORBIDDEN_JSON_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+const RELEASE_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{2,63}$/i;
+const SYNC_OPTION_NUMERIC_RANGES = {
+  maxFiles: { min: 1, max: 2000 },
+  maxTotalBytes: { min: 16 * 1024, max: 512 * 1024 * 1024 },
+  maxFileBytes: { min: 1024, max: 128 * 1024 * 1024 },
+  timeoutMs: { min: 10, max: 120000 },
+  concurrency: { min: 1, max: 16 },
+  keepReleases: { min: 1, max: 20 },
+  retryMaxAttempts: { min: 1, max: 8 },
+  retryBaseDelayMs: { min: 1, max: 10000 },
+};
 const { toInt, toText, toBooleanLoose } = require("../shared/normalizers");
 
 function toBool(value, fallback = false) {
@@ -35,6 +46,59 @@ function sanitizeJsonValue(value, depth = 0) {
 function sanitizeJsonObject(value) {
   const out = sanitizeJsonValue(value);
   if (!out || typeof out !== "object" || Array.isArray(out)) return {};
+  return out;
+}
+
+function toIntInRange(value, { min, max }) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return undefined;
+  const normalized = Math.trunc(parsed);
+  if (!Number.isFinite(normalized)) return undefined;
+  if (normalized < min || normalized > max) return undefined;
+  return normalized;
+}
+
+function sanitizeSyncOptions(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out = {};
+  for (const [key, range] of Object.entries(SYNC_OPTION_NUMERIC_RANGES)) {
+    const normalized = toIntInRange(value[key], range);
+    if (normalized === undefined) continue;
+    out[key] = normalized;
+  }
+  if (value.strictSelfCheck !== undefined) {
+    out.strictSelfCheck = toBool(value.strictSelfCheck, true);
+  }
+  return out;
+}
+
+function sanitizeSyncCache(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out = {};
+  for (const [rawUrl, rawEntry] of Object.entries(value)) {
+    const url = toText(rawUrl).trim();
+    if (!/^https?:\/\//i.test(url)) continue;
+    if (!rawEntry || typeof rawEntry !== "object" || Array.isArray(rawEntry)) continue;
+    const relativePath = toText(rawEntry.relativePath).trim();
+    if (!relativePath || relativePath.includes("..") || relativePath.startsWith("/")) continue;
+    out[url] = {
+      etag: toText(rawEntry.etag).trim(),
+      lastModified: toText(rawEntry.lastModified).trim(),
+      contentType: toText(rawEntry.contentType).trim(),
+      relativePath,
+    };
+  }
+  return out;
+}
+
+function sanitizeReleaseHistory(value) {
+  const source = Array.isArray(value) ? value : [];
+  const out = [];
+  for (const item of source) {
+    const releaseId = toText(item).trim();
+    if (!RELEASE_ID_PATTERN.test(releaseId)) continue;
+    if (!out.includes(releaseId)) out.push(releaseId);
+  }
   return out;
 }
 
@@ -118,6 +182,7 @@ function sanitizeEmbedProfileEntry(value) {
   const id = toText(value.id).trim();
   if (!id) return null;
 
+  const activeReleaseId = toText(value.activeReleaseId).trim();
   return {
     id,
     name: toText(value.name),
@@ -133,6 +198,11 @@ function sanitizeEmbedProfileEntry(value) {
     assetUrlOptionKey: toText(value.assetUrlOptionKey, "sceneUrl").trim() || "sceneUrl",
     matchExtensions: normalizeExtensionList(value.matchExtensions),
     defaultOptions: sanitizeJsonObject(value.defaultOptions),
+    syncOptions: sanitizeSyncOptions(value.syncOptions),
+    syncLastReport: sanitizeJsonObject(value.syncLastReport),
+    syncCache: sanitizeSyncCache(value.syncCache),
+    activeReleaseId: RELEASE_ID_PATTERN.test(activeReleaseId) ? activeReleaseId : "",
+    releaseHistory: sanitizeReleaseHistory(value.releaseHistory),
     enabled: toBool(value.enabled, true),
     createdAt: toText(value.createdAt),
     updatedAt: toText(value.updatedAt),

@@ -2,6 +2,39 @@ export type LibraryCoverType = "blank" | "image";
 export type LibraryOpenMode = "embed" | "download";
 export type LibraryAssetStatus = "ready" | "failed";
 
+export interface LibraryEmbedSyncOptions {
+  maxFiles?: number;
+  maxTotalBytes?: number;
+  maxFileBytes?: number;
+  timeoutMs?: number;
+  concurrency?: number;
+  keepReleases?: number;
+  retryMaxAttempts?: number;
+  retryBaseDelayMs?: number;
+  strictSelfCheck?: boolean;
+}
+
+export interface LibraryEmbedSyncReport {
+  startedAt?: string;
+  finishedAt?: string;
+  durationMs?: number;
+  totalUrls?: number;
+  fetchedCount?: number;
+  reusedCount?: number;
+  failedCount?: number;
+  totalBytes?: number;
+  maxObservedConcurrency?: number;
+  unresolvedCount?: number;
+  limits?: Record<string, unknown>;
+}
+
+export interface LibraryEmbedSyncCacheEntry {
+  etag?: string;
+  lastModified?: string;
+  contentType?: string;
+  relativePath?: string;
+}
+
 export interface LibraryFolder {
   id: string;
   name: string;
@@ -49,6 +82,11 @@ export interface LibraryEmbedProfile {
   assetUrlOptionKey: string;
   matchExtensions: string[];
   defaultOptions: Record<string, unknown>;
+  syncOptions: LibraryEmbedSyncOptions;
+  syncLastReport: LibraryEmbedSyncReport;
+  syncCache: Record<string, LibraryEmbedSyncCacheEntry>;
+  activeReleaseId: string;
+  releaseHistory: string[];
   enabled: boolean;
   createdAt?: string;
   updatedAt?: string;
