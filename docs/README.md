@@ -45,3 +45,8 @@
 - `docs/architecture/`：模块边界与约束（长期规则）
 - `docs/plans/`：当前进行中的设计与实施计划
 - `docs/archive/`：历史审计、迁移留档与已完成计划（仅追溯，不作为现行契约）
+
+## 当前计划状态
+
+- `docs/plans/` 当前为空（仅保留目录说明）。
+- 历史/已完成计划统一在 `docs/archive/plans/`。

@@ -1,6 +1,6 @@
 # API 说明
 
-这份文档是接口速查。按“公开可读”和“需要登录”分组，便于前后端协作时快速定位。
+这份文档用于接口速查。按“公开可读”和“需要管理员登录”分组，便于前后端协作时快速定位。
 
 ## 鉴权方式
 
@@ -39,22 +39,39 @@
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| `POST` | `/api/items` | 新增条目（link 或 upload） |
+| `POST` | `/api/items` | 新增条目（`link` 或 `upload`） |
 | `PUT` | `/api/items/:id` | 更新条目 |
 | `DELETE` | `/api/items/:id` | 删除条目 |
 | `POST` | `/api/items/:id/screenshot` | 触发重截图任务 |
 | `GET` | `/api/tasks/:taskId` | 查询任务状态 |
 | `POST` | `/api/tasks/:taskId/retry` | 重试失败任务 |
 
-### 资源库管理（文件夹 + `.ggb` / PhET HTML）
+### 资源库：文件夹与资源
 
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | `POST` | `/api/library/folders` | 创建文件夹 |
+| `PUT` | `/api/library/folders/:id` | 更新文件夹名称/分类 |
 | `POST` | `/api/library/folders/:id/cover` | 上传文件夹封面图 |
-| `POST` | `/api/library/folders/:id/assets` | 上传资源（支持 `.ggb` 与 PhET HTML） |
 | `DELETE` | `/api/library/folders/:id` | 删除文件夹（非空返回 `folder_not_empty`） |
-| `DELETE` | `/api/library/assets/:id` | 删除资源 |
+| `POST` | `/api/library/folders/:id/assets` | 上传资源（`.ggb` / PhET HTML / 自定义 embed 资源） |
+| `PUT` | `/api/library/assets/:id` | 更新资源（展示名、打开模式、归属文件夹、embed 配置） |
+| `DELETE` | `/api/library/assets/:id` | 软删除资源（进入回收站） |
+| `GET` | `/api/library/deleted-assets` | 查询回收站资源（可选 `folderId`） |
+| `POST` | `/api/library/assets/:id/restore` | 恢复回收站资源 |
+| `DELETE` | `/api/library/assets/:id/permanent` | 永久删除资源（不可恢复） |
+
+### 资源库：Embed 平台管理
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `GET` | `/api/library/embed-profiles` | 查询 Embed 平台配置 |
+| `POST` | `/api/library/embed-profiles` | 创建 Embed 平台配置（可含 `syncOptions`） |
+| `PUT` | `/api/library/embed-profiles/:id` | 更新 Embed 平台配置（可含 `syncOptions`） |
+| `POST` | `/api/library/embed-profiles/:id/sync` | 手动触发平台镜像同步 |
+| `POST` | `/api/library/embed-profiles/:id/sync/cancel` | 取消正在进行的同步任务 |
+| `POST` | `/api/library/embed-profiles/:id/rollback` | 回滚到上一版 release |
+| `DELETE` | `/api/library/embed-profiles/:id` | 删除 Embed 平台配置 |
 
 ### 分类管理
 
@@ -67,40 +84,64 @@
 | `PUT` | `/api/categories/:id` | 更新二级分类 |
 | `DELETE` | `/api/categories/:id` | 删除二级分类 |
 
-上传风险确认说明：
+## 资源库请求约束补充
+
+上传风险确认：
 
 - 对 HTML/ZIP 上传会执行风险扫描。
-- 若命中风险，接口返回 `409` 与 `error: risky_html_requires_confirmation`，并在 `details.findings` 返回命中项。
+- 若命中风险，返回 `409` 与 `error: risky_html_requires_confirmation`，并在 `details.findings` 返回命中项。
 - 管理端确认后，重试上传时在 `multipart/form-data` 中添加 `allowRiskyHtml=true` 即可继续。
 
-资源库上传说明：
+上传接口字段（`POST /api/library/folders/:id/assets`）：
 
-- 资源上传接口：`POST /api/library/folders/:id/assets`
-- `multipart/form-data` 字段：
-  - `file`：资源文件（支持 `.ggb`、`*.phet.html`，或含 PhET 标记的 HTML）
-  - `openMode`：`embed` 或 `download`
-  - `displayName`：可选，资源展示名称（可与文件名不同）
-- 资源重命名接口：`PUT /api/library/assets/:id`
-  - JSON 字段：`displayName`（可空字符串，表示回退为文件名显示）
-- 返回错误码示例：
-  - `unsupported_asset_type`
-  - `invalid_open_mode`
-  - `folder_not_found`
-  - `adapter_render_failed`
-  - `folder_not_empty`
+- `file`：资源文件（支持 `.ggb`、`*.phet.html`，或含 PhET 标记的 HTML）
+- `openMode`：`embed` 或 `download`
+- `displayName`：可选，资源展示名称（可与文件名不同）
+- `embedProfileId`：可选，自定义 embed 平台 ID
+- `embedOptionsJson`：可选，JSON 字符串
 
-## 后端实现边界（Extensibility Phase 1）
+资源更新接口字段（`PUT /api/library/assets/:id`）：
 
-在 2026-02-26 的可扩展性一期中，`items` 相关读取/写入逻辑已从路由文件中拆分为服务层：
+- `displayName`
+- `openMode`
+- `folderId`
+- `embedProfileId`
+- `embedOptions`
+
+Embed profile 的 `syncOptions`（create/update 可选）：
+
+- `maxFiles`
+- `maxTotalBytes`
+- `maxFileBytes`
+- `timeoutMs`
+- `concurrency`
+- `keepReleases`
+- `retryMaxAttempts`
+- `retryBaseDelayMs`
+- `strictSelfCheck`
+
+## 同步状态字段说明（embed profile）
+
+`/api/library/embed-profiles` 返回中的关键同步字段：
+
+- `syncStatus`：`ok` / `failed` / `pending`
+- `syncMessage`：稳定错误码（例如 `sync_timeout`、`sync_cancelled`、`offline_self_check_failed`）
+- `syncLastReport`：同步报告（`durationMs`、`fetchedCount`、`reusedCount`、`errors[]` 等）
+- `activeReleaseId`：当前生效 release
+- `releaseHistory`：保留的 release 列表
+
+## 后端实现边界（Items）
+
+`items` 相关读取/写入逻辑已拆分至服务层：
 
 - `server/services/items/readService.js`
 - `server/services/items/writeService.js`
 
 说明：
 
-- 当前版本以“简化实现、显式失败”为优先，不承诺旧配置/旧语义兼容。
 - 路由层负责参数解析与状态码映射。
-- 服务层负责 `items` 领域读写业务逻辑。
+- 服务层负责领域读写逻辑。
+- 当前版本以“简化实现、显式失败”为优先，不承诺旧配置/旧语义兼容。
 
 ## 请求示例
 

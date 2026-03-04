@@ -76,6 +76,28 @@ node -e 'const bcrypt=require("bcryptjs"); console.log(bcrypt.hashSync(process.a
 | `SCREENSHOT_CONCURRENCY` | `1` | 截图并发数 |
 | `SCREENSHOT_QUEUE_MAX` | `50` | 截图队列上限 |
 
+## Embed 镜像同步（鲁棒性）
+
+> 这些是全局默认值；单个 Embed Profile 可通过 `syncOptions` 覆盖。
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `LIBRARY_EMBED_SYNC_MAX_FILES` | `120` | 单次同步允许发现的最大 URL 数 |
+| `LIBRARY_EMBED_SYNC_MAX_TOTAL_BYTES` | `26214400` | 单次同步最大总字节数（25 MiB） |
+| `LIBRARY_EMBED_SYNC_MAX_FILE_BYTES` | `8388608` | 单文件最大字节数（8 MiB） |
+| `LIBRARY_EMBED_SYNC_TIMEOUT_MS` | `12000` | 整次同步超时（毫秒） |
+| `LIBRARY_EMBED_SYNC_CONCURRENCY` | `4` | 依赖下载并发上限 |
+| `LIBRARY_EMBED_SYNC_KEEP_RELEASES` | `3` | 每个 profile 保留的 release 数 |
+| `LIBRARY_EMBED_SYNC_RETRY_MAX_ATTEMPTS` | `3` | 抓取重试最大次数（含首次） |
+| `LIBRARY_EMBED_SYNC_RETRY_BASE_DELAY_MS` | `80` | 重试基础退避时长（毫秒） |
+| `LIBRARY_EMBED_SYNC_STRICT_SELF_CHECK` | `true` | 是否启用全图离线自检 |
+
+说明：
+
+- 推荐优先使用 profile 级 `syncOptions` 调整，不建议直接放大全局上限。
+- `LIBRARY_EMBED_SYNC_TIMEOUT_MS` 支持较小值（最小 `10ms`），但生产建议保持秒级以减少误判。
+- 同步失败时会记录 `syncMessage`（错误码）与 `syncLastReport.errors[]`（细节）。
+
 ## 观测接口
 
 | 变量 | 默认值 | 说明 |

@@ -46,9 +46,33 @@ curl -sf http://127.0.0.1:4173/api/health
 表现：资源为演示模式但页面打不开，或 Embed 脚本 404。
 
 排查：
-1. 检查平台配置脚本 URL、同步状态
-2. 尝试手动同步平台
+1. 检查平台配置脚本 URL、同步状态（`syncStatus` / `syncMessage`）
+2. 查看最近一次同步报告 `syncLastReport.errors[]`
 3. 验证 `viewerPath` 与脚本是否同版本可访问
+4. 若同步长时间卡住，先取消本次同步再重试
+5. 若故障发生在“刚同步后”，优先回滚到上一版 release
+
+常用接口（均需管理员 token）：
+
+- 触发同步：`POST /api/library/embed-profiles/:id/sync`
+- 取消同步：`POST /api/library/embed-profiles/:id/sync/cancel`
+- 回滚 release：`POST /api/library/embed-profiles/:id/rollback`
+
+最小排查示例：
+
+```bash
+# 1) 查看 profile 列表与状态
+curl -sS -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:4173/api/library/embed-profiles | jq '.profiles[] | {id,name,syncStatus,syncMessage,activeReleaseId}'
+
+# 2) 如有挂起/超时，取消本次同步
+curl -sS -X POST -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:4173/api/library/embed-profiles/<id>/sync/cancel
+
+# 3) 若新 release 有问题，回滚到上一版
+curl -sS -X POST -H "Authorization: Bearer <token>" \
+  http://127.0.0.1:4173/api/library/embed-profiles/<id>/rollback
+```
 
 临时缓解：
 1. 将受影响资源切换为“仅下载”
