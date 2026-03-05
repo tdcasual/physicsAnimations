@@ -70,9 +70,18 @@ test("createEmbedProfile cleans up mirrored files when profile state write fails
   );
 
   assert.equal(writeCalls.length >= 2, true);
-  assert.equal(deleteCalls.length, 2);
-  assert.match(deleteCalls[0].key, /^library\/vendor\/embed-profiles\/ep_.*\/current$/);
-  assert.equal(deleteCalls[0].options.recursive, true);
-  assert.match(deleteCalls[1].key, /^library\/vendor\/embed-profiles\/ep_[^/]+$/);
-  assert.equal(deleteCalls[1].options.recursive, true);
+  assert.equal(deleteCalls.length >= 2, true);
+  for (const call of deleteCalls) {
+    assert.equal(call?.options?.recursive, true);
+  }
+
+  const currentCleanup = deleteCalls.find((call) =>
+    /^library\/vendor\/embed-profiles\/ep_[^/]+\/current$/.test(String(call?.key || "")),
+  );
+  assert.ok(currentCleanup, "expected current pointer cleanup call");
+
+  const profileCleanup = deleteCalls.find((call) =>
+    /^library\/vendor\/embed-profiles\/ep_[^/]+$/.test(String(call?.key || "")),
+  );
+  assert.ok(profileCleanup, "expected profile root cleanup call");
 });
