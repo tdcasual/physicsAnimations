@@ -3,7 +3,17 @@ const express = require("express");
 const { requireAuth } = require("../lib/auth");
 const { logAdminAudit } = require("../lib/auditLogger");
 const { createWebdavStore } = require("../lib/contentStore");
-const { loadSystemState, mutateSystemState, normalizeMode, noSave } = require("../lib/systemState");
+const {
+  DEFAULT_EMBED_UPDATER_INTERVAL_DAYS,
+  MAX_EMBED_UPDATER_INTERVAL_DAYS,
+  MIN_EMBED_UPDATER_INTERVAL_DAYS,
+  getEmbedUpdaterNextRunAt,
+  loadSystemState,
+  mutateSystemState,
+  normalizeEmbedUpdaterIntervalDays,
+  normalizeMode,
+  noSave,
+} = require("../lib/systemState");
 const { syncWithWebdav } = require("../lib/webdavSync");
 
 function applyIncomingWebdav(current, incoming) {
@@ -34,6 +44,26 @@ function applyIncomingWebdav(current, incoming) {
   return nextWebdav;
 }
 
+function parseEmbedUpdaterIntervalDays(value) {
+  if (value === undefined) return { ok: true, value: undefined };
+
+  let parsed = null;
+  if (typeof value === "number") {
+    parsed = Number.isFinite(value) ? Math.trunc(value) : null;
+  } else if (typeof value === "string") {
+    const raw = value.trim();
+    if (/^\d+$/.test(raw)) parsed = Number.parseInt(raw, 10);
+  }
+
+  if (!Number.isFinite(parsed)) {
+    return { ok: false, error: "invalid_embed_updater_interval_days" };
+  }
+  if (parsed < MIN_EMBED_UPDATER_INTERVAL_DAYS || parsed > MAX_EMBED_UPDATER_INTERVAL_DAYS) {
+    return { ok: false, error: "invalid_embed_updater_interval_days" };
+  }
+  return { ok: true, value: parsed };
+}
+
 function toStorageResponse({ state, store, rootDir }) {
   const webdav = state.storage.webdav || {};
   return {
@@ -60,6 +90,36 @@ function toStorageResponse({ state, store, rootDir }) {
   };
 }
 
+function toEmbedUpdaterResponse(embedUpdater) {
+  const intervalDays = normalizeEmbedUpdaterIntervalDays(
+    embedUpdater?.intervalDays,
+    DEFAULT_EMBED_UPDATER_INTERVAL_DAYS,
+  );
+  const lastSummary = embedUpdater?.lastSummary && typeof embedUpdater.lastSummary === "object" ? embedUpdater.lastSummary : {};
+
+  return {
+    enabled: embedUpdater?.enabled !== false,
+    intervalDays,
+    lastCheckedAt: typeof embedUpdater?.lastCheckedAt === "string" ? embedUpdater.lastCheckedAt : "",
+    lastRunAt: typeof embedUpdater?.lastRunAt === "string" ? embedUpdater.lastRunAt : "",
+    lastSuccessAt: typeof embedUpdater?.lastSuccessAt === "string" ? embedUpdater.lastSuccessAt : "",
+    lastError: typeof embedUpdater?.lastError === "string" ? embedUpdater.lastError : "",
+    nextRunAt: getEmbedUpdaterNextRunAt({
+      enabled: embedUpdater?.enabled !== false,
+      intervalDays,
+      lastRunAt: typeof embedUpdater?.lastRunAt === "string" ? embedUpdater.lastRunAt : "",
+    }),
+    lastSummary: {
+      status: typeof lastSummary.status === "string" ? lastSummary.status : "idle",
+      ggbStatus: typeof lastSummary.ggbStatus === "string" ? lastSummary.ggbStatus : "",
+      totalProfiles: Number.isFinite(lastSummary.totalProfiles) ? Math.max(0, Math.trunc(lastSummary.totalProfiles)) : 0,
+      syncedProfiles: Number.isFinite(lastSummary.syncedProfiles) ? Math.max(0, Math.trunc(lastSummary.syncedProfiles)) : 0,
+      skippedProfiles: Number.isFinite(lastSummary.skippedProfiles) ? Math.max(0, Math.trunc(lastSummary.skippedProfiles)) : 0,
+      failedProfiles: Number.isFinite(lastSummary.failedProfiles) ? Math.max(0, Math.trunc(lastSummary.failedProfiles)) : 0,
+    },
+  };
+}
+
 function isRemoteMode(mode) {
   return mode === "webdav";
 }
@@ -79,8 +139,58 @@ function createSystemRouter({ authConfig, store, taskQueue, rootDir, updateStore
         adminPasswordConfigured: Boolean(process.env.ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD),
       },
       storage: toStorageResponse({ state, store, rootDir }),
+      embedUpdater: toEmbedUpdaterResponse(state.embedUpdater),
       taskQueue: typeof taskQueue?.getStats === "function" ? taskQueue.getStats() : null,
     });
+  });
+
+  router.post("/system/embed-updater", authRequired, async (req, res, next) => {
+    try {
+      const payload = req.body || {};
+      const parsedIntervalDays = parseEmbedUpdaterIntervalDays(payload.intervalDays);
+      if (!parsedIntervalDays.ok) {
+        res.status(400).json({ error: parsedIntervalDays.error });
+        return;
+      }
+      if (payload.enabled !== undefined && typeof payload.enabled !== "boolean") {
+        res.status(400).json({ error: "invalid_embed_updater_enabled" });
+        return;
+      }
+
+      await mutateSystemState({ rootDir }, (state) => {
+        const current = state.embedUpdater && typeof state.embedUpdater === "object" ? state.embedUpdater : {};
+        state.embedUpdater = {
+          ...current,
+          enabled: payload.enabled === undefined ? current.enabled !== false : payload.enabled === true,
+          intervalDays:
+            parsedIntervalDays.value === undefined
+              ? normalizeEmbedUpdaterIntervalDays(current.intervalDays, DEFAULT_EMBED_UPDATER_INTERVAL_DAYS)
+              : parsedIntervalDays.value,
+        };
+        return state;
+      });
+
+      const nextState = loadSystemState({ rootDir });
+      logAdminAudit({
+        action: "system.embed_updater.update",
+        actor: req.user?.username,
+        targetType: "system_embed_updater",
+        targetId: "embed_updater",
+        outcome: "success",
+        details: {
+          requestId: req.requestId,
+          enabled: nextState.embedUpdater?.enabled !== false,
+          intervalDays: nextState.embedUpdater?.intervalDays || DEFAULT_EMBED_UPDATER_INTERVAL_DAYS,
+        },
+      });
+
+      res.json({
+        ok: true,
+        embedUpdater: toEmbedUpdaterResponse(nextState.embedUpdater),
+      });
+    } catch (err) {
+      next(err);
+    }
   });
 
   router.post("/system/storage/validate", authRequired, async (req, res) => {

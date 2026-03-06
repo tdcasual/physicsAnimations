@@ -5,6 +5,9 @@ const { createError } = require("./errors");
 const { toInt } = require("./shared/normalizers");
 
 const SYSTEM_STATE_FILE = "system.json";
+const DEFAULT_EMBED_UPDATER_INTERVAL_DAYS = 20;
+const MIN_EMBED_UPDATER_INTERVAL_DAYS = 1;
+const MAX_EMBED_UPDATER_INTERVAL_DAYS = 365;
 const stateLocks = new Map();
 const NO_SAVE = Symbol("system_state_no_save");
 
@@ -51,6 +54,81 @@ function normalizeMode(raw) {
   return "";
 }
 
+function normalizeIsoString(value, fallback = "") {
+  if (typeof value !== "string") return fallback;
+  const normalized = value.trim();
+  return normalized || fallback;
+}
+
+function normalizeEmbedUpdaterIntervalDays(value, fallback = DEFAULT_EMBED_UPDATER_INTERVAL_DAYS) {
+  let parsed = fallback;
+  if (typeof value === "number") {
+    parsed = Number.isFinite(value) ? Math.trunc(value) : fallback;
+  } else if (typeof value === "string") {
+    const raw = value.trim();
+    if (/^\d+$/.test(raw)) parsed = Number.parseInt(raw, 10);
+  } else {
+    parsed = toInt(value, fallback);
+  }
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(MAX_EMBED_UPDATER_INTERVAL_DAYS, Math.max(MIN_EMBED_UPDATER_INTERVAL_DAYS, parsed));
+}
+
+function createDefaultEmbedUpdaterState() {
+  return {
+    enabled: true,
+    intervalDays: DEFAULT_EMBED_UPDATER_INTERVAL_DAYS,
+    lastCheckedAt: "",
+    lastRunAt: "",
+    lastSuccessAt: "",
+    lastError: "",
+    lastSummary: {
+      status: "idle",
+      ggbStatus: "",
+      totalProfiles: 0,
+      syncedProfiles: 0,
+      skippedProfiles: 0,
+      failedProfiles: 0,
+    },
+  };
+}
+
+function normalizeEmbedUpdater(raw, fallback) {
+  const base = fallback && typeof fallback === "object" ? fallback : createDefaultEmbedUpdaterState();
+  const source = raw && typeof raw === "object" ? raw : {};
+  const summary = source.lastSummary && typeof source.lastSummary === "object" ? source.lastSummary : {};
+
+  return {
+    enabled: typeof source.enabled === "boolean" ? source.enabled : base.enabled,
+    intervalDays: normalizeEmbedUpdaterIntervalDays(source.intervalDays, base.intervalDays),
+    lastCheckedAt: normalizeIsoString(source.lastCheckedAt, base.lastCheckedAt),
+    lastRunAt: normalizeIsoString(source.lastRunAt, base.lastRunAt),
+    lastSuccessAt: normalizeIsoString(source.lastSuccessAt, base.lastSuccessAt),
+    lastError: normalizeIsoString(source.lastError, base.lastError),
+    lastSummary: {
+      status: normalizeIsoString(summary.status, base.lastSummary.status || "idle"),
+      ggbStatus: normalizeIsoString(summary.ggbStatus, base.lastSummary.ggbStatus || ""),
+      totalProfiles: Math.max(0, toInt(summary.totalProfiles, base.lastSummary.totalProfiles || 0)),
+      syncedProfiles: Math.max(0, toInt(summary.syncedProfiles, base.lastSummary.syncedProfiles || 0)),
+      skippedProfiles: Math.max(0, toInt(summary.skippedProfiles, base.lastSummary.skippedProfiles || 0)),
+      failedProfiles: Math.max(0, toInt(summary.failedProfiles, base.lastSummary.failedProfiles || 0)),
+    },
+  };
+}
+
+function getEmbedUpdaterNextRunAt(embedUpdater) {
+  if (!embedUpdater || embedUpdater.enabled !== true) return "";
+  const lastSuccessAt = normalizeIsoString(embedUpdater.lastSuccessAt, "");
+  const lastError = normalizeIsoString(embedUpdater.lastError, "");
+  const lastRunAt = normalizeIsoString(embedUpdater.lastRunAt, "");
+  const anchor = lastSuccessAt || (lastError ? "" : lastRunAt);
+  if (!anchor) return "";
+  const intervalDays = normalizeEmbedUpdaterIntervalDays(embedUpdater.intervalDays, DEFAULT_EMBED_UPDATER_INTERVAL_DAYS);
+  const startedAt = new Date(anchor);
+  if (Number.isNaN(startedAt.getTime())) return "";
+  return new Date(startedAt.getTime() + intervalDays * 24 * 60 * 60 * 1000).toISOString();
+}
+
 function systemStatePath(rootDir) {
   return path.join(rootDir, "content", SYSTEM_STATE_FILE);
 }
@@ -80,6 +158,7 @@ function buildEnvDefaults() {
         scanRemote: false,
       },
     },
+    embedUpdater: createDefaultEmbedUpdaterState(),
   };
 }
 
@@ -114,6 +193,7 @@ function normalizeState(raw, fallback) {
         scanRemote: typeof webdav.scanRemote === "boolean" ? webdav.scanRemote : base.storage.webdav.scanRemote,
       },
     },
+    embedUpdater: normalizeEmbedUpdater(raw.embedUpdater, base.embedUpdater),
   };
 }
 
@@ -160,7 +240,14 @@ async function mutateSystemState({ rootDir }, mutator) {
 }
 
 module.exports = {
+  DEFAULT_EMBED_UPDATER_INTERVAL_DAYS,
+  MAX_EMBED_UPDATER_INTERVAL_DAYS,
+  MIN_EMBED_UPDATER_INTERVAL_DAYS,
+  createDefaultEmbedUpdaterState,
+  getEmbedUpdaterNextRunAt,
   loadSystemState,
+  normalizeEmbedUpdater,
+  normalizeEmbedUpdaterIntervalDays,
   saveSystemState,
   mutateSystemState,
   normalizeMode,

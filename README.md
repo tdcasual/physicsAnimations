@@ -64,31 +64,34 @@ npm run qa:release
 npm run update:geogebra-bundle
 ```
 
-## GeoGebra 内网自托管（带在线兜底）
+## Embed 自动更新（含 GeoGebra）
 
-资源库 `.ggb` 的容器页默认采用“自托管优先、在线兜底”：
+资源库 `.ggb` 的容器页默认采用“自托管优先、在线兜底”，而远程 Embed 平台则支持离线镜像同步。保留的 `ggb-updater` 服务名现在统一负责两件事：
 
-1. 优先加载 `/content/library/vendor/geogebra/current/deployggb.js`
-2. 自托管不可用时，回退到 `https://www.geogebra.org/apps/deployggb.js`
+1. 更新 `/content/library/vendor/geogebra/current/` 下的 GeoGebra 自托管资源包
+2. 同步已启用的远程 Embed 平台镜像（例如自定义 `embed.js` / `viewer.html`）
 
-首次部署或定期更新时执行：
+手动更新 GeoGebra 自托管包时，仍可单独执行：
 
 ```bash
 npm run update:geogebra-bundle
 ```
 
-容器部署建议使用更新任务容器（不依赖本机手工）：
+手动执行一次通用 maintenance 任务：
 
 ```bash
+npm run update:embed-maintenance
 docker compose --profile maintenance run --rm ggb-updater
 ```
 
-该命令会下载官方 Math Apps Bundle，生成稳定路径：
+`ggb-updater` 服务名保持兼容，但实际运行会同时处理 GeoGebra 与远程 Embed 平台。建议宿主机每天触发一次 maintenance 容器；任务内部会根据“系统设置 → Embed 自动更新”的配置决定是否真正执行，默认周期为 20 天。
+
+该任务会维护稳定路径：
 
 - `/content/library/vendor/geogebra/current/deployggb.js`
 - `/content/library/vendor/geogebra/current/web3d/`
 
-详细可配置项见 [配置项参考（环境变量）](docs/guides/configuration.md) 中 “GeoGebra 自托管（资源库）” 一节。
+详细可配置项见 [配置项参考（环境变量）](docs/guides/configuration.md) 中 “GeoGebra 自托管（资源库）” 与 “Embed 自动更新（系统设置）” 两节。
 
 ## Docker Compose 快速部署
 
@@ -113,7 +116,7 @@ services:
     restart: unless-stopped
 ```
 
-如果要启用 GeoGebra 自动更新，只需要在现有文件上增加 `ggb-updater` 服务（见 `docker-compose.example.yml`）。
+如果要启用通用 Embed 自动更新（GeoGebra + 远程 Embed 平台镜像），只需要在现有文件上增加 `ggb-updater` 服务（见 `docker-compose.example.yml`）。
 
 ```yaml
 services:
@@ -148,7 +151,7 @@ docker compose pull
 docker compose up -d
 docker logs -f physics-animations
 
-# 手动触发一次 GeoGebra 自托管包更新（可配置成定时任务）
+# 手动触发一次通用 Embed maintenance 任务（建议宿主机每天调度）
 docker compose --profile maintenance run --rm ggb-updater
 ```
 

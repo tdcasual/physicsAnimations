@@ -8,10 +8,13 @@ describe("admin system validation state", () => {
     const saving = ref(false);
     const validating = ref(false);
     const syncing = ref(false);
+    const savingEmbedUpdater = ref(false);
     const errorText = ref("");
     const successText = ref("");
     const validateText = ref("连接校验通过。");
     const validateOk = ref(true);
+    const embedUpdaterErrorText = ref("");
+    const embedUpdaterSuccessText = ref("");
     const wizardStep = ref<1 | 2 | 3 | 4>(2);
     const mode = ref("webdav");
     const url = ref("");
@@ -20,6 +23,8 @@ describe("admin system validation state", () => {
     const password = ref("");
     const timeoutMs = ref(15000);
     const scanRemote = ref(false);
+    const embedUpdaterEnabled = ref(true);
+    const embedUpdaterIntervalDays = ref(20);
     const remoteMode = computed(() => true);
     const requiresWebdavUrl = computed(() => true);
     const readOnlyMode = computed(() => false);
@@ -30,10 +35,13 @@ describe("admin system validation state", () => {
       saving,
       validating,
       syncing,
+      savingEmbedUpdater,
       errorText,
       successText,
       validateText,
       validateOk,
+      embedUpdaterErrorText,
+      embedUpdaterSuccessText,
       wizardStep,
       mode,
       url,
@@ -42,6 +50,8 @@ describe("admin system validation state", () => {
       password,
       timeoutMs,
       scanRemote,
+      embedUpdaterEnabled,
+      embedUpdaterIntervalDays,
       remoteMode,
       requiresWebdavUrl,
       readOnlyMode,
@@ -49,6 +59,7 @@ describe("admin system validation state", () => {
       setFieldError: () => {},
       clearFieldErrors: () => {},
       applyStorage: () => {},
+      applyEmbedUpdater: () => {},
     });
 
     await actions.runValidation();

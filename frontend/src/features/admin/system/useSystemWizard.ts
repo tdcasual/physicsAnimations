@@ -8,7 +8,6 @@ import {
 } from "../systemFormState";
 import { useFieldErrors } from "../composables/useFieldErrors";
 import { createSystemWizardActions } from "./useSystemWizardActions";
-
 export interface SystemStorage {
   mode: string;
   effectiveMode: string;
@@ -25,8 +24,27 @@ export interface SystemStorage {
   };
 }
 
-type WizardStep = 1 | 2 | 3 | 4;
+export interface SystemEmbedUpdaterSummary {
+  status: string;
+  ggbStatus: string;
+  totalProfiles: number;
+  syncedProfiles: number;
+  skippedProfiles: number;
+  failedProfiles: number;
+}
 
+export interface SystemEmbedUpdater {
+  enabled: boolean;
+  intervalDays: number;
+  lastCheckedAt: string;
+  lastRunAt: string;
+  lastSuccessAt: string;
+  lastError: string;
+  nextRunAt: string;
+  lastSummary: SystemEmbedUpdaterSummary;
+}
+
+type WizardStep = 1 | 2 | 3 | 4;
 export function useSystemWizard() {
   const steps: Array<{ id: WizardStep; title: string; hint: string }> = [
     { id: 1, title: "1. 选择模式", hint: "决定存储架构" },
@@ -39,14 +57,18 @@ export function useSystemWizard() {
   const saving = ref(false);
   const validating = ref(false);
   const syncing = ref(false);
+  const savingEmbedUpdater = ref(false);
 
   const errorText = ref("");
   const successText = ref("");
   const validateText = ref("");
   const validateOk = ref(false);
+  const embedUpdaterErrorText = ref("");
+  const embedUpdaterSuccessText = ref("");
   const { fieldErrors, setFieldError, clearFieldErrors, getFieldError } = useFieldErrors();
 
   const storage = ref<SystemStorage | null>(null);
+  const embedUpdater = ref<SystemEmbedUpdater | null>(null);
   const wizardStep = ref<WizardStep>(1);
 
   const mode = ref("local");
@@ -56,26 +78,32 @@ export function useSystemWizard() {
   const password = ref("");
   const timeoutMs = ref(15000);
   const scanRemote = ref(false);
+  const embedUpdaterEnabled = ref(true);
+  const embedUpdaterIntervalDays = ref(20);
 
-  const loadedSnapshot = ref("");
+  const loadedStorageSnapshot = ref("");
+  const loadedEmbedUpdaterSnapshot = ref("");
 
   const remoteMode = computed(() => isRemoteMode(mode.value));
   const requiresWebdavUrl = computed(() => shouldRequireWebdavUrl(mode.value));
   const readOnlyMode = computed(() => storage.value?.readOnly === true);
 
+  const hasStorageUnsavedChanges = computed(() => buildStorageSnapshot() !== loadedStorageSnapshot.value);
+  const hasEmbedUpdaterUnsavedChanges = computed(() => buildEmbedUpdaterSnapshot() !== loadedEmbedUpdaterSnapshot.value);
+  const hasUnsavedChanges = computed(() => hasStorageUnsavedChanges.value || hasEmbedUpdaterUnsavedChanges.value);
+
   const canSyncNow = computed(
-    () => canRunManualSync({ mode: mode.value, url: url.value }) && !hasUnsavedChanges.value && !readOnlyMode.value,
+    () => canRunManualSync({ mode: mode.value, url: url.value }) && !hasStorageUnsavedChanges.value && !readOnlyMode.value,
   );
 
   const syncHint = computed(() => {
     if (readOnlyMode.value) return "当前为只读模式，无法执行同步。";
     if (!remoteMode.value) return "local 模式不执行 WebDAV 同步。";
     if (!String(url.value || "").trim()) return "请先填写 WebDAV URL。";
-    if (hasUnsavedChanges.value) return "存在未保存改动，请先保存配置。";
+    if (hasStorageUnsavedChanges.value) return "存在未保存改动，请先保存配置。";
     return "";
   });
 
-  const hasUnsavedChanges = computed(() => buildFormSnapshot() !== loadedSnapshot.value);
   const saveDisabledHint = computed(() => {
     if (wizardStep.value !== 3) return "";
     if (saving.value) return "正在保存配置，请稍候。";
@@ -84,7 +112,15 @@ export function useSystemWizard() {
   });
   const continueDisabledHint = computed(() => {
     if (wizardStep.value !== 3) return "";
-    if (hasUnsavedChanges.value) return "请先保存配置后再继续下一步。";
+    if (hasStorageUnsavedChanges.value) return "请先保存配置后再继续下一步。";
+    return "";
+  });
+  const embedUpdaterSaveHint = computed(() => {
+    if (savingEmbedUpdater.value) return "正在保存自动更新设置，请稍候。";
+    const intervalDays = Number(embedUpdaterIntervalDays.value);
+    if (!Number.isFinite(intervalDays) || !Number.isInteger(intervalDays) || intervalDays < 1 || intervalDays > 365) {
+      return "更新周期需为 1-365 天的整数。";
+    }
     return "";
   });
 
@@ -95,7 +131,7 @@ export function useSystemWizard() {
     return date.toLocaleString();
   }
 
-  function buildFormSnapshot(): string {
+  function buildStorageSnapshot(): string {
     return JSON.stringify({
       mode: normalizeUiMode(mode.value),
       url: String(url.value || "").trim(),
@@ -107,8 +143,19 @@ export function useSystemWizard() {
     });
   }
 
-  function markLoadedSnapshot() {
-    loadedSnapshot.value = buildFormSnapshot();
+  function buildEmbedUpdaterSnapshot(): string {
+    return JSON.stringify({
+      enabled: embedUpdaterEnabled.value === true,
+      intervalDays: Number.isFinite(embedUpdaterIntervalDays.value) ? Math.trunc(embedUpdaterIntervalDays.value) : null,
+    });
+  }
+
+  function markLoadedStorageSnapshot() {
+    loadedStorageSnapshot.value = buildStorageSnapshot();
+  }
+
+  function markLoadedEmbedUpdaterSnapshot() {
+    loadedEmbedUpdaterSnapshot.value = buildEmbedUpdaterSnapshot();
   }
 
   function applyStorage(nextStorage: any, options: { resetStep: boolean } = { resetStep: false }) {
@@ -145,9 +192,37 @@ export function useSystemWizard() {
     validateText.value = "";
     validateOk.value = false;
     clearFieldErrors("webdavUrl");
-    markLoadedSnapshot();
+    markLoadedStorageSnapshot();
 
     if (options.resetStep) wizardStep.value = 1;
+  }
+
+  function applyEmbedUpdater(nextEmbedUpdater: any) {
+    const summary = nextEmbedUpdater?.lastSummary && typeof nextEmbedUpdater.lastSummary === "object" ? nextEmbedUpdater.lastSummary : {};
+    const intervalCandidate = Number(nextEmbedUpdater?.intervalDays);
+    const intervalDays = Number.isFinite(intervalCandidate) ? Math.trunc(intervalCandidate) : 20;
+
+    embedUpdater.value = {
+      enabled: nextEmbedUpdater?.enabled !== false,
+      intervalDays,
+      lastCheckedAt: nextEmbedUpdater?.lastCheckedAt || "",
+      lastRunAt: nextEmbedUpdater?.lastRunAt || "",
+      lastSuccessAt: nextEmbedUpdater?.lastSuccessAt || "",
+      lastError: nextEmbedUpdater?.lastError || "",
+      nextRunAt: nextEmbedUpdater?.nextRunAt || "",
+      lastSummary: {
+        status: summary?.status || "idle",
+        ggbStatus: summary?.ggbStatus || "",
+        totalProfiles: Number.isFinite(summary?.totalProfiles) ? Math.trunc(summary.totalProfiles) : 0,
+        syncedProfiles: Number.isFinite(summary?.syncedProfiles) ? Math.trunc(summary.syncedProfiles) : 0,
+        skippedProfiles: Number.isFinite(summary?.skippedProfiles) ? Math.trunc(summary.skippedProfiles) : 0,
+        failedProfiles: Number.isFinite(summary?.failedProfiles) ? Math.trunc(summary.failedProfiles) : 0,
+      },
+    };
+
+    embedUpdaterEnabled.value = embedUpdater.value.enabled;
+    embedUpdaterIntervalDays.value = intervalDays;
+    markLoadedEmbedUpdaterSnapshot();
   }
 
   function onModeChanged() {
@@ -180,15 +255,18 @@ export function useSystemWizard() {
     wizardStep.value = 3;
   }
 
-  const { loadSystem, runValidation, saveStorage, syncNow } = createSystemWizardActions({
+  const { loadSystem, runValidation, saveStorage, saveEmbedUpdater, syncNow } = createSystemWizardActions({
     loading,
     saving,
     validating,
     syncing,
+    savingEmbedUpdater,
     errorText,
     successText,
     validateText,
     validateOk,
+    embedUpdaterErrorText,
+    embedUpdaterSuccessText,
     wizardStep,
     mode,
     url,
@@ -197,6 +275,8 @@ export function useSystemWizard() {
     password,
     timeoutMs,
     scanRemote,
+    embedUpdaterEnabled,
+    embedUpdaterIntervalDays,
     remoteMode,
     requiresWebdavUrl,
     readOnlyMode,
@@ -204,16 +284,17 @@ export function useSystemWizard() {
     setFieldError,
     clearFieldErrors,
     applyStorage,
+    applyEmbedUpdater,
   });
 
   function handleBeforeUnload(event: BeforeUnloadEvent) {
-    if (!hasUnsavedChanges.value || saving.value || syncing.value) return;
+    if (!hasUnsavedChanges.value || saving.value || syncing.value || savingEmbedUpdater.value) return;
     event.preventDefault();
     event.returnValue = "";
   }
 
   onBeforeRouteLeave(() => {
-    if (!hasUnsavedChanges.value || saving.value || syncing.value) return true;
+    if (!hasUnsavedChanges.value || saving.value || syncing.value || savingEmbedUpdater.value) return true;
     return window.confirm("系统设置有未保存更改，确定离开当前页面吗？");
   });
 
@@ -232,14 +313,18 @@ export function useSystemWizard() {
     saving,
     validating,
     syncing,
+    savingEmbedUpdater,
     errorText,
     successText,
     validateText,
     validateOk,
+    embedUpdaterErrorText,
+    embedUpdaterSuccessText,
     fieldErrors,
     getFieldError,
     clearFieldErrors,
     storage,
+    embedUpdater,
     wizardStep,
     mode,
     url,
@@ -248,14 +333,19 @@ export function useSystemWizard() {
     password,
     timeoutMs,
     scanRemote,
+    embedUpdaterEnabled,
+    embedUpdaterIntervalDays,
     remoteMode,
     requiresWebdavUrl,
     readOnlyMode,
     canSyncNow,
     syncHint,
+    hasStorageUnsavedChanges,
+    hasEmbedUpdaterUnsavedChanges,
     hasUnsavedChanges,
     saveDisabledHint,
     continueDisabledHint,
+    embedUpdaterSaveHint,
     formatDate,
     onModeChanged,
     goStep,
@@ -263,6 +353,7 @@ export function useSystemWizard() {
     nextFromConnection,
     runValidation,
     saveStorage,
+    saveEmbedUpdater,
     syncNow,
   };
 }

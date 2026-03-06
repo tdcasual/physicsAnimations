@@ -4,7 +4,7 @@
 
 ## 推荐方式：Docker Compose
 
-仓库已提供完整模板：`docker-compose.example.yml`（包含 `physics-animations` 与 `ggb-updater`）。
+仓库已提供完整模板：`docker-compose.example.yml`（包含 `physics-animations` 与兼容保留的 `ggb-updater` maintenance 服务）。
 
 ## 存储配置变更（破坏性）
 
@@ -69,7 +69,7 @@ services:
     image: ${PHYSICS_ANIMATIONS_IMAGE:-ghcr.io/tdcasual/physicsanimations:latest}
     profiles: [maintenance]
     working_dir: /app
-    entrypoint: ["/bin/sh", "-lc", "./scripts/run_geogebra_updater.sh"]
+    entrypoint: ["/bin/sh", "-lc", "./scripts/run_embed_maintenance.sh"]
     environment:
       ROOT_DIR: /app
       GGB_BUNDLE_URL: https://download.geogebra.org/package/geogebra-math-apps-bundle
@@ -107,9 +107,12 @@ docker compose up -d
 
 如果继续使用默认 `latest` 镜像，这些截图相关路径不会阻塞主服务启动，但日志会出现 `screenshot_dependency_unavailable` 提示。
 
-## GeoGebra 更新任务（容器）
+## Embed 自动更新任务（容器）
 
-`ggb-updater` 是一个一次性任务容器，用于更新 `content/library/vendor/geogebra/current`，不会影响主服务可用性。
+`ggb-updater` 是兼容保留的服务名，对应一次性 maintenance 容器；它不会影响主服务可用性，但会统一处理：
+
+1. 更新 `content/library/vendor/geogebra/current`
+2. 同步已启用的远程 Embed 平台镜像
 
 手动执行一次：
 
@@ -117,17 +120,17 @@ docker compose up -d
 docker compose --profile maintenance run --rm ggb-updater
 ```
 
-推荐用宿主机 `cron` 调度（示例：每周日 03:15）：
+建议每天调度一次宿主机 `cron`（示例：每天 03:15）：
 
 ```cron
-15 3 * * 0 cd /path/to/physicsAnimations && docker compose --profile maintenance run --rm ggb-updater >> /var/log/physics-animations-ggb-updater.log 2>&1
+15 3 * * * cd /path/to/physicsAnimations && docker compose --profile maintenance run --rm ggb-updater >> /var/log/physics-animations-ggb-updater.log 2>&1
 ```
 
-建议配合 `flock` 做互斥，避免并发触发。
+真正是否执行由后台“系统设置 → Embed 自动更新”控制，默认周期为 20 天；即使宿主机每天触发，也只会在到期时真正执行同步。建议配合 `flock` 做互斥，避免并发触发。
 
 ## 内网/离线更新策略
 
-如果部署环境无法访问公网，请将 `ggb-updater` 的下载地址切到内网制品源：
+如果部署环境无法访问公网，可继续将 `ggb-updater` 中的 GeoGebra 下载地址切到内网制品源：
 
 ```yaml
 services:
@@ -180,4 +183,5 @@ docker run -d --name physics-animations \
 3. 管理员可登录并新增一条测试内容
 4. 重启容器后，测试内容仍存在（验证卷挂载正确）
 5. `docker compose --profile maintenance run --rm ggb-updater` 可成功完成
-6. `.ggb` `embed` 打开时可加载 `/content/library/vendor/geogebra/current/deployggb.js`
+6. 后台“系统设置 → Embed 自动更新”默认显示 20 天周期
+7. `.ggb` `embed` 打开时可加载 `/content/library/vendor/geogebra/current/deployggb.js`

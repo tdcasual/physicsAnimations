@@ -163,3 +163,39 @@ test("loadSystemState rejects invalid STORAGE_MODE env value", () => {
     else process.env.STORAGE_MODE = prevMode;
   }
 });
+
+test("loadSystemState provides default embed updater settings", () => {
+  withTempRoot((rootDir) => {
+    const state = loadSystemState({ rootDir });
+    assert.equal(state?.embedUpdater?.enabled, true);
+    assert.equal(state?.embedUpdater?.intervalDays, 20);
+    assert.equal(state?.embedUpdater?.lastCheckedAt, "");
+    assert.equal(state?.embedUpdater?.lastRunAt, "");
+    assert.equal(state?.embedUpdater?.lastSuccessAt, "");
+    assert.equal(state?.embedUpdater?.lastError, "");
+  });
+});
+
+test("loadSystemState normalizes embed updater interval days", () => {
+  withTempRoot((rootDir) => {
+    fs.writeFileSync(
+      path.join(rootDir, "content", "system.json"),
+      `${JSON.stringify(
+        {
+          version: 1,
+          embedUpdater: {
+            enabled: false,
+            intervalDays: "45",
+          },
+        },
+        null,
+        2,
+      )}\n`,
+      "utf8",
+    );
+
+    const state = loadSystemState({ rootDir });
+    assert.equal(state?.embedUpdater?.enabled, false);
+    assert.equal(state?.embedUpdater?.intervalDays, 45);
+  });
+});

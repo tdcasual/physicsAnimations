@@ -26,7 +26,9 @@
     "cleanup:embed-vendor": "node scripts/cleanup_embed_profile_vendor_duplicates.js",
     "backup:webdav": "node scripts/backup_to_webdav.js",
     "prepare": "node scripts/prepare.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "update:embed-maintenance": "node scripts/update_embed_maintenance.js",
+    "update:embed-maintenance:job": "sh ./scripts/run_embed_maintenance.sh"
   },
   "repository": {
     "type": "git",

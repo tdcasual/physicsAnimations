@@ -139,9 +139,18 @@ node scripts/update_geogebra_bundle.js \
   --sha256 <expected_sha256_hex>
 ```
 
-## GeoGebra 更新任务（容器作业）
+## Embed 自动更新（系统设置）
 
-> 仅用于 `ggb-updater` 任务容器，不是主应用服务变量。
+`ggb-updater` 任务容器现在会同时检查 GeoGebra 自托管包和远程 Embed 平台镜像，但真正的执行周期由后台“系统设置 → Embed 自动更新”控制：
+
+- 默认启用
+- 默认周期为 `20` 天
+- 建议宿主机每天运行一次 maintenance 容器，由任务内部判断是否到期
+- 运行状态会写入 `content/system.json` 的 `embedUpdater` 字段
+
+## GeoGebra / Embed 更新任务（容器作业）
+
+> 仅用于 `ggb-updater` maintenance 任务容器，不是主应用服务变量。
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
@@ -153,8 +162,9 @@ node scripts/update_geogebra_bundle.js \
 | `GGB_NO_LOCK` | `false` | 是否禁用更新锁 |
 | `GGB_LOCK_FILE` | 空 | 自定义锁文件路径（默认在 vendor 目录下） |
 | `GGB_KEEP_TEMP` | `false` | 是否保留下载/解压临时目录 |
+| `EMBED_UPDATER_FORCE` | `false` | 忽略系统设置周期，强制立即执行一次通用 maintenance |
 
-这些变量由 `scripts/run_geogebra_updater.sh` 读取，并转为 `update_geogebra_bundle.js` 参数。
+这些变量由 `scripts/run_embed_maintenance.sh` 读取；其中 `GGB_*` 会转为 `update_geogebra_bundle.js` 参数，`EMBED_UPDATER_FORCE` 用于忽略 20 天周期限制。
 
 ## 一个生产环境最小配置示例
 

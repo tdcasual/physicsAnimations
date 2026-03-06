@@ -1,5 +1,5 @@
 import type { ComputedRef, Ref } from "vue";
-import { getSystemInfo, updateSystemStorage, validateSystemStorage } from "../adminApi";
+import { getSystemInfo, updateSystemEmbedUpdater, updateSystemStorage, validateSystemStorage } from "../adminApi";
 import { buildSystemUpdatePayload } from "../systemFormState";
 
 type WizardStep = 1 | 2 | 3 | 4;
@@ -9,10 +9,13 @@ type SystemWizardActionsParams = {
   saving: Ref<boolean>;
   validating: Ref<boolean>;
   syncing: Ref<boolean>;
+  savingEmbedUpdater: Ref<boolean>;
   errorText: Ref<string>;
   successText: Ref<string>;
   validateText: Ref<string>;
   validateOk: Ref<boolean>;
+  embedUpdaterErrorText: Ref<string>;
+  embedUpdaterSuccessText: Ref<string>;
   wizardStep: Ref<WizardStep>;
   mode: Ref<string>;
   url: Ref<string>;
@@ -21,6 +24,8 @@ type SystemWizardActionsParams = {
   password: Ref<string>;
   timeoutMs: Ref<number>;
   scanRemote: Ref<boolean>;
+  embedUpdaterEnabled: Ref<boolean>;
+  embedUpdaterIntervalDays: Ref<number>;
   remoteMode: ComputedRef<boolean>;
   requiresWebdavUrl: ComputedRef<boolean>;
   readOnlyMode: ComputedRef<boolean>;
@@ -28,10 +33,15 @@ type SystemWizardActionsParams = {
   setFieldError: (key: string, message: string) => void;
   clearFieldErrors: (key?: string) => void;
   applyStorage: (nextStorage: any, options?: { resetStep: boolean }) => void;
+  applyEmbedUpdater: (nextEmbedUpdater: any) => void;
 };
 
 function resolveAuthError(status?: number, fallbackText = "操作失败。"): string {
   return status === 401 ? "请先登录管理员账号。" : fallbackText;
+}
+
+function isValidIntervalDays(value: number): boolean {
+  return Number.isFinite(value) && Number.isInteger(value) && value >= 1 && value <= 365;
 }
 
 export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
@@ -41,6 +51,7 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
     try {
       const data = await getSystemInfo();
       ctx.applyStorage(data?.storage || {}, { resetStep: options.resetStep });
+      ctx.applyEmbedUpdater(data?.embedUpdater || {});
     } catch (err) {
       const e = err as { status?: number; message?: string };
       if (e?.message === "invalid_storage_mode") {
@@ -159,6 +170,37 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
     }
   }
 
+  async function saveEmbedUpdater() {
+    const intervalDays = Number(ctx.embedUpdaterIntervalDays.value);
+    if (!isValidIntervalDays(intervalDays)) {
+      ctx.embedUpdaterErrorText.value = "自动更新周期需为 1-365 天的整数。";
+      ctx.embedUpdaterSuccessText.value = "";
+      return;
+    }
+
+    ctx.savingEmbedUpdater.value = true;
+    ctx.embedUpdaterErrorText.value = "";
+    ctx.embedUpdaterSuccessText.value = "";
+    try {
+      const data = await updateSystemEmbedUpdater({
+        enabled: ctx.embedUpdaterEnabled.value === true,
+        intervalDays: Math.trunc(intervalDays),
+      });
+      if (data?.embedUpdater) ctx.applyEmbedUpdater(data.embedUpdater);
+      else await loadSystem({ resetStep: false });
+      ctx.embedUpdaterSuccessText.value = "自动更新设置已保存。";
+    } catch (err) {
+      const e = err as { status?: number; data?: any };
+      if (e?.data?.error === "invalid_embed_updater_interval_days") {
+        ctx.embedUpdaterErrorText.value = "自动更新周期需为 1-365 天的整数。";
+        return;
+      }
+      ctx.embedUpdaterErrorText.value = resolveAuthError(e?.status, "保存自动更新设置失败。");
+    } finally {
+      ctx.savingEmbedUpdater.value = false;
+    }
+  }
+
   async function syncNow() {
     if (!ctx.canSyncNow.value) return;
 
@@ -187,6 +229,7 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
     loadSystem,
     runValidation,
     saveStorage,
+    saveEmbedUpdater,
     syncNow,
   };
 }

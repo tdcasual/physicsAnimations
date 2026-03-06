@@ -474,3 +474,48 @@ test("state db sqlite mirrors state writes", async () => {
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("system exposes embed updater defaults and persists updates", async () => {
+  const rootDir = makeTempRoot();
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+
+    const systemRes = await fetch(`${baseUrl}/api/system`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(systemRes.status, 200);
+    const system = await systemRes.json();
+    assert.equal(system?.embedUpdater?.enabled, true);
+    assert.equal(system?.embedUpdater?.intervalDays, 20);
+
+    const updateRes = await fetch(`${baseUrl}/api/system/embed-updater`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        enabled: false,
+        intervalDays: 45,
+      }),
+    });
+    assert.equal(updateRes.status, 200);
+    const updated = await updateRes.json();
+    assert.equal(updated?.embedUpdater?.enabled, false);
+    assert.equal(updated?.embedUpdater?.intervalDays, 45);
+
+    const nextSystemRes = await fetch(`${baseUrl}/api/system`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(nextSystemRes.status, 200);
+    const nextSystem = await nextSystemRes.json();
+    assert.equal(nextSystem?.embedUpdater?.enabled, false);
+    assert.equal(nextSystem?.embedUpdater?.intervalDays, 45);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

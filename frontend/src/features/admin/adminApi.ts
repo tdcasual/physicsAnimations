@@ -162,6 +162,20 @@ export async function getSystemInfo(): Promise<any> {
   return apiFetch("/api/system", { method: "GET" });
 }
 
+export async function updateSystemEmbedUpdater(payload: {
+  enabled?: boolean;
+  intervalDays?: number;
+}): Promise<any> {
+  return apiFetch("/api/system/embed-updater", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      enabled: payload.enabled,
+      intervalDays: payload.intervalDays,
+    }),
+  });
+}
+
 export async function updateSystemStorage(payload: {
   mode?: string;
   webdav?: Record<string, unknown>;

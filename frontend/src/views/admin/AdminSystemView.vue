@@ -2,6 +2,7 @@
 import { useSystemWizard } from "../../features/admin/system/useSystemWizard";
 import SystemStatusPanel from "./system/SystemStatusPanel.vue";
 import SystemWizardSteps from "./system/SystemWizardSteps.vue";
+import SystemEmbedUpdaterPanel from "./system/SystemEmbedUpdaterPanel.vue";
 
 const system = useSystemWizard();
 
@@ -11,13 +12,17 @@ const {
   saving,
   validating,
   syncing,
+  savingEmbedUpdater,
   errorText,
   successText,
   validateText,
   validateOk,
+  embedUpdaterErrorText,
+  embedUpdaterSuccessText,
   getFieldError,
   clearFieldErrors,
   storage,
+  embedUpdater,
   wizardStep,
   mode,
   url,
@@ -26,13 +31,17 @@ const {
   password,
   timeoutMs,
   scanRemote,
+  embedUpdaterEnabled,
+  embedUpdaterIntervalDays,
   remoteMode,
   readOnlyMode,
   canSyncNow,
   syncHint,
-  hasUnsavedChanges,
+  hasStorageUnsavedChanges,
+  hasEmbedUpdaterUnsavedChanges,
   saveDisabledHint,
   continueDisabledHint,
+  embedUpdaterSaveHint,
   formatDate,
   onModeChanged,
   goStep,
@@ -40,6 +49,7 @@ const {
   nextFromConnection,
   runValidation,
   saveStorage,
+  saveEmbedUpdater,
   syncNow,
 } = system;
 </script>
@@ -72,7 +82,7 @@ const {
       :syncing="syncing"
       :validate-text="validateText"
       :validate-ok="validateOk"
-      :has-unsaved-changes="hasUnsavedChanges"
+      :has-unsaved-changes="hasStorageUnsavedChanges"
       :save-disabled-hint="saveDisabledHint"
       :continue-disabled-hint="continueDisabledHint"
       :sync-hint="syncHint"
@@ -93,6 +103,22 @@ const {
       @run-validation="runValidation"
       @save-storage="saveStorage"
       @sync-now="syncNow"
+    />
+
+    <SystemEmbedUpdaterPanel
+      class="admin-card"
+      :embed-updater="embedUpdater"
+      :enabled="embedUpdaterEnabled"
+      :interval-days="embedUpdaterIntervalDays"
+      :saving="savingEmbedUpdater"
+      :error-text="embedUpdaterErrorText"
+      :success-text="embedUpdaterSuccessText"
+      :has-unsaved-changes="hasEmbedUpdaterUnsavedChanges"
+      :save-hint="embedUpdaterSaveHint"
+      :format-date="formatDate"
+      @update:enabled="embedUpdaterEnabled = $event"
+      @update:interval-days="embedUpdaterIntervalDays = $event"
+      @save="saveEmbedUpdater"
     />
   </section>
 </template>

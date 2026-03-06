@@ -25,12 +25,13 @@ services:
     entrypoint:
       - /bin/sh
       - -lc
-      - ./scripts/run_geogebra_updater.sh
+      - ./scripts/run_embed_maintenance.sh
     environment:
       ROOT_DIR: /app
       GGB_BUNDLE_URL: https://download.geogebra.org/package/geogebra-math-apps-bundle
       GGB_RETAIN_RELEASES: "3"
       GGB_NO_LOCK: "false"
+      EMBED_UPDATER_FORCE: "false"
     volumes:
       - ./content:/app/content
     restart: "no"
