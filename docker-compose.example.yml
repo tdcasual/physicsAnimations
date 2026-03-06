@@ -1,18 +1,24 @@
 services:
   physics-animations:
-    image: ghcr.io/tdcasual/physicsanimations:latest
+    image: ${PHYSICS_ANIMATIONS_IMAGE:-ghcr.io/tdcasual/physicsanimations:latest}
+    build:
+      context: .
+      target: ${PHYSICS_ANIMATIONS_BUILD_TARGET:-runtime}
     container_name: physics-animations
     ports:
       - "4173:4173"
     environment:
       PORT: 4173
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD_HASH: your_bcrypt_hash
+      JWT_SECRET: replace_with_long_random_secret
       LIBRARY_GGB_ENABLE_ONLINE_FALLBACK: "true"
     volumes:
       - ./content:/app/content
     restart: unless-stopped
 
   ggb-updater:
-    image: ghcr.io/tdcasual/physicsanimations:latest
+    image: ${PHYSICS_ANIMATIONS_IMAGE:-ghcr.io/tdcasual/physicsanimations:latest}
     profiles:
       - maintenance
     working_dir: /app

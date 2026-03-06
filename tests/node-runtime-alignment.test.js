@@ -26,6 +26,12 @@ test("frontend test script preloads localStorage shim for Node worker stability"
   assert.match(script, /--import\s+\.\/test\/node-localstorage-shim\.mjs/);
 });
 
+test(".dockerignore excludes local dependency directories used during image builds", () => {
+  const dockerignore = readUtf8(".dockerignore");
+  assert.match(dockerignore, /^node_modules\/?$/m);
+  assert.match(dockerignore, /^frontend\/node_modules\/?$/m);
+});
+
 test("Dockerfile uses Node 24 base images for all stages", () => {
   const dockerfile = readUtf8("Dockerfile");
   const fromLines = dockerfile
@@ -33,10 +39,26 @@ test("Dockerfile uses Node 24 base images for all stages", () => {
     .map((line) => line.trim())
     .filter((line) => line.startsWith("FROM "));
 
-  assert.ok(fromLines.length >= 2, "expected multi-stage Dockerfile");
+  assert.ok(fromLines.length >= 3, "expected multi-stage Dockerfile");
   for (const line of fromLines) {
-    assert.match(line, /^FROM node:24-bookworm-slim/i);
+    assert.match(line, /^FROM (node:24-bookworm-slim|runtime-base) /i);
   }
+});
+
+test("Dockerfile keeps browser runtime in a dedicated target", () => {
+  const dockerfile = readUtf8("Dockerfile");
+
+  assert.match(dockerfile, /^FROM node:24-bookworm-slim AS runtime-base$/m);
+  assert.match(dockerfile, /^FROM runtime-base AS runtime-browser$/m);
+  assert.match(dockerfile, /^FROM runtime-base AS runtime$/m);
+
+  const runtimeBaseSection = dockerfile.match(/^FROM node:24-bookworm-slim AS runtime-base$([\s\S]*?)(?=^FROM runtime-base AS runtime-browser$)/m);
+  assert.ok(runtimeBaseSection, "expected runtime-base section before runtime-browser stage");
+  assert.doesNotMatch(runtimeBaseSection[1], /playwright install --with-deps chromium/);
+
+  const runtimeBrowserSection = dockerfile.match(/^FROM runtime-base AS runtime-browser$([\s\S]*?)(?=^FROM runtime-base AS runtime$)/m);
+  assert.ok(runtimeBrowserSection, "expected runtime-browser section");
+  assert.match(runtimeBrowserSection[1], /playwright install --with-deps chromium/);
 });
 
 test("GitHub Actions setup-node uses Node 24", () => {
@@ -46,6 +68,11 @@ test("GitHub Actions setup-node uses Node 24", () => {
   for (const match of setupNodeMatches) {
     assert.equal(match[1], "24");
   }
+});
+
+test("GitHub Actions publishes the lean runtime target by default", () => {
+  const workflow = readUtf8(".github/workflows/docker-image.yml");
+  assert.match(workflow, /target:\s*runtime/);
 });
 
 test(".nvmrc and .node-version pin local runtime to Node 24", () => {

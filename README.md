@@ -19,7 +19,9 @@ npm start
 
 打开 `http://localhost:4173`。
 
-未设置管理员环境变量时，系统会在首次启动时随机生成管理员账号密码，并打印到服务日志（Docker 可用 `docker logs <container>` 查看）。
+本地非生产环境未设置管理员环境变量时，系统会在首次启动时随机生成管理员账号密码，并打印到服务日志。
+
+如果你使用容器镜像或设置了 `NODE_ENV=production`，则必须显式提供管理员凭据（`ADMIN_PASSWORD` 或 `ADMIN_PASSWORD_HASH`）以及 `JWT_SECRET`；生产模式不再自动生成这些敏感配置。
 
 如果你在本机遇到截图依赖缺失，再执行一次：
 
@@ -86,7 +88,7 @@ docker compose --profile maintenance run --rm ggb-updater
 
 仓库提供了容器模板文件：`docker-compose.example.yml`。
 
-你现有的最小 compose（含 `ADMIN_USERNAME` / `ADMIN_PASSWORD`）仍然兼容，可以继续使用：
+由于容器镜像默认以 `NODE_ENV=production` 运行，Compose 部署必须显式提供管理员凭据和 `JWT_SECRET`：
 
 ```yaml
 services:
@@ -98,7 +100,8 @@ services:
     environment:
       PORT: 4173
       ADMIN_USERNAME: admin
-      ADMIN_PASSWORD: admin
+      ADMIN_PASSWORD: change_me_now
+      JWT_SECRET: replace_with_long_random_secret
     volumes:
       - ./content:/app/content
     restart: unless-stopped
@@ -109,15 +112,29 @@ services:
 ```yaml
 services:
   physics-animations:
-    image: ghcr.io/tdcasual/physicsanimations:latest
+    image: ${PHYSICS_ANIMATIONS_IMAGE:-ghcr.io/tdcasual/physicsanimations:latest}
+    build:
+      context: .
+      target: ${PHYSICS_ANIMATIONS_BUILD_TARGET:-runtime}
     container_name: physics-animations
     ports:
       - "4173:4173"
     environment:
       PORT: 4173
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD_HASH: your_bcrypt_hash
+      JWT_SECRET: replace_with_long_random_secret
     volumes:
       - ./content:/app/content
     restart: unless-stopped
+```
+
+默认 `latest` / `runtime` 镜像不再预装 Chromium，主服务体积更小；如果你需要服务端截图能力（上传首图、链接缩略图、手动重截图），先本地构建浏览器目标：
+
+```bash
+export PHYSICS_ANIMATIONS_IMAGE=physicsanimations:runtime-browser
+export PHYSICS_ANIMATIONS_BUILD_TARGET=runtime-browser
+docker compose build physics-animations
 ```
 
 ```bash

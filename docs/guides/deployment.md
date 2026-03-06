@@ -30,7 +30,10 @@
 ```yaml
 services:
   physics-animations:
-    image: ghcr.io/tdcasual/physicsanimations:latest
+    image: ${PHYSICS_ANIMATIONS_IMAGE:-ghcr.io/tdcasual/physicsanimations:latest}
+    build:
+      context: .
+      target: ${PHYSICS_ANIMATIONS_BUILD_TARGET:-runtime}
     container_name: physics-animations
     ports:
       - "4173:4173"
@@ -49,7 +52,10 @@ services:
 ```yaml
 services:
   physics-animations:
-    image: ghcr.io/tdcasual/physicsanimations:latest
+    image: ${PHYSICS_ANIMATIONS_IMAGE:-ghcr.io/tdcasual/physicsanimations:latest}
+    build:
+      context: .
+      target: ${PHYSICS_ANIMATIONS_BUILD_TARGET:-runtime}
     container_name: physics-animations
     ports:
       - "4173:4173"
@@ -60,7 +66,7 @@ services:
     restart: unless-stopped
 
   ggb-updater:
-    image: ghcr.io/tdcasual/physicsanimations:latest
+    image: ${PHYSICS_ANIMATIONS_IMAGE:-ghcr.io/tdcasual/physicsanimations:latest}
     profiles: [maintenance]
     working_dir: /app
     entrypoint: ["/bin/sh", "-lc", "./scripts/run_geogebra_updater.sh"]
@@ -81,6 +87,25 @@ docker logs -f physics-animations
 ```
 
 说明：未显式配置管理员凭据时，会在启动日志打印随机生成的账号密码。
+
+## 可选浏览器运行时
+
+默认发布镜像会构建 `runtime` 目标，不再在主镜像内预装 Chromium。这样可以缩小生产镜像并避免把浏览器运行时带给所有部署。
+
+如果你的部署需要服务端截图能力（例如：
+- 新建链接时自动生成缩略图
+- 新建 HTML/ZIP 上传时自动生成首图
+- 管理端手动触发重截图
+），请在仓库目录内切换到 `runtime-browser` 目标本地构建：
+
+```bash
+export PHYSICS_ANIMATIONS_IMAGE=physicsanimations:runtime-browser
+export PHYSICS_ANIMATIONS_BUILD_TARGET=runtime-browser
+docker compose build physics-animations
+docker compose up -d
+```
+
+如果继续使用默认 `latest` 镜像，这些截图相关路径不会阻塞主服务启动，但日志会出现 `screenshot_dependency_unavailable` 提示。
 
 ## GeoGebra 更新任务（容器）
 
