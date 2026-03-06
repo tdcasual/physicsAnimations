@@ -36,7 +36,7 @@ export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
     if (options.length === 0) {
       options.push({
         value: "other",
-        label: "物理 / 其他",
+        label: "学科 / 其他",
       });
     }
     return options;

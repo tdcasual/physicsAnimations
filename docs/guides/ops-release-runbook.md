@@ -1,6 +1,6 @@
 # Ops Release Runbook
 
-适用范围：`physicsAnimations` 容器化发布、升级与快速回滚。
+适用范围：`学科演示集` 容器化发布、升级与快速回滚（仓库/目录技术标识仍为 `physicsAnimations`）。
 
 ## 1. Pre-Release Checklist
 

@@ -9,6 +9,9 @@ import type { LibraryFolder } from "../library/types";
 const VIEW_STATE_KEY = "pa_view_state";
 const MAX_GROUP_TABS = 8;
 const MAX_CATEGORY_TABS = 10;
+const MAX_QUICK_CATEGORIES = 4;
+const MAX_FEATURED_ITEMS = 4;
+const MAX_LIBRARY_HIGHLIGHTS = 3;
 
 function readViewState(): { groupId: string; categoryId: string } | null {
   try {
@@ -55,10 +58,20 @@ export function useCatalogViewState() {
       query: query.value,
     }),
   );
+
+  const activeGroup = computed(
+    () => view.value.groups.find((group) => group.id === view.value.activeGroupId) ?? view.value.groups[0] ?? null,
+  );
+  const activeCategory = computed(
+    () => view.value.categories.find((category) => category.id === view.value.activeCategoryId) ?? null,
+  );
+
   const directGroups = computed(() => view.value.groups.slice(0, MAX_GROUP_TABS));
   const overflowGroups = computed(() => view.value.groups.slice(MAX_GROUP_TABS));
   const directCategories = computed(() => view.value.categories.slice(0, MAX_CATEGORY_TABS));
   const overflowCategories = computed(() => view.value.categories.slice(MAX_CATEGORY_TABS));
+  const quickCategories = computed(() => view.value.categories.slice(0, MAX_QUICK_CATEGORIES));
+
   const filteredLibraryFolders = computed(() => {
     const activeGroupCategoryIds = new Set(view.value.categories.map((category) => category.id));
     return filterFoldersByCatalogContext({
@@ -67,6 +80,29 @@ export function useCatalogViewState() {
       activeGroupCategoryIds,
       query: query.value,
     });
+  });
+
+  const featuredItems = computed(() => view.value.items.slice(0, MAX_FEATURED_ITEMS));
+  const libraryHighlights = computed(() => filteredLibraryFolders.value.slice(0, MAX_LIBRARY_HIGHLIGHTS));
+
+  const heroTitle = computed(() => {
+    if (activeCategory.value) return `${activeCategory.value.title} 导航`;
+    return `${activeGroup.value?.title || "学科"}导航`;
+  });
+
+  const heroDescription = computed(() => {
+    if (query.value.trim()) {
+      return `当前正按“${query.value.trim()}”筛选，可从常用分类、推荐演示和资源库入口继续缩小范围。`;
+    }
+    if (activeCategory.value) {
+      return `围绕 ${activeCategory.value.title} 快速进入课堂演示、资源库精选和完整目录。`;
+    }
+    return "从常用分类、资源库精选和推荐演示中更快找到课堂演示与资源。";
+  });
+
+  const currentSectionTitle = computed(() => {
+    if (activeCategory.value) return activeCategory.value.title;
+    return `${activeGroup.value?.title || "当前分组"} 全部内容`;
   });
 
   function getItemHref(item: CatalogItem): string {
@@ -126,7 +162,13 @@ export function useCatalogViewState() {
     overflowGroups,
     directCategories,
     overflowCategories,
+    quickCategories,
     filteredLibraryFolders,
+    featuredItems,
+    libraryHighlights,
+    heroTitle,
+    heroDescription,
+    currentSectionTitle,
     getItemHref,
     selectGroup,
     selectCategory,

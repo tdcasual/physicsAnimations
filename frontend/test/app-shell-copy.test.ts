@@ -2,18 +2,35 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
+function readFile(relPath: string): string {
+  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+}
+
 describe("app shell copy", () => {
   it("does not display migration-in-progress wording in brand subtitle", () => {
-    const appVuePath = path.resolve(process.cwd(), "src", "App.vue");
-    const source = fs.readFileSync(appVuePath, "utf8");
+    const source = readFile("src/App.vue");
 
     expect(source.includes("迁移中")).toBe(false);
   });
 
-  it("removes legacy brand subtitle style after subtitle copy cleanup", () => {
-    const stylesPath = path.resolve(process.cwd(), "src", "styles.css");
-    const css = fs.readFileSync(stylesPath, "utf8");
+  it("introduces a short navigation-oriented brand subtitle", () => {
+    const source = readFile("src/App.vue");
 
-    expect(css.includes(".brand-subtitle")).toBe(false);
+    expect(source).toMatch(/更快找到课堂演示与资源/);
+  });
+
+  it("provides a direct catalog entry in the public shell", () => {
+    const source = readFile("src/App.vue");
+
+    expect(source).toMatch(/to="\/"/);
+    expect(source).toMatch(/返回目录|浏览首页/);
+  });
+
+  it("uses richer topbar grouping classes for brand and action hierarchy", () => {
+    const source = readFile("src/App.vue");
+
+    expect(source).toMatch(/class="brand-copy"/);
+    expect(source).toMatch(/class="topbar-primary-actions"/);
+    expect(source).toMatch(/class="topbar-utility-actions"/);
   });
 });

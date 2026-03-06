@@ -271,7 +271,7 @@ export function createTaxonomyAdminActions(ctx: TaxonomyAdminActionsParams) {
     const canDelete = Number(category.count || 0) === 0;
     const confirmText = canDelete
       ? `确定删除二级分类「${category.id}」吗？`
-      : "该二级分类下仍有内容，当前操作只会重置分类设置（标题/排序/隐藏/所属大类），内容不会删除；所属大类将恢复为默认（物理）。确定继续吗？";
+      : "该二级分类下仍有内容，当前操作只会重置分类设置（标题/排序/隐藏/所属大类），内容不会删除；所属大类将恢复为默认（学科）。确定继续吗？";
     if (!window.confirm(confirmText)) return;
 
     ctx.saving.value = true;

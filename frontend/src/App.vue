@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
 import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
@@ -18,6 +18,7 @@ const classroomModeEnabled = ref(false);
 const modalCardRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
 const isLoginRoute = computed(() => String(route.path || "") === "/login");
+const isCatalogRoute = computed(() => String(route.path || "") === "/");
 
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 let bodyOverflowBeforeLogin = "";
@@ -170,22 +171,32 @@ onBeforeUnmount(() => {
   <div class="app-shell">
     <header class="topbar">
       <div class="topbar-inner">
-        <div class="brand">
-          <div class="brand-title">我的物理动画集</div>
+        <div class="topbar-lead">
+          <RouterLink to="/" class="brand brand-link" aria-label="返回目录">
+            <div class="brand-copy">
+              <div class="brand-title">我的学科演示集</div>
+              <div class="brand-subcopy">更快找到课堂演示与资源</div>
+            </div>
+          </RouterLink>
+
+          <RouterLink v-if="!isCatalogRoute" to="/" class="btn btn-ghost btn-nav-home">浏览首页</RouterLink>
         </div>
 
-        <div class="actions">
-          <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-            课堂模式{{ classroomModeEnabled ? "开" : "关" }}
-          </button>
-          <button type="button" class="btn btn-ghost" @click="toggleTheme()">主题</button>
-          <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
-            登录
-          </button>
-          <template v-if="auth.loggedIn">
-            <RouterLink to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
-            <button type="button" class="btn btn-ghost" @click="logout">退出</button>
-          </template>
+        <div class="topbar-actions actions">
+          <div class="topbar-primary-actions">
+            <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
+              登录
+            </button>
+            <RouterLink v-if="auth.loggedIn" to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
+          </div>
+
+          <div class="topbar-utility-actions">
+            <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
+              课堂模式{{ classroomModeEnabled ? "开" : "关" }}
+            </button>
+            <button type="button" class="btn btn-ghost" @click="toggleTheme()">主题</button>
+            <button v-if="auth.loggedIn" type="button" class="btn btn-ghost" @click="logout">退出</button>
+          </div>
         </div>
       </div>
     </header>
@@ -245,3 +256,5 @@ onBeforeUnmount(() => {
     </div>
   </div>
 </template>
+
+<style scoped src="./AppShell.css"></style>

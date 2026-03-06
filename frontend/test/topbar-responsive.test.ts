@@ -35,4 +35,12 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/\.modal-card\s*\{[\s\S]*overflow:\s*auto/);
     expect(css).toMatch(/\.modal-card\s*\{[\s\S]*-webkit-overflow-scrolling:\s*touch/);
   });
+
+  it("adds dedicated topbar groups that stack cleanly on narrow screens", () => {
+    const css = readFile("src/styles.css");
+    expect(css).toMatch(/\.brand-copy\s*\{[\s\S]*display:\s*grid/);
+    expect(css).toMatch(/\.topbar-primary-actions\s*\{[\s\S]*display:\s*flex/);
+    expect(css).toMatch(/\.topbar-utility-actions\s*\{[\s\S]*display:\s*flex/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-actions\s*\{[\s\S]*width:\s*100%/);
+  });
 });

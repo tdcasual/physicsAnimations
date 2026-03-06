@@ -28,7 +28,7 @@ export function normalizeCatalog(catalog: any): CatalogData {
       groups: {
         [DEFAULT_GROUP_ID]: {
           id: DEFAULT_GROUP_ID,
-          title: "物理",
+          title: "学科",
           order: 0,
           hidden: false,
           categories,
