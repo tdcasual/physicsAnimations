@@ -10,6 +10,8 @@
 npm run qa:release
 ```
 
+对于 `Dependabot` / 其他依赖升级 PR，也必须走同一套 `qa:release`，不要以“只改依赖”为理由跳过 smoke 和前后端测试。
+
 `qa:release` 会串行执行：
 - 文件体积门禁（`guard:file-size`）
 - 安全模式门禁（`guard:security`）

@@ -77,6 +77,11 @@
 - `http`: `requestsTotal`、`activeRequests`、`statusCounts`、`latencyMs(avg/p50/p95/max/samples)`
 - 兼容保留：`uptimeSec`、`memory`、`taskQueue`、`stateDb`、`screenshotQueue`
 
+### 1.6 依赖新鲜度自动化
+
+- `.github/dependabot.yml` 已为仓库根目录与 `frontend/` 启用每周 npm 检查。
+- 依赖更新 PR 进入评审前，仍需完整执行 `npm run qa:release`，不要只看 `npm audit`。
+
 ## 2. 当前改进重点（按优先级）
 
 ### P0（下一轮优先，1-2 周）
