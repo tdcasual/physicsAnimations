@@ -1,6 +1,7 @@
 const express = require("express");
 
 const { requireAuth } = require("../lib/auth");
+const { logAdminAudit } = require("../lib/auditLogger");
 const { createWebdavStore } = require("../lib/contentStore");
 const { loadSystemState, mutateSystemState, normalizeMode, noSave } = require("../lib/systemState");
 const { syncWithWebdav } = require("../lib/webdavSync");
@@ -165,6 +166,19 @@ function createSystemRouter({ authConfig, store, taskQueue, rootDir, updateStore
       }
 
       const refreshed = loadSystemState({ rootDir });
+      logAdminAudit({
+        action: "system.storage.update",
+        actor: req.user?.username,
+        targetType: "system_storage",
+        targetId: nextMode,
+        outcome: "success",
+        details: {
+          requestId: req.requestId,
+          sync,
+          mode: nextMode,
+          scanRemote: webdav.scanRemote === true,
+        },
+      });
       res.json({
         ok: true,
         sync: syncResult,

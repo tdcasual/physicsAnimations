@@ -113,9 +113,11 @@ describe("loadViewerModel", () => {
     const model = await loadViewerModel({ id: "upload-1" });
     expect(model.status).toBe("ready");
     if (model.status !== "ready") return;
-    expect(model.target).toBe("/content/uploads/upload-1/index.html");
+    expect(model.target).toBe("/content/isolated/uploads/upload-1/index.html");
     expect(model.openHref).toBe("/content/uploads/upload-1/index.html");
     expect(model.iframeSandbox).toBe("allow-scripts");
+    expect(model.showHint).toBe(true);
+    expect(model.hintText).toContain("隔离");
   });
 
   it("retries public item fetch without token when token is invalid", async () => {

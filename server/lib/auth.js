@@ -11,6 +11,38 @@ const JWT_SECRET_FILE = ".jwt_secret";
 let didWarnEphemeralJwtSecret = false;
 let didWarnGeneratedAdminCredentials = false;
 
+function isProductionMode() {
+  return String(process.env.NODE_ENV || "").trim().toLowerCase() === "production";
+}
+
+function createConfigError(code, message) {
+  const err = new Error(code);
+  err.code = code;
+  err.status = 500;
+  err.details = { message };
+  return err;
+}
+
+function assertProductionAuthRequirements() {
+  if (!isProductionMode()) return;
+
+  if (!parseOptionalEnvString("JWT_SECRET")) {
+    throw createConfigError(
+      "production_requires_jwt_secret",
+      "Production mode requires JWT_SECRET to be set explicitly.",
+    );
+  }
+
+  const hasPasswordHash = Boolean(parseOptionalEnvString("ADMIN_PASSWORD_HASH"));
+  const hasPassword = typeof process.env.ADMIN_PASSWORD === "string" && process.env.ADMIN_PASSWORD.length > 0;
+  if (!hasPasswordHash && !hasPassword) {
+    throw createConfigError(
+      "production_requires_admin_password",
+      "Production mode requires ADMIN_PASSWORD or ADMIN_PASSWORD_HASH to be set explicitly.",
+    );
+  }
+}
+
 function parseOptionalEnvString(name) {
   const raw = process.env[name];
   if (typeof raw !== "string") return "";
@@ -121,6 +153,8 @@ function resolveJwtSecretWithSource({ rootDir } = {}) {
 }
 
 function getAuthConfig({ rootDir } = {}) {
+  assertProductionAuthRequirements();
+
   const adminDefaults = resolveAdminCredentialDefaults();
   const adminUsername = adminDefaults.username;
   const adminPasswordHash = adminDefaults.passwordHash;

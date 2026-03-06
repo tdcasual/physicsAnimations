@@ -1,5 +1,4 @@
 const path = require("path");
-const fs = require("fs");
 const express = require("express");
 const packageJson = require("../package.json");
 const logger = require("./lib/logger");
@@ -18,10 +17,12 @@ const { errorHandler } = require("./middleware/errorHandler");
 const { requestContextMiddleware } = require("./middleware/requestContext");
 const { securityHeadersMiddleware } = require("./middleware/securityHeaders");
 const { createAuthRouter } = require("./routes/auth");
+const { createContentRouter } = require("./routes/contentRoutes");
 const { createGroupsRouter } = require("./routes/groups");
 const { createCategoriesRouter } = require("./routes/categories");
 const { createItemsRouter } = require("./routes/items");
 const { createLibraryRouter } = require("./routes/library");
+const { createSpaRouter } = require("./routes/spaRoutes");
 const { createSystemRouter } = require("./routes/system");
 function parseTrustProxy(value) {
   if (value === undefined) return undefined;
@@ -61,6 +62,27 @@ function safeContentKey(reqPath, prefix) {
   if (normalized.startsWith("..") || normalized.includes("/../")) return null;
   if (!normalized.startsWith(`${prefix}/`)) return null;
   return normalized;
+}
+
+function safeAliasedContentKey(reqPath, routePrefix, storagePrefix) {
+  const raw = String(reqPath || "");
+  if (!raw.startsWith(routePrefix)) return null;
+  const suffix = raw.slice(routePrefix.length).replace(/^\/+/, "");
+  return safeContentKey(`/content/${storagePrefix}/${suffix}`, storagePrefix);
+}
+
+function isHtmlContentKey(key) {
+  const value = String(key || "").toLowerCase();
+  return value.endsWith(".html") || value.endsWith(".htm");
+}
+
+function applyUploadHtmlHeaders(res, { isolated = false } = {}) {
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cache-Control", "no-store");
+  if (isolated) {
+    res.setHeader("Content-Security-Policy", "sandbox allow-scripts");
+  }
 }
 
 function shouldServeSpaRoute(reqPath) {
@@ -227,96 +249,25 @@ function createApp({
   );
   app.use("/api", createLibraryRouter({ authConfig, store }));
 
-  const spaDistDir = path.join(rootDir, "frontend", "dist");
-  const spaAssetsDir = path.join(spaDistDir, "assets");
-  const spaIndexPath = path.join(spaDistDir, "index.html");
+  app.use(
+    "/content",
+    createContentRouter({
+      store,
+      guessContentType,
+      safeContentKey,
+      safeAliasedContentKey,
+      isHtmlContentKey,
+      applyUploadHtmlHeaders,
+    }),
+  );
 
-  app.use("/assets", express.static(spaAssetsDir));
-
-  function sendSpaEntry(_req, res) {
-    if (!fs.existsSync(spaIndexPath)) {
-      res.status(503).json({ error: "service_unavailable" });
-      return;
-    }
-    res.sendFile("index.html", { root: spaDistDir });
-  }
-
-  app.get(/^\/content\/uploads\/.*/, async (req, res, next) => {
-    try {
-      const key = safeContentKey(req.path, "uploads");
-      if (!key) {
-        res.status(400).json({ error: "invalid_path" });
-        return;
-      }
-      const stream = await store.createReadStream(key);
-      if (!stream) {
-        res.status(404).send("Not Found");
-        return;
-      }
-      res.setHeader("Content-Type", guessContentType(key));
-      if (key.toLowerCase().endsWith(".html") || key.toLowerCase().endsWith(".htm")) {
-        res.setHeader("Referrer-Policy", "no-referrer");
-        res.setHeader("X-Content-Type-Options", "nosniff");
-        res.setHeader("Cache-Control", "no-store");
-      }
-      stream.on("error", next);
-      stream.pipe(res);
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  app.get(/^\/content\/thumbnails\/.*/, async (req, res, next) => {
-    try {
-      const key = safeContentKey(req.path, "thumbnails");
-      if (!key) {
-        res.status(400).json({ error: "invalid_path" });
-        return;
-      }
-      const stream = await store.createReadStream(key);
-      if (!stream) {
-        res.status(404).send("Not Found");
-        return;
-      }
-      res.setHeader("Content-Type", guessContentType(key));
-      stream.on("error", next);
-      stream.pipe(res);
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  app.get(/^\/content\/library\/.*/, async (req, res, next) => {
-    try {
-      const key = safeContentKey(req.path, "library");
-      if (!key) {
-        res.status(400).json({ error: "invalid_path" });
-        return;
-      }
-      const stream = await store.createReadStream(key);
-      if (!stream) {
-        res.status(404).send("Not Found");
-        return;
-      }
-      res.setHeader("Content-Type", guessContentType(key));
-      stream.on("error", next);
-      stream.pipe(res);
-    } catch (err) {
-      next(err);
-    }
-  });
-
-  app.get(/^\/.*/, (req, res, next) => {
-    if (isHardCutLegacySpaPath(req.path)) {
-      res.status(404).json({ error: "not_found" });
-      return;
-    }
-    if (shouldServeSpaRoute(req.path)) {
-      sendSpaEntry(req, res);
-      return;
-    }
-    next();
-  });
+  app.use(
+    createSpaRouter({
+      rootDir,
+      shouldServeSpaRoute,
+      isHardCutLegacySpaPath,
+    }),
+  );
 
   app.use((_req, res) => {
     res.status(404).json({ error: "not_found" });

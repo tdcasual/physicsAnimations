@@ -24,6 +24,19 @@
 | `GET` | `/api/library/folders/:id/assets` | 文件夹资源列表 |
 | `GET` | `/api/library/assets/:id` | 资源打开信息（`embed/download`） |
 
+## 公开内容路径补充
+
+- `GET /content/uploads/*`
+  - 上传内容的原始访问路径。
+  - 适合“打开原页面”这类显式直接访问场景。
+- `GET /content/isolated/uploads/*`
+  - 上传 HTML 的隔离预览路径，供前台 `viewer` iframe 默认使用。
+  - 相比原始路径，会为 HTML 响应增加 `Content-Security-Policy: sandbox allow-scripts`，并保留 `Referrer-Policy: no-referrer`、`X-Content-Type-Options: nosniff`、`Cache-Control: no-store`。
+- `GET /content/thumbnails/*`
+  - 缩略图资源路径。
+- `GET /content/library/*`
+  - 资源库文件与生成 viewer 页面路径。
+
 ## 需要管理员登录的接口
 
 ### 账号与系统

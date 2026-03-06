@@ -13,6 +13,7 @@ test("qa gate script includes required verification commands", () => {
   assert.match(script, /npm run test:e2e:admin-write/);
   assert.match(script, /npm run build:frontend/);
   assert.match(script, /npm run smoke:spa-public/);
+  assert.match(script, /npm run smoke:spa-catalog-viewer/);
   assert.match(script, /npm run smoke:spa-admin/);
   assert.match(script, /npm run smoke:spa-admin-write/);
   assert.match(script, /npm run smoke:spa-library-admin/);

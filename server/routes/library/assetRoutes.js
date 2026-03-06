@@ -1,3 +1,5 @@
+const { logAdminAudit } = require("../../lib/auditLogger");
+
 function registerAssetRoutes({
   router,
   service,
@@ -71,6 +73,18 @@ function registerAssetRoutes({
         embedOptions: parsedEmbedOptions.value,
       });
       if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
+      logAdminAudit({
+        action: "library.asset.upload",
+        actor: req.user?.username,
+        targetType: "library_asset",
+        targetId: result.asset?.id,
+        outcome: "success",
+        details: {
+          requestId: req.requestId,
+          folderId: id,
+          openMode: result.asset?.openMode,
+        },
+      });
     }),
   );
 
@@ -100,6 +114,14 @@ function registerAssetRoutes({
         embedOptions: body.embedOptions,
       });
       if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
+      logAdminAudit({
+        action: "library.asset.update",
+        actor: req.user?.username,
+        targetType: "library_asset",
+        targetId: id,
+        outcome: "success",
+        details: { requestId: req.requestId },
+      });
     }),
   );
 
@@ -111,6 +133,14 @@ function registerAssetRoutes({
       const id = parseWithSchema(idSchema, req.params.id);
       const result = await service.deleteAsset({ assetId: id });
       if (sendServiceResult(res, result, () => ({ ok: true }))) return;
+      logAdminAudit({
+        action: "library.asset.delete",
+        actor: req.user?.username,
+        targetType: "library_asset",
+        targetId: id,
+        outcome: "success",
+        details: { requestId: req.requestId },
+      });
     }),
   );
 
@@ -122,6 +152,14 @@ function registerAssetRoutes({
       const id = parseWithSchema(idSchema, req.params.id);
       const result = await service.deleteAssetPermanently({ assetId: id });
       if (sendServiceResult(res, result, () => ({ ok: true }))) return;
+      logAdminAudit({
+        action: "library.asset.delete_permanent",
+        actor: req.user?.username,
+        targetType: "library_asset",
+        targetId: id,
+        outcome: "success",
+        details: { requestId: req.requestId },
+      });
     }),
   );
 
@@ -133,6 +171,14 @@ function registerAssetRoutes({
       const id = parseWithSchema(idSchema, req.params.id);
       const result = await service.restoreAsset({ assetId: id });
       if (sendServiceResult(res, result, (value) => ({ ok: true, asset: value.asset }))) return;
+      logAdminAudit({
+        action: "library.asset.restore",
+        actor: req.user?.username,
+        targetType: "library_asset",
+        targetId: id,
+        outcome: "success",
+        details: { requestId: req.requestId },
+      });
     }),
   );
 }

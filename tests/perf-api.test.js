@@ -13,6 +13,8 @@ const DEFAULT_SCALE = {
   items: 2000,
   categories: 80,
   groups: 5,
+  libraryFolders: 120,
+  libraryAssets: 2400,
   seedCatalogCategories: 20,
   seedItemsPerCategory: 10,
 };
@@ -108,6 +110,40 @@ function buildFixture(scale = DEFAULT_SCALE) {
     };
   });
 
+  const libraryFolders = Array.from({ length: scale.libraryFolders }, (_, i) => ({
+    id: `lib_f_${i + 1}`,
+    name: `Library Folder ${i + 1}`,
+    categoryId: categories[i % categories.length]?.id || "other",
+    coverType: "blank",
+    coverPath: "",
+    parentId: null,
+    order: i,
+    createdAt: "2026-01-01T00:00:00.000Z",
+    updatedAt: "2026-01-01T00:00:00.000Z",
+  }));
+
+  const libraryAssets = Array.from({ length: scale.libraryAssets }, (_, i) => {
+    const folder = libraryFolders[i % libraryFolders.length];
+    return {
+      id: `lib_a_${i + 1}`,
+      folderId: folder.id,
+      adapterKey: "geogebra",
+      displayName: `Library Asset ${i + 1}`,
+      fileName: `asset_${i + 1}.ggb`,
+      filePath: `content/library/assets/lib_a_${i + 1}/source/asset_${i + 1}.ggb`,
+      fileSize: 2048,
+      openMode: i % 3 === 0 ? "download" : "embed",
+      generatedEntryPath: i % 3 === 0 ? "" : `content/library/assets/lib_a_${i + 1}/viewer/index.html`,
+      embedProfileId: "",
+      embedOptions: {},
+      status: "ready",
+      deleted: false,
+      deletedAt: "",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    };
+  });
+
   const animationsJson = {};
   for (let i = 0; i < scale.seedCatalogCategories; i += 1) {
     const categoryId = `seed_${i + 1}`;
@@ -122,7 +158,7 @@ function buildFixture(scale = DEFAULT_SCALE) {
     };
   }
 
-  return { items, categories, groups, animationsJson };
+  return { items, categories, groups, animationsJson, libraryFolders, libraryAssets };
 }
 
 function makeTempRoot() {
@@ -178,6 +214,16 @@ function writeFixture(rootDir, fixture) {
   fs.writeFileSync(
     path.join(rootDir, "content", "categories.json"),
     `${JSON.stringify(categoriesPayload, null, 2)}\n`,
+  );
+
+  fs.mkdirSync(path.join(rootDir, "content", "library"), { recursive: true });
+  fs.writeFileSync(
+    path.join(rootDir, "content", "library", "folders.json"),
+    `${JSON.stringify({ version: 1, folders: fixture.libraryFolders }, null, 2)}\n`,
+  );
+  fs.writeFileSync(
+    path.join(rootDir, "content", "library", "assets.json"),
+    `${JSON.stringify({ version: 1, assets: fixture.libraryAssets }, null, 2)}\n`,
   );
 }
 
@@ -270,6 +316,8 @@ async function runBenchmark({ name, baseUrl, path: apiPath, warmup, runs }) {
 test("perf fixture matches scale B", () => {
   const fixture = buildFixture();
   assert.equal(fixture.items.length, 2000);
+  assert.equal(fixture.libraryFolders.length, 120);
+  assert.equal(fixture.libraryAssets.length, 2400);
 });
 
 test("perf benchmarks emit stats", async () => {
@@ -295,15 +343,23 @@ test("perf benchmarks emit stats", async () => {
       `[perf] scale=${label} items=${scale.items} categories=${scale.categories} groups=${scale.groups} node=${process.version}`,
     );
 
+    const focusLibraryFolderId = fixture.libraryFolders[0]?.id || "lib_f_1";
+
     const endpoints = [
       { name: "/api/catalog", path: "/api/catalog" },
       { name: "/api/categories", path: "/api/categories" },
       { name: "/api/items?page=1&pageSize=24", path: "/api/items?page=1&pageSize=24" },
       { name: "/api/items?type=link", path: "/api/items?page=1&pageSize=24&type=link" },
       { name: "/api/items?q=term", path: "/api/items?page=1&pageSize=24&q=item" },
+      { name: "/api/library/catalog", path: "/api/library/catalog" },
+      {
+        name: `/api/library/folders/${focusLibraryFolderId}/assets`,
+        path: `/api/library/folders/${encodeURIComponent(focusLibraryFolderId)}/assets`,
+      },
     ];
 
     for (const endpoint of endpoints) {
+      assert.ok(budgets.endpoints?.[endpoint.name], `missing perf budget for ${endpoint.name}`);
       const bench = await runBenchmark({
         name: endpoint.name,
         baseUrl,

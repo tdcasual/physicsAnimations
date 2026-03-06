@@ -14,13 +14,15 @@
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `ADMIN_USERNAME` | 未设置 | 不设置时会随机生成用户名（形如 `admin_xxxxxxxx`） |
-| `ADMIN_PASSWORD` | 未设置 | 不设置且未提供 `ADMIN_PASSWORD_HASH` 时会随机生成密码并写入启动日志 |
-| `ADMIN_PASSWORD_HASH` | 未设置 | 若设置，优先于 `ADMIN_PASSWORD` |
-| `JWT_SECRET` | 未设置 | 强烈建议生产环境设置固定值 |
+| `ADMIN_USERNAME` | 未设置 | 非生产环境不设置时会随机生成用户名（形如 `admin_xxxxxxxx`）；生产环境可省略为默认 `admin`，但仍建议显式设置 |
+| `ADMIN_PASSWORD` | 未设置 | 非生产环境不设置且未提供 `ADMIN_PASSWORD_HASH` 时会随机生成密码并写入启动日志；生产环境必须显式设置本项或 `ADMIN_PASSWORD_HASH` |
+| `ADMIN_PASSWORD_HASH` | 未设置 | 若设置，优先于 `ADMIN_PASSWORD`；生产环境建议优先使用本项 |
+| `JWT_SECRET` | 未设置 | 非生产环境可回退到文件/内存兜底；生产环境必须显式设置固定值 |
 | `JWT_ISSUER` | `physicsAnimations` | JWT issuer |
 | `JWT_AUDIENCE` | `physicsAnimations-web` | JWT audience |
 | `JWT_TTL_SECONDS` | `28800` | token 有效期（秒） |
+
+> 说明：当 `NODE_ENV=production` 时，若缺少 `JWT_SECRET` 或缺少 `ADMIN_PASSWORD` / `ADMIN_PASSWORD_HASH`，服务会直接启动失败（fail closed）。
 
 生成 bcrypt hash：
 

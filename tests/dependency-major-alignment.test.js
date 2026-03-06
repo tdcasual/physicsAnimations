@@ -13,6 +13,6 @@ test("backend dependencies are aligned to upgraded major versions", () => {
   assert.equal(pkg.dependencies?.["serverless-http"], undefined);
   assert.equal(pkg.dependencies?.bcryptjs, "^3.0.3");
   assert.equal(pkg.dependencies?.["iconv-lite"], "^0.7.2");
-  assert.equal(pkg.dependencies?.multer, "^2.1.0");
+  assert.equal(pkg.dependencies?.multer, "^2.1.1");
   assert.equal(pkg.dependencies?.["playwright-chromium"], "^1.58.2");
 });

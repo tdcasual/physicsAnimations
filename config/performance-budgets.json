@@ -21,6 +21,14 @@
     "/api/items?q=term": {
       "avgMs": 40,
       "p95Ms": 90
+    },
+    "/api/library/catalog": {
+      "avgMs": 70,
+      "p95Ms": 160
+    },
+    "/api/library/folders/lib_f_1/assets": {
+      "avgMs": 50,
+      "p95Ms": 130
     }
   }
 }

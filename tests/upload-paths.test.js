@@ -87,6 +87,10 @@ test("webdav content routes block traversal and allow valid paths", async () => 
     assert.equal(okUpload.status, 200);
     assert.equal(await okUpload.text(), "ok");
 
+    const okIsolatedUpload = await fetch(`${baseUrl}/content/isolated/uploads/ok.html`);
+    assert.equal(okIsolatedUpload.status, 200);
+    assert.equal(await okIsolatedUpload.text(), "ok");
+
     const okThumb = await fetch(`${baseUrl}/content/thumbnails/ok.png`);
     assert.equal(okThumb.status, 200);
 
@@ -100,6 +104,13 @@ test("webdav content routes block traversal and allow valid paths", async () => 
     const traversal2 = await fetch(`${baseUrl}/content/uploads/%2e%2e%2fitems.json`);
     assert.equal(traversal2.status, 400);
     assert.deepEqual(await traversal2.json(), { error: "invalid_path" });
+
+    const isolatedTraversal1 = await fetch(`${baseUrl}/content/isolated/uploads/../items.json`);
+    assert.ok([400, 404].includes(isolatedTraversal1.status));
+
+    const isolatedTraversal2 = await fetch(`${baseUrl}/content/isolated/uploads/%2e%2e%2fitems.json`);
+    assert.equal(isolatedTraversal2.status, 400);
+    assert.deepEqual(await isolatedTraversal2.json(), { error: "invalid_path" });
 
     const traversal3 = await fetch(`${baseUrl}/content/thumbnails/../items.json`);
     assert.ok([400, 404].includes(traversal3.status));

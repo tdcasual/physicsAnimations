@@ -42,6 +42,8 @@ function captureWarns(fn) {
 
 test("getAuthConfig generates random bootstrap admin credentials and logs them", async () => {
   await withEnvUnset(["ADMIN_USERNAME", "ADMIN_PASSWORD", "ADMIN_PASSWORD_HASH", "JWT_SECRET"], async () => {
+    const oldNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "test";
     const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-auth-"));
     fs.mkdirSync(path.join(rootDir, "content"), { recursive: true });
 
@@ -68,6 +70,8 @@ test("getAuthConfig generates random bootstrap admin credentials and logs them",
       });
       assert.equal(ok, true);
     } finally {
+      if (oldNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = oldNodeEnv;
       fs.rmSync(rootDir, { recursive: true, force: true });
     }
   });
@@ -75,6 +79,8 @@ test("getAuthConfig generates random bootstrap admin credentials and logs them",
 
 test("getAuthConfig keeps explicit username and generates password when only username is provided", async () => {
   await withEnvUnset(["ADMIN_PASSWORD", "ADMIN_PASSWORD_HASH", "JWT_SECRET"], async () => {
+    const oldNodeEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = "test";
     const oldUsername = process.env.ADMIN_USERNAME;
     process.env.ADMIN_USERNAME = "teacher";
     const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-auth-"));
@@ -89,10 +95,11 @@ test("getAuthConfig keeps explicit username and generates password when only use
       assert.ok(notice, "expected generated credential notice in logs");
       assert.match(notice, /username=teacher/);
     } finally {
+      if (oldNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = oldNodeEnv;
       if (oldUsername === undefined) delete process.env.ADMIN_USERNAME;
       else process.env.ADMIN_USERNAME = oldUsername;
       fs.rmSync(rootDir, { recursive: true, force: true });
     }
   });
 });
-

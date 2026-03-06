@@ -1,3 +1,5 @@
+const { logAdminAudit } = require("../../lib/auditLogger");
+
 function registerFolderRoutes({
   router,
   service,
@@ -40,6 +42,14 @@ function registerFolderRoutes({
       const body = parseWithSchema(createFolderSchema, req.body);
       const result = await service.createFolder(body);
       if (sendServiceResult(res, result, (value) => ({ ok: true, folder: value }))) return;
+      logAdminAudit({
+        action: "library.folder.create",
+        actor: req.user?.username,
+        targetType: "library_folder",
+        targetId: result.id,
+        outcome: "success",
+        details: { requestId: req.requestId },
+      });
     }),
   );
 
@@ -81,6 +91,14 @@ function registerFolderRoutes({
         categoryId: body.categoryId,
       });
       if (sendServiceResult(res, result, (value) => ({ ok: true, folder: value.folder }))) return;
+      logAdminAudit({
+        action: "library.folder.update",
+        actor: req.user?.username,
+        targetType: "library_folder",
+        targetId: id,
+        outcome: "success",
+        details: { requestId: req.requestId },
+      });
     }),
   );
 
@@ -92,6 +110,14 @@ function registerFolderRoutes({
       const id = parseWithSchema(idSchema, req.params.id);
       const result = await service.deleteFolder({ folderId: id });
       if (sendServiceResult(res, result, () => ({ ok: true }))) return;
+      logAdminAudit({
+        action: "library.folder.delete",
+        actor: req.user?.username,
+        targetType: "library_folder",
+        targetId: id,
+        outcome: "success",
+        details: { requestId: req.requestId },
+      });
     }),
   );
 }

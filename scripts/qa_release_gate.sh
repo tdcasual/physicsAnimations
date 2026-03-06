@@ -10,6 +10,7 @@ npm --prefix frontend run test -- --run
 npm run typecheck:frontend
 npm run test:e2e:admin-write
 npm run smoke:spa-public
+npm run smoke:spa-catalog-viewer
 npm run smoke:spa-admin
 npm run smoke:spa-admin-write
 npm run smoke:spa-library-admin

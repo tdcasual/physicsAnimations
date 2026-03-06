@@ -157,3 +157,5 @@ dist
 # Worktrees
 .worktrees/
 .worktrees
+
+frontend/node_modules

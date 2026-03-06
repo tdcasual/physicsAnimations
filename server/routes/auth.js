@@ -3,6 +3,7 @@ const { z } = require("zod");
 
 const bcrypt = require("bcryptjs");
 const { issueToken, requireAuth, resolveAdminCredentials, verifyLogin } = require("../lib/auth");
+const { logAdminAudit } = require("../lib/auditLogger");
 const { saveAdminState } = require("../lib/adminState");
 const { parseWithSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
@@ -100,6 +101,18 @@ function createAuthRouter({ authConfig, store }) {
       });
 
       const token = issueToken({ username: nextUsername, authConfig });
+      logAdminAudit({
+        action: "auth.account.update",
+        actor: req.user?.username,
+        targetType: "admin_account",
+        targetId: nextUsername,
+        outcome: "success",
+        details: {
+          requestId: req.requestId,
+          usernameChanged: hasNewUsername,
+          passwordChanged: hasNewPassword,
+        },
+      });
       res.json({ token, username: nextUsername });
     }),
   );

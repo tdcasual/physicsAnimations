@@ -50,6 +50,15 @@ function normalizeViewerTarget(raw: unknown): string {
   return `/${target.replace(/^\.?\//, "")}`;
 }
 
+function isUploadContentTarget(target: string): boolean {
+  return target.startsWith("/content/uploads/");
+}
+
+function toIsolatedUploadTarget(target: string): string {
+  if (!isUploadContentTarget(target)) return target;
+  return `/content/isolated${target.slice("/content".length)}`;
+}
+
 async function tryFetchItemMeta(id: string): Promise<{
   item: any | null;
   status: number;
@@ -123,16 +132,21 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
   }
 
   target = normalizeViewerTarget(target);
+  const openHref = target;
+  const isUploadTarget = isUploadContentTarget(target);
+  const iframeTarget = isUploadTarget ? toIsolatedUploadTarget(target) : target;
 
   if (item?.title) title = String(item.title);
   if (item?.thumbnail) screenshotUrl = String(item.thumbnail);
 
   const isExternalLink = item ? item.type === "link" : isHttpUrl(target);
   const iframeSandbox = "allow-scripts";
-  const showHint = isExternalLink;
+  const showHint = isExternalLink || isUploadTarget;
   const hintText = isExternalLink
     ? "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：默认直接进入交互；若无法嵌入请点“打开原页面”。"
-    : "";
+    : isUploadTarget
+      ? "上传 HTML 默认通过隔离预览路径加载；如需直接打开原页面，请点击“打开原页面”。"
+      : "";
   const showModeToggle = isExternalLink && Boolean(screenshotUrl);
   const screenshotModeDefault = false;
   const modeButtonText = screenshotModeDefault ? "进入交互" : "仅截图";
@@ -140,8 +154,8 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
   return {
     status: "ready",
     title,
-    target,
-    openHref: target,
+    target: iframeTarget,
+    openHref,
     iframeSandbox,
     screenshotUrl,
     showHint,

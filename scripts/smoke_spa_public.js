@@ -150,6 +150,18 @@ function normalizeExpectedTarget(raw) {
   return `/${target.replace(/^\.?\//, "")}`;
 }
 
+function toViewerFrameExpectedTarget(raw) {
+  const target = normalizeExpectedTarget(raw);
+  if (target.startsWith("/content/uploads/")) {
+    return `/content/isolated${target.slice("/content".length)}`;
+  }
+  return target;
+}
+
+function toViewerOpenExpectedTarget(raw) {
+  return normalizeExpectedTarget(raw);
+}
+
 async function cleanupCreatedItem({ baseUrl, token, id }) {
   if (!id || !token) return;
   const response = await fetch(`${baseUrl}/api/items/${encodeURIComponent(id)}`, {
@@ -223,8 +235,9 @@ async function run() {
     });
     createdId = String(created.id);
     const createdItem = await loadItemById({ baseUrl, token: authToken, id: createdId });
-    const expectedTarget = normalizeExpectedTarget(createdItem?.src || "");
-    if (!expectedTarget) throw new Error("created upload item missing src");
+    const expectedFrameTarget = toViewerFrameExpectedTarget(createdItem?.src || "");
+    const expectedOpenTarget = toViewerOpenExpectedTarget(createdItem?.src || "");
+    if (!expectedFrameTarget || !expectedOpenTarget) throw new Error("created upload item missing src");
 
     const itemGroupMeta = await findItemGroupMeta(baseUrl, createdId);
     const expectedGroupTitle = itemGroupMeta?.groupTitle || "";
@@ -278,12 +291,12 @@ async function run() {
       const viewerFrame = page.locator("iframe.viewer-frame");
       await viewerFrame.waitFor({ state: "visible", timeout: 10000 });
       const frameSrc = await viewerFrame.getAttribute("src");
-      if (frameSrc !== expectedTarget) {
-        throw new Error(`viewer frame src mismatch: expected ${expectedTarget}, got ${frameSrc}`);
+      if (frameSrc !== expectedFrameTarget) {
+        throw new Error(`viewer frame src mismatch: expected ${expectedFrameTarget}, got ${frameSrc}`);
       }
       const openHref = await page.getByRole("link", { name: "打开原页面" }).getAttribute("href");
-      if (openHref !== expectedTarget) {
-        throw new Error(`open link href mismatch: expected ${expectedTarget}, got ${openHref}`);
+      if (openHref !== expectedOpenTarget) {
+        throw new Error(`open link href mismatch: expected ${expectedOpenTarget}, got ${openHref}`);
       }
       await page.screenshot({ path: screenshotViewerPath, fullPage: false });
     } finally {
@@ -312,7 +325,13 @@ async function run() {
   }
 }
 
-run().catch((err) => {
-  logger.error("smoke_public_failed", err);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  run().catch((err) => {
+    logger.error("smoke_public_failed", err);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  run,
+};

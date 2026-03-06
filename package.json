@@ -21,6 +21,7 @@
     "test:e2e:admin-write": "node scripts/smoke_spa_admin_writepath.js",
     "smoke:spa-library-admin": "node scripts/smoke_spa_library_admin.js",
     "smoke:spa-public": "node scripts/smoke_spa_public.js",
+    "smoke:spa-catalog-viewer": "node scripts/smoke_spa_catalog_viewer.js",
     "qa:release": "bash ./scripts/qa_release_gate.sh",
     "cleanup:embed-vendor": "node scripts/cleanup_embed_profile_vendor_duplicates.js",
     "backup:webdav": "node scripts/backup_to_webdav.js",
@@ -43,7 +44,7 @@
     "iconv-lite": "^0.7.2",
     "ipaddr.js": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
-    "multer": "^2.1.0",
+    "multer": "^2.1.1",
     "playwright-chromium": "^1.58.2",
     "unzipper": "^0.12.3",
     "zod": "^4.3.6"
