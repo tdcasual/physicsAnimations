@@ -14,11 +14,19 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/type=\"submit\"/);
   });
 
-  it("hides topbar login button on /login and redirects after modal login success", () => {
+  it("hides topbar login button on /login and sanitizes modal redirects through the shared helper", () => {
     const source = read("src/App.vue");
     expect(source).toMatch(/isLoginRoute/);
     expect(source).toMatch(/v-if=\"!auth\.loggedIn && !isLoginRoute\"/);
-    expect(source).toMatch(/await router\.replace\(\"\/admin\/dashboard\"\)/);
+    expect(source).toMatch(/resolveAdminRedirect/);
+    expect(source).toMatch(/const redirect = resolveAdminRedirect\(route\.query\.redirect\)/);
+    expect(source).not.toMatch(/await router\.replace\(\"\/admin\/dashboard\"\)/);
+  });
+
+  it("keeps primary auth actions separate from shell environment settings", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/class="topbar-primary-actions"[\s\S]*class="topbar-environment-shell"/);
+    expect(source).toMatch(/aria-label="切换环境设置"/);
   });
 
   it("disables auto-capitalization and auto-correct in app-shell login modal inputs", () => {
@@ -27,6 +35,14 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/name="username"[\s\S]*autocorrect="off"/);
     expect(source).toMatch(/name="password"[\s\S]*autocapitalize="none"/);
     expect(source).toMatch(/name="password"[\s\S]*autocorrect="off"/);
+  });
+
+  it("clears stale login errors while typing in the app-shell login modal", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/function\s+clearLoginError\(\)\s*\{/);
+    expect(source).toMatch(/if\s*\(!loginError\.value\) return/);
+    expect(source).toMatch(/loginError\.value\s*=\s*""/);
+    expect(source.match(/@input="clearLoginError"/g)?.length ?? 0).toBe(2);
   });
 
   it("locks body scroll while login modal is open and restores it after close", () => {

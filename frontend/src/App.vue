@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
+import { resolveAdminRedirect } from "./router/redirect";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
 import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
@@ -15,15 +16,33 @@ const loginUsername = ref("");
 const loginPassword = ref("");
 const loginError = ref("");
 const classroomModeEnabled = ref(false);
+const topbarUtilityOpen = ref(false);
+const topbarRef = ref<HTMLElement | null>(null);
 const modalCardRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
 const isLoginRoute = computed(() => String(route.path || "") === "/login");
 const isCatalogRoute = computed(() => String(route.path || "") === "/");
+const classroomModeLabel = computed(() => `课堂放大${classroomModeEnabled.value ? "开" : "关"}`);
+const topbarNote = computed(() => {
+  const currentPath = String(route.path || "");
+  if (currentPath.startsWith("/admin")) {
+    return "管理工作台 · 上传演示 · 资源归档";
+  }
+  if (currentPath.startsWith("/viewer")) {
+    return "演示舞台 · 返回目录可继续检索";
+  }
+  if (currentPath.startsWith("/library")) {
+    return "资源档案 · 文件夹浏览";
+  }
+  return "检索课堂演示 · 分章浏览 · 资源归档";
+});
 
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 let bodyOverflowBeforeLogin = "";
+let topbarResizeObserver: ResizeObserver | null = null;
 
 function openLogin() {
+  topbarUtilityOpen.value = false;
   lastFocusedBeforeLogin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   loginOpen.value = true;
   loginError.value = "";
@@ -79,8 +98,23 @@ function handleLoginModalKeydown(event: KeyboardEvent) {
   }
 }
 
+function clearLoginError() {
+  if (!loginError.value) return;
+  loginError.value = "";
+}
+
+function toggleTopbarUtilityPanel() {
+  topbarUtilityOpen.value = !topbarUtilityOpen.value;
+}
+
 function toggleClassroom() {
   classroomModeEnabled.value = toggleClassroomMode();
+  topbarUtilityOpen.value = false;
+}
+
+function toggleThemeMode() {
+  toggleTheme();
+  topbarUtilityOpen.value = false;
 }
 
 function toLoginMessage(err: unknown): string {
@@ -110,14 +144,16 @@ async function submitLogin() {
       password: loginPassword.value,
     });
     loginPassword.value = "";
+    const redirect = resolveAdminRedirect(route.query.redirect);
     closeLogin();
-    await router.replace("/admin/dashboard");
+    await router.replace(redirect);
   } catch (err) {
     loginError.value = toLoginMessage(err);
   }
 }
 
 async function logout() {
+  topbarUtilityOpen.value = false;
   auth.logout();
   if (String(route.path || "").startsWith("/admin")) {
     await router.replace("/");
@@ -125,6 +161,7 @@ async function logout() {
 }
 
 function handleAuthExpired() {
+  topbarUtilityOpen.value = false;
   auth.logout();
   const currentPath = String(route.fullPath || "");
   if (currentPath.startsWith("/admin")) {
@@ -135,11 +172,26 @@ function handleAuthExpired() {
   }
 }
 
+function syncTopbarHeight() {
+  const topbarHeight = Math.ceil(topbarRef.value?.getBoundingClientRect().height || 0);
+  document.documentElement.style.setProperty("--app-topbar-height", `${topbarHeight}px`);
+}
+
 onMounted(async () => {
   window.addEventListener("pa-auth-expired", handleAuthExpired as EventListener);
   classroomModeEnabled.value = applyStoredClassroomMode();
   applyStoredTheme();
+  await nextTick();
+  syncTopbarHeight();
+  if (typeof ResizeObserver !== "undefined" && topbarRef.value) {
+    topbarResizeObserver = new ResizeObserver(() => {
+      syncTopbarHeight();
+    });
+    topbarResizeObserver.observe(topbarRef.value);
+  }
   await auth.bootstrap();
+  await nextTick();
+  syncTopbarHeight();
 });
 
 watch(loginOpen, async (open) => {
@@ -160,24 +212,38 @@ watch(loginOpen, async (open) => {
   restoreTarget?.focus();
 });
 
+watch(
+  () => route.fullPath,
+  () => {
+    topbarUtilityOpen.value = false;
+  },
+);
+
 onBeforeUnmount(() => {
   window.removeEventListener("pa-auth-expired", handleAuthExpired as EventListener);
   window.removeEventListener("keydown", handleLoginModalKeydown);
+  topbarResizeObserver?.disconnect();
+  topbarResizeObserver = null;
+  document.documentElement.style.removeProperty("--app-topbar-height");
   document.body.style.overflow = bodyOverflowBeforeLogin;
 });
 </script>
 
 <template>
   <div class="app-shell">
-    <header class="topbar">
+    <header ref="topbarRef" class="topbar">
       <div class="topbar-inner">
         <div class="topbar-lead">
-          <RouterLink to="/" class="brand brand-link" aria-label="返回目录">
-            <div class="brand-copy">
-              <div class="brand-title">我的学科演示集</div>
-              <div class="brand-subcopy">更快找到课堂演示与资源</div>
-            </div>
-          </RouterLink>
+          <div class="brand-stack">
+            <RouterLink to="/" class="brand brand-link" aria-label="返回目录">
+              <div class="brand-copy">
+                <div class="brand-meta">教学实验图谱</div>
+                <div class="brand-title">我的学科演示集</div>
+                <div class="brand-subcopy">更快找到课堂演示与资源</div>
+              </div>
+            </RouterLink>
+            <p class="topbar-note">{{ topbarNote }}</p>
+          </div>
 
           <RouterLink v-if="!isCatalogRoute" to="/" class="btn btn-ghost btn-nav-home">浏览首页</RouterLink>
         </div>
@@ -187,15 +253,44 @@ onBeforeUnmount(() => {
             <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
               登录
             </button>
-            <RouterLink v-if="auth.loggedIn" to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
+            <template v-if="auth.loggedIn">
+              <RouterLink to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
+              <button type="button" class="btn btn-ghost" @click="logout">退出</button>
+            </template>
           </div>
 
-          <div class="topbar-utility-actions">
+          <button
+            type="button"
+            class="btn btn-ghost topbar-mobile-toggle"
+            aria-label="切换环境设置"
+            :aria-expanded="topbarUtilityOpen ? 'true' : 'false'"
+            aria-controls="topbar-mobile-utility-panel"
+            @click="toggleTopbarUtilityPanel"
+          >
+            环境
+          </button>
+
+          <div class="topbar-environment-shell">
+            <span class="topbar-utility-label">环境偏好</span>
+            <div class="topbar-utility-actions">
+              <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
+                {{ classroomModeLabel }}
+              </button>
+              <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
+            </div>
+          </div>
+
+          <div
+            id="topbar-mobile-utility-panel"
+            class="topbar-mobile-utility-panel"
+            :class="{ 'is-open': topbarUtilityOpen }"
+            :aria-hidden="topbarUtilityOpen ? 'false' : 'true'"
+          >
+            <div class="topbar-mobile-utility-copy">环境偏好</div>
             <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-              课堂模式{{ classroomModeEnabled ? "开" : "关" }}
+              {{ classroomModeLabel }}
             </button>
-            <button type="button" class="btn btn-ghost" @click="toggleTheme()">主题</button>
-            <button v-if="auth.loggedIn" type="button" class="btn btn-ghost" @click="logout">退出</button>
+            <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
           </div>
         </div>
       </div>
@@ -228,6 +323,7 @@ onBeforeUnmount(() => {
               autocapitalize="none"
               autocorrect="off"
               spellcheck="false"
+              @input="clearLoginError"
             />
           </label>
 
@@ -242,6 +338,7 @@ onBeforeUnmount(() => {
               autocapitalize="none"
               autocorrect="off"
               spellcheck="false"
+              @input="clearLoginError"
             />
           </label>
 

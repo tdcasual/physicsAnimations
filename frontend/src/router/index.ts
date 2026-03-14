@@ -15,7 +15,13 @@ export function createAppRouter({
   const router = createRouter({
     history,
     routes: appRoutes,
-    scrollBehavior(_to, _from, savedPosition) {
+    scrollBehavior(to, _from, savedPosition) {
+      const hasHashTarget = typeof to.hash === "string" && to.hash.trim();
+      const hasMeaningfulSavedPosition = !!savedPosition && (savedPosition.top !== 0 || savedPosition.left !== 0);
+
+      if (hasHashTarget && !hasMeaningfulSavedPosition) {
+        return { el: to.hash };
+      }
       if (savedPosition) return savedPosition;
       return { left: 0, top: 0 };
     },

@@ -32,5 +32,14 @@ describe("app shell copy", () => {
     expect(source).toMatch(/class="brand-copy"/);
     expect(source).toMatch(/class="topbar-primary-actions"/);
     expect(source).toMatch(/class="topbar-utility-actions"/);
+    expect(source).toMatch(/class="topbar-environment-shell"/);
+  });
+
+  it("frames utility controls as environment settings instead of peer navigation", () => {
+    const source = readFile("src/App.vue");
+
+    expect(source).toMatch(/环境偏好/);
+    expect(source).toMatch(/昼夜主题/);
+    expect(source).not.toMatch(/>\s*界面\s*</);
   });
 });

@@ -1,6 +1,6 @@
 .catalog-view {
   display: grid;
-  gap: 16px;
+  gap: clamp(16px, 2vw, 22px);
 }
 
 .catalog-hero,
@@ -8,66 +8,94 @@
 .catalog-section {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--surface) 94%, var(--bg));
-  box-shadow: 0 12px 32px -24px rgba(15, 23, 42, 0.45);
-  padding: 18px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--surface) 94%, var(--paper));
+  box-shadow: 0 24px 52px -36px color-mix(in oklab, var(--ink) 26%, transparent);
+  padding: clamp(18px, 2vw, 24px);
+}
+
+.catalog-section[id] {
+  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 136px);
 }
 
 .catalog-hero {
   display: grid;
   gap: 16px 20px;
   background:
-    linear-gradient(135deg, color-mix(in srgb, var(--surface) 92%, var(--bg)), color-mix(in srgb, var(--primary) 8%, var(--surface))),
+    linear-gradient(135deg, color-mix(in oklab, var(--surface) 90%, var(--paper)), color-mix(in oklab, var(--accent) 8%, var(--surface))),
     var(--surface);
 }
 
 .catalog-hero::before {
   content: "";
   position: absolute;
-  inset: -28% auto auto -6%;
-  width: 320px;
-  height: 320px;
+  inset: -28% auto auto -4%;
+  width: 360px;
+  height: 360px;
   border-radius: 999px;
-  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 18%, transparent), transparent 70%);
+  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%);
   pointer-events: none;
 }
 
 .catalog-hero::after {
   content: "";
   position: absolute;
-  inset: auto 18px 18px auto;
-  width: min(220px, 40%);
+  inset: auto 20px 20px auto;
+  width: min(240px, 42%);
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 55%, var(--border)) 60%, transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent-copper) 56%, var(--border)) 60%, transparent);
 }
 
 .catalog-hero-copy,
 .catalog-hero-search,
+.catalog-hero-overview,
+.catalog-hero-map,
 .catalog-hero-actions,
 .catalog-section-heading {
   position: relative;
   z-index: 1;
 }
 
+.catalog-hero-copy {
+  animation: catalog-hero-rise 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.catalog-hero-search {
+  animation: catalog-hero-rise 560ms 70ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.catalog-hero-actions {
+  animation: catalog-hero-rise 560ms 100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.catalog-hero-overview {
+  animation: catalog-hero-rise 560ms 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.catalog-hero-map {
+  animation: catalog-hero-rise 560ms 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .catalog-hero-kicker {
-  color: color-mix(in srgb, var(--primary) 76%, var(--text));
+  color: color-mix(in oklab, var(--accent-copper-strong) 78%, var(--text));
   font-size: calc(12px * var(--ui-scale, 1));
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .catalog-hero-title,
 .catalog-section-title {
   margin: 0;
-  font-size: calc(24px * var(--ui-scale, 1));
-  line-height: 1.15;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
+  font-size: clamp(1.7rem, 1.2rem + 1vw, 2.45rem);
+  line-height: 1.06;
+  letter-spacing: -0.04em;
 }
 
-.catalog-hero-title {
-  letter-spacing: -0.02em;
+.catalog-section-title {
+  font-size: clamp(1.4rem, 1.05rem + 0.45vw, 1.9rem);
 }
 
 .catalog-hero-description,
@@ -75,26 +103,87 @@
   margin: 0;
   color: var(--muted);
   font-size: calc(14px * var(--ui-scale, 1));
+  max-width: 56ch;
+}
+
+.catalog-hero-note {
+  margin: 0;
+  color: color-mix(in oklab, var(--muted) 78%, var(--text));
+  font-size: calc(13px * var(--ui-scale, 1));
+  max-width: 48ch;
+}
+
+.catalog-hero-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.catalog-overview-card {
+  display: grid;
+  gap: 6px;
+  min-height: 100%;
+  padding: 12px 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--accent) 16%, var(--border));
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)), color-mix(in oklab, var(--accent) 6%, var(--surface))),
+    var(--surface);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--paper-strong) 64%, transparent);
+}
+
+.catalog-overview-card:first-child {
+  border-color: color-mix(in oklab, var(--accent) 28%, var(--border));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, var(--surface)), color-mix(in oklab, var(--surface) 93%, var(--paper))),
+    var(--surface);
+}
+
+.catalog-overview-label {
+  color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.catalog-overview-card strong {
+  font-size: calc(15px * var(--ui-scale, 1));
+  line-height: 1.22;
+}
+
+.catalog-overview-card span {
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale, 1));
+  line-height: 1.45;
 }
 
 .catalog-search-field {
   display: grid;
-  gap: 8px;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
+  border-radius: 18px;
+  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
 }
 
 .catalog-search-label,
-.catalog-mobile-filter-label {
-  font-size: calc(13px * var(--ui-scale, 1));
-  color: var(--muted);
+.catalog-mobile-filter-label,
+.catalog-map-heading {
+  font-size: calc(12px * var(--ui-scale, 1));
+  color: color-mix(in oklab, var(--muted) 88%, var(--text));
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .catalog-search {
   width: min(560px, 100%);
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
   border-radius: 999px;
   min-height: 46px;
   padding: 10px 14px;
-  background: color-mix(in srgb, var(--surface) 92%, var(--bg));
+  background: color-mix(in oklab, var(--paper) 70%, var(--surface));
   color: var(--text);
   font-size: calc(14px * var(--ui-scale, 1));
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
@@ -106,8 +195,55 @@
 .catalog-mobile-filter-trigger:focus-visible,
 .catalog-card:focus-visible {
   outline: none;
-  border-color: color-mix(in srgb, var(--primary) 58%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 56%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 15%, transparent);
+}
+
+.catalog-hero-map {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in oklab, var(--accent-copper) 20%, var(--border));
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--accent-copper) 8%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
+    var(--surface);
+}
+
+.catalog-map-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.catalog-map-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.catalog-map-step {
+  min-inline-size: 2.4rem;
+  padding-top: 2px;
+  color: color-mix(in oklab, var(--accent) 80%, var(--text));
+  font-size: calc(12px * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.catalog-map-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.catalog-map-copy strong {
+  font-size: calc(15px * var(--ui-scale, 1));
+}
+
+.catalog-map-copy span {
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .catalog-hero-actions,
@@ -132,36 +268,87 @@
   transform: translateY(-1px);
 }
 
+.catalog-quick-access[data-tone="atlas"] {
+  padding: clamp(14px, 1.7vw, 18px);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 7%, var(--surface)), color-mix(in oklab, var(--surface) 93%, var(--paper))),
+    var(--surface);
+}
+
+.catalog-quick-access-band {
+  display: grid;
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 14px 18px;
+  align-items: center;
+}
+
+.catalog-quick-access-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.catalog-quick-access-kicker,
+.catalog-quick-access-note {
+  margin: 0;
+}
+
+.catalog-quick-access-kicker {
+  color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.catalog-quick-access-title {
+  font-size: clamp(1.15rem, 1rem + 0.35vw, 1.55rem);
+  line-height: 1.12;
+}
+
+.catalog-quick-access-note {
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale, 1));
+  line-height: 1.45;
+  max-width: 34ch;
+}
+
+.catalog-chip-list--quick {
+  align-items: center;
+  justify-content: flex-start;
+}
+
 .catalog-quick-chip {
-  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
   border-radius: 999px;
-  min-height: 42px;
+  min-height: 44px;
   padding: 8px 12px;
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
   color: inherit;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
   font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 600;
 }
 
 .catalog-quick-chip:hover {
-  border-color: color-mix(in srgb, var(--primary) 46%, var(--border));
-  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 42%, var(--border));
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
 }
 
 .catalog-quick-chip-link {
-  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  border-color: color-mix(in oklab, var(--accent-copper) 42%, var(--border));
 }
 
 .catalog-mobile-filter-trigger {
   display: none;
-  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border));
+  border: 1px solid color-mix(in oklab, var(--accent) 22%, var(--border));
   border-radius: 14px;
   min-height: 44px;
   padding: 10px 12px;
-  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
+  background: color-mix(in oklab, var(--surface) 90%, var(--paper));
   color: inherit;
   align-items: center;
   justify-content: space-between;
@@ -172,10 +359,10 @@
 .catalog-mobile-filter-panel {
   display: none;
   gap: 12px;
-  border: 1px solid var(--border);
-  border-radius: 14px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
+  border-radius: 16px;
   padding: 12px;
-  background: color-mix(in srgb, var(--surface) 92%, var(--bg));
+  background: color-mix(in oklab, var(--surface) 92%, var(--paper));
   transform: translateY(-8px) scale(0.985);
   transform-origin: top center;
   opacity: 0.001;
@@ -195,15 +382,72 @@
 .catalog-section-heading {
   display: grid;
   gap: 6px;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+}
+
+.catalog-section-heading-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.catalog-section-heading-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.catalog-section-badge {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
+  color: color-mix(in oklab, var(--accent-strong) 58%, var(--text));
+  font-size: calc(12px * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .catalog-section-heading::after {
   content: "";
-  width: 72px;
+  width: 84px;
   height: 1px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 42%, var(--border)), transparent);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 38%, var(--border)), transparent);
+}
+
+.catalog-section--map {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 7%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
+    var(--surface);
+}
+
+.catalog-section--current {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 10%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+    var(--surface);
+}
+
+.catalog-section--recommended {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent) 9%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+    var(--surface);
+}
+
+.catalog-section--library {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 7%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
+    var(--surface);
+}
+
+.catalog-section[data-section="archive"] {
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)), color-mix(in oklab, var(--surface-raised) 84%, var(--paper))),
+    var(--surface);
 }
 
 .catalog-section-nav {
@@ -218,8 +462,8 @@
 }
 
 .catalog-tab {
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
+  border: 1px solid color-mix(in oklab, var(--line-strong) 16%, var(--border));
+  background: color-mix(in oklab, var(--surface) 90%, var(--paper));
   border-radius: 999px;
   padding: 6px 12px;
   min-height: 44px;
@@ -229,15 +473,16 @@
   white-space: nowrap;
   color: var(--text);
   font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 600;
 }
 
 .catalog-tab:hover {
-  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  border-color: color-mix(in oklab, var(--accent) 36%, var(--border));
 }
 
 .catalog-tab.active {
-  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  border-color: color-mix(in oklab, var(--accent) 62%, var(--border));
+  background: color-mix(in oklab, var(--accent) 15%, var(--surface));
 }
 
 .catalog-select {
@@ -246,10 +491,11 @@
 
 .catalog-state,
 .catalog-empty {
-  border: 1px dashed var(--border);
-  border-radius: 12px;
+  border: 1px dashed color-mix(in oklab, var(--line-strong) 20%, var(--border));
+  border-radius: 14px;
   padding: 20px;
   color: var(--muted);
+  background: color-mix(in oklab, var(--surface) 84%, var(--paper));
 }
 
 .catalog-card-strip,
@@ -261,13 +507,23 @@
 
 .catalog-card {
   position: relative;
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 16%, var(--border));
+  border-radius: 18px;
   text-decoration: none;
   color: inherit;
   overflow: hidden;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 96%, var(--bg)), var(--surface));
-  box-shadow: 0 16px 32px -28px rgba(15, 23, 42, 0.6);
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)) 0%, color-mix(in oklab, var(--surface-raised) 84%, var(--paper)) 100%);
+  box-shadow: 0 20px 40px -32px color-mix(in oklab, var(--ink) 30%, transparent);
+}
+
+.catalog-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 80%, transparent), transparent 70%);
+  opacity: 0.65;
 }
 
 .catalog-card::after {
@@ -275,15 +531,15 @@
   position: absolute;
   inset: 0 0 auto;
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 48%, var(--border)), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 48%, var(--border)), transparent);
   opacity: 0;
   transition: opacity 160ms ease;
 }
 
 .catalog-card:hover {
   transform: translateY(-4px);
-  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
-  box-shadow: 0 24px 48px -30px rgba(37, 99, 235, 0.24);
+  border-color: color-mix(in oklab, var(--accent) 28%, var(--border));
+  box-shadow: 0 26px 54px -34px color-mix(in oklab, var(--accent) 26%, transparent);
 }
 
 .catalog-card:hover::after {
@@ -296,7 +552,8 @@
 
 .catalog-thumb {
   aspect-ratio: 16 / 9;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 72%, var(--bg)), color-mix(in srgb, var(--primary) 8%, var(--surface)));
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 70%, var(--paper)), color-mix(in oklab, var(--accent) 10%, var(--surface)));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -310,30 +567,43 @@
 
 .catalog-thumb-placeholder {
   color: var(--muted);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.08em;
 }
 
 .catalog-card-body {
   display: grid;
-  gap: 4px;
-  padding: 12px;
+  gap: 6px;
+  padding: 14px 14px 16px;
+}
+
+.catalog-card-kicker {
+  color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 .catalog-card-title {
-  font-weight: 600;
+  font-weight: 700;
   display: flex;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 6px;
   overflow-wrap: anywhere;
   word-break: break-word;
-  font-size: calc(15px * var(--ui-scale, 1));
+  font-size: calc(16px * var(--ui-scale, 1));
+  line-height: 1.2;
 }
 
 .catalog-link-tag {
-  color: color-mix(in srgb, var(--primary) 78%, var(--text));
-  font-weight: 500;
+  color: color-mix(in oklab, var(--accent) 76%, var(--text));
+  font-weight: 600;
+}
+
+.catalog-folder-card::before {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--accent) 80%, transparent), transparent 70%);
 }
 
 .catalog-folder-card {
@@ -342,15 +612,27 @@
 
 .catalog-folder-tag {
   color: var(--muted);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .catalog-card-desc {
-  margin-top: 6px;
   color: var(--muted);
   overflow-wrap: anywhere;
   word-break: break-word;
   font-size: calc(13px * var(--ui-scale, 1));
+  line-height: 1.5;
+}
+
+@keyframes catalog-hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes catalog-panel-in {
@@ -358,18 +640,20 @@
     opacity: 0;
     transform: translateY(-8px) scale(0.985);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 980px) {
   .catalog-hero {
-    grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.85fr);
-    align-items: end;
+    grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+    align-items: start;
   }
-  .catalog-hero-actions {
+
+  .catalog-hero-map {
     grid-column: 1 / -1;
   }
 }
@@ -381,10 +665,36 @@
     padding: 14px;
   }
 
+  .catalog-hero-overview,
+  .catalog-map-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-section-heading-row {
+    flex-direction: column;
+  }
+
+  .catalog-quick-access-band {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .catalog-chip-list--quick {
+    display: grid;
+  }
+
+  .catalog-section-badge {
+    min-height: 32px;
+  }
+
   .catalog-hero-actions .btn,
   .catalog-quick-chip {
     width: 100%;
     justify-content: center;
+  }
+
+  .catalog-map-grid {
+    gap: 10px;
   }
 
   .catalog-mobile-filter-trigger {
@@ -415,5 +725,26 @@
 
   .catalog-tabs {
     scrollbar-width: thin;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .catalog-hero-copy,
+  .catalog-hero-search,
+  .catalog-hero-overview,
+  .catalog-hero-map,
+  .catalog-hero-actions {
+    animation: none;
+  }
+
+  .catalog-hero-actions .btn,
+  .catalog-quick-chip,
+  .catalog-tab,
+  .catalog-card {
+    transition: none;
+  }
+
+  .catalog-mobile-filter-panel.is-open {
+    animation: none;
   }
 }

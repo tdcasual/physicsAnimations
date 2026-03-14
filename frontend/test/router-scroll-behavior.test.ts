@@ -31,4 +31,32 @@ describe("router scroll behavior", () => {
 
     expect(position).toEqual(saved);
   });
+
+  it("scrolls to hash anchors for public route navigation when no saved position exists", async () => {
+    const router = createAppRouter({ history: createMemoryHistory("/") });
+    const scrollBehavior = router.options.scrollBehavior;
+    expect(scrollBehavior).toBeTypeOf("function");
+
+    const position = await scrollBehavior!(
+      { path: "/", hash: "#catalog-library" } as never,
+      { path: "/viewer/demo" } as never,
+      null,
+    );
+
+    expect(position).toEqual({ el: "#catalog-library" });
+  });
+
+  it("prefers hash anchors over empty top-left saved positions for hash history entries", async () => {
+    const router = createAppRouter({ history: createMemoryHistory("/") });
+    const scrollBehavior = router.options.scrollBehavior;
+    expect(scrollBehavior).toBeTypeOf("function");
+
+    const position = await scrollBehavior!(
+      { path: "/", hash: "#catalog-current" } as never,
+      { path: "/viewer/demo" } as never,
+      { left: 0, top: 0 },
+    );
+
+    expect(position).toEqual({ el: "#catalog-current" });
+  });
 });

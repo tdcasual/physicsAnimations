@@ -16,6 +16,7 @@ interface ReadyViewerModel {
   showModeToggle: boolean;
   screenshotModeDefault: boolean;
   modeButtonText: string;
+  deferInteractiveStart: boolean;
 }
 
 interface ErrorViewerModel {
@@ -140,16 +141,20 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
   if (item?.thumbnail) screenshotUrl = String(item.thumbnail);
 
   const isExternalLink = item ? item.type === "link" : isHttpUrl(target);
+  const hasScreenshotPreview = Boolean(screenshotUrl);
   const iframeSandbox = "allow-scripts";
   const showHint = isExternalLink || isUploadTarget;
   const hintText = isExternalLink
-    ? "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：默认直接进入交互；若无法嵌入请点“打开原页面”。"
+    ? hasScreenshotPreview
+      ? "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：默认先显示截图；如需尝试交互或直接访问，请使用“进入交互”或“打开原页面”。"
+      : "外链站点可能因 X-Frame-Options / CSP 禁止被嵌入：若无法嵌入请点“打开原页面”。"
     : isUploadTarget
       ? "上传 HTML 默认通过隔离预览路径加载；如需直接打开原页面，请点击“打开原页面”。"
       : "";
-  const showModeToggle = isExternalLink && Boolean(screenshotUrl);
-  const screenshotModeDefault = false;
+  const showModeToggle = isExternalLink && hasScreenshotPreview;
+  const screenshotModeDefault = isExternalLink && hasScreenshotPreview;
   const modeButtonText = screenshotModeDefault ? "进入交互" : "仅截图";
+  const deferInteractiveStart = isExternalLink;
 
   return {
     status: "ready",
@@ -163,5 +168,6 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
     showModeToggle,
     screenshotModeDefault,
     modeButtonText,
+    deferInteractiveStart,
   };
 }

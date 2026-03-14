@@ -9,6 +9,12 @@ export function normalizePublicUrl(raw: string): string {
   return `/${value.replace(/^\.?\//, "")}`;
 }
 
+
+export function isCatalogAppRoute(href: string): boolean {
+  const value = normalizePublicUrl(href);
+  return value.startsWith("/viewer/") || value.startsWith("/library/folder/");
+}
+
 export function getCatalogItemHref(item: CatalogItem): string {
   return normalizePublicUrl(item.href || item.src || "#");
 }

@@ -285,7 +285,10 @@ async function run() {
       }
       await page.screenshot({ path: screenshotCatalogPath, fullPage: false });
 
-      await page.goto(`${baseUrl}/viewer/${encodeURIComponent(createdId)}`, { waitUntil: "networkidle" });
+      await Promise.all([
+        page.waitForURL(new RegExp(`/viewer/${createdId}$`), { timeout: 10000 }),
+        card.click(),
+      ]);
       await page.getByRole("link", { name: "打开原页面" }).waitFor({ state: "visible", timeout: 10000 });
       await page.getByText(smokeTitle).first().waitFor({ state: "visible", timeout: 10000 });
       const viewerFrame = page.locator("iframe.viewer-frame");
@@ -299,6 +302,13 @@ async function run() {
         throw new Error(`open link href mismatch: expected ${expectedOpenTarget}, got ${openHref}`);
       }
       await page.screenshot({ path: screenshotViewerPath, fullPage: false });
+
+      await page.locator(".viewer-back").click();
+      await searchInput.waitFor({ state: "visible", timeout: 10000 });
+      const searchAfterReturn = await searchInput.inputValue();
+      if (searchAfterReturn !== smokeTitle) {
+        throw new Error(`catalog search lost context after viewer return: expected ${smokeTitle}, got ${searchAfterReturn}`);
+      }
     } finally {
       await browser.close();
     }

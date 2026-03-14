@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CatalogItem } from "../src/features/catalog/types";
-import { getCatalogItemHref, normalizePublicUrl } from "../src/features/catalog/catalogLink";
+import { getCatalogItemHref, isCatalogAppRoute, normalizePublicUrl } from "../src/features/catalog/catalogLink";
 
 describe("catalog link selection", () => {
   it("prefers viewer route for external link items when href is provided", () => {
@@ -49,6 +49,14 @@ describe("catalog link selection", () => {
     };
 
     expect(getCatalogItemHref(item)).toBe("/uploads/upload-1.html");
+  });
+
+
+  it("recognizes in-app catalog routes that should preserve router history context", () => {
+    expect(isCatalogAppRoute("/viewer/link-1")).toBe(true);
+    expect(isCatalogAppRoute("/library/folder/folder-1")).toBe(true);
+    expect(isCatalogAppRoute("/content/uploads/upload-1/index.html")).toBe(false);
+    expect(isCatalogAppRoute("https://example.com/demo")).toBe(false);
   });
 
   it("normalizes empty value to placeholder", () => {

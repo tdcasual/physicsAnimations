@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { getCatalogItemHref } from "./catalogLink";
 import { loadCatalogData } from "./catalogService";
 import { computeCatalogView, filterFoldersByCatalogContext } from "./catalogState";
@@ -13,15 +13,78 @@ const MAX_QUICK_CATEGORIES = 4;
 const MAX_FEATURED_ITEMS = 4;
 const MAX_LIBRARY_HIGHLIGHTS = 3;
 
-function readViewState(): { groupId: string; categoryId: string } | null {
+export interface CatalogViewStateSnapshot {
+  groupId: string;
+  categoryId: string;
+  query: string;
+}
+
+export function parseCatalogViewState(raw: string | null | undefined): CatalogViewStateSnapshot | null {
   try {
-    const raw = localStorage.getItem(VIEW_STATE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw) as Record<string, unknown>;
     const groupId = typeof data.groupId === "string" ? data.groupId : "";
     const categoryId = typeof data.categoryId === "string" ? data.categoryId : "";
+    const query = typeof data.query === "string" ? data.query : "";
     if (!groupId) return null;
-    return { groupId, categoryId: categoryId || "all" };
+    return {
+      groupId,
+      categoryId: categoryId || "all",
+      query,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function serializeCatalogViewState(snapshot: CatalogViewStateSnapshot): string {
+  return JSON.stringify({
+    groupId: String(snapshot.groupId || "").trim(),
+    categoryId: String(snapshot.categoryId || "all").trim() || "all",
+    query: String(snapshot.query || ""),
+  });
+}
+
+export function buildCatalogHomepageSections(
+  items: CatalogItem[],
+  options: { currentLimit?: number; recommendedLimit?: number } = {},
+): { currentItems: CatalogItem[]; recommendedItems: CatalogItem[] } {
+  const currentLimit = Number(options.currentLimit || MAX_FEATURED_ITEMS);
+  const recommendedLimit = Number(options.recommendedLimit || MAX_FEATURED_ITEMS);
+  const currentItems = (items || []).slice(0, currentLimit);
+  const recommendedItems = (items || []).slice(currentLimit, currentLimit + recommendedLimit);
+
+  return {
+    currentItems,
+    recommendedItems,
+  };
+}
+
+export function buildCatalogHeroActions(input: {
+  currentItemsCount: number;
+  libraryHighlightsCount: number;
+}): {
+  continueHref: string;
+  secondaryHref: string;
+  secondaryLabel: string;
+} {
+  const hasCurrentItems = Number(input.currentItemsCount || 0) > 0;
+  const hasLibraryHighlights = Number(input.libraryHighlightsCount || 0) > 0;
+
+  return {
+    continueHref: hasCurrentItems
+      ? "#catalog-current"
+      : hasLibraryHighlights
+        ? "#catalog-library"
+        : "#catalog-all",
+    secondaryHref: hasLibraryHighlights ? "#catalog-library" : "#catalog-all",
+    secondaryLabel: hasLibraryHighlights ? "浏览资源库" : "浏览全部内容",
+  };
+}
+
+function readViewState(): CatalogViewStateSnapshot | null {
+  try {
+    return parseCatalogViewState(localStorage.getItem(VIEW_STATE_KEY));
   } catch {
     return null;
   }
@@ -40,9 +103,10 @@ export function useCatalogViewState() {
     try {
       localStorage.setItem(
         VIEW_STATE_KEY,
-        JSON.stringify({
+        serializeCatalogViewState({
           groupId: selectedGroupId.value,
           categoryId: selectedCategoryId.value,
+          query: query.value,
         }),
       );
     } catch {
@@ -71,6 +135,7 @@ export function useCatalogViewState() {
   const directCategories = computed(() => view.value.categories.slice(0, MAX_CATEGORY_TABS));
   const overflowCategories = computed(() => view.value.categories.slice(MAX_CATEGORY_TABS));
   const quickCategories = computed(() => view.value.categories.slice(0, MAX_QUICK_CATEGORIES));
+  const hasCatalogGroups = computed(() => view.value.groups.length > 0);
 
   const filteredLibraryFolders = computed(() => {
     const activeGroupCategoryIds = new Set(view.value.categories.map((category) => category.id));
@@ -82,8 +147,21 @@ export function useCatalogViewState() {
     });
   });
 
-  const featuredItems = computed(() => view.value.items.slice(0, MAX_FEATURED_ITEMS));
+  const homepageSections = computed(() =>
+    buildCatalogHomepageSections(view.value.items, {
+      currentLimit: MAX_FEATURED_ITEMS,
+      recommendedLimit: MAX_FEATURED_ITEMS,
+    }),
+  );
+  const currentItems = computed(() => homepageSections.value.currentItems);
+  const recommendedItems = computed(() => homepageSections.value.recommendedItems);
   const libraryHighlights = computed(() => filteredLibraryFolders.value.slice(0, MAX_LIBRARY_HIGHLIGHTS));
+  const heroActions = computed(() =>
+    buildCatalogHeroActions({
+      currentItemsCount: currentItems.value.length,
+      libraryHighlightsCount: libraryHighlights.value.length,
+    }),
+  );
 
   const heroTitle = computed(() => {
     if (activeCategory.value) return `${activeCategory.value.title} 导航`;
@@ -92,12 +170,12 @@ export function useCatalogViewState() {
 
   const heroDescription = computed(() => {
     if (query.value.trim()) {
-      return `当前正按“${query.value.trim()}”筛选，可从常用分类、推荐演示和资源库入口继续缩小范围。`;
+      return `当前正按“${query.value.trim()}”筛选，可继续浏览当前内容，或按需切去资源档案。`;
     }
     if (activeCategory.value) {
-      return `围绕 ${activeCategory.value.title} 快速进入课堂演示、资源库精选和完整目录。`;
+      return `围绕 ${activeCategory.value.title} 更快进入课堂演示、资源档案和完整目录。`;
     }
-    return "从常用分类、资源库精选和推荐演示中更快找到课堂演示与资源。";
+    return "从分类、推荐演示和资源档案中更快定位课堂内容。";
   });
 
   const currentSectionTitle = computed(() => {
@@ -122,17 +200,27 @@ export function useCatalogViewState() {
     persistViewState();
   }
 
+  watch(query, () => {
+    persistViewState();
+  });
+
   onMounted(async () => {
     const savedView = readViewState();
     if (savedView) {
       selectedGroupId.value = savedView.groupId;
       selectedCategoryId.value = savedView.categoryId;
+      query.value = savedView.query;
     }
 
     loading.value = true;
     loadError.value = "";
     try {
-      catalog.value = await loadCatalogData();
+      const catalogResult = await loadCatalogData();
+      catalog.value = catalogResult.catalog;
+      if (!catalogResult.ok) {
+        loadError.value = "加载目录失败，请稍后重试。";
+        return;
+      }
 
       const next = computeCatalogView({
         catalog: catalog.value,
@@ -146,8 +234,6 @@ export function useCatalogViewState() {
 
       const libraryCatalog = await listLibraryCatalog().catch(() => ({ folders: [] }));
       libraryFolders.value = Array.isArray(libraryCatalog.folders) ? libraryCatalog.folders : [];
-    } catch {
-      loadError.value = "加载目录失败，请稍后重试。";
     } finally {
       loading.value = false;
     }
@@ -163,9 +249,14 @@ export function useCatalogViewState() {
     directCategories,
     overflowCategories,
     quickCategories,
+    hasCatalogGroups,
     filteredLibraryFolders,
-    featuredItems,
+    currentItems,
+    recommendedItems,
     libraryHighlights,
+    continueBrowseHref: computed(() => heroActions.value.continueHref),
+    secondaryBrowseHref: computed(() => heroActions.value.secondaryHref),
+    secondaryBrowseLabel: computed(() => heroActions.value.secondaryLabel),
     heroTitle,
     heroDescription,
     currentSectionTitle,

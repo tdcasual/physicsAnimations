@@ -2,6 +2,19 @@ import type { CatalogData } from "./types";
 
 export const DEFAULT_GROUP_ID = "physics";
 
+export interface CatalogLoadSuccess {
+  ok: true;
+  catalog: CatalogData;
+}
+
+export interface CatalogLoadFailure {
+  ok: false;
+  catalog: CatalogData;
+  error: "request_failed";
+}
+
+export type CatalogLoadResult = CatalogLoadSuccess | CatalogLoadFailure;
+
 function safeText(text: unknown): string {
   return typeof text === "string" ? text : "";
 }
@@ -40,12 +53,19 @@ export function normalizeCatalog(catalog: any): CatalogData {
   return { groups: {} };
 }
 
-export async function loadCatalogData(): Promise<CatalogData> {
+export async function loadCatalogData(): Promise<CatalogLoadResult> {
   try {
     const response = await fetch("/api/catalog", { method: "GET", cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return normalizeCatalog(await response.json());
+    return {
+      ok: true,
+      catalog: normalizeCatalog(await response.json()),
+    };
   } catch {
-    return { groups: {} };
+    return {
+      ok: false,
+      catalog: { groups: {} },
+      error: "request_failed",
+    };
   }
 }

@@ -7,13 +7,18 @@ function readFile(relPath: string): string {
 }
 
 describe("topbar responsive layout", () => {
-  it("defines a mobile breakpoint that keeps action buttons horizontally scrollable", () => {
+  it("defines a mobile breakpoint that collapses utility controls into a compact disclosure panel", () => {
+    const app = readFile("src/App.vue");
     const css = readFile("src/styles.css");
+
+    expect(app).toMatch(/topbar-mobile-toggle/);
+    expect(app).toMatch(/topbar-mobile-utility-panel/);
+    expect(app).toMatch(/topbar-environment-shell/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)/);
-    expect(css).toMatch(/\.topbar-inner\s*\{[\s\S]*flex-wrap:\s*wrap/);
-    expect(css).toMatch(/\.actions\s*\{[\s\S]*flex-wrap:\s*nowrap/);
-    expect(css).toMatch(/\.actions\s*\{[\s\S]*overflow-x:\s*auto/);
-    expect(css).toMatch(/\.actions\s*\{[\s\S]*-webkit-overflow-scrolling:\s*touch/);
+    expect(css).toMatch(/\.topbar-mobile-toggle\s*\{[\s\S]*display:\s*none\s*!important/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-mobile-toggle\s*\{[\s\S]*display:\s*inline-flex\s*!important/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-environment-shell\s*\{[\s\S]*display:\s*none/);
+    expect(css).toMatch(/\.topbar-mobile-utility-panel\s*\{[\s\S]*opacity:/);
   });
 
   it("uses dynamic viewport units to avoid iOS 100vh jump", () => {
@@ -41,6 +46,7 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/\.brand-copy\s*\{[\s\S]*display:\s*grid/);
     expect(css).toMatch(/\.topbar-primary-actions\s*\{[\s\S]*display:\s*flex/);
     expect(css).toMatch(/\.topbar-utility-actions\s*\{[\s\S]*display:\s*flex/);
+    expect(css).toMatch(/\.topbar-environment-shell\s*\{[\s\S]*display:\s*flex/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-actions\s*\{[\s\S]*width:\s*100%/);
   });
 });

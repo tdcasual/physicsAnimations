@@ -17,7 +17,7 @@ function jsonResponse(payload: unknown, status = 200): Response {
 }
 
 describe("loadViewerModel", () => {
-  it("uses interactive mode by default for external links with screenshot", async () => {
+  it("uses screenshot mode by default for external links when a captured preview exists", async () => {
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
       if (url.includes("/api/items/")) {
@@ -42,8 +42,40 @@ describe("loadViewerModel", () => {
     expect(model.target).toBe("https://example.com");
     expect(model.showHint).toBe(true);
     expect(model.showModeToggle).toBe(true);
+    expect(model.deferInteractiveStart).toBe(true);
+    expect(model.screenshotModeDefault).toBe(true);
+    expect(model.modeButtonText).toBe("进入交互");
+    expect(model.hintText).toContain("默认先显示截图");
+  });
+
+  it("keeps interactive mode when external links have no screenshot preview", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/items/")) {
+        return jsonResponse({
+          item: {
+            id: "link-no-shot",
+            type: "link",
+            src: "https://example.com/no-shot",
+            title: "无截图外链",
+            thumbnail: "",
+          },
+        });
+      }
+      return new Response("not_found", { status: 404 });
+    });
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const model = await loadViewerModel({ id: "link-no-shot" });
+    expect(model.status).toBe("ready");
+    if (model.status !== "ready") return;
+
+    expect(model.showHint).toBe(true);
+    expect(model.showModeToggle).toBe(false);
+    expect(model.deferInteractiveStart).toBe(true);
     expect(model.screenshotModeDefault).toBe(false);
     expect(model.modeButtonText).toBe("仅截图");
+    expect(model.hintText).not.toContain("默认先显示截图");
   });
 
   it("returns not_found when item detail is unavailable", async () => {
@@ -116,6 +148,7 @@ describe("loadViewerModel", () => {
     expect(model.target).toBe("/content/isolated/uploads/upload-1/index.html");
     expect(model.openHref).toBe("/content/uploads/upload-1/index.html");
     expect(model.iframeSandbox).toBe("allow-scripts");
+    expect(model.deferInteractiveStart).toBe(false);
     expect(model.showHint).toBe(true);
     expect(model.hintText).toContain("隔离");
   });
