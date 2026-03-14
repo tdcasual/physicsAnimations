@@ -132,6 +132,7 @@ type LibraryAdminActionState = {
   clearFieldErrors: (...fieldKeys: string[]) => void;
   getFieldError: (fieldKey: string) => string;
   setActivePanelTab: (tab: LibraryPanelTab) => void;
+  selectFolder: (folderId: string, options?: { panelTab?: LibraryPanelTab }) => void;
   isPanelSectionOpen: (key: string) => boolean;
   togglePanelSection: (key: string) => void;
   ensurePanelSectionOpen: (key: string) => void;

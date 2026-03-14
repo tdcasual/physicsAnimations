@@ -93,12 +93,12 @@ const createCategoryHiddenModel = computed({
     <div class="form-grid">
       <label class="field">
         <span>大类 ID（英文/数字）</span>
-        <input v-model="createGroupIdModel" class="field-input" type="text" />
+        <input v-model="createGroupIdModel" class="field-input" type="text" :disabled="saving" />
       </label>
 
       <label class="field">
         <span>标题</span>
-        <input v-model="createGroupTitleModel" class="field-input" type="text" />
+        <input v-model="createGroupTitleModel" class="field-input" type="text" :disabled="saving" />
       </label>
 
       <details class="subaccordion" :open="createGroupHiddenModel || Number(createGroupOrderModel || 0) !== 0">
@@ -106,10 +106,10 @@ const createCategoryHiddenModel = computed({
         <div class="form-grid subaccordion-body">
           <label class="field">
             <span>排序（越大越靠前）</span>
-            <input v-model.number="createGroupOrderModel" class="field-input" type="number" />
+            <input v-model.number="createGroupOrderModel" class="field-input" type="number" :disabled="saving" />
           </label>
           <label class="checkbox">
-            <input v-model="createGroupHiddenModel" type="checkbox" />
+            <input v-model="createGroupHiddenModel" type="checkbox" :disabled="saving" />
             <span>隐藏该大类（首页不显示）</span>
           </label>
         </div>
@@ -139,7 +139,7 @@ const createCategoryHiddenModel = computed({
     <div class="form-grid">
       <label class="field field-span">
         <span>标题</span>
-        <input v-model="groupFormTitleModel" class="field-input" type="text" />
+        <input v-model="groupFormTitleModel" class="field-input" type="text" :disabled="saving" />
       </label>
 
       <details class="subaccordion" :open="groupFormHiddenModel || Number(groupFormOrderModel || 0) !== 0">
@@ -147,10 +147,10 @@ const createCategoryHiddenModel = computed({
         <div class="form-grid subaccordion-body">
           <label class="field">
             <span>排序（越大越靠前）</span>
-            <input v-model.number="groupFormOrderModel" class="field-input" type="number" />
+            <input v-model.number="groupFormOrderModel" class="field-input" type="number" :disabled="saving" />
           </label>
           <label class="checkbox">
-            <input v-model="groupFormHiddenModel" type="checkbox" />
+            <input v-model="groupFormHiddenModel" type="checkbox" :disabled="saving" />
             <span>隐藏该大类（首页不显示）</span>
           </label>
         </div>
@@ -174,12 +174,12 @@ const createCategoryHiddenModel = computed({
     <div class="form-grid">
       <label class="field">
         <span>分类 ID（英文/数字）</span>
-        <input id="taxonomy-category-create-id" v-model="createCategoryIdModel" class="field-input" type="text" />
+        <input id="taxonomy-category-create-id" v-model="createCategoryIdModel" class="field-input" type="text" :disabled="saving" />
       </label>
 
       <label class="field">
         <span>标题</span>
-        <input v-model="createCategoryTitleModel" class="field-input" type="text" />
+        <input v-model="createCategoryTitleModel" class="field-input" type="text" :disabled="saving" />
       </label>
 
       <details class="subaccordion" :open="createCategoryHiddenModel || Number(createCategoryOrderModel || 0) !== 0">
@@ -187,10 +187,10 @@ const createCategoryHiddenModel = computed({
         <div class="form-grid subaccordion-body">
           <label class="field">
             <span>排序（越大越靠前）</span>
-            <input v-model.number="createCategoryOrderModel" class="field-input" type="number" />
+            <input v-model.number="createCategoryOrderModel" class="field-input" type="number" :disabled="saving" />
           </label>
           <label class="checkbox">
-            <input v-model="createCategoryHiddenModel" type="checkbox" />
+            <input v-model="createCategoryHiddenModel" type="checkbox" :disabled="saving" />
             <span>隐藏该分类（首页不显示）</span>
           </label>
         </div>

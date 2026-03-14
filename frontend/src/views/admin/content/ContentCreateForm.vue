@@ -32,6 +32,7 @@ const emit = defineEmits<{
       <select
         :value="props.linkCategoryId"
         class="field-input"
+        :disabled="props.saving"
         @change="emit('update:linkCategoryId', ($event.target as HTMLSelectElement).value)"
       >
         <option v-for="option in props.groupedCategoryOptions" :key="option.value" :value="option.value">
@@ -51,6 +52,7 @@ const emit = defineEmits<{
       autocorrect="off"
       spellcheck="false"
       placeholder="https://example.com"
+      :disabled="props.saving"
       @input="
         emit('update:linkUrl', ($event.target as HTMLInputElement).value);
         emit('clear-link-url-error');
@@ -65,6 +67,7 @@ const emit = defineEmits<{
       :value="props.linkTitle"
       class="field-input"
       type="text"
+      :disabled="props.saving"
       @input="emit('update:linkTitle', ($event.target as HTMLInputElement).value)"
     />
   </label>
@@ -74,6 +77,7 @@ const emit = defineEmits<{
     <textarea
       :value="props.linkDescription"
       class="field-input field-textarea"
+      :disabled="props.saving"
       @input="emit('update:linkDescription', ($event.target as HTMLTextAreaElement).value)"
     />
   </label>

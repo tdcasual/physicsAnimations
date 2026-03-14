@@ -7,6 +7,7 @@ import {
 import { useActionFeedback } from "../composables/useActionFeedback";
 import { useFieldErrors } from "../composables/useFieldErrors";
 import { usePagedAdminList } from "../composables/usePagedAdminList";
+import { usePendingChangesGuard } from "../composables/usePendingChangesGuard";
 import { createContentAdminActions } from "./useContentAdminActions";
 
 interface CategoryRow {
@@ -48,6 +49,7 @@ export function useContentAdmin() {
   const editOrder = ref(0);
   const editPublished = ref(true);
   const editHidden = ref(false);
+  const editingSnapshot = ref<AdminItem | null>(null);
 
   const groupedCategoryOptions = computed(() => {
     const groupsMap = new Map(groups.value.map((group) => [group.id, group.title]));
@@ -57,7 +59,23 @@ export function useContentAdmin() {
     }));
   });
 
-  const selectedItem = computed(() => items.value.find((item) => item.id === editingId.value) || null);
+  const selectedItem = computed(() => items.value.find((item) => item.id === editingId.value) || editingSnapshot.value || null);
+  const loadedEditSnapshot = computed(() => {
+    const item = editingSnapshot.value;
+    if (!item) return "";
+    return JSON.stringify({
+      title: item.title || "",
+      description: item.description || "",
+      categoryId: item.categoryId || "other",
+      order: Number(item.order || 0),
+      published: item.published !== false,
+      hidden: item.hidden === true,
+    });
+  });
+  const hasPendingEditChanges = computed(() => {
+    if (!editingSnapshot.value) return false;
+    return buildEditSnapshot() !== loadedEditSnapshot.value;
+  });
 
   function viewerHref(id: string): string {
     const base = import.meta.env.BASE_URL || "/";
@@ -80,8 +98,25 @@ export function useContentAdmin() {
     return fieldErrorState.getFieldError(key);
   }
 
+  function buildEditSnapshot(): string {
+    return JSON.stringify({
+      title: editTitle.value,
+      description: editDescription.value,
+      categoryId: editCategoryId.value,
+      order: Number(editOrder.value || 0),
+      published: editPublished.value,
+      hidden: editHidden.value,
+    });
+  }
+
+  function confirmDiscardPendingEdit(): boolean {
+    if (!editingId.value || !editingSnapshot.value || !hasPendingEditChanges.value) return true;
+    return window.confirm("当前编辑内容有未保存更改，确定切换吗？");
+  }
+
   function resetEdit() {
     editingId.value = "";
+    editingSnapshot.value = null;
     editTitle.value = "";
     editDescription.value = "";
     editCategoryId.value = "other";
@@ -91,8 +126,12 @@ export function useContentAdmin() {
     clearFieldErrors("editTitle");
   }
 
-  function beginEdit(item: AdminItem) {
+  function beginEdit(item: AdminItem, options: { force?: boolean } = {}) {
+    if (item.id === editingId.value && !options.force) return;
+    if (!options.force && !confirmDiscardPendingEdit()) return;
+
     editingId.value = item.id;
+    editingSnapshot.value = item;
     editTitle.value = item.title || "";
     editDescription.value = item.description || "";
     editCategoryId.value = item.categoryId || "other";
@@ -106,8 +145,8 @@ export function useContentAdmin() {
     const currentId = editingId.value;
     if (!currentId) return;
     const currentItem = items.value.find((item) => item.id === currentId);
-    if (!currentItem) {
-      resetEdit();
+    if (currentItem) {
+      editingSnapshot.value = currentItem;
     }
   }
 
@@ -170,6 +209,12 @@ export function useContentAdmin() {
       saving.value = false;
     }
   }
+
+  usePendingChangesGuard({
+    hasPendingChanges: hasPendingEditChanges,
+    isBlocked: saving,
+    message: "当前编辑内容有未保存更改，确定离开当前页面吗？",
+  });
 
   let timer = 0;
   watch(query, () => {

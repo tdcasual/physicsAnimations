@@ -86,6 +86,18 @@ function readLibrarySources() {
 }
 
 describe("admin library layout", () => {
+  it("adopts the shared admin page header and workspace semantics", () => {
+    const { template, style, combined } = readLibrarySources();
+
+    expect(template).toMatch(/admin-page-header/);
+    expect(template).toMatch(/admin-page-kicker/);
+    expect(template).toMatch(/admin-page-intro/);
+    expect(template).toMatch(/admin-page-meta/);
+    expect(template).toMatch(/admin-workspace-grid/);
+    expect(combined).toMatch(/admin-page-stack/);
+    expect(style).not.toMatch(/^\s*\.library-header\s*\{/m);
+  });
+
   it("uses a three-column workbench with panel tabs and scoped search", () => {
     const { template, combined } = readLibrarySources();
     expect(template).toMatch(/library-workbench/);

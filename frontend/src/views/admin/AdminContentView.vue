@@ -1,19 +1,43 @@
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
+import type { AdminItemRow } from "../../features/admin/adminApi";
+import { useContentAdmin } from "../../features/admin/content/useContentAdmin";
+import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
 import ContentCreateForm from "./content/ContentCreateForm.vue";
 import ContentEditPanel from "./content/ContentEditPanel.vue";
 import ContentListPanel from "./content/ContentListPanel.vue";
-import { useContentAdmin } from "../../features/admin/content/useContentAdmin";
 
 const vm = reactive(useContentAdmin());
+const contentEditorPanelRef = ref<HTMLElement | null>(null);
+const { focusEditPanel: focusContentEditPanel } = createAdminMobileEditPanelFocus({
+  panelRef: contentEditorPanelRef,
+  maxWidth: 1024,
+});
+
+async function openContentEditor(item: AdminItemRow) {
+  vm.beginEdit(item);
+  if (vm.editingId !== item.id) return;
+  await focusContentEditPanel();
+}
 </script>
 
 <template>
   <section class="admin-content-view">
-    <h2>内容管理</h2>
+    <header class="admin-page-header">
+      <div class="admin-page-copy">
+        <p class="admin-page-kicker">内容编修</p>
+        <h2>内容管理</h2>
+        <p class="admin-page-intro">把外链标题、说明和发布状态整理成可直接出现在公开目录的课堂入口。</p>
+      </div>
+      <div class="admin-page-meta">
+        <span class="admin-page-meta-label">当前节奏</span>
+        <strong>{{ vm.editingId ? "编辑详情已展开" : "先补新条目" }}</strong>
+        <span>{{ vm.editingId ? "右侧面板保持聚焦，适合连续修订标题、分类与排序。" : "先创建或筛选条目，再在右侧完成发布设定。" }}</span>
+      </div>
+    </header>
 
-    <div class="workspace-grid">
-      <div class="admin-panel list-panel admin-card">
+    <div class="admin-workspace-grid">
+      <div class="list-panel admin-card">
         <ContentCreateForm
           :grouped-category-options="vm.groupedCategoryOptions"
           :link-category-id="vm.linkCategoryId"
@@ -41,13 +65,13 @@ const vm = reactive(useContentAdmin());
           :preview-href="vm.previewHref"
           :saving="vm.saving"
           @update:query="vm.query = $event"
-          @begin-edit="vm.beginEdit"
+          @begin-edit="openContentEditor"
           @remove-item="vm.removeItem"
           @load-more="vm.reloadItems({ reset: false })"
         />
       </div>
 
-      <aside class="admin-panel editor-panel admin-card">
+      <aside ref="contentEditorPanelRef" class="editor-panel admin-card admin-mobile-focus-anchor">
         <ContentEditPanel
           :selected-item="vm.selectedItem"
           :action-feedback="vm.actionFeedback"
@@ -84,25 +108,6 @@ const vm = reactive(useContentAdmin());
   gap: 14px;
 }
 
-h2 {
-  margin: 0;
-}
-
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 12px;
-}
-
-.admin-panel {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-}
-
 .list-panel,
 .editor-panel {
   align-content: start;
@@ -110,7 +115,15 @@ h2 {
 
 .editor-panel {
   position: sticky;
-  top: 80px;
+  align-self: start;
+  top: calc(var(--app-topbar-height, 0px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-mobile-focus-anchor {
+  scroll-margin-top: calc(var(--app-topbar-height, 0px) + 16px);
 }
 
 h3 {
@@ -257,12 +270,11 @@ h3 {
 }
 
 @media (max-width: 1024px) {
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
-
   .editor-panel {
     position: static;
+    top: auto;
+    max-height: none;
+    overflow: visible;
   }
 }
 </style>

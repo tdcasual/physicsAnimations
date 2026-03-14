@@ -56,81 +56,94 @@ const {
 
 <template>
   <section class="admin-system-view">
-    <h2>系统设置向导</h2>
+    <header class="admin-page-header">
+      <div class="admin-page-copy">
+        <p class="admin-page-kicker">同步与巡检</p>
+        <h2>系统设置向导</h2>
+        <p class="admin-page-intro">先确认连接与访问模式，再安排同步和 Embed 更新节奏，避免课前公开目录失联。</p>
+      </div>
+      <div class="admin-page-meta">
+        <span class="admin-page-meta-label">当前节奏</span>
+        <strong>{{ canSyncNow ? "验证完成，可执行同步" : "先完成连接校验" }}</strong>
+        <span>{{ canSyncNow ? "左侧向导确认后，可在当前页直接执行同步和更新。" : "先逐步校验存储、路径和权限，再推进同步动作。" }}</span>
+      </div>
+    </header>
 
     <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
     <div v-if="successText" class="success-text admin-feedback success">{{ successText }}</div>
 
-    <SystemStatusPanel class="admin-card" :loading="loading" :storage="storage" :format-date="formatDate" />
+    <div class="admin-workspace-grid">
+      <SystemWizardSteps
+        class="admin-card"
+        :steps="steps"
+        :wizard-step="wizardStep"
+        :loading="loading"
+        :mode="mode"
+        :url="url"
+        :base-path="basePath"
+        :username="username"
+        :password="password"
+        :timeout-ms="timeoutMs"
+        :scan-remote="scanRemote"
+        :remote-mode="remoteMode"
+        :read-only-mode="readOnlyMode"
+        :validating="validating"
+        :saving="saving"
+        :syncing="syncing"
+        :validate-text="validateText"
+        :validate-ok="validateOk"
+        :has-unsaved-changes="hasStorageUnsavedChanges"
+        :save-disabled-hint="saveDisabledHint"
+        :continue-disabled-hint="continueDisabledHint"
+        :sync-hint="syncHint"
+        :can-sync-now="canSyncNow"
+        :get-field-error="getFieldError"
+        :clear-field-errors="clearFieldErrors"
+        @update:mode="mode = $event"
+        @update:url="url = $event"
+        @update:base-path="basePath = $event"
+        @update:username="username = $event"
+        @update:password="password = $event"
+        @update:timeout-ms="timeoutMs = $event"
+        @update:scan-remote="scanRemote = $event"
+        @go-step="goStep($event)"
+        @step-click="goStep($event)"
+        @mode-changed="onModeChanged"
+        @next-from-mode="nextFromMode"
+        @next-from-connection="nextFromConnection"
+        @run-validation="runValidation"
+        @save-storage="saveStorage"
+        @sync-now="syncNow"
+      />
 
-    <SystemWizardSteps
-      class="admin-card"
-      :steps="steps"
-      :wizard-step="wizardStep"
-      :loading="loading"
-      :mode="mode"
-      :url="url"
-      :base-path="basePath"
-      :username="username"
-      :password="password"
-      :timeout-ms="timeoutMs"
-      :scan-remote="scanRemote"
-      :remote-mode="remoteMode"
-      :read-only-mode="readOnlyMode"
-      :validating="validating"
-      :saving="saving"
-      :syncing="syncing"
-      :validate-text="validateText"
-      :validate-ok="validateOk"
-      :has-unsaved-changes="hasStorageUnsavedChanges"
-      :save-disabled-hint="saveDisabledHint"
-      :continue-disabled-hint="continueDisabledHint"
-      :sync-hint="syncHint"
-      :can-sync-now="canSyncNow"
-      :get-field-error="getFieldError"
-      :clear-field-errors="clearFieldErrors"
-      @update:mode="mode = $event"
-      @update:url="url = $event"
-      @update:base-path="basePath = $event"
-      @update:username="username = $event"
-      @update:password="password = $event"
-      @update:timeout-ms="timeoutMs = $event"
-      @update:scan-remote="scanRemote = $event"
-      @go-step="goStep($event)"
-      @mode-changed="onModeChanged"
-      @next-from-mode="nextFromMode"
-      @next-from-connection="nextFromConnection"
-      @run-validation="runValidation"
-      @save-storage="saveStorage"
-      @sync-now="syncNow"
-    />
+      <aside class="admin-page-stack">
+        <SystemStatusPanel class="admin-card" :loading="loading" :storage="storage" :format-date="formatDate" />
 
-    <SystemEmbedUpdaterPanel
-      class="admin-card"
-      :embed-updater="embedUpdater"
-      :enabled="embedUpdaterEnabled"
-      :interval-days="embedUpdaterIntervalDays"
-      :saving="savingEmbedUpdater"
-      :error-text="embedUpdaterErrorText"
-      :success-text="embedUpdaterSuccessText"
-      :has-unsaved-changes="hasEmbedUpdaterUnsavedChanges"
-      :save-hint="embedUpdaterSaveHint"
-      :format-date="formatDate"
-      @update:enabled="embedUpdaterEnabled = $event"
-      @update:interval-days="embedUpdaterIntervalDays = $event"
-      @save="saveEmbedUpdater"
-    />
+        <SystemEmbedUpdaterPanel
+          class="admin-card"
+          :embed-updater="embedUpdater"
+          :loading="loading"
+          :enabled="embedUpdaterEnabled"
+          :interval-days="embedUpdaterIntervalDays"
+          :saving="savingEmbedUpdater"
+          :error-text="embedUpdaterErrorText"
+          :success-text="embedUpdaterSuccessText"
+          :has-unsaved-changes="hasEmbedUpdaterUnsavedChanges"
+          :save-hint="embedUpdaterSaveHint"
+          :format-date="formatDate"
+          @update:enabled="embedUpdaterEnabled = $event"
+          @update:interval-days="embedUpdaterIntervalDays = $event"
+          @save="saveEmbedUpdater"
+        />
+      </aside>
+    </div>
   </section>
 </template>
 
 <style scoped>
 .admin-system-view {
   display: grid;
-  gap: 12px;
-}
-
-h2 {
-  margin: 0;
+  gap: 14px;
 }
 
 .error-text {

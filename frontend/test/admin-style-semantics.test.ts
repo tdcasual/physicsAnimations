@@ -10,6 +10,11 @@ describe("admin style semantics", () => {
   it("defines shared admin semantic classes in global styles", () => {
     const css = read("src/styles.css");
     expect(css).toMatch(/\.admin-card\s*\{/);
+    expect(css).toMatch(/\.admin-page-header\s*\{/);
+    expect(css).toMatch(/\.admin-page-kicker\s*\{/);
+    expect(css).toMatch(/\.admin-page-intro\s*\{/);
+    expect(css).toMatch(/\.admin-page-meta\s*\{/);
+    expect(css).toMatch(/\.admin-workspace-grid\s*\{/);
     expect(css).toMatch(/\.admin-field\s*\{/);
     expect(css).toMatch(/\.admin-input\s*\{/);
     expect(css).toMatch(/\.admin-actions\s*\{/);
@@ -21,6 +26,11 @@ describe("admin style semantics", () => {
     const content = read("src/views/admin/AdminContentView.vue");
     const contentCreate = read("src/views/admin/content/ContentCreateForm.vue");
     const contentEdit = read("src/views/admin/content/ContentEditPanel.vue");
+    const libraryTemplate = read("src/views/admin/library/AdminLibraryView.template.html");
+    const libraryStyle = read("src/views/admin/library/AdminLibraryView.css");
+    const libraryFolderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
+    const libraryAssetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
+    const libraryInspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
     const uploads = read("src/views/admin/AdminUploadsView.vue");
     const uploadsCreate = read("src/views/admin/uploads/UploadsCreateForm.vue");
     const uploadsEdit = read("src/views/admin/uploads/UploadsEditPanel.vue");
@@ -31,11 +41,26 @@ describe("admin style semantics", () => {
     const system = read("src/views/admin/AdminSystemView.vue");
     const systemStatusPanel = read("src/views/admin/system/SystemStatusPanel.vue");
     const systemWizardSteps = read("src/views/admin/system/SystemWizardSteps.vue");
+    const account = read("src/views/admin/AdminAccountView.vue");
+    const libraryCombined = [libraryTemplate, libraryStyle].join("\n");
+    const libraryColumnsCombined = [libraryFolderColumn, libraryAssetColumn, libraryInspectorColumn].join("\n");
     const taxonomyCombined = [taxonomy, taxonomyTree, taxonomyGroupPanel, taxonomyCategoryPanel].join("\n");
     const systemCombined = [system, systemStatusPanel, systemWizardSteps].join("\n");
 
     for (const source of [content, uploads, taxonomy, system]) {
       expect(source).toMatch(/admin-card/);
+    }
+    expect(libraryColumnsCombined).toMatch(/admin-card/);
+
+    for (const source of [content, libraryCombined, uploads, taxonomy, system, account]) {
+      expect(source).toMatch(/admin-page-header/);
+      expect(source).toMatch(/admin-page-kicker/);
+      expect(source).toMatch(/admin-page-intro/);
+      expect(source).toMatch(/admin-page-meta/);
+    }
+
+    for (const source of [content, libraryCombined, uploads, taxonomy, system]) {
+      expect(source).toMatch(/admin-workspace-grid/);
     }
 
     expect([content, contentCreate, contentEdit].some((source) => /admin-actions/.test(source))).toBe(true);
@@ -80,5 +105,14 @@ describe("admin style semantics", () => {
       expect(source).not.toMatch(/\.field\s*\{/);
       expect(source).not.toMatch(/\.field-input\s*\{/);
     }
+  });
+
+  it("uses dashboard-specific operational hooks instead of only brochure-like cards", () => {
+    const dashboard = read("src/views/admin/AdminDashboardView.vue");
+    const layout = read("src/views/admin/AdminLayoutView.vue");
+
+    expect(dashboard).toMatch(/admin-task-card--queue/);
+    expect(dashboard).toMatch(/admin-signal-card--metric/);
+    expect(layout).toMatch(/admin-shell-status-strip/);
   });
 });

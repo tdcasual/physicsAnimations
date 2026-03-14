@@ -10,6 +10,7 @@ describe("mobile touch targets", () => {
   it("defines minimum touch heights for high-frequency controls", () => {
     const globalCss = read("src/styles.css");
     const catalogView = read("src/views/CatalogView.vue");
+    const catalogViewCss = read("src/views/CatalogView.css");
     const libraryFolderView = read("src/views/LibraryFolderView.vue");
     const loginView = read("src/views/LoginView.vue");
     const adminLibraryCss = read("src/views/admin/library/AdminLibraryView.css");
@@ -26,7 +27,9 @@ describe("mobile touch targets", () => {
     expect(globalCss).toMatch(/input\[type="checkbox"\],\s*input\[type="radio"\]\s*\{[\s\S]*block-size:\s*18px/);
     expect(catalogView).toMatch(/\.catalog-search\s*\{[\s\S]*min-height:\s*44px/);
     expect(catalogView).toMatch(/\.catalog-tab\s*\{[\s\S]*min-height:\s*44px/);
-    expect(libraryFolderView).toMatch(/<RouterLink[^>]*class="[^"]*\bbtn\b[^"]*"/);
+    expect(catalogViewCss).toMatch(/\.catalog-quick-chip\s*\{[^}]*min-height:\s*44px/);
+    expect(libraryFolderView).toMatch(/<button[^>]*class="[^"]*\bbtn\b[^"]*"/);
+    expect(libraryFolderView).toMatch(/<a[^>]*class="[^"]*\bbtn\b[^"]*"/);
     expect(adminLibraryCss).toMatch(/\.panel-tab\s*\{[\s\S]*min-height:\s*44px/);
     expect(adminLibraryCss).toMatch(/\.panel-section-toggle\s*\{[\s\S]*min-height:\s*44px/);
     expect(adminLibraryCss).toMatch(/\.folder-pick\s*\{[\s\S]*min-height:\s*44px/);
@@ -36,7 +39,8 @@ describe("mobile touch targets", () => {
     expect(loginView).toMatch(/class=\"btn btn-primary\"/);
     expect(taxonomyCategoryEditor).toMatch(/\.subaccordion\s*>\s*summary\s*\{[\s\S]*min-height:\s*44px/);
     expect(taxonomyGroupEditor).toMatch(/\.subaccordion\s*>\s*summary\s*\{[\s\S]*min-height:\s*44px/);
-    expect(viewerView).toMatch(/<RouterLink[^>]*class="[^"]*\bviewer-btn\b[^"]*"/);
+    expect(viewerView).toMatch(/<button[^>]*class="[^"]*\bviewer-btn\b[^"]*"/);
+    expect(viewerView).toMatch(/<a[^>]*class="[^"]*\bviewer-btn\b[^"]*"/);
     expect(systemWizardSteps).toMatch(/\.step-button\s*\{[\s\S]*min-height:\s*44px/);
     expect(viewerView).toMatch(/\.viewer-btn\s*\{[\s\S]*min-height:\s*44px/);
     expect(adminLayout).toMatch(/\.admin-link\s*\{[\s\S]*min-height:\s*44px/);

@@ -38,7 +38,7 @@ type UploadAdminActionParams = {
   ) => void;
   syncEditStateWithItems: () => void;
   resetEdit: () => void;
-  beginEdit: (item: AdminItemRow) => void;
+  beginEdit: (item: AdminItemRow, options?: { force?: boolean }) => void;
   setActionFeedback: (text: string, isError?: boolean) => void;
   setFieldError: (key: string, message: string) => void;
   clearFieldErrors: (...keys: string[]) => void;
@@ -121,7 +121,7 @@ export function createUploadAdminActions(ctx: UploadAdminActionParams) {
 
       await reloadUploads({ reset: true });
       const updated = ctx.items.value.find((item) => item.id === id);
-      if (updated) ctx.beginEdit(updated);
+      if (updated) ctx.beginEdit(updated, { force: true });
       ctx.setActionFeedback("保存成功。", false);
     } catch (err) {
       const e = err as { status?: number; data?: { error?: string } };

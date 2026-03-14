@@ -38,7 +38,7 @@ type ContentAdminActionParams = {
   ) => void;
   syncEditStateWithItems: () => void;
   resetEdit: () => void;
-  beginEdit: (item: AdminItemRow) => void;
+  beginEdit: (item: AdminItemRow, options?: { force?: boolean }) => void;
   setFieldError: (key: string, message: string) => void;
   clearFieldErrors: (key?: string) => void;
   setActionFeedback: (text: string, isError?: boolean) => void;
@@ -119,7 +119,7 @@ export function createContentAdminActions(ctx: ContentAdminActionParams) {
       });
       await reloadItems({ reset: true });
       const updated = ctx.items.value.find((item) => item.id === id);
-      if (updated) ctx.beginEdit(updated);
+      if (updated) ctx.beginEdit(updated, { force: true });
       ctx.setActionFeedback("保存成功。", false);
     } catch (err) {
       const e = err as { status?: number; data?: { error?: string } };

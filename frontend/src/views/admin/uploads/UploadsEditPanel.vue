@@ -56,6 +56,7 @@ const emit = defineEmits<{
         :value="props.editTitle"
         class="field-input"
         type="text"
+        :disabled="props.saving"
         @input="emit('update:editTitle', ($event.target as HTMLInputElement).value)"
       />
       <div v-if="props.editTitleError" class="field-error-text">{{ props.editTitleError }}</div>
@@ -66,6 +67,7 @@ const emit = defineEmits<{
       <textarea
         :value="props.editDescription"
         class="field-input field-textarea"
+        :disabled="props.saving"
         @input="emit('update:editDescription', ($event.target as HTMLTextAreaElement).value)"
       />
     </label>
@@ -76,6 +78,7 @@ const emit = defineEmits<{
         <select
           :value="props.editCategoryId"
           class="field-input"
+          :disabled="props.saving"
           @change="emit('update:editCategoryId', ($event.target as HTMLSelectElement).value)"
         >
           <option v-for="option in props.categoryOptions" :key="option.value" :value="option.value">
@@ -90,6 +93,7 @@ const emit = defineEmits<{
           :value="props.editOrder"
           class="field-input"
           type="number"
+          :disabled="props.saving"
           @input="emit('update:editOrder', Number(($event.target as HTMLInputElement).value || 0))"
         />
       </label>
@@ -100,6 +104,7 @@ const emit = defineEmits<{
         <input
           :checked="props.editPublished"
           type="checkbox"
+          :disabled="props.saving"
           @change="emit('update:editPublished', ($event.target as HTMLInputElement).checked)"
         />
         <span>已发布</span>
@@ -109,6 +114,7 @@ const emit = defineEmits<{
         <input
           :checked="props.editHidden"
           type="checkbox"
+          :disabled="props.saving"
           @change="emit('update:editHidden', ($event.target as HTMLInputElement).checked)"
         />
         <span>隐藏</span>
@@ -117,7 +123,7 @@ const emit = defineEmits<{
 
     <div class="editor-footer">
       <div class="actions admin-actions">
-        <button type="button" class="btn btn-ghost" @click="emit('reset-edit')">取消</button>
+        <button type="button" class="btn btn-ghost" :disabled="props.saving" @click="emit('reset-edit')">取消</button>
         <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('save-edit', props.selectedItem.id)">
           保存
         </button>

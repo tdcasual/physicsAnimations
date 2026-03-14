@@ -37,7 +37,7 @@ const emit = defineEmits<{
   </div>
 
   <div v-if="props.errorText" class="error-text">{{ props.errorText }}</div>
-  <div v-if="props.items.length === 0 && !props.loading" class="empty">暂无上传内容。</div>
+  <div v-if="props.items.length === 0 && !props.loading" class="empty">{{ props.query.trim() ? "未找到匹配的上传内容。" : "暂无上传内容。" }}</div>
 
   <article
     v-for="item in props.items"

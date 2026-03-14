@@ -52,7 +52,7 @@ const categoryFormHiddenModel = computed({
     <div class="form-grid">
       <label class="field">
         <span>大类</span>
-        <select v-model="categoryFormGroupIdModel" class="field-input">
+        <select v-model="categoryFormGroupIdModel" class="field-input" :disabled="saving">
           <option v-for="group in allSortedGroups" :key="group.id" :value="group.id">
             {{ group.title || group.id }} ({{ group.id }})
           </option>
@@ -61,7 +61,7 @@ const categoryFormHiddenModel = computed({
 
       <label class="field">
         <span>标题</span>
-        <input v-model="categoryFormTitleModel" class="field-input" type="text" />
+        <input v-model="categoryFormTitleModel" class="field-input" type="text" :disabled="saving" />
       </label>
 
       <details class="subaccordion" :open="categoryFormHiddenModel || Number(categoryFormOrderModel || 0) !== 0">
@@ -69,10 +69,10 @@ const categoryFormHiddenModel = computed({
         <div class="form-grid subaccordion-body">
           <label class="field">
             <span>排序（越大越靠前）</span>
-            <input v-model.number="categoryFormOrderModel" class="field-input" type="number" />
+            <input v-model.number="categoryFormOrderModel" class="field-input" type="number" :disabled="saving" />
           </label>
           <label class="checkbox">
-            <input v-model="categoryFormHiddenModel" type="checkbox" />
+            <input v-model="categoryFormHiddenModel" type="checkbox" :disabled="saving" />
             <span>隐藏该分类（首页不显示）</span>
           </label>
         </div>

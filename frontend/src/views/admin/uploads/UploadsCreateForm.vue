@@ -36,6 +36,7 @@ function onInputFile(event: Event) {
       <select
         :value="props.categoryId"
         class="field-input"
+        :disabled="props.saving"
         @change="emit('update:categoryId', ($event.target as HTMLSelectElement).value)"
       >
         <option v-for="option in props.categoryOptions" :key="option.value" :value="option.value">
@@ -52,6 +53,7 @@ function onInputFile(event: Event) {
       class="field-input"
       type="file"
       accept=".html,.htm,.zip,text/html,application/zip"
+      :disabled="props.saving"
       @change="onInputFile"
     />
     <div v-if="props.uploadFileError" class="field-error-text">{{ props.uploadFileError }}</div>
@@ -63,6 +65,7 @@ function onInputFile(event: Event) {
       :value="props.title"
       class="field-input"
       type="text"
+      :disabled="props.saving"
       @input="emit('update:title', ($event.target as HTMLInputElement).value)"
     />
   </label>
@@ -72,6 +75,7 @@ function onInputFile(event: Event) {
     <textarea
       :value="props.description"
       class="field-input field-textarea"
+      :disabled="props.saving"
       @input="emit('update:description', ($event.target as HTMLTextAreaElement).value)"
     />
   </label>

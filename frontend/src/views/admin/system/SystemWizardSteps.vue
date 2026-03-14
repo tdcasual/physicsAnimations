@@ -40,6 +40,7 @@ const emit = defineEmits<{
   (event: "update:timeoutMs", value: number): void;
   (event: "update:scanRemote", value: boolean): void;
   (event: "go-step", value: WizardStep): void;
+  (event: "step-click", value: WizardStep): void;
   (event: "mode-changed"): void;
   (event: "next-from-mode"): void;
   (event: "next-from-connection"): void;
@@ -52,6 +53,8 @@ const modeModel = computed({
   get: () => props.mode,
   set: (value: string) => emit("update:mode", value),
 });
+
+const wizardBusy = computed(() => props.loading || props.saving || props.validating || props.syncing);
 
 function onModeChange() {
   emit("mode-changed");
@@ -67,7 +70,8 @@ function onModeChange() {
           type="button"
           class="step-button"
           :class="{ active: wizardStep === item.id, done: wizardStep > item.id }"
-          @click="emit('go-step', item.id)"
+          :disabled="wizardBusy"
+          @click="emit('step-click', item.id)"
         >
           {{ item.title }}
         </button>
@@ -79,19 +83,19 @@ function onModeChange() {
       <h4>选择模式</h4>
       <div class="mode-grid">
         <label class="mode-card" :class="{ active: mode === 'local' }">
-          <input v-model="modeModel" type="radio" value="local" :disabled="readOnlyMode" @change="onModeChange" />
+          <input v-model="modeModel" type="radio" value="local" :disabled="wizardBusy || readOnlyMode" @change="onModeChange" />
           <strong>local</strong>
           <span>仅使用本地目录存储，配置简单，离线可用。</span>
         </label>
         <label class="mode-card" :class="{ active: mode === 'webdav' }">
-          <input v-model="modeModel" type="radio" value="webdav" :disabled="readOnlyMode" @change="onModeChange" />
+          <input v-model="modeModel" type="radio" value="webdav" :disabled="wizardBusy || readOnlyMode" @change="onModeChange" />
           <strong>webdav</strong>
           <span>直接使用 WebDAV 作为主存储，适合集中化部署场景。</span>
         </label>
       </div>
 
       <div class="actions admin-actions">
-        <button type="button" class="btn btn-primary" :disabled="loading" @click="emit('next-from-mode')">下一步</button>
+        <button type="button" class="btn btn-primary" :disabled="wizardBusy" @click="emit('next-from-mode')">下一步</button>
       </div>
     </div>
 
@@ -134,20 +138,20 @@ function onModeChange() {
       <div v-if="continueDisabledHint" class="continue-disabled-hint admin-feedback">{{ continueDisabledHint }}</div>
 
       <div class="actions admin-actions wizard-step3-actions">
-        <button type="button" class="btn btn-ghost" @click="emit('go-step', 2)">上一步</button>
+        <button type="button" class="btn btn-ghost" :disabled="wizardBusy" @click="emit('go-step', 2)">上一步</button>
         <button
           v-if="remoteMode"
           type="button"
           class="btn btn-ghost"
-          :disabled="validating || readOnlyMode"
+          :disabled="wizardBusy || readOnlyMode"
           @click="emit('run-validation')"
         >
           {{ validating ? "校验中..." : "测试连接" }}
         </button>
-        <button type="button" class="btn btn-primary" :disabled="saving || readOnlyMode" @click="emit('save-storage')">
+        <button type="button" class="btn btn-primary" :disabled="wizardBusy || readOnlyMode" @click="emit('save-storage')">
           {{ saving ? "保存中..." : "保存配置" }}
         </button>
-        <button type="button" class="btn btn-ghost" :disabled="hasUnsavedChanges" @click="emit('go-step', 4)">下一步</button>
+        <button type="button" class="btn btn-ghost" :disabled="wizardBusy || hasUnsavedChanges" @click="emit('go-step', 4)">下一步</button>
       </div>
     </div>
 
@@ -164,8 +168,8 @@ function onModeChange() {
       <div v-else class="empty">local 模式已生效，无需远端同步。</div>
 
       <div class="actions admin-actions">
-        <button type="button" class="btn btn-ghost" @click="emit('go-step', 3)">上一步</button>
-        <button type="button" class="btn btn-ghost" @click="emit('go-step', 1)">重新配置</button>
+        <button type="button" class="btn btn-ghost" :disabled="wizardBusy" @click="emit('go-step', 3)">上一步</button>
+        <button type="button" class="btn btn-ghost" :disabled="wizardBusy" @click="emit('go-step', 1)">重新配置</button>
       </div>
     </div>
   </div>

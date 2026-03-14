@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 
 const adminNavGroups = [
   {
     id: "workspace",
     title: "内容管理",
+    summary: "3 项常用操作 · 内容修订优先",
     items: [
       { to: "/admin/dashboard", label: "概览", description: "查看当前站点入口、工作区状态与常用入口。" },
       { to: "/admin/content", label: "内容", description: "管理演示内容、说明文案和展示组织。" },
@@ -15,6 +16,7 @@ const adminNavGroups = [
   {
     id: "library",
     title: "资源结构",
+    summary: "2 个归档入口 · 优先补齐素材组织",
     items: [
       { to: "/admin/library", label: "资源库", description: "整理资源文件夹、封面和素材归档。" },
       { to: "/admin/taxonomy", label: "分类", description: "维护导航分组与课堂分类结构。" },
@@ -23,6 +25,7 @@ const adminNavGroups = [
   {
     id: "system",
     title: "系统设置",
+    summary: "2 个系统面板 · 发布前集中巡检",
     items: [
       { to: "/admin/system", label: "系统", description: "查看运行配置、引导流程和系统级设置。" },
       { to: "/admin/account", label: "账号", description: "管理账户信息与后台使用偏好。" },
@@ -32,9 +35,39 @@ const adminNavGroups = [
 
 const route = useRoute();
 const adminNavRef = ref<HTMLElement | null>(null);
+const adminNavShellRef = ref<HTMLElement | null>(null);
+const adminNavTriggerRef = ref<HTMLElement | null>(null);
 const mobileNavOpen = ref(false);
 const adminItems = adminNavGroups.flatMap((group) => group.items);
+const currentAdminGroup = computed(
+  () => adminNavGroups.find((group) => group.items.some((item) => route.path.startsWith(item.to))) ?? adminNavGroups[0],
+);
 const currentAdminSection = computed(() => adminItems.find((item) => route.path.startsWith(item.to)) ?? adminItems[0]);
+const adminWorkspaceCount = adminItems.length;
+
+let lastFocusedBeforeMobileNav: HTMLElement | null = null;
+let bodyOverflowBeforeMobileNav = "";
+
+function openMobileNav() {
+  lastFocusedBeforeMobileNav = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  mobileNavOpen.value = true;
+}
+
+function closeMobileNav() {
+  mobileNavOpen.value = false;
+}
+
+function toggleMobileNav() {
+  if (mobileNavOpen.value) {
+    closeMobileNav();
+    return;
+  }
+  openMobileNav();
+}
+
+function applyAdminDocumentTitle() {
+  document.title = `${currentAdminSection.value.label} - 管理后台`;
+}
 
 function scrollAdminNavLinkIntoView(target: HTMLElement | null) {
   if (!target) return;
@@ -52,7 +85,8 @@ async function scrollActiveAdminLinkIntoView() {
 watch(
   () => route.fullPath,
   () => {
-    mobileNavOpen.value = false;
+    closeMobileNav();
+    applyAdminDocumentTitle();
     void scrollActiveAdminLinkIntoView();
   },
   { immediate: true },
@@ -63,24 +97,86 @@ function onAdminNavFocusIn(event: FocusEvent) {
   if (!(target instanceof HTMLElement) || !target.classList.contains("admin-link")) return;
   scrollAdminNavLinkIntoView(target);
 }
+
+function getMobileNavFocusables(): HTMLElement[] {
+  const shell = adminNavShellRef.value;
+  if (!shell) return [];
+  const focusable = shell.querySelectorAll<HTMLElement>(
+    'a[href],button:not([disabled]),textarea,input:not([disabled]),select,[tabindex]:not([tabindex="-1"])',
+  );
+  return Array.from(focusable).filter((node) => !node.hasAttribute("disabled") && node.tabIndex !== -1);
+}
+
+function handleMobileNavKeydown(event: KeyboardEvent) {
+  if (!mobileNavOpen.value) return;
+  if (event.key !== "Tab") return;
+
+  const focusables = getMobileNavFocusables();
+  if (focusables.length === 0) return;
+
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const active = document.activeElement as HTMLElement | null;
+  const inShell = active ? adminNavShellRef.value?.contains(active) === true : false;
+
+  if (event.shiftKey) {
+    if (!inShell || active === first) {
+      event.preventDefault();
+      last.focus();
+    }
+    return;
+  }
+
+  if (!inShell || active === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+watch(mobileNavOpen, async (open) => {
+  if (open) {
+    bodyOverflowBeforeMobileNav = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    await nextTick();
+    adminNavShellRef.value?.querySelector<HTMLElement>(".admin-link")?.focus();
+    return;
+  }
+
+  document.body.style.overflow = bodyOverflowBeforeMobileNav;
+  bodyOverflowBeforeMobileNav = "";
+  const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value;
+  lastFocusedBeforeMobileNav = null;
+  restoreTarget?.focus();
+});
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = bodyOverflowBeforeMobileNav;
+});
 </script>
 
 <template>
-  <section class="admin-layout-view">
-    <header class="admin-shell-header">
+  <section class="admin-layout-view" @keydown.esc.window="closeMobileNav">
+    <header class="admin-shell-header admin-shell-header--compact">
       <div class="admin-shell-copy">
         <p class="admin-shell-kicker">后台工作区</p>
         <h1>管理后台</h1>
         <p class="admin-shell-description">当前模块：{{ currentAdminSection.label }} · {{ currentAdminSection.description }}</p>
+        <div class="admin-shell-status-strip">
+          <span class="admin-shell-status-label">当前焦点</span>
+          <strong>{{ currentAdminSection.label }}</strong>
+          <span>{{ currentAdminGroup.title }} · {{ currentAdminGroup.summary }}</span>
+        </div>
+        <p class="admin-shell-note">内容编修、资源归档和系统巡检保持同线推进。</p>
       </div>
       <div class="admin-shell-actions">
         <RouterLink class="admin-link admin-link-home" to="/">主页面</RouterLink>
         <button
+          ref="adminNavTriggerRef"
           type="button"
           class="admin-mobile-nav-trigger"
           :aria-expanded="mobileNavOpen ? 'true' : 'false'"
           aria-controls="admin-nav-shell"
-          @click="mobileNavOpen = !mobileNavOpen"
+          @click="toggleMobileNav"
         >
           工作区菜单
         </button>
@@ -88,10 +184,24 @@ function onAdminNavFocusIn(event: FocusEvent) {
     </header>
 
     <div class="admin-shell">
-      <aside id="admin-nav-shell" class="admin-nav-shell" :class="{ 'is-open': mobileNavOpen }">
+      <button
+        v-if="mobileNavOpen"
+        type="button"
+        class="admin-nav-backdrop"
+        aria-label="关闭工作区菜单"
+        @click="closeMobileNav"
+      />
+      <aside
+        id="admin-nav-shell"
+        ref="adminNavShellRef"
+        class="admin-nav-shell"
+        :class="{ 'is-open': mobileNavOpen }"
+        @keydown="handleMobileNavKeydown"
+      >
         <nav ref="adminNavRef" class="admin-nav" @focusin="onAdminNavFocusIn">
           <section v-for="group in adminNavGroups" :key="group.id" class="admin-nav-group">
             <div class="admin-nav-group-title">{{ group.title }}</div>
+            <div class="admin-nav-group-summary">{{ group.summary }}</div>
             <div class="admin-nav-group-links">
               <RouterLink v-for="item in group.items" :key="item.to" class="admin-link" active-class="active" :to="item.to">
                 {{ item.label }}
@@ -102,10 +212,12 @@ function onAdminNavFocusIn(event: FocusEvent) {
       </aside>
 
       <div class="admin-body">
-        <section class="admin-context-card">
+        <section class="admin-context-card" :class="['admin-context-card--active']">
           <p class="admin-context-kicker">当前工作区</p>
+          <p class="admin-context-status">执行中</p>
           <h2 class="admin-context-title">{{ currentAdminSection.label }}</h2>
-          <p class="admin-context-copy">{{ currentAdminSection.description }}</p>
+          <p class="admin-context-copy">围绕当前模块继续处理任务、巡检与补档动作。</p>
+          <p class="admin-context-note">{{ adminWorkspaceCount }} 个工作区入口保持同一条执行路径；移动端通过工作区菜单切换。</p>
         </section>
         <RouterView />
       </div>
@@ -121,10 +233,10 @@ h1, .admin-context-title { margin: 0; }
 .admin-context-card {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--surface) 94%, var(--bg));
-  box-shadow: 0 12px 32px -24px rgba(15, 23, 42, 0.45);
+  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--surface) 94%, var(--paper));
+  box-shadow: 0 24px 52px -38px color-mix(in oklab, var(--ink) 26%, transparent);
 }
 .admin-shell-header::after,
 .admin-nav-shell::before,
@@ -134,12 +246,26 @@ h1, .admin-context-title { margin: 0; }
   inset: 0 auto auto 0;
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 48%, var(--border)), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 48%, var(--border)), transparent);
 }
-.admin-shell-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px; }
+.admin-shell-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--accent) 7%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+    var(--surface);
+}
+.admin-shell-header--compact {
+  gap: 10px;
+  padding: 16px 18px;
+}
 .admin-shell-copy,
 .admin-body,
 .admin-nav-group { display: grid; gap: 8px; }
+.admin-shell-header--compact .admin-shell-copy { gap: 6px; }
 .admin-shell-kicker,
 .admin-context-kicker,
 .admin-nav-group-title {
@@ -150,29 +276,75 @@ h1, .admin-context-title { margin: 0; }
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+.admin-shell-status-label,
+.admin-context-status {
+  margin: 0;
+  color: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
 .admin-shell-description,
-.admin-context-copy { margin: 0; color: var(--muted); }
+.admin-context-copy,
+.admin-shell-note,
+.admin-context-note { margin: 0; color: var(--muted); }
+.admin-shell-note,
+.admin-context-note { max-width: 52ch; font-size: calc(13px * var(--ui-scale, 1)); }
+.admin-shell-header--compact .admin-shell-description { font-size: calc(14px * var(--ui-scale, 1)); }
+.admin-shell-header--compact .admin-shell-note {
+  max-width: 44ch;
+  font-size: calc(12px * var(--ui-scale, 1));
+}
+.admin-shell-status-strip {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in oklab, var(--accent) 20%, var(--border));
+  border-radius: 16px;
+  max-width: 46ch;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--accent) 8%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+    var(--surface);
+}
+.admin-shell-header--compact .admin-shell-status-strip {
+  gap: 3px;
+  padding: 8px 10px;
+  max-width: 40ch;
+}
 .admin-shell-actions,
 .admin-nav-group-links { display: flex; gap: 8px; flex-wrap: wrap; }
 .admin-shell { display: grid; grid-template-columns: minmax(240px, 280px) minmax(0, 1fr); gap: 16px; align-items: start; }
-.admin-nav-shell { padding: 14px; transition: opacity 180ms ease, transform 180ms ease; }
+.admin-nav-backdrop { display: none; }
+.admin-nav-shell {
+  padding: 14px;
+  transition: opacity 180ms ease, transform 180ms ease;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 6%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+    var(--surface);
+}
 .admin-nav { display: grid; gap: 14px; }
 .admin-nav-group {
   padding: 12px;
-  border: 1px solid color-mix(in srgb, var(--primary) 10%, var(--border));
-  border-radius: 14px;
-  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
+  border: 1px solid color-mix(in oklab, var(--accent) 10%, var(--border));
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--surface) 92%, var(--paper));
+}
+.admin-nav-group-summary {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale, 1));
+  line-height: 1.5;
 }
 .admin-link,
 .admin-mobile-nav-trigger {
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 6px 10px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 16%, var(--border));
+  border-radius: 14px;
+  padding: 6px 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: inherit;
-  background: color-mix(in srgb, var(--surface) 88%, var(--bg));
+  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
   font-size: calc(13px * var(--ui-scale, 1));
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
@@ -180,24 +352,36 @@ h1, .admin-context-title { margin: 0; }
 .admin-mobile-nav-trigger { min-height: 44px; }
 .admin-link:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
-  box-shadow: 0 10px 24px -22px rgba(37, 99, 235, 0.55);
+  border-color: color-mix(in oklab, var(--accent) 34%, var(--border));
+  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--accent) 42%, transparent);
 }
 .admin-mobile-nav-trigger:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
-  box-shadow: 0 10px 24px -22px rgba(37, 99, 235, 0.55);
+  border-color: color-mix(in oklab, var(--accent) 34%, var(--border));
+  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--accent) 42%, transparent);
 }
 .admin-link:active,
 .admin-mobile-nav-trigger:active { transform: translateY(0) scale(0.985); }
 .admin-link.active,
 .admin-mobile-nav-trigger {
-  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
 }
-.admin-link.active { background: color-mix(in srgb, var(--primary) 15%, var(--surface)); }
+.admin-link.active {
+  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
+  color: color-mix(in oklab, var(--accent-strong) 60%, var(--text));
+}
 .admin-link-home { white-space: nowrap; }
 .admin-mobile-nav-trigger { display: none; cursor: pointer; }
-.admin-context-card { position: relative; padding: 16px; }
+.admin-context-card {
+  position: relative;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 8%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+    var(--surface);
+}
+.admin-context-card--active {
+  box-shadow: 0 24px 52px -38px color-mix(in oklab, var(--accent-copper) 22%, transparent);
+}
 
 @keyframes admin-shell-in {
   from {
@@ -217,11 +401,27 @@ h1, .admin-context-title { margin: 0; }
 
 @media (max-width: 640px) {
   .admin-shell-header { padding: 14px; flex-direction: column; }
+  .admin-shell-header--compact { padding: 12px 14px; }
   .admin-shell-actions { width: 100%; }
   .admin-link-home,
   .admin-mobile-nav-trigger { flex: 1 1 calc(50% - 4px); }
   .admin-mobile-nav-trigger { display: inline-flex; }
-  .admin-nav-shell { display: none; padding: 12px; transform-origin: top center; }
+  .admin-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    border: 0;
+    padding: 0;
+    background: rgba(15, 23, 42, 0.28);
+  }
+  .admin-nav-shell {
+    display: none;
+    padding: 12px;
+    transform-origin: top center;
+    position: relative;
+    z-index: 5;
+  }
   .admin-nav-shell.is-open { display: block; animation: admin-shell-in 180ms ease; }
   .admin-nav {
     display: flex;

@@ -71,8 +71,11 @@ export function useTaxonomyAdminLifecycle(params: UseTaxonomyAdminLifecycleParam
   }
 
   watch([searchQuery, showHidden], () => {
+    const previousSelection = selection.value ? { ...selection.value } : null;
     syncSelectionAndOpenGroups();
-    syncFormsFromSelection();
+    if (selection.value?.kind !== previousSelection?.kind || selection.value?.id !== previousSelection?.id) {
+      syncFormsFromSelection();
+    }
   });
 
   watch(

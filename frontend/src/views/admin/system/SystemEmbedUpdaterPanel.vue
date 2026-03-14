@@ -4,6 +4,7 @@ import type { SystemEmbedUpdater } from "../../../features/admin/system/useSyste
 
 const props = defineProps<{
   embedUpdater: SystemEmbedUpdater | null;
+  loading: boolean;
   enabled: boolean;
   intervalDays: number;
   saving: boolean;
@@ -48,7 +49,7 @@ function onIntervalInput(event: Event) {
       <label class="admin-field toggle-field">
         <span class="field-label">启用自动更新</span>
         <span class="toggle-control">
-          <input type="checkbox" :checked="enabled" @change="onEnabledChange" />
+          <input type="checkbox" :checked="enabled" :disabled="loading || saving" @change="onEnabledChange" />
           <span>{{ enabled ? "已启用" : "已暂停" }}</span>
         </span>
       </label>
@@ -63,6 +64,7 @@ function onIntervalInput(event: Event) {
           step="1"
           inputmode="numeric"
           :value="Number.isFinite(intervalDays) ? intervalDays : ''"
+          :disabled="loading || saving"
           @input="onIntervalInput"
         />
       </label>
@@ -105,7 +107,7 @@ function onIntervalInput(event: Event) {
     <div v-if="saveHint" class="admin-feedback save-hint">{{ saveHint }}</div>
 
     <div class="admin-actions">
-      <button type="button" class="btn btn-primary" :disabled="saving || Boolean(saveHint)" @click="emit('save')">
+      <button type="button" class="btn btn-primary" :disabled="loading || saving || Boolean(saveHint)" @click="emit('save')">
         保存自动更新设置
       </button>
     </div>

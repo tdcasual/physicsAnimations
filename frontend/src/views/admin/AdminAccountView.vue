@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { setToken } from "../../features/auth/authApi";
 import { useAuthStore } from "../../features/auth/useAuthStore";
 import { updateAccount } from "../../features/admin/adminApi";
+import { usePendingChangesGuard } from "../../features/admin/composables/usePendingChangesGuard";
 
 const auth = useAuthStore();
 
@@ -37,6 +38,25 @@ function clearFieldErrors(key?: string) {
 function getFieldError(key: string): string {
   return fieldErrors.value[key] || "";
 }
+
+function syncConfirmPasswordError() {
+  if (!getFieldError("confirmPassword")) return;
+  if (!newPassword.value || newPassword.value === confirmPassword.value) {
+    clearFieldErrors("confirmPassword");
+  }
+}
+
+watch([newPassword, confirmPassword], () => {
+  syncConfirmPasswordError();
+});
+
+const hasPendingChanges = computed(() => Boolean(currentPassword.value || newUsername.value || newPassword.value || confirmPassword.value));
+
+usePendingChangesGuard({
+  hasPendingChanges,
+  isBlocked: saving,
+  message: "账号信息有未保存更改，确定离开当前页面吗？",
+});
 
 async function submit() {
   errorText.value = "";
@@ -77,9 +97,9 @@ async function submit() {
     if (typeof data?.username === "string") {
       auth.username = data.username;
       auth.loggedIn = true;
-      newUsername.value = data.username;
     }
     currentPassword.value = "";
+    newUsername.value = "";
     newPassword.value = "";
     confirmPassword.value = "";
     successText.value = "账号信息已更新。";
@@ -111,11 +131,22 @@ async function submit() {
 
 <template>
   <section class="admin-account-view">
-    <h2>账号设置</h2>
+    <header class="admin-page-header">
+      <div class="admin-page-copy">
+        <p class="admin-page-kicker">权限与身份</p>
+        <h2>账号设置</h2>
+        <p class="admin-page-intro">保持管理员身份信息可追踪、可恢复，避免课前切换设备时出现登录阻塞。</p>
+      </div>
+      <div class="admin-page-meta">
+        <span class="admin-page-meta-label">当前账号</span>
+        <strong>{{ auth.username || "未命名管理员" }}</strong>
+        <span>更新用户名或密码后会立即刷新当前登录身份。</span>
+      </div>
+    </header>
     <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
     <div v-if="successText" class="success-text admin-feedback success">{{ successText }}</div>
 
-    <form class="panel admin-card" @submit.prevent="submit">
+    <form class="admin-card" @submit.prevent="submit">
       <div class="current-user">
         当前登录用户：<strong>{{ auth.username || "-" }}</strong>
       </div>
@@ -131,6 +162,7 @@ async function submit() {
           autocapitalize="none"
           autocorrect="off"
           spellcheck="false"
+          :disabled="saving"
           @input="clearFieldErrors('currentPassword')"
         />
         <div v-if="getFieldError('currentPassword')" class="field-error-text">{{ getFieldError("currentPassword") }}</div>
@@ -147,6 +179,7 @@ async function submit() {
           autocapitalize="none"
           autocorrect="off"
           spellcheck="false"
+          :disabled="saving"
           @input="clearFieldErrors('newUsername')"
         />
         <div v-if="getFieldError('newUsername')" class="field-error-text">{{ getFieldError("newUsername") }}</div>
@@ -163,6 +196,7 @@ async function submit() {
           autocapitalize="none"
           autocorrect="off"
           spellcheck="false"
+          :disabled="saving"
           @input="clearFieldErrors('newPassword')"
         />
         <div v-if="getFieldError('newPassword')" class="field-error-text">{{ getFieldError("newPassword") }}</div>
@@ -179,6 +213,7 @@ async function submit() {
           autocapitalize="none"
           autocorrect="off"
           spellcheck="false"
+          :disabled="saving"
           @input="clearFieldErrors('confirmPassword')"
         />
         <div v-if="getFieldError('confirmPassword')" class="field-error-text">{{ getFieldError("confirmPassword") }}</div>
@@ -195,10 +230,6 @@ async function submit() {
 .admin-account-view {
   display: grid;
   gap: 12px;
-}
-
-h2 {
-  margin: 0;
 }
 
 .current-user {

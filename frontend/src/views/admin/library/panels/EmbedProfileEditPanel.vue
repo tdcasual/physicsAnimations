@@ -13,7 +13,7 @@ defineProps<{ vm: any }>();
         <div class="asset-meta">平台 ID：{{ vm.drafts.editingEmbedProfileId }}</div>
         <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editEmbedProfileName') }">
           <span>平台名称</span>
-          <input v-model="vm.drafts.embedEditName" class="field-input" type="text" />
+          <input v-model="vm.drafts.embedEditName" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
           <div v-if="vm.actions.getFieldError('editEmbedProfileName')" class="field-error-text">{{ vm.actions.getFieldError("editEmbedProfileName") }}</div>
         </label>
         <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editEmbedScriptUrl') }">
@@ -25,6 +25,7 @@ defineProps<{ vm: any }>();
             autocapitalize="none"
             autocorrect="off"
             spellcheck="false"
+            :disabled="vm.ui.savingEmbed"
           />
           <div v-if="vm.actions.getFieldError('editEmbedScriptUrl')" class="field-error-text">{{ vm.actions.getFieldError("editEmbedScriptUrl") }}</div>
         </label>
@@ -37,34 +38,35 @@ defineProps<{ vm: any }>();
             autocapitalize="none"
             autocorrect="off"
             spellcheck="false"
+            :disabled="vm.ui.savingEmbed"
           />
         </label>
         <label class="field">
           <span>viewerPath</span>
-          <input v-model="vm.drafts.embedEditViewerPath" class="field-input" type="text" />
+          <input v-model="vm.drafts.embedEditViewerPath" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
         </label>
         <label class="field">
           <span>构造器名称</span>
-          <input v-model="vm.drafts.embedEditConstructorName" class="field-input" type="text" />
+          <input v-model="vm.drafts.embedEditConstructorName" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
         </label>
         <label class="field">
           <span>资源 URL 参数键</span>
-          <input v-model="vm.drafts.embedEditAssetUrlOptionKey" class="field-input" type="text" />
+          <input v-model="vm.drafts.embedEditAssetUrlOptionKey" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
         </label>
         <label class="field">
           <span>允许扩展名（逗号分隔）</span>
-          <input v-model="vm.drafts.embedEditExtensionsText" class="field-input" type="text" />
+          <input v-model="vm.drafts.embedEditExtensionsText" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
         </label>
         <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editEmbedDefaultOptionsJson') }">
           <span>默认参数 JSON</span>
-          <textarea v-model="vm.drafts.embedEditDefaultOptionsJson" class="field-input" rows="4" />
+          <textarea v-model="vm.drafts.embedEditDefaultOptionsJson" class="field-input" rows="4" :disabled="vm.ui.savingEmbed" />
           <div v-if="vm.actions.getFieldError('editEmbedDefaultOptionsJson')" class="field-error-text">
             {{ vm.actions.getFieldError("editEmbedDefaultOptionsJson") }}
           </div>
         </label>
         <label class="field">
           <span>
-            <input v-model="vm.drafts.embedEditEnabled" type="checkbox" />
+            <input v-model="vm.drafts.embedEditEnabled" type="checkbox" :disabled="vm.ui.savingEmbed" />
             启用该平台
           </span>
         </label>

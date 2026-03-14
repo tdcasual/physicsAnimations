@@ -87,6 +87,7 @@ export function useSystemWizard() {
   const remoteMode = computed(() => isRemoteMode(mode.value));
   const requiresWebdavUrl = computed(() => shouldRequireWebdavUrl(mode.value));
   const readOnlyMode = computed(() => storage.value?.readOnly === true);
+  const wizardBusy = computed(() => loading.value || saving.value || validating.value || syncing.value);
 
   const hasStorageUnsavedChanges = computed(() => buildStorageSnapshot() !== loadedStorageSnapshot.value);
   const hasEmbedUpdaterUnsavedChanges = computed(() => buildEmbedUpdaterSnapshot() !== loadedEmbedUpdaterSnapshot.value);
@@ -226,6 +227,7 @@ export function useSystemWizard() {
   }
 
   function onModeChanged() {
+    if (wizardBusy.value) return;
     successText.value = "";
     validateText.value = "";
     validateOk.value = false;
@@ -235,16 +237,48 @@ export function useSystemWizard() {
     if (wizardStep.value > 2) wizardStep.value = 2;
   }
 
+  function canNavigateToStep(step: WizardStep) {
+    if (wizardBusy.value) return false;
+    if (step <= wizardStep.value) return true;
+    if (wizardStep.value === 2 && requiresWebdavUrl.value && !String(url.value || "").trim()) {
+      setFieldError("webdavUrl", "请填写 WebDAV 地址。");
+      errorText.value = "请填写 WebDAV 地址。";
+      return false;
+    }
+    if (wizardStep.value === 3 && hasStorageUnsavedChanges.value) return false;
+    return true;
+  }
+
   function goStep(step: WizardStep) {
+    if (!canNavigateToStep(step)) return;
+    if (step <= wizardStep.value) {
+      wizardStep.value = step;
+      return;
+    }
+    if (wizardStep.value === 1) {
+      wizardStep.value = remoteMode.value ? 2 : 3;
+      return;
+    }
+    if (wizardStep.value === 2) {
+      clearFieldErrors("webdavUrl");
+      wizardStep.value = 3;
+      return;
+    }
+    if (wizardStep.value === 3) {
+      wizardStep.value = 4;
+      return;
+    }
     wizardStep.value = step;
   }
 
   function nextFromMode() {
+    if (wizardBusy.value) return;
     errorText.value = "";
     wizardStep.value = remoteMode.value ? 2 : 3;
   }
 
   function nextFromConnection() {
+    if (wizardBusy.value) return;
     errorText.value = "";
     if (requiresWebdavUrl.value && !String(url.value || "").trim()) {
       setFieldError("webdavUrl", "请填写 WebDAV 地址。");

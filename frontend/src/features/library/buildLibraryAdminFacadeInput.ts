@@ -159,6 +159,7 @@ export function buildLibraryAdminFacadeInput(params: BuildLibraryAdminFacadeInpu
       clearFieldErrors: feedback.clearFieldErrors,
       getFieldError: feedback.getFieldError,
       setActivePanelTab: panels.setActivePanelTab,
+      selectFolder: actions.selectFolder,
       isPanelSectionOpen: panels.isPanelSectionOpen,
       togglePanelSection: panels.togglePanelSection,
       ensurePanelSectionOpen: panels.ensurePanelSectionOpen,

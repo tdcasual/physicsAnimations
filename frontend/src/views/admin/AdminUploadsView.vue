@@ -1,19 +1,43 @@
 <script setup lang="ts">
-import { reactive } from "vue";
+import { reactive, ref } from "vue";
+import type { AdminItemRow } from "../../features/admin/adminApi";
+import { useUploadAdmin } from "../../features/admin/uploads/useUploadAdmin";
+import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
 import UploadsCreateForm from "./uploads/UploadsCreateForm.vue";
 import UploadsEditPanel from "./uploads/UploadsEditPanel.vue";
 import UploadsListPanel from "./uploads/UploadsListPanel.vue";
-import { useUploadAdmin } from "../../features/admin/uploads/useUploadAdmin";
 
 const vm = reactive(useUploadAdmin());
+const uploadEditorPanelRef = ref<HTMLElement | null>(null);
+const { focusEditPanel: focusUploadEditPanel } = createAdminMobileEditPanelFocus({
+  panelRef: uploadEditorPanelRef,
+  maxWidth: 1024,
+});
+
+async function openUploadEditor(item: AdminItemRow) {
+  vm.beginEdit(item);
+  if (vm.editingId !== item.id) return;
+  await focusUploadEditPanel();
+}
 </script>
 
 <template>
   <section class="admin-uploads-view">
-    <h2>上传管理</h2>
+    <header class="admin-page-header">
+      <div class="admin-page-copy">
+        <p class="admin-page-kicker">资源归档</p>
+        <h2>上传管理</h2>
+        <p class="admin-page-intro">先把课堂素材稳定入库，再补齐标题、分类与说明，让公开目录入口保持清晰。</p>
+      </div>
+      <div class="admin-page-meta">
+        <span class="admin-page-meta-label">当前节奏</span>
+        <strong>{{ vm.editingId ? "素材编辑中" : "准备新上传" }}</strong>
+        <span>{{ vm.editingId ? "右侧面板会承接当前素材的发布与排序调整。" : "先上传文件，再回到列表补充检索和归档信息。" }}</span>
+      </div>
+    </header>
 
-    <div class="workspace-grid">
-      <div class="admin-panel list-panel admin-card">
+    <div class="admin-workspace-grid">
+      <div class="list-panel admin-card">
         <UploadsCreateForm
           :category-options="vm.categoryOptions"
           :category-id="vm.categoryId"
@@ -39,13 +63,13 @@ const vm = reactive(useUploadAdmin());
           :preview-href="vm.previewHref"
           :saving="vm.saving"
           @update:query="vm.query = $event"
-          @begin-edit="vm.beginEdit"
+          @begin-edit="openUploadEditor"
           @remove-item="vm.removeItem"
           @load-more="vm.reloadUploads({ reset: false })"
         />
       </div>
 
-      <aside class="admin-panel editor-panel admin-card">
+      <aside ref="uploadEditorPanelRef" class="editor-panel admin-card admin-mobile-focus-anchor">
         <UploadsEditPanel
           :selected-item="vm.selectedItem"
           :action-feedback="vm.actionFeedback"
@@ -82,25 +106,6 @@ const vm = reactive(useUploadAdmin());
   gap: 14px;
 }
 
-h2 {
-  margin: 0;
-}
-
-.workspace-grid {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 12px;
-}
-
-.admin-panel {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-}
-
 .list-panel,
 .editor-panel {
   align-content: start;
@@ -108,7 +113,15 @@ h2 {
 
 .editor-panel {
   position: sticky;
-  top: 80px;
+  align-self: start;
+  top: calc(var(--app-topbar-height, 0px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-mobile-focus-anchor {
+  scroll-margin-top: calc(var(--app-topbar-height, 0px) + 16px);
 }
 
 h3 {
@@ -255,12 +268,11 @@ h3 {
 }
 
 @media (max-width: 1024px) {
-  .workspace-grid {
-    grid-template-columns: 1fr;
-  }
-
   .editor-panel {
     position: static;
+    top: auto;
+    max-height: none;
+    overflow: visible;
   }
 }
 </style>

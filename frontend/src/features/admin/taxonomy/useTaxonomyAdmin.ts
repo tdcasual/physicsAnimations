@@ -1,4 +1,4 @@
-import { nextTick } from "vue";
+import { computed, nextTick } from "vue";
 import {
   normalizeTaxonomySelection,
   type TaxonomyCategory,
@@ -6,6 +6,7 @@ import {
 } from "../taxonomyUiState";
 import { createTaxonomyAdminActions } from "./useTaxonomyAdminActions";
 import { useTaxonomyAdminDraftState } from "./useTaxonomyAdminDraftState";
+import { usePendingChangesGuard } from "../composables/usePendingChangesGuard";
 import { useTaxonomyAdminLifecycle } from "./useTaxonomyAdminLifecycle";
 const DEFAULT_GROUP_ID = "physics";
 const UI_STATE_KEY = "pa_taxonomy_ui";
@@ -185,6 +186,46 @@ export function useTaxonomyAdmin() {
     return `内容 ${Number(category.count || 0)} · 新增 ${Number(category.dynamicCount || 0)}`;
   }
 
+  const hasPendingChanges = computed(() => {
+    const hasGroupEditChanges = Boolean(selectedGroup.value) &&
+      JSON.stringify({
+        title: groupFormTitle.value,
+        order: Number(groupFormOrder.value || 0),
+        hidden: groupFormHidden.value,
+      }) !==
+        JSON.stringify({
+          title: selectedGroup.value?.title || "",
+          order: Number(selectedGroup.value?.order || 0),
+          hidden: selectedGroup.value?.hidden === true,
+        });
+
+    const hasCreateGroupChanges =
+      Boolean(createGroupId.value || createGroupTitle.value) ||
+      Number(createGroupOrder.value || 0) !== 0 ||
+      createGroupHidden.value;
+
+    const hasCreateCategoryChanges =
+      Boolean(createCategoryId.value || createCategoryTitle.value) ||
+      Number(createCategoryOrder.value || 0) !== 0 ||
+      createCategoryHidden.value;
+
+    const hasCategoryEditChanges = Boolean(selectedCategory.value) &&
+      JSON.stringify({
+        groupId: categoryFormGroupId.value || fallbackGroupId.value,
+        title: categoryFormTitle.value,
+        order: Number(categoryFormOrder.value || 0),
+        hidden: categoryFormHidden.value,
+      }) !==
+        JSON.stringify({
+          groupId: selectedCategory.value?.groupId || fallbackGroupId.value,
+          title: selectedCategory.value?.title || "",
+          order: Number(selectedCategory.value?.order || 0),
+          hidden: selectedCategory.value?.hidden === true,
+        });
+
+    return hasGroupEditChanges || hasCreateGroupChanges || hasCreateCategoryChanges || hasCategoryEditChanges;
+  });
+
   const {
     reloadTaxonomy,
     saveGroup,
@@ -226,6 +267,12 @@ export function useTaxonomyAdmin() {
     resetCreateGroupForm,
     selectGroup: (groupId: string) => selectGroup(groupId),
     selectCategory,
+  });
+
+  usePendingChangesGuard({
+    hasPendingChanges,
+    isBlocked: saving,
+    message: "分类内容有未保存更改，确定离开当前页面吗？",
   });
 
   useTaxonomyAdminLifecycle({
