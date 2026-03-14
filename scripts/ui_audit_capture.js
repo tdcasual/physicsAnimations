@@ -7,11 +7,23 @@ const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const { ensureSpaDistFresh } = require("./lib/ensure_spa_dist_fresh");
 const { findOpenPort, startServer, stopServer, waitForHealth } = require("./lib/smoke_runtime");
 
+const CATALOG_READY_SELECTORS = [
+  ".catalog-search",
+  ".catalog-empty",
+  ".catalog-state",
+];
+
 function parseTagArg(argv) {
   const defaultTag = "before";
-  const raw = argv.find((arg) => arg.startsWith("--tag="));
-  if (!raw) return defaultTag;
-  const value = String(raw.split("=")[1] || "").trim();
+  const inlineArg = argv.find((arg) => arg.startsWith("--tag="));
+  if (inlineArg) {
+    const value = String(inlineArg.split("=")[1] || "").trim();
+    return value || defaultTag;
+  }
+
+  const tagIndex = argv.findIndex((arg) => arg === "--tag");
+  if (tagIndex === -1) return defaultTag;
+  const value = String(argv[tagIndex + 1] || "").trim();
   return value || defaultTag;
 }
 
@@ -35,6 +47,22 @@ async function capturePage(page, filePath, options = {}) {
 
 async function waitForHeading(page, heading) {
   await page.getByRole("heading", { name: heading }).first().waitFor({ state: "visible", timeout: 10000 });
+}
+
+async function waitForCatalogReadyState(page, timeoutMs = 10000) {
+  const perSelectorTimeout = Math.max(250, Math.floor(timeoutMs / CATALOG_READY_SELECTORS.length));
+  const failures = [];
+
+  for (const selector of CATALOG_READY_SELECTORS) {
+    try {
+      await page.locator(selector).first().waitFor({ state: "visible", timeout: perSelectorTimeout });
+      return selector;
+    } catch (error) {
+      failures.push(`${selector}: ${error?.message || String(error)}`);
+    }
+  }
+
+  throw new Error(`catalog ready state timeout: ${failures.join(" | ")}`);
 }
 
 async function loginFromCatalog(page, username, password) {
@@ -125,7 +153,7 @@ async function captureViewportSuite({
     });
 
     await page.goto("/", { waitUntil: "networkidle" });
-    await page.getByRole("navigation", { name: "大类" }).waitFor({ state: "visible", timeout: 10000 });
+    await waitForCatalogReadyState(page);
     await capturePage(page, path.join(outputDir, `${tag}-${viewportName}-catalog.png`), {
       fullPage: captureFullPage,
     });
@@ -241,7 +269,16 @@ async function run() {
   }
 }
 
-run().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  run().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  CATALOG_READY_SELECTORS,
+  parseTagArg,
+  run,
+  waitForCatalogReadyState,
+};

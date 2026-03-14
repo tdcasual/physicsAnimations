@@ -159,3 +159,4 @@ dist
 .worktrees
 
 frontend/node_modules
+.playwright-cli/
