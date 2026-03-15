@@ -42,4 +42,12 @@ describe("app shell copy", () => {
     expect(source).toMatch(/昼夜主题/);
     expect(source).not.toMatch(/>\s*界面\s*</);
   });
+
+  it("adds a small environment copy block so settings read as secondary context", () => {
+    const source = readFile("src/App.vue");
+
+    expect(source).toMatch(/topbar-environment-copy/);
+    expect(source).toMatch(/topbar-utility-note/);
+    expect(source).toMatch(/放大与主题仅影响当前设备/);
+  });
 });

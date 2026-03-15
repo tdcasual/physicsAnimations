@@ -1,37 +1,54 @@
-import fs from "node:fs";
-import path from "node:path";
-import { describe, expect, it } from "vitest";
-
-function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
-}
+import { beforeEach, describe, expect, it } from "vitest";
+import SystemEmbedUpdaterPanel from "../src/views/admin/system/SystemEmbedUpdaterPanel.vue";
+import { mountVueComponent } from "./helpers/mountVueComponent";
+import {
+  mountSystemWizardHarness,
+  mockUpdateSystemEmbedUpdater,
+  resetSystemWizardApiMocks,
+} from "./helpers/systemWizardHarness";
 
 describe("admin system embed updater panel", () => {
-  it("wires a dedicated panel and API action for embed auto updates", () => {
-    const view = read("src/views/admin/AdminSystemView.vue");
-    const panel = read("src/views/admin/system/SystemEmbedUpdaterPanel.vue");
-    const state = read("src/features/admin/system/useSystemWizard.ts");
-    const actions = read("src/features/admin/system/useSystemWizardActions.ts");
-    const api = read("src/features/admin/adminApi.ts");
+  beforeEach(() => {
+    resetSystemWizardApiMocks();
+  });
 
-    expect(view).toMatch(/import\s+SystemEmbedUpdaterPanel/);
-    expect(view).toMatch(/<SystemEmbedUpdaterPanel/);
-    expect(view).toMatch(/:interval-days="embedUpdaterIntervalDays"/);
-    expect(view).toMatch(/@save="saveEmbedUpdater"/);
+  it("wires a dedicated panel and API action for embed auto updates", async () => {
+    const harness = await mountSystemWizardHarness();
 
-    expect(panel).toMatch(/Embed 自动更新/);
-    expect(panel).toMatch(/更新周期（天）/);
-    expect(panel).toMatch(/保存自动更新设置/);
+    expect(harness.wizard.embedUpdater.value?.enabled).toBe(true);
+    expect(harness.wizard.embedUpdaterIntervalDays.value).toBe(20);
+    expect(harness.wizard.hasEmbedUpdaterUnsavedChanges.value).toBe(false);
 
-    expect(state).toMatch(/const\s+embedUpdater\s*=\s*ref<SystemEmbedUpdater \| null>\(null\)/);
-    expect(state).toMatch(/const\s+embedUpdaterIntervalDays\s*=\s*ref\(20\)/);
-    expect(state).toMatch(/const\s+hasEmbedUpdaterUnsavedChanges\s*=\s*computed\(/);
-    expect(state).toMatch(/saveEmbedUpdater/);
+    harness.wizard.embedUpdaterIntervalDays.value = 30;
+    expect(harness.wizard.hasEmbedUpdaterUnsavedChanges.value).toBe(true);
 
-    expect(actions).toMatch(/updateSystemEmbedUpdater/);
-    expect(actions).toMatch(/async function saveEmbedUpdater\(/);
+    await harness.wizard.saveEmbedUpdater();
 
-    expect(api).toMatch(/export async function updateSystemEmbedUpdater/);
-    expect(api).toMatch(/"\/api\/system\/embed-updater"/);
+    expect(mockUpdateSystemEmbedUpdater).toHaveBeenCalledWith({
+      enabled: true,
+      intervalDays: 30,
+    });
+    expect(harness.wizard.embedUpdaterSuccessText.value).toBe("自动更新设置已保存。");
+    expect(harness.wizard.hasEmbedUpdaterUnsavedChanges.value).toBe(false);
+
+    const panel = await mountVueComponent(SystemEmbedUpdaterPanel, {
+      embedUpdater: harness.wizard.embedUpdater.value,
+      loading: false,
+      enabled: true,
+      intervalDays: 30,
+      saving: false,
+      errorText: "",
+      successText: "",
+      hasUnsavedChanges: false,
+      saveHint: "",
+      formatDate: () => "-",
+    });
+
+    expect(panel.host.textContent).toContain("Embed 自动更新");
+    expect(panel.host.textContent).toContain("更新周期（天）");
+    expect(panel.host.textContent).toContain("保存自动更新设置");
+
+    panel.cleanup();
+    harness.cleanup();
   });
 });

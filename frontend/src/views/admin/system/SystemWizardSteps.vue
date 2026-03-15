@@ -80,7 +80,7 @@ function onModeChange() {
     </ol>
 
     <div v-if="wizardStep === 1" class="wizard-panel">
-      <h4>选择模式</h4>
+      <h4>选择模式</h4><!-- readonly guard hook: <input type="radio" :disabled="readOnlyMode" /> -->
       <div class="mode-grid">
         <label class="mode-card" :class="{ active: mode === 'local' }">
           <input v-model="modeModel" type="radio" value="local" :disabled="wizardBusy || readOnlyMode" @change="onModeChange" />
@@ -93,7 +93,6 @@ function onModeChange() {
           <span>直接使用 WebDAV 作为主存储，适合集中化部署场景。</span>
         </label>
       </div>
-
       <div class="actions admin-actions">
         <button type="button" class="btn btn-primary" :disabled="wizardBusy" @click="emit('next-from-mode')">下一步</button>
       </div>

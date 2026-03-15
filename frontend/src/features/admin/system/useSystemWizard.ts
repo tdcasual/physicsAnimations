@@ -3,48 +3,15 @@ import { onBeforeRouteLeave } from "vue-router";
 import {
   canRunManualSync,
   isRemoteMode,
-  normalizeUiMode,
   shouldRequireWebdavUrl,
 } from "../systemFormState";
 import { useFieldErrors } from "../composables/useFieldErrors";
 import { createSystemWizardActions } from "./useSystemWizardActions";
-export interface SystemStorage {
-  mode: string;
-  effectiveMode: string;
-  readOnly: boolean;
-  localPath: string;
-  lastSyncedAt: string;
-  webdav: {
-    url: string;
-    basePath: string;
-    username: string;
-    timeoutMs: number;
-    hasPassword: boolean;
-    scanRemote: boolean;
-  };
-}
+import { createSystemWizardBindings, formatSystemDate } from "./useSystemWizardBindings";
+import type { SystemEmbedUpdater, SystemStorage, WizardStep } from "./systemWizardTypes";
 
-export interface SystemEmbedUpdaterSummary {
-  status: string;
-  ggbStatus: string;
-  totalProfiles: number;
-  syncedProfiles: number;
-  skippedProfiles: number;
-  failedProfiles: number;
-}
+export type { SystemEmbedUpdater, SystemStorage } from "./systemWizardTypes";
 
-export interface SystemEmbedUpdater {
-  enabled: boolean;
-  intervalDays: number;
-  lastCheckedAt: string;
-  lastRunAt: string;
-  lastSuccessAt: string;
-  lastError: string;
-  nextRunAt: string;
-  lastSummary: SystemEmbedUpdaterSummary;
-}
-
-type WizardStep = 1 | 2 | 3 | 4;
 export function useSystemWizard() {
   const steps: Array<{ id: WizardStep; title: string; hint: string }> = [
     { id: 1, title: "1. 选择模式", hint: "决定存储架构" },
@@ -83,6 +50,26 @@ export function useSystemWizard() {
 
   const loadedStorageSnapshot = ref("");
   const loadedEmbedUpdaterSnapshot = ref("");
+
+  const { buildStorageSnapshot, buildEmbedUpdaterSnapshot, applyStorage, applyEmbedUpdater } = createSystemWizardBindings({
+    storage,
+    embedUpdater,
+    wizardStep,
+    mode,
+    url,
+    basePath,
+    username,
+    password,
+    timeoutMs,
+    scanRemote,
+    validateText,
+    validateOk,
+    embedUpdaterEnabled,
+    embedUpdaterIntervalDays,
+    loadedStorageSnapshot,
+    loadedEmbedUpdaterSnapshot,
+    clearFieldErrors,
+  });
 
   const remoteMode = computed(() => isRemoteMode(mode.value));
   const requiresWebdavUrl = computed(() => shouldRequireWebdavUrl(mode.value));
@@ -124,107 +111,6 @@ export function useSystemWizard() {
     }
     return "";
   });
-
-  function formatDate(raw: string): string {
-    if (!raw) return "-";
-    const date = new Date(raw);
-    if (Number.isNaN(date.getTime())) return raw;
-    return date.toLocaleString();
-  }
-
-  function buildStorageSnapshot(): string {
-    return JSON.stringify({
-      mode: normalizeUiMode(mode.value),
-      url: String(url.value || "").trim(),
-      basePath: String(basePath.value || "").trim(),
-      username: String(username.value || "").trim(),
-      timeoutMs: Number.isFinite(timeoutMs.value) ? Math.trunc(timeoutMs.value) : null,
-      scanRemote: scanRemote.value === true,
-      hasPasswordInput: Boolean(password.value),
-    });
-  }
-
-  function buildEmbedUpdaterSnapshot(): string {
-    return JSON.stringify({
-      enabled: embedUpdaterEnabled.value === true,
-      intervalDays: Number.isFinite(embedUpdaterIntervalDays.value) ? Math.trunc(embedUpdaterIntervalDays.value) : null,
-    });
-  }
-
-  function markLoadedStorageSnapshot() {
-    loadedStorageSnapshot.value = buildStorageSnapshot();
-  }
-
-  function markLoadedEmbedUpdaterSnapshot() {
-    loadedEmbedUpdaterSnapshot.value = buildEmbedUpdaterSnapshot();
-  }
-
-  function applyStorage(nextStorage: any, options: { resetStep: boolean } = { resetStep: false }) {
-    const timeoutCandidate = Number(nextStorage?.webdav?.timeoutMs);
-    const normalizedTimeoutMs = Number.isFinite(timeoutCandidate) ? Math.trunc(timeoutCandidate) : 15000;
-
-    storage.value = {
-      mode: nextStorage?.mode || "local",
-      effectiveMode: nextStorage?.effectiveMode || nextStorage?.mode || "local",
-      readOnly: nextStorage?.readOnly === true,
-      localPath: nextStorage?.localPath || "",
-      lastSyncedAt: nextStorage?.lastSyncedAt || "",
-      webdav: {
-        url: nextStorage?.webdav?.url || "",
-        basePath: nextStorage?.webdav?.basePath || "physicsAnimations",
-        username: nextStorage?.webdav?.username || "",
-        timeoutMs: normalizedTimeoutMs,
-        hasPassword: nextStorage?.webdav?.hasPassword === true,
-        scanRemote: nextStorage?.webdav?.scanRemote === true,
-      },
-    };
-
-    const normalizedMode = normalizeUiMode(storage.value.mode || "local");
-    if (!normalizedMode) {
-      throw new Error("invalid_storage_mode");
-    }
-    mode.value = normalizedMode;
-    url.value = storage.value.webdav.url || "";
-    basePath.value = storage.value.webdav.basePath || "physicsAnimations";
-    username.value = storage.value.webdav.username || "";
-    timeoutMs.value = normalizedTimeoutMs;
-    scanRemote.value = storage.value.webdav.scanRemote === true;
-    password.value = "";
-    validateText.value = "";
-    validateOk.value = false;
-    clearFieldErrors("webdavUrl");
-    markLoadedStorageSnapshot();
-
-    if (options.resetStep) wizardStep.value = 1;
-  }
-
-  function applyEmbedUpdater(nextEmbedUpdater: any) {
-    const summary = nextEmbedUpdater?.lastSummary && typeof nextEmbedUpdater.lastSummary === "object" ? nextEmbedUpdater.lastSummary : {};
-    const intervalCandidate = Number(nextEmbedUpdater?.intervalDays);
-    const intervalDays = Number.isFinite(intervalCandidate) ? Math.trunc(intervalCandidate) : 20;
-
-    embedUpdater.value = {
-      enabled: nextEmbedUpdater?.enabled !== false,
-      intervalDays,
-      lastCheckedAt: nextEmbedUpdater?.lastCheckedAt || "",
-      lastRunAt: nextEmbedUpdater?.lastRunAt || "",
-      lastSuccessAt: nextEmbedUpdater?.lastSuccessAt || "",
-      lastError: nextEmbedUpdater?.lastError || "",
-      nextRunAt: nextEmbedUpdater?.nextRunAt || "",
-      lastSummary: {
-        status: summary?.status || "idle",
-        ggbStatus: summary?.ggbStatus || "",
-        totalProfiles: Number.isFinite(summary?.totalProfiles) ? Math.trunc(summary.totalProfiles) : 0,
-        syncedProfiles: Number.isFinite(summary?.syncedProfiles) ? Math.trunc(summary.syncedProfiles) : 0,
-        skippedProfiles: Number.isFinite(summary?.skippedProfiles) ? Math.trunc(summary.skippedProfiles) : 0,
-        failedProfiles: Number.isFinite(summary?.failedProfiles) ? Math.trunc(summary.failedProfiles) : 0,
-      },
-    };
-
-    embedUpdaterEnabled.value = embedUpdater.value.enabled;
-    embedUpdaterIntervalDays.value = intervalDays;
-    markLoadedEmbedUpdaterSnapshot();
-  }
 
   function onModeChanged() {
     if (wizardBusy.value) return;
@@ -380,7 +266,7 @@ export function useSystemWizard() {
     saveDisabledHint,
     continueDisabledHint,
     embedUpdaterSaveHint,
-    formatDate,
+    formatDate: formatSystemDate,
     onModeChanged,
     goStep,
     nextFromMode,

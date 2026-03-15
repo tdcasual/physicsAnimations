@@ -92,4 +92,13 @@ describe("library folder view", () => {
     expect(source).toMatch(/void router\.replace\(\{\s*path:\s*"\/",\s*hash:\s*"#catalog-library"\s*\}\)/);
     expect(source).not.toMatch(/void router\.replace\("\/"\)/);
   });
+
+  it("offers quick shortcuts back to recent and favorite teaching flows", () => {
+    const source = read("src/views/LibraryFolderView.vue");
+
+    expect(source).toMatch(/回到最近课堂入口/);
+    expect(source).toMatch(/查看已固定演示/);
+    expect(source).toMatch(/#catalog-recent/);
+    expect(source).toMatch(/#catalog-favorites/);
+  });
 });

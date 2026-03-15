@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import { useRoute } from "vue-router";
+import AdminShellHeader from "../../components/admin/AdminShellHeader.vue";
+import { RouterLink, useRoute } from "vue-router";
 
 const adminNavGroups = [
   {
@@ -37,6 +38,7 @@ const route = useRoute();
 const adminNavRef = ref<HTMLElement | null>(null);
 const adminNavShellRef = ref<HTMLElement | null>(null);
 const adminNavTriggerRef = ref<HTMLElement | null>(null);
+const adminHeaderRef = ref<{ focusTrigger: () => void } | null>(null);
 const mobileNavOpen = ref(false);
 const adminItems = adminNavGroups.flatMap((group) => group.items);
 const currentAdminGroup = computed(
@@ -50,6 +52,7 @@ let bodyOverflowBeforeMobileNav = "";
 
 function openMobileNav() {
   lastFocusedBeforeMobileNav = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  adminNavTriggerRef.value = lastFocusedBeforeMobileNav;
   mobileNavOpen.value = true;
 }
 
@@ -146,7 +149,11 @@ watch(mobileNavOpen, async (open) => {
   bodyOverflowBeforeMobileNav = "";
   const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value;
   lastFocusedBeforeMobileNav = null;
-  restoreTarget?.focus();
+  if (restoreTarget) {
+    restoreTarget.focus();
+    return;
+  }
+  adminHeaderRef.value?.focusTrigger();
 });
 
 onBeforeUnmount(() => {
@@ -156,32 +163,13 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="admin-layout-view" @keydown.esc.window="closeMobileNav">
-    <header class="admin-shell-header admin-shell-header--compact">
-      <div class="admin-shell-copy">
-        <p class="admin-shell-kicker">后台工作区</p>
-        <h1>管理后台</h1>
-        <p class="admin-shell-description">当前模块：{{ currentAdminSection.label }} · {{ currentAdminSection.description }}</p>
-        <div class="admin-shell-status-strip">
-          <span class="admin-shell-status-label">当前焦点</span>
-          <strong>{{ currentAdminSection.label }}</strong>
-          <span>{{ currentAdminGroup.title }} · {{ currentAdminGroup.summary }}</span>
-        </div>
-        <p class="admin-shell-note">内容编修、资源归档和系统巡检保持同线推进。</p>
-      </div>
-      <div class="admin-shell-actions">
-        <RouterLink class="admin-link admin-link-home" to="/">主页面</RouterLink>
-        <button
-          ref="adminNavTriggerRef"
-          type="button"
-          class="admin-mobile-nav-trigger"
-          :aria-expanded="mobileNavOpen ? 'true' : 'false'"
-          aria-controls="admin-nav-shell"
-          @click="toggleMobileNav"
-        >
-          工作区菜单
-        </button>
-      </div>
-    </header>
+    <AdminShellHeader
+      ref="adminHeaderRef"
+      :current-admin-section="currentAdminSection"
+      :current-admin-group="currentAdminGroup"
+      :mobile-nav-open="mobileNavOpen"
+      @toggle-mobile-nav="toggleMobileNav"
+    />
 
     <div class="admin-shell">
       <button
@@ -214,10 +202,14 @@ onBeforeUnmount(() => {
       <div class="admin-body">
         <section class="admin-context-card" :class="['admin-context-card--active']">
           <p class="admin-context-kicker">当前工作区</p>
-          <p class="admin-context-status">执行中</p>
+          <div class="admin-shell-status-strip">
+            <p class="admin-context-status">执行中</p>
+            <span>优先维持当前模块的连续处理，再切换其他工作区。</span>
+          </div>
           <h2 class="admin-context-title">{{ currentAdminSection.label }}</h2>
           <p class="admin-context-copy">围绕当前模块继续处理任务、巡检与补档动作。</p>
           <p class="admin-context-note">{{ adminWorkspaceCount }} 个工作区入口保持同一条执行路径；移动端通过工作区菜单切换。</p>
+          <RouterLink class="admin-link admin-link-home" to="/">主页面</RouterLink>
         </section>
         <RouterView />
       </div>
@@ -225,10 +217,9 @@ onBeforeUnmount(() => {
   </section>
 </template>
 
-<style scoped>
+<style>
 .admin-layout-view { display: grid; gap: 16px; }
-h1, .admin-context-title { margin: 0; }
-.admin-shell-header,
+.admin-layout-view h1, .admin-context-title { margin: 0; }
 .admin-nav-shell,
 .admin-context-card {
   position: relative;
@@ -238,7 +229,6 @@ h1, .admin-context-title { margin: 0; }
   background: color-mix(in oklab, var(--surface) 94%, var(--paper));
   box-shadow: 0 24px 52px -38px color-mix(in oklab, var(--ink) 26%, transparent);
 }
-.admin-shell-header::after,
 .admin-nav-shell::before,
 .admin-context-card::before {
   content: "";
@@ -248,25 +238,8 @@ h1, .admin-context-title { margin: 0; }
   height: 1px;
   background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 48%, var(--border)), transparent);
 }
-.admin-shell-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 20px;
-  background:
-    linear-gradient(135deg, color-mix(in oklab, var(--accent) 7%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
-}
-.admin-shell-header--compact {
-  gap: 10px;
-  padding: 16px 18px;
-}
-.admin-shell-copy,
 .admin-body,
 .admin-nav-group { display: grid; gap: 8px; }
-.admin-shell-header--compact .admin-shell-copy { gap: 6px; }
-.admin-shell-kicker,
 .admin-context-kicker,
 .admin-nav-group-title {
   margin: 0;
@@ -285,34 +258,13 @@ h1, .admin-context-title { margin: 0; }
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.admin-shell-description,
-.admin-context-copy,
-.admin-shell-note,
-.admin-context-note { margin: 0; color: var(--muted); }
-.admin-shell-note,
-.admin-context-note { max-width: 52ch; font-size: calc(13px * var(--ui-scale, 1)); }
-.admin-shell-header--compact .admin-shell-description { font-size: calc(14px * var(--ui-scale, 1)); }
-.admin-shell-header--compact .admin-shell-note {
-  max-width: 44ch;
-  font-size: calc(12px * var(--ui-scale, 1));
-}
 .admin-shell-status-strip {
   display: grid;
   gap: 4px;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in oklab, var(--accent) 20%, var(--border));
-  border-radius: 16px;
-  max-width: 46ch;
-  background:
-    linear-gradient(135deg, color-mix(in oklab, var(--accent) 8%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
 }
-.admin-shell-header--compact .admin-shell-status-strip {
-  gap: 3px;
-  padding: 8px 10px;
-  max-width: 40ch;
-}
-.admin-shell-actions,
+.admin-context-copy,
+.admin-context-note { margin: 0; color: var(--muted); }
+.admin-context-note { max-width: 52ch; font-size: calc(13px * var(--ui-scale, 1)); }
 .admin-nav-group-links { display: flex; gap: 8px; flex-wrap: wrap; }
 .admin-shell { display: grid; grid-template-columns: minmax(240px, 280px) minmax(0, 1fr); gap: 16px; align-items: start; }
 .admin-nav-backdrop { display: none; }

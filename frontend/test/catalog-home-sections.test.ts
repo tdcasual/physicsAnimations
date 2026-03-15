@@ -1,5 +1,9 @@
+import { createApp } from "vue";
+import { createMemoryHistory, createRouter } from "vue-router";
 import { describe, expect, it } from "vitest";
 import * as catalogViewStateModule from "../src/features/catalog/useCatalogViewState";
+import CatalogTeacherQuickAccessArea from "../src/components/catalog/CatalogTeacherQuickAccessArea.vue";
+import { mountVueComponent } from "./helpers/mountVueComponent";
 
 const sampleItems = Array.from({ length: 6 }, (_, index) => ({
   id: `item-${index + 1}`,
@@ -49,5 +53,58 @@ describe("catalog homepage section helper", () => {
 
     expect(result.currentItems).toHaveLength(3);
     expect(result.recommendedItems).toEqual([]);
+  });
+
+  it("adds teacher quick-access sections for recent and favorite demos near the top of the catalog", () => {
+    const root = document.createElement("div");
+    document.body.appendChild(root);
+    const app = createApp(CatalogTeacherQuickAccessArea, {
+      recentItems: [],
+      favoriteItems: [],
+      favoriteIds: new Set<string>(),
+    });
+
+    app.mount(root);
+
+    expect(root.querySelector("#catalog-recent")).not.toBeNull();
+    expect(root.querySelector("#catalog-favorites")).not.toBeNull();
+    expect(root.textContent).toContain("最近查看");
+    expect(root.textContent).toContain("收藏演示");
+
+    app.unmount();
+    root.remove();
+  });
+
+  it("adds a teaching workspace summary with current-class momentum and pinned-demo status", async () => {
+    const buildWorkspaceSummary = (catalogViewStateModule as any).buildCatalogTeacherWorkspaceSummary;
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: "/", component: { template: "<div />" } },
+        { path: "/viewer/:id", component: { template: "<div />" } },
+      ],
+    });
+    await router.push("/");
+    await router.isReady();
+
+    const mounted = await mountVueComponent(
+      CatalogTeacherQuickAccessArea,
+      {
+      recentItems: sampleItems.slice(0, 2),
+      favoriteItems: sampleItems.slice(2, 3),
+      favoriteIds: new Set<string>(["item-3"]),
+        workspaceSummary: buildWorkspaceSummary({
+          recentItems: sampleItems.slice(0, 2),
+          favoriteItems: sampleItems.slice(2, 3),
+        }),
+      },
+      { plugins: [router] },
+    );
+
+    expect(mounted.host.textContent).toContain("教学工作区");
+    expect(mounted.host.textContent).toContain("最近课堂入口");
+    expect(mounted.host.textContent).toContain("已固定演示");
+
+    mounted.cleanup();
   });
 });

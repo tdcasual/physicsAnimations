@@ -19,7 +19,10 @@ describe("admin visual polish", () => {
   });
 
   it("adds framed workspace surfaces and nav hover feedback", () => {
-    const source = read("src/views/admin/AdminLayoutView.vue");
+    const source = [
+      read("src/views/admin/AdminLayoutView.vue"),
+      read("src/components/admin/AdminShellHeader.vue"),
+    ].join("\n");
 
     expect(source).toMatch(/admin-nav-shell::before/);
     expect(source).toMatch(/\.admin-link:hover\s*\{/);

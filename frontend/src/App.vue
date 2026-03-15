@@ -22,7 +22,7 @@ const modalCardRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
 const isLoginRoute = computed(() => String(route.path || "") === "/login");
 const isCatalogRoute = computed(() => String(route.path || "") === "/");
-const classroomModeLabel = computed(() => `课堂放大${classroomModeEnabled.value ? "开" : "关"}`);
+const classroomModeLabel = computed(() => `课堂模式${classroomModeEnabled.value ? "开" : "关"}`);
 const topbarNote = computed(() => {
   const currentPath = String(route.path || "");
   if (currentPath.startsWith("/admin")) {
@@ -271,7 +271,10 @@ onBeforeUnmount(() => {
           </button>
 
           <div class="topbar-environment-shell">
-            <span class="topbar-utility-label">环境偏好</span>
+            <div class="topbar-environment-copy">
+              <span class="topbar-utility-label">环境偏好</span>
+              <span class="topbar-utility-note">放大与主题仅影响当前设备</span>
+            </div>
             <div class="topbar-utility-actions">
               <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
                 {{ classroomModeLabel }}

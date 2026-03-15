@@ -41,7 +41,7 @@ type UploadAdminActionParams = {
   beginEdit: (item: AdminItemRow, options?: { force?: boolean }) => void;
   setActionFeedback: (text: string, isError?: boolean) => void;
   setFieldError: (key: string, message: string) => void;
-  clearFieldErrors: (...keys: string[]) => void;
+  clearFieldErrors: (key?: string) => void;
 };
 
 function resolveAuthError(status?: number, fallbackText = "操作失败。"): string {

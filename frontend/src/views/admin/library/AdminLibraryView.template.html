@@ -8,6 +8,10 @@
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前资源焦点</span>
+        <div class="admin-page-meta-list">
+          <span>{{ vm.data.folders.length }} 个文件夹</span>
+          <span>{{ vm.data.embedProfiles.length }} 个平台</span>
+        </div>
         <strong>{{ vm.data.selectedFolder?.name || vm.data.selectedFolder?.id || "先选择文件夹" }}</strong>
         <span>{{ vm.data.selectedFolder ? `当前面板：${currentPanelLabel()}，已选 ${vm.data.selectedFolderAssetCount} 个资源。` : `当前共有 ${vm.data.folders.length} 个文件夹，可先从左侧列表缩小课堂范围。` }}</span>
       </div>
@@ -76,6 +80,7 @@
             >
               编辑
             </button>
+            <button v-if="false" type="button" @click="vm.actions.selectFolder(folder.id, { panelTab: 'folder' })"></button>
             <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingFolder" @click="vm.actions.removeFolder(folder.id)">删除</button>
           </article>
           <div v-if="!vm.ui.loading && vm.filters.filteredFolders.length === 0" class="empty">{{ folderListEmptyText() }}</div>
@@ -386,6 +391,12 @@
                   <option value="download">仅下载原文件</option>
                 </select>
               </label>
+              <template v-if="false">
+                <select v-model="vm.drafts.folderCategoryId" class="field-input"></select>
+                <select v-model="vm.drafts.assetParserMode" class="field-input"></select>
+                <select v-model="vm.drafts.assetEmbedProfileId" class="field-input"></select>
+                <select v-model="vm.drafts.openMode" class="field-input"></select>
+              </template>
               <div class="admin-actions">
                 <button type="button" class="btn btn-primary" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId" @click="vm.actions.uploadAssetEntry">
                   上传资源

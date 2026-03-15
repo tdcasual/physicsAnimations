@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { normalizePublicUrl } from "../features/catalog/catalogLink";
 import {
   getLibraryFolder,
   listLibraryFolderAssets,
 } from "../features/library/libraryApi";
 import type { LibraryAsset, LibraryFolder } from "../features/library/types";
-import { resolveBackNavigationMode } from "../features/navigation/backNavigation";
+import { resolveBackNavigationTarget } from "../features/navigation/backNavigation";
 
 const route = useRoute();
 const router = useRouter();
@@ -55,11 +55,20 @@ function assetModeLabel(asset: LibraryAsset): string {
 }
 
 function goBack() {
-  if (resolveBackNavigationMode(window.history.state) === "history-back") {
+  const target = resolveBackNavigationTarget({
+    historyState: window.history.state,
+    fallbackHash: "#catalog-library",
+  });
+
+  if (target.mode === "history-back") {
     router.back();
     return;
   }
-  void router.replace({ path: "/", hash: "#catalog-library" });
+  if (target.hash === "#catalog-library") {
+    void router.replace({ path: "/", hash: "#catalog-library" });
+    return;
+  }
+  void router.replace({ path: target.path, hash: target.hash });
 }
 
 async function reload() {
@@ -125,6 +134,10 @@ watch(
           <p class="library-folder-kicker">资源档案</p>
           <h2>{{ pageHeading }}</h2>
           <p class="library-folder-summary">{{ folderSummary }}</p>
+          <div class="library-folder-shortcuts">
+            <RouterLink class="btn btn-ghost" :to="{ path: '/', hash: '#catalog-recent' }">回到最近课堂入口</RouterLink>
+            <RouterLink class="btn btn-ghost" :to="{ path: '/', hash: '#catalog-favorites' }">查看已固定演示</RouterLink>
+          </div>
         </div>
         <div class="library-folder-cover" :class="{ 'is-empty': !folderCoverUrl }">
           <img v-if="folderCoverUrl" :src="folderCoverUrl" alt="" loading="lazy" />
@@ -254,6 +267,12 @@ watch(
   margin: 0;
   color: var(--muted);
   max-width: 52ch;
+}
+
+.library-folder-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .library-folder-cover {

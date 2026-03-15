@@ -1,6 +1,5 @@
-import fs from "node:fs";
-import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { nextTick } from "vue";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearCatalogReturnScroll,
   parseCatalogReturnScroll,
@@ -9,10 +8,7 @@ import {
   serializeCatalogReturnScroll,
   writeCatalogReturnScroll,
 } from "../src/features/catalog/catalogReturnScroll";
-
-function readSource(relativePath: string) {
-  return fs.readFileSync(path.resolve(process.cwd(), relativePath), "utf8");
-}
+import { mountCatalogViewChromeHarness } from "./helpers/catalogViewChromeHarness";
 
 describe("catalog return scroll", () => {
   afterEach(() => {
@@ -96,12 +92,35 @@ describe("catalog return scroll", () => {
     ).toBeNull();
   });
 
-  it("wires CatalogView through one-shot save and restore hooks", () => {
-    const source = readSource("src/views/CatalogView.vue");
+  it("saves a one-shot return-scroll snapshot when leaving catalog and restores it when returning", async () => {
+    Object.defineProperty(window, "scrollY", { value: 1800, configurable: true });
 
-    expect(source).toMatch(/onBeforeRouteLeave/);
-    expect(source).toMatch(/writeCatalogReturnScroll/);
-    expect(source).toMatch(/resolveCatalogReturnScrollRestore/);
-    expect(source).toMatch(/window\.scrollTo\(/);
+    const leavingHarness = await mountCatalogViewChromeHarness({ initialPath: "/" });
+    await leavingHarness.router.push("/viewer/demo");
+
+    expect(readCatalogReturnScroll()).toEqual({
+      catalogFullPath: "/",
+      destinationPath: "/viewer/demo",
+      scrollY: 1800,
+      timestamp: expect.any(Number),
+    });
+
+    leavingHarness.cleanup();
+
+    const scrollTo = vi.fn();
+    Object.defineProperty(window, "scrollTo", { value: scrollTo, configurable: true });
+    Object.defineProperty(window.history, "state", {
+      value: { forward: "/viewer/demo" },
+      configurable: true,
+    });
+
+    const restoringHarness = await mountCatalogViewChromeHarness({ initialPath: "/", loading: true });
+    restoringHarness.loading.value = false;
+    await nextTick();
+    await nextTick();
+
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 1800 });
+
+    restoringHarness.cleanup();
   });
 });

@@ -8,6 +8,7 @@ import { createTaxonomyAdminActions } from "./useTaxonomyAdminActions";
 import { useTaxonomyAdminDraftState } from "./useTaxonomyAdminDraftState";
 import { usePendingChangesGuard } from "../composables/usePendingChangesGuard";
 import { useTaxonomyAdminLifecycle } from "./useTaxonomyAdminLifecycle";
+
 const DEFAULT_GROUP_ID = "physics";
 const UI_STATE_KEY = "pa_taxonomy_ui";
 type GroupRow = TaxonomyGroup;
@@ -55,10 +56,7 @@ export function useTaxonomyAdmin() {
     defaultGroupId: DEFAULT_GROUP_ID,
   });
 
-  function setActionFeedback(text: string, isError = false) {
-    actionFeedback.value = text;
-    actionFeedbackError.value = isError;
-  }
+  function setActionFeedback(text: string, isError = false) { actionFeedback.value = text; actionFeedbackError.value = isError; }
 
   function setGroupOpen(groupId: string, open: boolean) {
     const id = String(groupId || "").trim();
@@ -83,18 +81,13 @@ export function useTaxonomyAdmin() {
       (id) => visibleGroupIds.has(id),
     );
 
-    if (selection.value?.kind === "group") {
-      setGroupOpen(selection.value.id, true);
-    }
+    if (selection.value?.kind === "group") setGroupOpen(selection.value.id, true);
 
     if (selection.value?.kind === "category") {
       const groupId = categoryById.value.get(selection.value.id)?.groupId;
       if (groupId) setGroupOpen(groupId, true);
     }
-
-    if (openGroupIds.value.length === 0 && fallbackGroupId.value) {
-      setGroupOpen(fallbackGroupId.value, true);
-    }
+    if (openGroupIds.value.length === 0 && fallbackGroupId.value) setGroupOpen(fallbackGroupId.value, true);
   }
 
   function syncFormsFromSelection() {
@@ -112,31 +105,15 @@ export function useTaxonomyAdmin() {
     }
   }
 
-  function resetCreateCategoryForm() {
-    createCategoryId.value = "";
-    createCategoryTitle.value = "";
-    createCategoryOrder.value = 0;
-    createCategoryHidden.value = false;
-  }
-
-  function resetCreateGroupForm() {
-    createGroupId.value = "";
-    createGroupTitle.value = "";
-    createGroupOrder.value = 0;
-    createGroupHidden.value = false;
-  }
+  function resetCreateCategoryForm() { createCategoryId.value = ""; createCategoryTitle.value = ""; createCategoryOrder.value = 0; createCategoryHidden.value = false; }
+  function resetCreateGroupForm() { createGroupId.value = ""; createGroupTitle.value = ""; createGroupOrder.value = 0; createGroupHidden.value = false; }
 
   function selectGroup(groupId: string, options: { focusCreate?: boolean } = {}) {
     selection.value = { kind: "group", id: groupId };
     setGroupOpen(groupId, true);
     syncFormsFromSelection();
     setActionFeedback("");
-
-    if (options.focusCreate) {
-      void nextTick(() => {
-        document.querySelector<HTMLInputElement>("#taxonomy-category-create-id")?.focus();
-      });
-    }
+    if (options.focusCreate) void nextTick(() => { document.querySelector<HTMLInputElement>("#taxonomy-category-create-id")?.focus(); });
   }
 
   function selectCategory(categoryId: string) {
@@ -148,23 +125,10 @@ export function useTaxonomyAdmin() {
     setActionFeedback("");
   }
 
-  function isGroupOpen(groupId: string): boolean {
-    if (searchQuery.value.trim()) return true;
-    return openGroupIds.value.includes(groupId);
-  }
-
-  function onToggleGroup(groupId: string, open: boolean) {
-    if (searchQuery.value.trim()) return;
-    setGroupOpen(groupId, open);
-  }
-
-  function collapseAll() {
-    openGroupIds.value = [];
-  }
-
-  function expandAll() {
-    openGroupIds.value = visibleGroups.value.map((group) => group.id);
-  }
+  function isGroupOpen(groupId: string): boolean { return searchQuery.value.trim() ? true : openGroupIds.value.includes(groupId); }
+  function onToggleGroup(groupId: string, open: boolean) { if (searchQuery.value.trim()) return; setGroupOpen(groupId, open); }
+  function collapseAll() { openGroupIds.value = []; }
+  function expandAll() { openGroupIds.value = visibleGroups.value.map((group) => group.id); }
 
   function groupMetaText(node: { group: GroupRow; shownCategories: CategoryRow[] }): string {
     const totalCategories = Number(node.group.categoryCount || 0);
@@ -182,9 +146,7 @@ export function useTaxonomyAdmin() {
     return `${categoryText} · ${itemText}`;
   }
 
-  function categoryMetaText(category: CategoryRow): string {
-    return `内容 ${Number(category.count || 0)} · 新增 ${Number(category.dynamicCount || 0)}`;
-  }
+  function categoryMetaText(category: CategoryRow): string { return `内容 ${Number(category.count || 0)} · 新增 ${Number(category.dynamicCount || 0)}`; }
 
   const hasPendingChanges = computed(() => {
     const hasGroupEditChanges = Boolean(selectedGroup.value) &&
@@ -269,23 +231,8 @@ export function useTaxonomyAdmin() {
     selectCategory,
   });
 
-  usePendingChangesGuard({
-    hasPendingChanges,
-    isBlocked: saving,
-    message: "分类内容有未保存更改，确定离开当前页面吗？",
-  });
-
-  useTaxonomyAdminLifecycle({
-    uiStateKey: UI_STATE_KEY,
-    searchQuery,
-    showHidden,
-    openGroupIds,
-    selection,
-    fallbackGroupId,
-    syncSelectionAndOpenGroups,
-    syncFormsFromSelection,
-    reloadTaxonomy,
-  });
+  usePendingChangesGuard({ hasPendingChanges, isBlocked: saving, message: "分类内容有未保存更改，确定离开当前页面吗？" });
+  useTaxonomyAdminLifecycle({ uiStateKey: UI_STATE_KEY, searchQuery, showHidden, openGroupIds, selection, fallbackGroupId, syncSelectionAndOpenGroups, syncFormsFromSelection, reloadTaxonomy });
 
   return {
     DEFAULT_GROUP_ID,

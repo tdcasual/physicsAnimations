@@ -3,6 +3,16 @@ import { getCatalogItemHref } from "./catalogLink";
 import { loadCatalogData } from "./catalogService";
 import { computeCatalogView, filterFoldersByCatalogContext } from "./catalogState";
 import type { CatalogData, CatalogItem } from "./types";
+import {
+  readFavoriteDemos,
+  type FavoriteDemoEntry,
+  writeFavoriteDemos,
+} from "./favorites";
+import {
+  readRecentActivity,
+  type RecentActivityEntry,
+  writeRecentActivity,
+} from "./recentActivity";
 import { listLibraryCatalog } from "../library/libraryApi";
 import type { LibraryFolder } from "../library/types";
 
@@ -12,6 +22,7 @@ const MAX_CATEGORY_TABS = 10;
 const MAX_QUICK_CATEGORIES = 4;
 const MAX_FEATURED_ITEMS = 4;
 const MAX_LIBRARY_HIGHLIGHTS = 3;
+const MAX_TEACHER_QUICK_ACCESS_ITEMS = 4;
 
 export interface CatalogViewStateSnapshot {
   groupId: string;
@@ -60,6 +71,85 @@ export function buildCatalogHomepageSections(
   };
 }
 
+export function buildCatalogTeacherQuickAccess(
+  items: CatalogItem[],
+  options: {
+    recentEntries?: RecentActivityEntry[];
+    favoriteEntries?: FavoriteDemoEntry[];
+    recentLimit?: number;
+    favoriteLimit?: number;
+  } = {},
+): {
+  recentItems: CatalogItem[];
+  favoriteItems: CatalogItem[];
+  prunedRecentEntries: RecentActivityEntry[];
+  prunedFavoriteEntries: FavoriteDemoEntry[];
+} {
+  const itemById = new Map((items || []).map((item) => [item.id, item]));
+  const recentLimit = Math.max(1, Number(options.recentLimit) || MAX_TEACHER_QUICK_ACCESS_ITEMS);
+  const favoriteLimit = Math.max(1, Number(options.favoriteLimit) || MAX_TEACHER_QUICK_ACCESS_ITEMS);
+
+  const resolveEntries = <T extends { id: string }>(
+    entries: T[] | undefined,
+    timestampKey: keyof T,
+  ): { validEntries: T[]; resolvedItems: CatalogItem[] } => {
+    const seen = new Set<string>();
+    const sortedEntries = [...(entries || [])].sort((left, right) => Number(right[timestampKey]) - Number(left[timestampKey]));
+    const validEntries: T[] = [];
+    const resolvedItems: CatalogItem[] = [];
+
+    for (const entry of sortedEntries) {
+      const id = String(entry.id || "").trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      const item = itemById.get(id);
+      if (!item) continue;
+      validEntries.push(entry);
+      resolvedItems.push(item);
+    }
+
+    return {
+      validEntries,
+      resolvedItems,
+    };
+  };
+
+  const recent = resolveEntries(options.recentEntries, "lastViewedAt");
+  const favorites = resolveEntries(options.favoriteEntries, "favoritedAt");
+
+  return {
+    recentItems: recent.resolvedItems.slice(0, recentLimit),
+    favoriteItems: favorites.resolvedItems.slice(0, favoriteLimit),
+    prunedRecentEntries: recent.validEntries,
+    prunedFavoriteEntries: favorites.validEntries,
+  };
+}
+
+export function buildCatalogTeacherWorkspaceSummary(input: {
+  recentItems: CatalogItem[];
+  favoriteItems: CatalogItem[];
+}): Array<{ label: string; value: string; note: string }> {
+  const recentCount = input.recentItems.length;
+  const favoriteCount = input.favoriteItems.length;
+
+  return [
+    {
+      label: "最近课堂入口",
+      value: recentCount ? `${recentCount} 个最近演示` : "等待第一次课堂启动",
+      note: recentCount
+        ? "从最近打开过的内容里继续回放或重开，不必再回到目录深处。"
+        : "先打开一个演示，课前回放和课中重开会从这里开始。",
+    },
+    {
+      label: "已固定演示",
+      value: favoriteCount ? `${favoriteCount} 个常用演示` : "还没有固定演示",
+      note: favoriteCount
+        ? "高频课堂内容已经固定，下一节课可以直接从这里进入。"
+        : "把高频演示钉在这里，下一节课不用重新搜索。",
+    },
+  ];
+}
+
 export function buildCatalogHeroActions(input: {
   currentItemsCount: number;
   libraryHighlightsCount: number;
@@ -98,6 +188,8 @@ export function useCatalogViewState() {
   const selectedCategoryId = ref("all");
   const catalog = ref<CatalogData>({ groups: {} });
   const libraryFolders = ref<LibraryFolder[]>([]);
+  const recentEntries = ref<RecentActivityEntry[]>([]);
+  const favoriteEntries = ref<FavoriteDemoEntry[]>([]);
 
   function persistViewState() {
     try {
@@ -156,6 +248,23 @@ export function useCatalogViewState() {
   const currentItems = computed(() => homepageSections.value.currentItems);
   const recommendedItems = computed(() => homepageSections.value.recommendedItems);
   const libraryHighlights = computed(() => filteredLibraryFolders.value.slice(0, MAX_LIBRARY_HIGHLIGHTS));
+  const teacherQuickAccess = computed(() =>
+    buildCatalogTeacherQuickAccess(view.value.items, {
+      recentEntries: recentEntries.value,
+      favoriteEntries: favoriteEntries.value,
+      recentLimit: MAX_TEACHER_QUICK_ACCESS_ITEMS,
+      favoriteLimit: MAX_TEACHER_QUICK_ACCESS_ITEMS,
+    }),
+  );
+  const recentItems = computed(() => teacherQuickAccess.value.recentItems);
+  const favoriteItems = computed(() => teacherQuickAccess.value.favoriteItems);
+  const favoriteIds = computed(() => new Set(teacherQuickAccess.value.prunedFavoriteEntries.map((entry) => entry.id)));
+  const teacherWorkspaceSummary = computed(() =>
+    buildCatalogTeacherWorkspaceSummary({
+      recentItems: recentItems.value,
+      favoriteItems: favoriteItems.value,
+    }),
+  );
   const heroActions = computed(() =>
     buildCatalogHeroActions({
       currentItemsCount: currentItems.value.length,
@@ -185,6 +294,11 @@ export function useCatalogViewState() {
 
   function getItemHref(item: CatalogItem): string {
     return getCatalogItemHref(item);
+  }
+
+  function refreshTeacherQuickAccess() {
+    recentEntries.value = readRecentActivity();
+    favoriteEntries.value = readFavoriteDemos();
   }
 
   function selectGroup(groupId: string) {
@@ -234,6 +348,16 @@ export function useCatalogViewState() {
 
       const libraryCatalog = await listLibraryCatalog().catch(() => ({ folders: [] }));
       libraryFolders.value = Array.isArray(libraryCatalog.folders) ? libraryCatalog.folders : [];
+      refreshTeacherQuickAccess();
+
+      if (teacherQuickAccess.value.prunedRecentEntries.length !== recentEntries.value.length) {
+        recentEntries.value = teacherQuickAccess.value.prunedRecentEntries;
+        writeRecentActivity(recentEntries.value);
+      }
+      if (teacherQuickAccess.value.prunedFavoriteEntries.length !== favoriteEntries.value.length) {
+        favoriteEntries.value = teacherQuickAccess.value.prunedFavoriteEntries;
+        writeFavoriteDemos(favoriteEntries.value);
+      }
     } finally {
       loading.value = false;
     }
@@ -251,6 +375,10 @@ export function useCatalogViewState() {
     quickCategories,
     hasCatalogGroups,
     filteredLibraryFolders,
+    recentItems,
+    favoriteItems,
+    favoriteIds,
+    teacherWorkspaceSummary,
     currentItems,
     recommendedItems,
     libraryHighlights,
@@ -261,6 +389,7 @@ export function useCatalogViewState() {
     heroDescription,
     currentSectionTitle,
     getItemHref,
+    refreshTeacherQuickAccess,
     selectGroup,
     selectCategory,
   };

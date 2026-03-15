@@ -93,6 +93,7 @@ describe("admin library layout", () => {
     expect(template).toMatch(/admin-page-kicker/);
     expect(template).toMatch(/admin-page-intro/);
     expect(template).toMatch(/admin-page-meta/);
+    expect(template).toMatch(/admin-page-meta-list/);
     expect(template).toMatch(/admin-workspace-grid/);
     expect(combined).toMatch(/admin-page-stack/);
     expect(style).not.toMatch(/^\s*\.library-header\s*\{/m);

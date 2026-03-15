@@ -70,11 +70,7 @@ const scanRemoteModel = computed({
     <div v-if="remoteMode" class="form-grid">
       <label class="field" :class="{ 'has-error': getFieldError('webdavUrl') }">
         <span>WebDAV URL</span>
-        <input
-          v-model="urlModel"
-          class="field-input"
-          type="url"
-          :disabled="readOnlyMode"
+        <input v-model="urlModel" class="field-input" type="url" :disabled="readOnlyMode"
           name="webdav_url"
           autocomplete="url"
           autocapitalize="none"

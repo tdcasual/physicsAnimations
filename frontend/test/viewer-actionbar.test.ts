@@ -8,8 +8,12 @@ function read(relPath: string): string {
 
 describe("viewer action bar", () => {
   it("keeps action bar sticky below the shared topbar and pairs it with a staged presentation shell", () => {
-    const source = read("src/views/ViewerView.vue");
+    const source = [
+      read("src/views/ViewerView.vue"),
+      read("src/components/viewer/ViewerStageShell.vue"),
+    ].join("\n");
     expect(source).toMatch(/class="viewer-stage-shell"/);
+    expect(source).toMatch(/class="viewer-stage-proscenium"/);
     expect(source).toMatch(/class="viewer-rail"/);
     expect(source).toMatch(/class="viewer-rail-state"/);
     expect(source).toMatch(/\.viewer-bar\s*\{[\s\S]*position:\s*sticky/);
@@ -33,13 +37,19 @@ describe("viewer action bar", () => {
   });
 
   it("moves preview hint copy into a side rail instead of the main action path", () => {
-    const source = read("src/views/ViewerView.vue");
+    const source = [
+      read("src/views/ViewerView.vue"),
+      read("src/components/viewer/ViewerStageShell.vue"),
+    ].join("\n");
     expect(source).toMatch(/class="viewer-rail-note"/);
     expect(source).not.toMatch(/class="viewer-hint"/);
   });
 
   it("adds a visible mode chip and transition note inside the stage frame", () => {
-    const source = read("src/views/ViewerView.vue");
+    const source = [
+      read("src/views/ViewerView.vue"),
+      read("src/components/viewer/ViewerStageShell.vue"),
+    ].join("\n");
     expect(source).toMatch(/const stageModeLabel = computed/);
     expect(source).toMatch(/const stageTransitionText = computed/);
     expect(source).toMatch(/class="viewer-mode-chip"/);
@@ -47,20 +57,26 @@ describe("viewer action bar", () => {
   });
 
   it("hides stale ready-state actions while the next viewer route is still loading", () => {
-    const source = read("src/views/ViewerView.vue");
+    const source = [
+      read("src/views/ViewerView.vue"),
+      read("src/components/viewer/ViewerStageShell.vue"),
+    ].join("\n");
     expect(source).toMatch(/document\.title = "正在加载作品\.\.\."/);
-    expect(source).toMatch(/v-if="!loading && model\?\.status === 'ready' && model\.showHint"/);
+    expect(source).toMatch(/:show-hint="model\.showHint"/);
     expect(source).toMatch(/class="viewer-rail-state"/);
     expect(source).toMatch(/v-if="!loading && model\?\.status === 'ready' && model\.showModeToggle"/);
     expect(source).toMatch(/v-if="!loading && model\?\.status === 'ready'"/);
-    expect(source).toMatch(/v-if="!loading && model\?\.status === 'ready' && modeStateText"/);
+    expect(source).toMatch(/props\.modeStateText/);
   });
 
   it("defers external iframe mounting until the user explicitly starts interaction", () => {
-    const source = read("src/views/ViewerView.vue");
+    const source = [
+      read("src/views/ViewerView.vue"),
+      read("src/components/viewer/ViewerStageShell.vue"),
+    ].join("\n");
     expect(source).toMatch(/const interactiveStarted = ref\(true\)/);
     expect(source).toMatch(/interactiveStarted\.value = !next\.deferInteractiveStart/);
-    expect(source).toMatch(/v-if="interactiveStarted"/);
+    expect(source).toMatch(/v-if="props\.interactiveStarted"/);
     expect(source).toMatch(/尝试交互/);
   });
 
@@ -80,14 +96,33 @@ describe("viewer action bar", () => {
   it("normalizes screenshot image src so relative content paths work under /viewer/:id", () => {
     const source = read("src/views/ViewerView.vue");
     expect(source).toMatch(/normalizePublicUrl/);
-    expect(source).toMatch(/:src=\"normalizePublicUrl\(model\.screenshotUrl\)\"/);
+    expect(source).toMatch(/const normalizedScreenshotSrc = computed/);
+    expect(source).toMatch(/:normalized-screenshot-src="normalizedScreenshotSrc"/);
   });
 
   it("defines purposeful stage animations with a reduced-motion fallback", () => {
-    const source = read("src/views/ViewerView.vue");
+    const source = [
+      read("src/views/ViewerView.vue"),
+      read("src/components/viewer/ViewerStageShell.vue"),
+    ].join("\n");
     expect(source).toMatch(/@keyframes viewer-stage-glow/);
     expect(source).toMatch(/@keyframes viewer-stage-shift/);
     expect(source).toMatch(/@media \(prefers-reduced-motion: reduce\)/);
     expect(source).toMatch(/\.viewer-stage-frame--transitioning/);
+  });
+
+  it("delegates the staged rail-and-screen presentation to a dedicated component", () => {
+    const source = read("src/views/ViewerView.vue");
+    expect(source).toMatch(/import ViewerStageShell/);
+    expect(source).toMatch(/<ViewerStageShell/);
+    expect(source).not.toMatch(/class="viewer-stage-shell"/);
+  });
+
+  it("adds teacher workflow actions for recent activity capture and favorite toggling", () => {
+    const source = read("src/views/ViewerView.vue");
+    expect(source).toMatch(/recordRecentActivity/);
+    expect(source).toMatch(/toggleFavoriteDemo|toggleFavorite/);
+    expect(source).toMatch(/收藏演示/);
+    expect(source).toMatch(/已收藏/);
   });
 });

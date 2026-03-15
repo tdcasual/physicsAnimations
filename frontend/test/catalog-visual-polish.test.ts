@@ -8,7 +8,10 @@ function read(relPath: string): string {
 
 describe("catalog visual polish", () => {
   it("adds a teaching-atlas map and differentiated card metadata", () => {
-    const vue = read("src/views/CatalogView.vue");
+    const vue = [
+      read("src/views/CatalogView.vue"),
+      read("src/components/catalog/CatalogHeroSection.vue"),
+    ].join("\n");
     const css = read("src/views/CatalogView.css");
 
     expect(vue).toMatch(/catalog-hero-map/);
@@ -19,7 +22,10 @@ describe("catalog visual polish", () => {
   });
 
   it("turns quick access into a denser tool band instead of a roomy section shell", () => {
-    const vue = read("src/views/CatalogView.vue");
+    const vue = [
+      read("src/views/CatalogView.vue"),
+      read("src/components/catalog/CatalogQuickAccessBand.vue"),
+    ].join("\n");
     const css = read("src/views/CatalogView.css");
 
     expect(vue).toMatch(/catalog-quick-access-band/);
@@ -29,7 +35,10 @@ describe("catalog visual polish", () => {
   });
 
   it("compresses the hero explanation into a single overview rail instead of stacked decks", () => {
-    const vue = read("src/views/CatalogView.vue");
+    const vue = [
+      read("src/views/CatalogView.vue"),
+      read("src/components/catalog/CatalogHeroSection.vue"),
+    ].join("\n");
     const css = read("src/views/CatalogView.css");
 
     expect(vue).toMatch(/catalog-hero-overview/);
@@ -38,6 +47,19 @@ describe("catalog visual polish", () => {
     expect(vue).not.toMatch(/catalog-hero-itinerary/);
     expect(css).toMatch(/\.catalog-hero-overview\s*\{/);
     expect(css).toMatch(/\.catalog-overview-card\s*\{/);
+  });
+
+  it("splits the hero into primary actions and lighter supporting guidance", () => {
+    const vue = [
+      read("src/views/CatalogView.vue"),
+      read("src/components/catalog/CatalogHeroSection.vue"),
+    ].join("\n");
+    const css = read("src/views/CatalogView.css");
+
+    expect(vue).toMatch(/catalog-hero-primary/);
+    expect(vue).toMatch(/catalog-hero-support/);
+    expect(css).toMatch(/\.catalog-hero-primary\s*\{/);
+    expect(css).toMatch(/\.catalog-hero-support\s*\{/);
   });
 
   it("adds a layered hero surface and interactive card feedback", () => {
@@ -56,5 +78,17 @@ describe("catalog visual polish", () => {
 
     expect(css).toMatch(/\.catalog-mobile-filter-panel\s*\{[\s\S]*transform:/);
     expect(css).toMatch(/\.catalog-mobile-filter-panel\.is-open\s*\{[\s\S]*animation:/);
+  });
+
+  it("turns teacher quick access into a small workspace summary instead of only two plain lists", () => {
+    const vue = [
+      read("src/components/catalog/CatalogTeacherQuickAccessArea.vue"),
+      read("src/components/catalog/CatalogTeacherQuickAccessSection.vue"),
+      read("src/components/catalog/CatalogTeacherWorkspaceSummary.vue"),
+    ].join("\n");
+
+    expect(vue).toMatch(/catalog-workspace-summary/);
+    expect(vue).toMatch(/catalog-workspace-card/);
+    expect(vue).toMatch(/教学工作区/);
   });
 });
