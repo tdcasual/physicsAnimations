@@ -55,7 +55,7 @@ const hintText = computed(() => {
 const modeStateText = computed(() => {
   if (model.value?.status !== "ready") return "";
   if (!model.value.showModeToggle) return "";
-  return screenshotMode.value ? "当前：截图模式" : "当前：交互模式";
+  return screenshotMode.value ? "截图模式" : "交互模式";
 });
 
 const stageModeLabel = computed(() => {
@@ -70,39 +70,51 @@ const stageModeLabel = computed(() => {
 const stageTransitionText = computed(() => {
   if (model.value?.status !== "ready") return "正在准备舞台…";
   if (stageTransitionState.value === "mode-shift") {
-    if (screenshotVisible.value) return "舞台切换到截图模式";
+    if (screenshotVisible.value) return "切换到截图模式";
     if (interactiveStarted.value) {
-      return model.value.deferInteractiveStart ? "正在切换到交互预演" : "舞台切换到课堂演示";
+      return model.value.deferInteractiveStart ? "切换到交互预演" : "切换到课堂演示";
     }
-    return "舞台切回待命状态";
+    return "切回待命";
   }
-  if (screenshotVisible.value) return "静态画面已就绪，可先确认版式与完整构图。";
+  if (screenshotVisible.value) return "静态画面已就绪。";
   if (interactiveStarted.value) {
     return model.value.deferInteractiveStart
-      ? "当前已进入可操作预演，适合上课前快速试跑关键交互。"
-      : "当前处于课堂演示模式，可直接聚焦内容本体。";
+      ? "已进入交互预演，可快速试跑关键交互。"
+      : "课堂演示已就绪，可直接聚焦内容。";
   }
-  return "舞台保持待命，等待继续进入交互。";
+  return "舞台待命，等待进入交互。";
 });
 
 const viewerRailStateText = computed(() => {
   if (model.value?.status !== "ready") return "";
   if (modeStateText.value) return modeStateText.value;
-  if (screenshotVisible.value) return "当前：讲台截图";
+  if (screenshotVisible.value) return "讲台截图";
   if (interactiveStarted.value) {
-    return model.value.deferInteractiveStart ? "当前：交互预演" : "当前：课堂演示";
+    return model.value.deferInteractiveStart ? "交互预演" : "课堂演示";
   }
-  return "当前：待命状态";
+  return "待命状态";
 });
 
 const viewerRailSupportText = computed(() => {
   if (model.value?.status !== "ready") return "";
-  if (screenshotVisible.value) return "先确认完整画面，再决定是否进入交互或跳转原页面。";
+  if (screenshotVisible.value) return "先看构图，再决定是否进入交互。";
   if (model.value.deferInteractiveStart && interactiveStarted.value) {
-    return "当前已进入可操作预演，适合上课前快速确认关键交互。";
+    return "交互预演已开启，可快速确认关键动作。";
   }
-  if (model.value.deferInteractiveStart) return "这是外链资源，默认保持待命，避免无效加载打断课堂节奏。";
-  return "本地或托管内容可直接作为课堂舞台使用。";
+  if (model.value.deferInteractiveStart) return "外链默认待命，避免无效加载打断课堂节奏。";
+  return "当前内容可直接作为课堂舞台使用。";
+});
+
+const viewerBarSummary = computed(() => {
+  if (loading.value) return "正在准备舞台。";
+  if (model.value?.status === "error") return model.value.message;
+  if (screenshotVisible.value) return "先看构图，再切换交互或打开原页面。";
+  if (interactiveStarted.value) {
+    return model.value?.deferInteractiveStart
+      ? "已进入交互预演。"
+      : "课堂舞台已就绪。";
+  }
+  return "舞台待命，可继续进入交互。";
 });
 
 const showDeferredFallback = computed(() => {
@@ -262,21 +274,24 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="viewer-page">
-    <header class="viewer-bar">
+  <section class="viewer-page viewer-page--staged">
+    <header class="viewer-bar viewer-bar--compact">
       <div class="viewer-bar-left">
         <button type="button" class="viewer-back viewer-btn" @click="goBack">← 返回</button>
-        <div class="viewer-title-block">
-          <p class="viewer-kicker">课堂演示舞台</p>
-          <div class="viewer-title">
-            {{
-              loading
-                ? "正在加载..."
-                : model?.status === "ready"
-                  ? model.title
-                  : (model?.title ?? "作品预览")
-            }}
+        <div class="viewer-bar-copy">
+          <div class="viewer-title-block">
+            <p class="viewer-kicker">课堂演示舞台</p>
+            <div class="viewer-title">
+              {{
+                loading
+                  ? "正在加载..."
+                  : model?.status === "ready"
+                    ? model.title
+                    : (model?.title ?? "作品预览")
+              }}
+            </div>
           </div>
+          <p class="viewer-bar-summary">{{ viewerBarSummary }}</p>
         </div>
       </div>
 
@@ -354,6 +369,10 @@ onBeforeUnmount(() => {
   gap: 16px;
 }
 
+.viewer-page--staged {
+  gap: 14px;
+}
+
 .viewer-bar {
   position: sticky;
   top: var(--app-topbar-height, 0px);
@@ -372,21 +391,34 @@ onBeforeUnmount(() => {
   box-shadow: 0 26px 48px -36px color-mix(in oklab, var(--ink) 24%, transparent);
 }
 
+.viewer-bar--compact {
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 20px;
+}
+
 .viewer-bar-left {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
   flex: 1 1 auto;
 }
 
 .viewer-back {
   text-decoration: none;
+  white-space: nowrap;
+}
+
+.viewer-bar-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
 }
 
 .viewer-title-block {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -410,11 +442,19 @@ onBeforeUnmount(() => {
   word-break: break-word;
 }
 
+.viewer-bar-summary {
+  margin: 0;
+  max-width: 48ch;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale, 1));
+  line-height: 1.45;
+}
+
 .viewer-actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
 }
 
@@ -441,6 +481,35 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 640px) {
+  .viewer-bar--compact {
+    gap: 6px;
+    padding: 8px 10px;
+  }
+
+  .viewer-bar-left {
+    gap: 8px;
+  }
+
+  .viewer-bar-copy {
+    gap: 2px;
+  }
+
+  .viewer-title-block {
+    gap: 1px;
+  }
+
+  .viewer-kicker {
+    display: none;
+  }
+
+  .viewer-title {
+    font-size: clamp(1.06rem, 0.96rem + 0.4vw, 1.32rem);
+  }
+
+  .viewer-bar-summary {
+    display: none;
+  }
+
   .viewer-actions {
     width: 100%;
     justify-content: flex-start;

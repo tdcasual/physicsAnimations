@@ -15,12 +15,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="catalog-quick-access" data-tone="atlas">
+  <section class="catalog-quick-access" :class="'catalog-stage-band'">
     <div class="catalog-quick-access-band">
       <div class="catalog-quick-access-copy">
-        <p class="catalog-quick-access-kicker">快捷入口</p>
-        <h2 class="catalog-section-title catalog-quick-access-title">先从常用入口开始</h2>
-        <p class="catalog-quick-access-note">把常用分类和资源入口压到一条快速开始带里，减少在大列表里的来回寻找。</p>
+        <p class="catalog-quick-access-label">快捷入口</p>
       </div>
       <div class="catalog-chip-list catalog-chip-list--quick">
         <button
@@ -30,9 +28,9 @@ const emit = defineEmits<{
           class="catalog-quick-chip"
           @click="emit('select-category', category.id)"
         >
-          常用分类 · {{ category.title }}
+          {{ category.title }}
         </button>
-        <a v-if="props.hasLibraryHighlights" href="#catalog-library" class="catalog-quick-chip catalog-quick-chip-link">浏览资源库精选</a>
+        <a v-if="props.hasLibraryHighlights" href="#catalog-library" class="catalog-quick-chip catalog-quick-chip-link">资源库</a>
       </div>
     </div>
   </section>
@@ -40,53 +38,30 @@ const emit = defineEmits<{
 
 <style scoped>
 .catalog-quick-access {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
-  border-radius: 20px;
-  box-shadow: 0 24px 52px -36px color-mix(in oklab, var(--ink) 26%, transparent);
-  padding: clamp(14px, 1.7vw, 18px);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 7%, var(--surface)), color-mix(in oklab, var(--surface) 93%, var(--paper))),
-    var(--surface);
+  min-width: 0;
+  padding: 0;
 }
 
 .catalog-quick-access-band {
   display: grid;
-  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-  gap: 14px 18px;
-  align-items: center;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 10px 18px;
+  align-items: start;
 }
 
 .catalog-quick-access-copy {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: center;
   min-width: 0;
 }
 
-.catalog-quick-access-kicker,
-.catalog-quick-access-note {
+.catalog-quick-access-label {
   margin: 0;
-}
-
-.catalog-quick-access-kicker {
   color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
   font-size: calc(11px * var(--ui-scale, 1));
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-}
-
-.catalog-quick-access-title {
-  font-size: clamp(1.15rem, 1rem + 0.35vw, 1.55rem);
-  line-height: 1.12;
-}
-
-.catalog-quick-access-note {
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale, 1));
-  line-height: 1.45;
-  max-width: 34ch;
 }
 
 .catalog-chip-list {
@@ -103,9 +78,9 @@ const emit = defineEmits<{
 .catalog-quick-chip {
   border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
   border-radius: 999px;
-  min-height: 44px;
-  padding: 8px 12px;
-  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
+  min-height: 40px;
+  padding: 7px 12px;
+  background: color-mix(in oklab, var(--paper) 74%, var(--surface));
   color: inherit;
   text-decoration: none;
   display: inline-flex;
@@ -133,13 +108,9 @@ const emit = defineEmits<{
 }
 
 @media (max-width: 640px) {
-  .catalog-quick-access {
-    padding: 14px;
-  }
-
   .catalog-quick-access-band {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   .catalog-chip-list--quick {

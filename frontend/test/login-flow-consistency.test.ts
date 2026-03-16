@@ -26,7 +26,7 @@ describe("login flow consistency", () => {
   it("keeps primary auth actions separate from shell environment settings", () => {
     const source = read("src/App.vue");
     expect(source).toMatch(/class="topbar-primary-actions"[\s\S]*class="topbar-environment-shell"/);
-    expect(source).toMatch(/aria-label="切换环境设置"/);
+    expect(source).toMatch(/aria-label="打开更多操作"/);
   });
 
   it("disables auto-capitalization and auto-correct in app-shell login modal inputs", () => {

@@ -56,7 +56,7 @@ const {
 
 <template>
   <section class="admin-system-view">
-    <header class="admin-page-header">
+    <header class="admin-page-header admin-page-header--system">
       <div class="admin-page-copy">
         <p class="admin-page-kicker">同步与巡检</p>
         <h2>系统设置向导</h2>

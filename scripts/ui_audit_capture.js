@@ -13,6 +13,50 @@ const CATALOG_READY_SELECTORS = [
   ".catalog-state",
 ];
 
+const TEMP_VIEWER_FIXTURE_HTML = `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UI 审图临时演示</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      font-family: Georgia, "Noto Serif SC", serif;
+      background: radial-gradient(circle at top, #eef3ff, #dfe7fa 44%, #f6efe3 100%);
+      color: #23314f;
+    }
+    main {
+      width: min(92vw, 920px);
+      padding: 48px;
+      border-radius: 32px;
+      background: rgba(255,255,255,0.76);
+      border: 1px solid rgba(35,49,79,0.12);
+      box-shadow: 0 24px 60px rgba(35,49,79,0.16);
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 56px;
+      line-height: 1.05;
+    }
+    p {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>课堂摆锤演示</h1>
+    <p>temp viewer fixture for UI audit capture</p>
+  </main>
+</body>
+</html>`;
+
 function parseTagArg(argv) {
   const defaultTag = "before";
   const inlineArg = argv.find((arg) => arg.startsWith("--tag="));
@@ -77,7 +121,66 @@ async function loginFromCatalog(page, username, password) {
   await dialog.getByRole("textbox", { name: "密码" }).fill(password);
   await dialog.getByRole("button", { name: "登录" }).click();
 
-  await page.getByRole("link", { name: "管理" }).waitFor({ state: "visible", timeout: 10000 });
+  await Promise.any([
+    page.waitForURL((url) => url.pathname.startsWith("/admin"), { timeout: 10000 }),
+    page.getByRole("link", { name: "管理" }).waitFor({ state: "visible", timeout: 10000 }),
+    page.getByRole("button", { name: "退出" }).waitFor({ state: "visible", timeout: 10000 }),
+  ]);
+}
+
+async function readSessionToken(page) {
+  return page.evaluate(() => sessionStorage.getItem("pa_admin_token") || "");
+}
+
+async function createTemporaryViewerFixture(context, token) {
+  const response = await context.request.post("/api/items", {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    multipart: {
+      file: {
+        name: "viewer-fixture.html",
+        mimeType: "text/html",
+        buffer: Buffer.from(TEMP_VIEWER_FIXTURE_HTML, "utf8"),
+      },
+      categoryId: "other",
+      title: "UI 审图临时演示",
+      description: "temp viewer fixture for UI audit capture",
+    },
+  });
+
+  if (!response.ok()) {
+    throw new Error(`createTemporaryViewerFixture failed: ${response.status()} ${await response.text()}`);
+  }
+
+  const data = await response.json();
+  if (!data?.id) {
+    throw new Error("createTemporaryViewerFixture failed: missing id");
+  }
+
+  return data;
+}
+
+async function deleteTemporaryViewerFixture(context, token, itemId) {
+  if (!itemId) return;
+  const response = await context.request.delete(`/api/items/${encodeURIComponent(itemId)}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!response.ok()) {
+    throw new Error(`deleteTemporaryViewerFixture failed: ${response.status()} ${await response.text()}`);
+  }
+}
+
+async function captureViewerScreen(page, outputDir, tag, viewportName, captureFullPage, fixtureId) {
+  await page.goto(`/viewer/${encodeURIComponent(fixtureId)}`, { waitUntil: "networkidle" });
+  await page.locator(".viewer-bar").first().waitFor({ state: "visible", timeout: 10000 });
+  await page.locator(".viewer-stage-frame").first().waitFor({ state: "visible", timeout: 10000 });
+  await page.locator(".viewer-frame, .viewer-shot").first().waitFor({ state: "visible", timeout: 10000 });
+  await capturePage(page, path.join(outputDir, `${tag}-${viewportName}-viewer.png`), {
+    fullPage: captureFullPage,
+  });
 }
 
 async function captureAdminScreens(page, dir, tag, viewportName, captureFullPage) {
@@ -136,6 +239,8 @@ async function captureViewportSuite({
     baseURL: baseUrl,
     ...contextOptions,
   });
+  let temporaryViewerFixtureId = "";
+  let authToken = "";
 
   try {
     const page = await context.newPage();
@@ -167,13 +272,27 @@ async function captureViewportSuite({
     await capturePage(page, path.join(outputDir, `${tag}-${viewportName}-login-page.png`), { fullPage: false });
 
     await loginFromCatalog(page, username, password);
+    authToken = await readSessionToken(page);
+    if (!authToken) {
+      throw new Error("missing admin session token after login");
+    }
     await capturePage(page, path.join(outputDir, `${tag}-${viewportName}-catalog-auth.png`), {
       fullPage: captureFullPage,
     });
 
+    const temporaryViewerFixture = await createTemporaryViewerFixture(context, authToken);
+    temporaryViewerFixtureId = temporaryViewerFixture.id;
+    await captureViewerScreen(page, outputDir, tag, viewportName, captureFullPage, temporaryViewerFixture.id);
+
     await captureAdminScreens(page, outputDir, tag, viewportName, captureFullPage);
   } finally {
-    await context.close();
+    try {
+      if (temporaryViewerFixtureId && authToken) {
+        await deleteTemporaryViewerFixture(context, authToken, temporaryViewerFixtureId);
+      }
+    } finally {
+      await context.close();
+    }
   }
 }
 
@@ -278,6 +397,9 @@ if (require.main === module) {
 
 module.exports = {
   CATALOG_READY_SELECTORS,
+  TEMP_VIEWER_FIXTURE_HTML,
+  createTemporaryViewerFixture,
+  deleteTemporaryViewerFixture,
   parseTagArg,
   run,
   waitForCatalogReadyState,

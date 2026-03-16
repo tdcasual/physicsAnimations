@@ -13,12 +13,12 @@ describe("app shell visual polish", () => {
     expect(app).toMatch(/AppShell\.css/);
   });
 
-  it("defines the teaching-atlas token palette and editorial topbar copy", () => {
+  it("defines the shared shell token palette and compact topbar brand lockup", () => {
     const app = read("src/App.vue");
     const css = read("src/styles.css");
 
-    expect(app).toMatch(/brand-meta/);
-    expect(app).toMatch(/topbar-note/);
+    expect(app).toMatch(/brand-lockup/);
+    expect(app).toMatch(/brand-mark/);
     expect(css).toMatch(/--paper:/);
     expect(css).toMatch(/--ink:/);
     expect(css).toMatch(/--accent-copper:/);
@@ -39,5 +39,35 @@ describe("app shell visual polish", () => {
     expect(app).toMatch(/topbar-environment-shell/);
     expect(css).toMatch(/topbar-environment-shell/);
     expect(css).toMatch(/topbar-utility-label/);
+  });
+
+  it("adds dedicated compact-shell polish for the brand rail and route-aware shell tone hooks", () => {
+    const app = read("src/App.vue");
+    const shellCss = read("src/AppShell.css");
+    const baseCss = read("src/styles.css");
+
+    expect(app).toMatch(/brand-lockup/);
+    expect(app).toMatch(/brand-mark/);
+    expect(shellCss).toMatch(/topbar-shell-panel/);
+    expect(shellCss).toMatch(/brand-link::before/);
+    expect(shellCss).toMatch(/topbar--viewer/);
+    expect(baseCss).toMatch(/brand-lockup/);
+  });
+
+  it("adds compact mobile polish for the home link and utility drawer framing", () => {
+    const app = read("src/App.vue");
+    const shellCss = read("src/AppShell.css");
+
+    expect(app).toMatch(/topbar-home-link/);
+    expect(shellCss).toMatch(/topbar-home-link/);
+    expect(shellCss).toMatch(/topbar-mobile-utility-panel/);
+  });
+
+  it("protects the compact brand lockup from overflow on narrow screens", () => {
+    const css = read("src/styles.css");
+
+    expect(css).toMatch(/\.brand-link\s*\{[\s\S]*min-width:\s*0/);
+    expect(css).toMatch(/\.brand-lockup\s*\{[\s\S]*min-width:\s*0/);
+    expect(css).toMatch(/\.brand-mark\s*\{[\s\S]*white-space:\s*nowrap/);
   });
 });

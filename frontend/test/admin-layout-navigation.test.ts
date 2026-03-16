@@ -7,8 +7,8 @@ function readFile(relPath: string): string {
 }
 
 describe("admin layout navigation", () => {
-  it("provides a direct link back to public catalog", () => {
-    const source = readFile("src/views/admin/AdminLayoutView.vue");
+  it("provides a direct link back to public catalog from the admin shell header", () => {
+    const source = [readFile("src/views/admin/AdminLayoutView.vue"), readFile("src/components/admin/AdminShellHeader.vue")].join("\n");
     expect(source).toMatch(/to="\/"/);
     expect(source).toMatch(/主页面/);
   });

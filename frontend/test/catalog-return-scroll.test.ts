@@ -15,6 +15,11 @@ describe("catalog return scroll", () => {
     clearCatalogReturnScroll();
   });
 
+  it("uses a shared scrollTo mock in the jsdom test harness", () => {
+    expect(window.scrollTo).toBeTypeOf("function");
+    expect(vi.isMockFunction(window.scrollTo)).toBe(true);
+  });
+
   it("round-trips one-shot return scroll snapshots", () => {
     const raw = serializeCatalogReturnScroll({
       catalogFullPath: "/#catalog-library",

@@ -1,72 +1,129 @@
 .catalog-view {
   display: grid;
-  gap: clamp(16px, 2vw, 22px);
+  gap: clamp(20px, 2.5vw, 32px);
+}
+
+.catalog-stage {
+  position: relative;
+  display: grid;
+  gap: clamp(14px, 1.7vw, 18px);
+  padding: clamp(18px, 2.2vw, 28px);
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 15%, var(--border));
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 90%, var(--paper)), color-mix(in oklab, var(--accent) 5%, var(--surface)) 58%, color-mix(in oklab, var(--paper) 82%, var(--surface))),
+    var(--surface);
+  box-shadow: 0 32px 76px -54px color-mix(in oklab, var(--ink) 24%, transparent);
+}
+
+.catalog-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, color-mix(in oklab, var(--accent) 5%, transparent), transparent 18%, transparent 82%, color-mix(in oklab, var(--accent-copper) 6%, transparent)),
+    linear-gradient(180deg, color-mix(in oklab, var(--paper) 68%, transparent), transparent 30%);
+  pointer-events: none;
+}
+
+.catalog-stage > * {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
 }
 
 .catalog-hero,
-.catalog-quick-access,
 .catalog-section {
   position: relative;
-  overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
-  border-radius: 20px;
-  background: color-mix(in oklab, var(--surface) 94%, var(--paper));
-  box-shadow: 0 24px 52px -36px color-mix(in oklab, var(--ink) 26%, transparent);
-  padding: clamp(18px, 2vw, 24px);
+  min-width: 0;
+}
+
+.catalog-section {
+  overflow: visible;
+  padding: clamp(6px, 1vw, 10px) 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .catalog-section[id] {
-  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 136px);
+  scroll-margin-top: calc(var(--app-topbar-height, 0px) + env(safe-area-inset-top, 0px) + 18px);
 }
 
 .catalog-hero {
   display: grid;
-  gap: 16px 20px;
-  background:
-    linear-gradient(135deg, color-mix(in oklab, var(--surface) 90%, var(--paper)), color-mix(in oklab, var(--accent) 8%, var(--surface))),
-    var(--surface);
+  gap: 12px 18px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+}
+
+.catalog-stage-hero {
+  padding-bottom: 14px;
+  border-bottom: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
+}
+
+.catalog-stage-band {
+  padding-top: 2px;
+}
+
+.catalog-stage-rail {
+  padding-top: 10px;
+  border-top: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
 }
 
 .catalog-hero::before {
   content: "";
   position: absolute;
-  inset: -28% auto auto -4%;
-  width: 360px;
-  height: 360px;
+  inset: -34% auto auto -8%;
+  width: 420px;
+  height: 420px;
   border-radius: 999px;
-  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 22%, transparent), transparent 70%);
+  background: radial-gradient(circle, color-mix(in oklab, var(--accent) 16%, transparent), transparent 72%);
   pointer-events: none;
 }
 
 .catalog-hero::after {
   content: "";
   position: absolute;
-  inset: auto 20px 20px auto;
-  width: min(240px, 42%);
+  inset: auto 0 0 auto;
+  width: min(180px, 32%);
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent-copper) 56%, var(--border)) 60%, transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent-copper) 42%, var(--border)) 60%, transparent);
 }
 
 .catalog-hero-copy,
 .catalog-hero-search,
-.catalog-hero-overview,
-.catalog-hero-map,
+.catalog-hero-status-strip,
 .catalog-hero-actions,
-.catalog-hero-primary,
+.catalog-hero-mainline,
+.catalog-hero-toolbar,
 .catalog-hero-support,
 .catalog-section-heading {
   position: relative;
   z-index: 1;
 }
 
-.catalog-hero-primary {
+.catalog-hero-mainline {
+  display: grid;
+  gap: 14px;
+}
+
+.catalog-hero-toolbar {
   display: grid;
   gap: 12px;
 }
 
 .catalog-hero-support {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+}
+
+.catalog-hero-support--status {
+  gap: 0;
 }
 
 .catalog-hero-copy {
@@ -81,12 +138,17 @@
   animation: catalog-hero-rise 560ms 100ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.catalog-hero-overview {
+.catalog-hero-status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 0;
+  min-height: 36px;
+  padding: 7px 0 0;
+  border-top: 1px solid color-mix(in oklab, var(--line-strong) 10%, var(--border));
+  border-radius: 999px;
+  background: transparent;
   animation: catalog-hero-rise 560ms 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.catalog-hero-map {
-  animation: catalog-hero-rise 560ms 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .catalog-hero-kicker {
@@ -101,7 +163,7 @@
 .catalog-section-title {
   margin: 0;
   font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
-  font-size: clamp(1.7rem, 1.2rem + 1vw, 2.45rem);
+  font-size: clamp(1.55rem, 1.12rem + 0.8vw, 2.05rem);
   line-height: 1.06;
   letter-spacing: -0.04em;
 }
@@ -115,73 +177,56 @@
   margin: 0;
   color: var(--muted);
   font-size: calc(14px * var(--ui-scale, 1));
-  max-width: 56ch;
+  max-width: 34ch;
 }
 
-.catalog-hero-note {
-  margin: 0;
-  color: color-mix(in oklab, var(--muted) 78%, var(--text));
-  font-size: calc(13px * var(--ui-scale, 1));
-  max-width: 48ch;
-}
-
-.catalog-hero-overview {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 10px;
-}
-
-.catalog-overview-card {
-  display: grid;
-  gap: 6px;
-  min-height: 100%;
-  padding: 12px 12px 14px;
-  border: 1px solid color-mix(in oklab, var(--accent) 16%, var(--border));
-  border-radius: 16px;
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)), color-mix(in oklab, var(--accent) 6%, var(--surface))),
-    var(--surface);
-  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--paper-strong) 64%, transparent);
-}
-
-.catalog-overview-card:first-child {
-  border-color: color-mix(in oklab, var(--accent) 28%, var(--border));
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, var(--surface)), color-mix(in oklab, var(--surface) 93%, var(--paper))),
-    var(--surface);
-}
-
-.catalog-overview-label {
-  color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
-  font-size: calc(11px * var(--ui-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.catalog-overview-card strong {
-  font-size: calc(15px * var(--ui-scale, 1));
-  line-height: 1.22;
-}
-
-.catalog-overview-card span {
+.catalog-hero-status-item {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   color: var(--muted);
   font-size: calc(13px * var(--ui-scale, 1));
-  line-height: 1.45;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.catalog-hero-status-item + .catalog-hero-status-item {
+  padding-inline-start: 16px;
+}
+
+.catalog-hero-status-item + .catalog-hero-status-item::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--accent-copper) 54%, var(--border));
+}
+
+.catalog-hero-status-item--lead {
+  color: var(--text);
+  font-weight: 700;
 }
 
 .catalog-search-field {
   display: grid;
-  gap: 10px;
-  padding: 14px;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
   border-radius: 18px;
-  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
+  background: color-mix(in oklab, var(--paper) 74%, var(--surface));
+}
+
+.catalog-search-field--toolbar {
+  padding: 8px 10px 10px;
+  border-radius: 18px;
 }
 
 .catalog-search-label,
-.catalog-mobile-filter-label,
-.catalog-map-heading {
+.catalog-mobile-filter-label {
   font-size: calc(12px * var(--ui-scale, 1));
   color: color-mix(in oklab, var(--muted) 88%, var(--text));
   font-weight: 700;
@@ -190,11 +235,11 @@
 }
 
 .catalog-search {
-  width: min(560px, 100%);
+  width: 100%;
   border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
   border-radius: 999px;
-  min-height: 46px;
-  padding: 10px 14px;
+  min-height: 42px;
+  padding: 8px 14px;
   background: color-mix(in oklab, var(--paper) 70%, var(--surface));
   color: var(--text);
   font-size: calc(14px * var(--ui-scale, 1));
@@ -209,53 +254,6 @@
   outline: none;
   border-color: color-mix(in oklab, var(--accent) 56%, var(--border));
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 15%, transparent);
-}
-
-.catalog-hero-map {
-  display: grid;
-  gap: 10px;
-  padding: 12px 14px;
-  border: 1px solid color-mix(in oklab, var(--accent-copper) 20%, var(--border));
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, color-mix(in oklab, var(--accent-copper) 8%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
-    var(--surface);
-}
-
-.catalog-map-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.catalog-map-item {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.catalog-map-step {
-  min-inline-size: 2.4rem;
-  padding-top: 2px;
-  color: color-mix(in oklab, var(--accent) 80%, var(--text));
-  font-size: calc(12px * var(--ui-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
-.catalog-map-copy {
-  display: grid;
-  gap: 4px;
-}
-
-.catalog-map-copy strong {
-  font-size: calc(15px * var(--ui-scale, 1));
-}
-
-.catalog-map-copy span {
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale, 1));
 }
 
 .catalog-hero-actions,
@@ -280,49 +278,26 @@
   transform: translateY(-1px);
 }
 
-.catalog-quick-access[data-tone="atlas"] {
-  padding: clamp(14px, 1.7vw, 18px);
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 7%, var(--surface)), color-mix(in oklab, var(--surface) 93%, var(--paper))),
-    var(--surface);
-}
-
 .catalog-quick-access-band {
   display: grid;
-  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-  gap: 14px 18px;
-  align-items: center;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 10px 18px;
+  align-items: start;
 }
 
 .catalog-quick-access-copy {
-  display: grid;
-  gap: 4px;
+  display: flex;
+  align-items: center;
   min-width: 0;
 }
 
-.catalog-quick-access-kicker,
-.catalog-quick-access-note {
+.catalog-quick-access-label {
   margin: 0;
-}
-
-.catalog-quick-access-kicker {
   color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
   font-size: calc(11px * var(--ui-scale, 1));
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-}
-
-.catalog-quick-access-title {
-  font-size: clamp(1.15rem, 1rem + 0.35vw, 1.55rem);
-  line-height: 1.12;
-}
-
-.catalog-quick-access-note {
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale, 1));
-  line-height: 1.45;
-  max-width: 34ch;
 }
 
 .catalog-chip-list--quick {
@@ -333,9 +308,9 @@
 .catalog-quick-chip {
   border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
   border-radius: 999px;
-  min-height: 44px;
-  padding: 8px 12px;
-  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
+  min-height: 40px;
+  padding: 7px 12px;
+  background: color-mix(in oklab, var(--paper) 74%, var(--surface));
   color: inherit;
   text-decoration: none;
   display: inline-flex;
@@ -394,8 +369,8 @@
 .catalog-section-heading {
   display: grid;
   gap: 6px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
 }
 
 .catalog-section-heading-row {
@@ -413,12 +388,12 @@
 
 .catalog-section-badge {
   flex: 0 0 auto;
-  min-height: 36px;
-  padding: 8px 12px;
-  border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
   border-radius: 999px;
-  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
-  color: color-mix(in oklab, var(--accent-strong) 58%, var(--text));
+  background: transparent;
+  color: color-mix(in oklab, var(--accent-strong) 50%, var(--text));
   font-size: calc(12px * var(--ui-scale, 1));
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -427,39 +402,67 @@
 
 .catalog-section-heading::after {
   content: "";
-  width: 84px;
+  width: 72px;
   height: 1px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 38%, var(--border)), transparent);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 28%, var(--border)), transparent);
+}
+
+.catalog-section--flat {
+  background: transparent;
+  box-shadow: none;
+}
+
+.catalog-section--flat .catalog-card-strip,
+.catalog-section--flat .catalog-grid {
+  gap: 12px;
 }
 
 .catalog-section--map {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent) 7%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
-    var(--surface);
+  padding-top: 2px;
 }
 
 .catalog-section--current {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 10%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
+  padding-top: 0;
 }
 
 .catalog-section--recommended {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent) 9%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
+  padding-top: 0;
 }
 
 .catalog-section--library {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 7%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
-    var(--surface);
+  padding-top: 0;
 }
 
-.catalog-section[data-section="archive"] {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)), color-mix(in oklab, var(--surface-raised) 84%, var(--paper))),
-    var(--surface);
+.catalog-section--map .catalog-section-heading::after {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 32%, var(--border)), transparent);
+}
+
+.catalog-section--current .catalog-section-heading::after,
+.catalog-section--library .catalog-section-heading::after {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent-copper) 28%, var(--border)), transparent);
+}
+
+.catalog-section--archive {
+  padding: clamp(6px, 1vw, 10px) 0 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.catalog-section--archive .catalog-section-heading {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+}
+
+.catalog-section--archive .catalog-section-heading::after {
+  width: 64px;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 24%, var(--border)), transparent);
+}
+
+.catalog-section--archive .catalog-grid {
+  gap: 12px;
 }
 
 .catalog-section-nav {
@@ -510,11 +513,24 @@
   background: color-mix(in oklab, var(--surface) 84%, var(--paper));
 }
 
+.catalog-empty {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.catalog-empty--inline {
+  padding: 10px 0 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: color-mix(in oklab, var(--muted) 88%, var(--text));
+}
+
 .catalog-card-strip,
 .catalog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--catalog-card-min-width, 220px), 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 .catalog-card {
@@ -526,7 +542,7 @@
   overflow: hidden;
   background:
     linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)) 0%, color-mix(in oklab, var(--surface-raised) 84%, var(--paper)) 100%);
-  box-shadow: 0 20px 40px -32px color-mix(in oklab, var(--ink) 30%, transparent);
+  box-shadow: 0 18px 36px -32px color-mix(in oklab, var(--ink) 24%, transparent);
 }
 
 .catalog-card::before {
@@ -660,26 +676,54 @@
 }
 
 @media (min-width: 980px) {
-  .catalog-hero {
-    grid-template-columns: minmax(0, 1.18fr) minmax(320px, 0.82fr);
+  .catalog-hero-mainline {
+    grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.22fr);
     align-items: start;
   }
 
-  .catalog-hero-map {
-    grid-column: 1 / -1;
+  .catalog-hero-toolbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px 12px;
+  }
+
+  .catalog-hero-actions {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+  }
+
+  .catalog-hero-actions .btn {
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 640px) {
-  .catalog-hero,
-  .catalog-quick-access,
-  .catalog-section {
+  .catalog-stage {
     padding: 14px;
   }
 
-  .catalog-hero-overview,
-  .catalog-map-grid {
-    grid-template-columns: 1fr;
+  .catalog-stage-hero {
+    padding-bottom: 12px;
+  }
+
+  .catalog-stage-rail,
+  .catalog-section--archive,
+  .catalog-section--flat {
+    padding-top: 8px;
+  }
+
+  .catalog-section--archive {
+    padding-inline: 0;
+  }
+
+  .catalog-hero-status-strip {
+    padding-top: 8px;
+    padding-inline: 0;
+    border-radius: 18px;
+  }
+
+  .catalog-hero-mainline {
+    gap: 10px;
   }
 
   .catalog-section-heading-row {
@@ -688,7 +732,7 @@
 
   .catalog-quick-access-band {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
   .catalog-chip-list--quick {
@@ -696,17 +740,19 @@
   }
 
   .catalog-section-badge {
-    min-height: 32px;
+    min-height: 28px;
+  }
+
+  .catalog-hero-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .catalog-hero-actions .btn,
   .catalog-quick-chip {
     width: 100%;
     justify-content: center;
-  }
-
-  .catalog-map-grid {
-    gap: 10px;
   }
 
   .catalog-mobile-filter-trigger {
@@ -743,8 +789,7 @@
 @media (prefers-reduced-motion: reduce) {
   .catalog-hero-copy,
   .catalog-hero-search,
-  .catalog-hero-overview,
-  .catalog-hero-map,
+  .catalog-hero-status-strip,
   .catalog-hero-actions {
     animation: none;
   }
@@ -758,16 +803,5 @@
 
   .catalog-mobile-filter-panel.is-open {
     animation: none;
-  }
-}
-.catalog-teacher-quick-access {
-  display: grid;
-  gap: 14px;
-}
-
-@media (min-width: 900px) {
-  .catalog-teacher-quick-access {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
   }
 }

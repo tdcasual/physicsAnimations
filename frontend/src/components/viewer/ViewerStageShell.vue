@@ -26,65 +26,54 @@ const emit = defineEmits<{
     class="viewer-stage-shell"
     :class="['viewer-stage-shell', { 'viewer-stage-shell--screenshot': props.screenshotVisible, 'viewer-stage-shell--interactive': props.interactiveStarted && !props.screenshotVisible }]"
   >
-    <aside class="viewer-rail">
-      <div class="viewer-rail-block">
-        <p class="viewer-rail-label">展示模式</p>
-        <div v-if="props.modeStateText" class="viewer-rail-state">
-          {{ props.modeStateText }}
-        </div>
-        <div v-else class="viewer-rail-state">{{ props.viewerRailStateText }}</div>
-      </div>
-
-      <div v-if="props.showHint" class="viewer-rail-note">
-        {{ props.hintText }}
-      </div>
-
-      <div class="viewer-rail-block viewer-rail-block--support">
-        <p class="viewer-rail-label">讲台提示</p>
-        <p class="viewer-rail-support">{{ props.viewerRailSupportText }}</p>
-      </div>
-    </aside>
-
-    <div class="viewer-stage-column">
-      <div class="viewer-stage-proscenium">
-        <div class="viewer-stage-caption">
-          <p class="viewer-stage-kicker">Presentation Surface</p>
-          <p class="viewer-stage-copy">让舞台先占据视线，操作按钮和说明只保留在辅助轨道。</p>
-        </div>
-
-        <div
-          class="viewer-stage-frame"
-          :class="{
-            'viewer-stage-frame--screenshot': props.screenshotVisible,
-            'viewer-stage-frame--interactive': props.interactiveStarted && !props.screenshotVisible,
-            'viewer-stage-frame--transitioning': props.stageTransitionState === 'mode-shift',
-          }"
+    <div class="viewer-stage-proscenium">
+      <div class="viewer-stage-status-band" aria-label="舞台状态">
+        <span class="viewer-stage-status-pill viewer-stage-status-pill--lead">
+          {{ props.modeStateText || props.viewerRailStateText }}
+        </span>
+        <span class="viewer-stage-status-pill">
+          {{ props.showHint ? props.hintText : props.viewerRailSupportText }}
+        </span>
+        <span
+          v-if="props.showHint && props.viewerRailSupportText"
+          class="viewer-stage-status-pill"
         >
-          <div class="viewer-stage-head">
-            <div class="viewer-mode-chip">{{ props.stageModeLabel }}</div>
-            <div class="viewer-transition-note">{{ props.stageTransitionText }}</div>
-          </div>
-          <div class="viewer-stage-aura" aria-hidden="true"></div>
-          <div class="viewer-stage-veil" aria-hidden="true"></div>
-          <div class="viewer-stage-screen">
-            <img
-              v-if="props.screenshotUrl && props.screenshotVisible"
-              class="viewer-shot"
-              :src="props.normalizedScreenshotSrc"
-              alt=""
-            />
-            <iframe
-              v-if="props.interactiveStarted"
-              v-show="!props.screenshotVisible"
-              class="viewer-frame"
-              :src="props.frameSrc"
-              title="作品"
-              loading="eager"
-              :sandbox="props.frameSandbox"
-              referrerpolicy="no-referrer"
-              @load="emit('frame-load')"
-            />
-          </div>
+          {{ props.viewerRailSupportText }}
+        </span>
+      </div>
+
+      <div
+        class="viewer-stage-frame viewer-stage-frame--priority"
+        :class="{
+          'viewer-stage-frame--screenshot': props.screenshotVisible,
+          'viewer-stage-frame--interactive': props.interactiveStarted && !props.screenshotVisible,
+          'viewer-stage-frame--transitioning': props.stageTransitionState === 'mode-shift',
+        }"
+      >
+        <div class="viewer-stage-head">
+          <div class="viewer-mode-chip">{{ props.stageModeLabel }}</div>
+          <div class="viewer-transition-note">{{ props.stageTransitionText }}</div>
+        </div>
+        <div class="viewer-stage-aura" aria-hidden="true"></div>
+        <div class="viewer-stage-veil" aria-hidden="true"></div>
+        <div class="viewer-stage-screen">
+          <img
+            v-if="props.screenshotUrl && props.screenshotVisible"
+            class="viewer-shot"
+            :src="props.normalizedScreenshotSrc"
+            alt=""
+          />
+          <iframe
+            v-if="props.interactiveStarted"
+            v-show="!props.screenshotVisible"
+            class="viewer-frame"
+            :src="props.frameSrc"
+            title="作品"
+            loading="eager"
+            :sandbox="props.frameSandbox"
+            referrerpolicy="no-referrer"
+            @load="emit('frame-load')"
+          />
         </div>
       </div>
     </div>
@@ -94,64 +83,7 @@ const emit = defineEmits<{
 <style scoped>
 .viewer-stage-shell {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   gap: 14px;
-  align-items: start;
-}
-
-.viewer-rail,
-.viewer-stage-frame {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 20%, var(--border));
-}
-
-.viewer-rail {
-  position: sticky;
-  top: calc(var(--app-topbar-height, 0px) + 104px);
-  display: grid;
-  gap: 14px;
-  padding: 18px;
-  border-radius: 22px;
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 10%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
-  box-shadow: 0 24px 50px -38px color-mix(in oklab, var(--ink) 26%, transparent);
-}
-
-.viewer-rail-block {
-  display: grid;
-  gap: 6px;
-}
-
-.viewer-rail-label,
-.viewer-stage-kicker {
-  margin: 0;
-  color: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
-  font-size: calc(11px * var(--ui-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.viewer-rail-state {
-  font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
-  font-size: clamp(1.1rem, 0.98rem + 0.4vw, 1.45rem);
-  line-height: 1.08;
-}
-
-.viewer-rail-note,
-.viewer-rail-support,
-.viewer-stage-copy {
-  margin: 0;
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale, 1));
-  line-height: 1.6;
-}
-
-.viewer-stage-column {
-  display: grid;
-  gap: 12px;
   min-width: 0;
 }
 
@@ -168,17 +100,46 @@ const emit = defineEmits<{
   box-shadow: inset 0 1px 0 color-mix(in oklab, var(--paper-strong) 22%, transparent);
 }
 
-.viewer-stage-caption {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 12px;
-  padding-inline: 4px;
+.viewer-stage-status-band,
+.viewer-stage-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 20%, var(--border));
 }
 
-.viewer-stage-copy {
-  max-width: 36ch;
-  text-align: right;
+.viewer-stage-status-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)), color-mix(in oklab, var(--accent) 6%, var(--surface))),
+    var(--surface);
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--paper-strong) 24%, transparent);
+}
+
+.viewer-stage-status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid color-mix(in oklab, var(--accent) 12%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale, 1));
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.viewer-stage-status-pill--lead {
+  border-color: color-mix(in oklab, var(--accent-copper) 24%, var(--border));
+  background: color-mix(in oklab, var(--accent-copper) 10%, var(--surface));
+  color: var(--text);
+  font-weight: 700;
 }
 
 .viewer-stage-frame {
@@ -345,33 +306,33 @@ const emit = defineEmits<{
   }
 }
 
-@media (max-width: 900px) {
-  .viewer-stage-shell {
-    grid-template-columns: 1fr;
-  }
-
-  .viewer-rail {
-    position: static;
-  }
-}
-
 @media (max-width: 640px) {
+  .viewer-stage-proscenium {
+    gap: 10px;
+    padding: 6px;
+    border-radius: 26px;
+  }
+
+  .viewer-stage-status-band {
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 18px;
+  }
+
   .viewer-stage-head {
     align-items: flex-start;
     flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .viewer-transition-note {
     text-align: left;
   }
 
-  .viewer-stage-caption {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .viewer-stage-copy {
-    text-align: left;
+  .viewer-stage-frame--priority {
+    padding: 10px;
+    border-radius: 24px;
   }
 }
 

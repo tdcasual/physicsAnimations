@@ -25,7 +25,7 @@ const emit = defineEmits<{
   <div class="list-divider" />
 
   <div class="list-header">
-    <h3>内容列表</h3>
+    <h3 class="list-heading">内容列表</h3>
     <input
       :value="props.query"
       class="field-input list-search"

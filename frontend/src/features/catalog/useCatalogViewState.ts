@@ -137,15 +137,15 @@ export function buildCatalogTeacherWorkspaceSummary(input: {
       label: "最近课堂入口",
       value: recentCount ? `${recentCount} 个最近演示` : "等待第一次课堂启动",
       note: recentCount
-        ? "从最近打开过的内容里继续回放或重开，不必再回到目录深处。"
-        : "先打开一个演示，课前回放和课中重开会从这里开始。",
+        ? "从最近打开过的内容继续回放或重开。"
+        : "先打开一个演示即可建立最近入口。",
     },
     {
       label: "已固定演示",
       value: favoriteCount ? `${favoriteCount} 个常用演示` : "还没有固定演示",
       note: favoriteCount
-        ? "高频课堂内容已经固定，下一节课可以直接从这里进入。"
-        : "把高频演示钉在这里，下一节课不用重新搜索。",
+        ? "高频内容已固定，下次可直接进入。"
+        : "把高频演示固定在这里，下次不用重搜。",
     },
   ];
 }
@@ -279,12 +279,12 @@ export function useCatalogViewState() {
 
   const heroDescription = computed(() => {
     if (query.value.trim()) {
-      return `当前正按“${query.value.trim()}”筛选，可继续浏览当前内容，或按需切去资源档案。`;
+      return `按“${query.value.trim()}”筛选，可直接进入结果。`;
     }
     if (activeCategory.value) {
-      return `围绕 ${activeCategory.value.title} 更快进入课堂演示、资源档案和完整目录。`;
+      return `${activeCategory.value.title} 的演示与资源入口。`;
     }
-    return "从分类、推荐演示和资源档案中更快定位课堂内容。";
+    return "先缩小范围，再进入演示。";
   });
 
   const currentSectionTitle = computed(() => {

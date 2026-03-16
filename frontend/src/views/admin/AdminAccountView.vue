@@ -131,7 +131,7 @@ async function submit() {
 
 <template>
   <section class="admin-account-view">
-    <header class="admin-page-header">
+    <header class="admin-page-header admin-page-header--account">
       <div class="admin-page-copy">
         <p class="admin-page-kicker">权限与身份</p>
         <h2>账号设置</h2>

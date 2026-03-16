@@ -10,24 +10,6 @@ import { useCatalogViewState } from "../features/catalog/useCatalogViewState";
 import { writeBackNavigationFallbackHash } from "../features/navigation/backNavigation";
 import { useCatalogViewChrome } from "./useCatalogViewChrome";
 
-const heroMapItems = [
-  {
-    step: "01",
-    title: "检索",
-    description: "直接搜索标题或说明，先把课堂范围快速收窄。",
-  },
-  {
-    step: "02",
-    title: "分章",
-    description: "先切大类，再收窄到当前单元或实验主题。",
-  },
-  {
-    step: "03",
-    title: "资源",
-    description: "只有要原文件或下载包时，再进入资源档案。",
-  },
-] as const;
-
 const {
   loading,
   loadError,
@@ -59,29 +41,20 @@ const {
   selectCategory,
 } = useCatalogViewState();
 
-const heroOverviewCards = computed(() => [
-  {
-    label: "当前范围",
-    title: currentSectionTitle.value || heroTitle.value,
-    note: query.value.trim()
-      ? `搜索词：${query.value.trim()}`
-      : hasCatalogGroups.value
-        ? "先在当前分组和分类里继续缩小课堂范围。"
-        : "可以直接从完整目录开始浏览。",
-  },
-  {
-    label: "优先入口",
-    title: recommendedItems.value.length ? `先看 ${recommendedItems.value.length} 个推荐演示` : "继续当前内容",
-    note: recommendedItems.value.length
-      ? "推荐演示更贴近当前上下文，适合先进入课堂展示。"
-      : "没有推荐入口时，继续浏览会直接带你去当前内容区。",
-  },
-  {
-    label: "资源补充",
-    title: libraryHighlights.value.length ? `${libraryHighlights.value.length} 个档案入口` : "按需补资源",
-    note: "需要原文件、容器页或下载包时，再切去资源档案。",
-  },
-]);
+const heroStatusItems = computed(() => {
+  const queryText = query.value.trim();
+  const activeLabel = currentSectionTitle.value || heroTitle.value;
+  const recommendationLabel = queryText
+    ? `检索“${queryText}”`
+    : recommendedItems.value.length
+      ? `${recommendedItems.value.length} 个推荐演示`
+      : currentItems.value.length
+        ? `${currentItems.value.length} 个当前演示`
+        : `${view.value.items.length} 个目录结果`;
+  const archiveLabel = libraryHighlights.value.length ? `${secondaryBrowseLabel.value}仍可补充素材` : "下方保留完整目录";
+
+  return [activeLabel, recommendationLabel, archiveLabel];
+});
 
 function getFolderHref(folderId: string): string {
   const base = import.meta.env.BASE_URL || "/";
@@ -127,27 +100,28 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
     <div v-if="loading" class="catalog-state">正在加载作品...</div>
     <div v-else-if="loadError" class="catalog-state">{{ loadError }}</div>
     <template v-else>
-      <CatalogHeroSection
-        v-model:query="query"
-        :hero-title="heroTitle"
-        :hero-description="heroDescription"
-        :continue-browse-href="continueBrowseHref"
-        :secondary-browse-href="secondaryBrowseHref"
-        :secondary-browse-label="secondaryBrowseLabel"
-        :hero-overview-cards="heroOverviewCards"
-        :hero-map-items="heroMapItems"
-      />
+      <section class="catalog-stage">
+        <CatalogHeroSection
+          v-model:query="query"
+          :hero-title="heroTitle"
+          :hero-description="heroDescription"
+          :continue-browse-href="continueBrowseHref"
+          :secondary-browse-href="secondaryBrowseHref"
+          :secondary-browse-label="secondaryBrowseLabel"
+          :hero-status-items="heroStatusItems"
+        />
 
-      <CatalogQuickAccessBand
-        v-if="quickCategories.length || libraryHighlights.length"
-        :quick-categories="quickCategories"
-        :has-library-highlights="libraryHighlights.length > 0"
-        @select-category="selectCategory"
-      />
+        <CatalogQuickAccessBand
+          v-if="quickCategories.length || libraryHighlights.length"
+          :quick-categories="quickCategories"
+          :has-library-highlights="libraryHighlights.length > 0"
+          @select-category="selectCategory"
+        />
 
-      <CatalogTeacherQuickAccessArea :recent-items="recentItems" :favorite-items="favoriteItems" :favorite-ids="favoriteIds" :workspace-summary="teacherWorkspaceSummary" @open-item="rememberWorkflowFallbackHash" @toggle-favorite="toggleCatalogFavorite" />
+        <CatalogTeacherQuickAccessArea :recent-items="recentItems" :favorite-items="favoriteItems" :favorite-ids="favoriteIds" :workspace-summary="teacherWorkspaceSummary" @open-item="rememberWorkflowFallbackHash" @toggle-favorite="toggleCatalogFavorite" />
+      </section>
 
-      <section v-if="hasCatalogGroups" class="catalog-section catalog-section-nav catalog-section--map">
+      <section v-if="hasCatalogGroups" class="catalog-section catalog-section-nav catalog-section--map catalog-section--flat">
         <div class="catalog-section-heading">
           <div class="catalog-section-heading-row">
             <div class="catalog-section-heading-copy">
@@ -208,7 +182,7 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
         </nav>
       </section>
 
-      <section v-if="hasCatalogGroups && currentItems.length" id="catalog-current" class="catalog-section catalog-section--current">
+      <section v-if="hasCatalogGroups && currentItems.length" id="catalog-current" class="catalog-section catalog-section--current catalog-section--flat">
         <div class="catalog-section-heading">
           <div class="catalog-section-heading-row">
             <div class="catalog-section-heading-copy">
@@ -226,7 +200,7 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
         </div>
       </section>
 
-      <section v-if="recommendedItems.length" class="catalog-section catalog-section--recommended">
+      <section v-if="recommendedItems.length" class="catalog-section catalog-section--recommended catalog-section--flat">
         <div class="catalog-section-heading">
           <div class="catalog-section-heading-row">
             <div class="catalog-section-heading-copy">
@@ -244,7 +218,7 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
         </div>
       </section>
 
-      <section id="catalog-library" v-if="libraryHighlights.length" class="catalog-section catalog-section--library">
+      <section id="catalog-library" v-if="libraryHighlights.length" class="catalog-section catalog-section--library catalog-section--flat">
         <div class="catalog-section-heading">
           <div class="catalog-section-heading-row">
             <div class="catalog-section-heading-copy">
@@ -262,12 +236,12 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
         </div>
       </section>
 
-      <section id="catalog-all" class="catalog-section" data-section="archive">
+      <section id="catalog-all" class="catalog-section" :class="'catalog-section--archive'" data-section="archive">
         <div class="catalog-section-heading">
           <div class="catalog-section-heading-row">
             <div class="catalog-section-heading-copy">
               <h2 class="catalog-section-title">全部内容</h2>
-              <p class="catalog-section-copy">需要完整浏览时，继续从下方全部目录进入。</p>
+              <p class="catalog-section-copy">完整目录保留在这里，继续向下浏览即可。</p>
             </div>
             <div class="catalog-section-badge">{{ filteredLibraryFolders.length + view.items.length }} 项总览</div>
           </div>
@@ -281,7 +255,7 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
             <div class="catalog-thumb"><img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 1) || '?' }}</div></div>
             <div class="catalog-card-body"><div class="catalog-card-kicker">{{ getItemKicker(item.type) }}</div><div class="catalog-card-title">{{ item.title }} <small v-if="item.type === 'link'" class="catalog-link-tag">链接</small></div><div class="catalog-card-desc">{{ item.description || '点击查看详情…' }}</div></div>
           </component>
-          <div v-if="view.items.length === 0 && filteredLibraryFolders.length === 0" class="catalog-empty">{{ view.hasAnyItems ? '没有匹配的作品。' : '未找到任何作品。' }}</div>
+          <div v-if="view.items.length === 0 && filteredLibraryFolders.length === 0" class="catalog-empty catalog-empty--inline">{{ view.hasAnyItems ? '没有匹配的作品。' : '未找到任何作品。' }}</div>
         </div>
       </section>
     </template>

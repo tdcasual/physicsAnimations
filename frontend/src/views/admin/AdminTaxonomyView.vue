@@ -80,7 +80,7 @@ async function openCategoryEditor(categoryId: string) {
 
 <template>
   <section class="admin-taxonomy-view">
-    <header class="admin-page-header">
+    <header class="admin-page-header admin-page-header--taxonomy">
       <div class="admin-page-copy">
         <p class="admin-page-kicker">目录编排</p>
         <h2>分类管理</h2>

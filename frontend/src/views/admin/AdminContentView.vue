@@ -23,16 +23,18 @@ async function openContentEditor(item: AdminItemRow) {
 
 <template>
   <section class="admin-content-view">
-    <header class="admin-page-header">
+    <header class="admin-page-header admin-page-header--content">
       <div class="admin-page-copy">
         <p class="admin-page-kicker">内容编修</p>
         <h2>内容管理</h2>
-        <p class="admin-page-intro">把外链标题、说明和发布状态整理成可直接出现在公开目录的课堂入口。</p>
+        <p class="admin-page-intro admin-page-intro--supporting">整理目录入口所需的标题与状态。</p>
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前节奏</span>
         <strong>{{ vm.editingId ? "编辑详情已展开" : "先补新条目" }}</strong>
-        <span>{{ vm.editingId ? "右侧面板保持聚焦，适合连续修订标题、分类与排序。" : "先创建或筛选条目，再在右侧完成发布设定。" }}</span>
+        <span class="admin-page-meta-copy">
+          {{ vm.editingId ? "右侧面板保持聚焦，适合连续修订标题与排序。" : "先创建或筛选条目，再在右侧完成发布设定。" }}
+        </span>
       </div>
     </header>
 
@@ -149,11 +151,11 @@ h3 {
   flex-wrap: wrap;
 }
 
-.list-divider {
+:deep(.list-divider) {
   border-top: 1px dashed var(--border);
 }
 
-.list-header {
+:deep(.list-header) {
   display: flex;
   justify-content: space-between;
   gap: 10px;
@@ -161,11 +163,11 @@ h3 {
   flex-wrap: wrap;
 }
 
-.list-search {
+:deep(.list-search) {
   width: min(360px, 100%);
 }
 
-.item-card {
+:deep(.item-card) {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px;
@@ -174,32 +176,32 @@ h3 {
   background: color-mix(in srgb, var(--surface) 90%, var(--bg));
 }
 
-.item-card.selected {
+:deep(.item-card.selected) {
   border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
   background: color-mix(in srgb, var(--primary) 9%, var(--surface));
 }
 
-.item-head {
+:deep(.item-head) {
   display: flex;
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.item-title {
+:deep(.item-title) {
   font-weight: 600;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.item-meta {
+:deep(.item-meta) {
   color: var(--muted);
   font-size: 12px;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.item-actions {
+:deep(.item-actions) {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -248,14 +250,14 @@ h3 {
   font-size: 13px;
 }
 
-.empty {
+:deep(.empty) {
   border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 16px;
   color: var(--muted);
 }
 
-.list-footer {
+:deep(.list-footer) {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -263,10 +265,20 @@ h3 {
   flex-wrap: wrap;
 }
 
-.meta {
+:deep(.meta) {
   color: var(--muted);
   font-size: 12px;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  :deep(.list-header) {
+    gap: 6px;
+  }
+
+  :deep(.list-heading) {
+    display: none;
+  }
 }
 
 @media (max-width: 1024px) {

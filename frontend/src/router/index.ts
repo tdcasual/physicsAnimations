@@ -16,7 +16,7 @@ export function createAppRouter({
     history,
     routes: appRoutes,
     scrollBehavior(to, _from, savedPosition) {
-      const hasHashTarget = typeof to.hash === "string" && to.hash.trim();
+      const hasHashTarget = to.path === "/" && typeof to.hash === "string" && to.hash.trim();
       const hasMeaningfulSavedPosition = !!savedPosition && (savedPosition.top !== 0 || savedPosition.left !== 0);
 
       if (hasHashTarget && !hasMeaningfulSavedPosition) {

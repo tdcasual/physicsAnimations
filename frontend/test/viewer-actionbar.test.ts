@@ -12,10 +12,15 @@ describe("viewer action bar", () => {
       read("src/views/ViewerView.vue"),
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
+    expect(source).toMatch(/class="viewer-page viewer-page--staged"/);
+    expect(source).toMatch(/class="viewer-bar viewer-bar--compact"/);
+    expect(source).toMatch(/class="viewer-bar-copy"/);
+    expect(source).toMatch(/class="viewer-bar-summary"/);
     expect(source).toMatch(/class="viewer-stage-shell"/);
     expect(source).toMatch(/class="viewer-stage-proscenium"/);
-    expect(source).toMatch(/class="viewer-rail"/);
-    expect(source).toMatch(/class="viewer-rail-state"/);
+    expect(source).toMatch(/class="viewer-stage-status-band"/);
+    expect(source).toMatch(/class="viewer-stage-status-pill"/);
+    expect(source).not.toMatch(/class="viewer-rail"/);
     expect(source).toMatch(/\.viewer-bar\s*\{[\s\S]*position:\s*sticky/);
     expect(source).toMatch(/\.viewer-bar\s*\{[\s\S]*top:\s*var\(--app-topbar-height,\s*0px\)/);
   });
@@ -36,22 +41,27 @@ describe("viewer action bar", () => {
     expect(source).toMatch(/\.viewer-title\s*\{[\s\S]*min-width:\s*0/);
   });
 
-  it("moves preview hint copy into a side rail instead of the main action path", () => {
+  it("moves preview hint copy into a compact stage status band instead of a side rail", () => {
     const source = [
       read("src/views/ViewerView.vue"),
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
-    expect(source).toMatch(/class="viewer-rail-note"/);
+    expect(source).toMatch(/class="viewer-stage-status-band"/);
+    expect(source).toMatch(/class="viewer-stage-status-pill viewer-stage-status-pill--lead"/);
+    expect(source).not.toMatch(/class="viewer-rail-card/);
     expect(source).not.toMatch(/class="viewer-hint"/);
   });
 
-  it("adds a visible mode chip and transition note inside the stage frame", () => {
+  it("adds a visible mode chip, transition note, and one compact status band around the stage", () => {
     const source = [
       read("src/views/ViewerView.vue"),
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
     expect(source).toMatch(/const stageModeLabel = computed/);
     expect(source).toMatch(/const stageTransitionText = computed/);
+    expect(source).toMatch(/class="viewer-stage-status-band"/);
+    expect(source).not.toMatch(/class="viewer-stage-brief/);
+    expect(source).not.toMatch(/class="viewer-stage-status-grid"/);
     expect(source).toMatch(/class="viewer-mode-chip"/);
     expect(source).toMatch(/class="viewer-transition-note"/);
   });
@@ -63,7 +73,7 @@ describe("viewer action bar", () => {
     ].join("\n");
     expect(source).toMatch(/document\.title = "正在加载作品\.\.\."/);
     expect(source).toMatch(/:show-hint="model\.showHint"/);
-    expect(source).toMatch(/class="viewer-rail-state"/);
+    expect(source).toMatch(/class="viewer-stage-status-pill"/);
     expect(source).toMatch(/v-if="!loading && model\?\.status === 'ready' && model\.showModeToggle"/);
     expect(source).toMatch(/v-if="!loading && model\?\.status === 'ready'"/);
     expect(source).toMatch(/props\.modeStateText/);
@@ -124,5 +134,16 @@ describe("viewer action bar", () => {
     expect(source).toMatch(/toggleFavoriteDemo|toggleFavorite/);
     expect(source).toMatch(/收藏演示/);
     expect(source).toMatch(/已收藏/);
+  });
+
+  it("tightens the compact viewer header on small screens so the stage arrives sooner", () => {
+    const source = read("src/views/ViewerView.vue");
+    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-bar--compact\s*\{[\s\S]*padding:\s*8px 10px/);
+    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-bar--compact\s*\{[\s\S]*gap:\s*6px/);
+    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-bar-left\s*\{[\s\S]*gap:\s*8px/);
+    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-kicker\s*\{[\s\S]*display:\s*none/);
+    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-bar-summary\s*\{[\s\S]*display:\s*none/);
+    expect(source).toMatch(/\.viewer-back\s*\{[\s\S]*white-space:\s*nowrap/);
+    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-title\s*\{[\s\S]*font-size:\s*clamp\(1\.06rem,\s*0\.96rem \+ 0\.4vw,\s*1\.32rem\)/);
   });
 });

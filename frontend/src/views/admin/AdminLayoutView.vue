@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import AdminShellHeader from "../../components/admin/AdminShellHeader.vue";
-import { RouterLink, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 
 const adminNavGroups = [
   {
@@ -45,7 +45,6 @@ const currentAdminGroup = computed(
   () => adminNavGroups.find((group) => group.items.some((item) => route.path.startsWith(item.to))) ?? adminNavGroups[0],
 );
 const currentAdminSection = computed(() => adminItems.find((item) => route.path.startsWith(item.to)) ?? adminItems[0]);
-const adminWorkspaceCount = adminItems.length;
 
 let lastFocusedBeforeMobileNav: HTMLElement | null = null;
 let bodyOverflowBeforeMobileNav = "";
@@ -162,7 +161,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="admin-layout-view" @keydown.esc.window="closeMobileNav">
+  <section :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]" @keydown.esc.window="closeMobileNav">
     <AdminShellHeader
       ref="adminHeaderRef"
       :current-admin-section="currentAdminSection"
@@ -200,17 +199,6 @@ onBeforeUnmount(() => {
       </aside>
 
       <div class="admin-body">
-        <section class="admin-context-card" :class="['admin-context-card--active']">
-          <p class="admin-context-kicker">当前工作区</p>
-          <div class="admin-shell-status-strip">
-            <p class="admin-context-status">执行中</p>
-            <span>优先维持当前模块的连续处理，再切换其他工作区。</span>
-          </div>
-          <h2 class="admin-context-title">{{ currentAdminSection.label }}</h2>
-          <p class="admin-context-copy">围绕当前模块继续处理任务、巡检与补档动作。</p>
-          <p class="admin-context-note">{{ adminWorkspaceCount }} 个工作区入口保持同一条执行路径；移动端通过工作区菜单切换。</p>
-          <RouterLink class="admin-link admin-link-home" to="/">主页面</RouterLink>
-        </section>
         <RouterView />
       </div>
     </div>
@@ -218,10 +206,30 @@ onBeforeUnmount(() => {
 </template>
 
 <style>
-.admin-layout-view { display: grid; gap: 16px; }
-.admin-layout-view h1, .admin-context-title { margin: 0; }
-.admin-nav-shell,
-.admin-context-card {
+.admin-layout-view {
+  --admin-shell-accent: var(--accent);
+  --admin-shell-accent-quiet: var(--accent-copper);
+  display: grid;
+  gap: 14px;
+}
+
+.admin-layout-view--workspace {
+  --admin-shell-accent: color-mix(in oklab, var(--accent) 82%, var(--accent-copper) 18%);
+  --admin-shell-accent-quiet: color-mix(in oklab, var(--accent-copper) 62%, var(--surface));
+}
+
+.admin-layout-view--library {
+  --admin-shell-accent: color-mix(in oklab, var(--accent-copper) 78%, var(--accent) 22%);
+  --admin-shell-accent-quiet: color-mix(in oklab, var(--accent-copper-strong) 48%, var(--surface));
+}
+
+.admin-layout-view--system {
+  --admin-shell-accent: color-mix(in oklab, var(--line-strong) 72%, var(--accent) 28%);
+  --admin-shell-accent-quiet: color-mix(in oklab, var(--line-strong) 38%, var(--surface));
+}
+
+.admin-layout-view h1 { margin: 0; }
+.admin-nav-shell {
   position: relative;
   overflow: hidden;
   border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
@@ -229,18 +237,16 @@ onBeforeUnmount(() => {
   background: color-mix(in oklab, var(--surface) 94%, var(--paper));
   box-shadow: 0 24px 52px -38px color-mix(in oklab, var(--ink) 26%, transparent);
 }
-.admin-nav-shell::before,
-.admin-context-card::before {
+.admin-nav-shell::before {
   content: "";
   position: absolute;
   inset: 0 auto auto 0;
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--accent) 48%, var(--border)), transparent);
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--admin-shell-accent) 48%, var(--border)), transparent);
 }
 .admin-body,
 .admin-nav-group { display: grid; gap: 8px; }
-.admin-context-kicker,
 .admin-nav-group-title {
   margin: 0;
   color: var(--muted);
@@ -249,8 +255,7 @@ onBeforeUnmount(() => {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.admin-shell-status-label,
-.admin-context-status {
+.admin-shell-status-label {
   margin: 0;
   color: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
   font-size: calc(11px * var(--ui-scale, 1));
@@ -262,24 +267,21 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 4px;
 }
-.admin-context-copy,
-.admin-context-note { margin: 0; color: var(--muted); }
-.admin-context-note { max-width: 52ch; font-size: calc(13px * var(--ui-scale, 1)); }
 .admin-nav-group-links { display: flex; gap: 8px; flex-wrap: wrap; }
-.admin-shell { display: grid; grid-template-columns: minmax(240px, 280px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.admin-shell { display: grid; grid-template-columns: minmax(236px, 276px) minmax(0, 1fr); gap: 14px; align-items: start; }
 .admin-nav-backdrop { display: none; }
 .admin-nav-shell {
-  padding: 14px;
+  padding: 12px;
   transition: opacity 180ms ease, transform 180ms ease;
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 6%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+    linear-gradient(180deg, color-mix(in oklab, var(--admin-shell-accent-quiet) 10%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
     var(--surface);
 }
-.admin-nav { display: grid; gap: 14px; }
+.admin-nav { display: grid; gap: 10px; }
 .admin-nav-group {
-  padding: 12px;
-  border: 1px solid color-mix(in oklab, var(--accent) 10%, var(--border));
-  border-radius: 16px;
+  padding: 10px;
+  border: 1px solid color-mix(in oklab, var(--admin-shell-accent) 10%, var(--border));
+  border-radius: 15px;
   background: color-mix(in oklab, var(--surface) 92%, var(--paper));
 }
 .admin-nav-group-summary {
@@ -304,36 +306,26 @@ onBeforeUnmount(() => {
 .admin-mobile-nav-trigger { min-height: 44px; }
 .admin-link:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--accent) 34%, var(--border));
-  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--accent) 42%, transparent);
+  border-color: color-mix(in oklab, var(--admin-shell-accent) 34%, var(--border));
+  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--admin-shell-accent) 42%, transparent);
 }
 .admin-mobile-nav-trigger:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--accent) 34%, var(--border));
-  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--accent) 42%, transparent);
+  border-color: color-mix(in oklab, var(--admin-shell-accent) 34%, var(--border));
+  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--admin-shell-accent) 42%, transparent);
 }
 .admin-link:active,
 .admin-mobile-nav-trigger:active { transform: translateY(0) scale(0.985); }
 .admin-link.active,
 .admin-mobile-nav-trigger {
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  border-color: color-mix(in oklab, var(--admin-shell-accent) 55%, var(--border));
 }
 .admin-link.active {
-  background: color-mix(in oklab, var(--accent) 16%, var(--surface));
-  color: color-mix(in oklab, var(--accent-strong) 60%, var(--text));
+  background: color-mix(in oklab, var(--admin-shell-accent) 16%, var(--surface));
+  color: color-mix(in oklab, var(--admin-shell-accent) 60%, var(--text));
 }
 .admin-link-home { white-space: nowrap; }
 .admin-mobile-nav-trigger { display: none; cursor: pointer; }
-.admin-context-card {
-  position: relative;
-  padding: 18px;
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-copper) 8%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
-}
-.admin-context-card--active {
-  box-shadow: 0 24px 52px -38px color-mix(in oklab, var(--accent-copper) 22%, transparent);
-}
 
 @keyframes admin-shell-in {
   from {
@@ -354,6 +346,7 @@ onBeforeUnmount(() => {
 @media (max-width: 640px) {
   .admin-shell-header { padding: 14px; flex-direction: column; }
   .admin-shell-header--compact { padding: 12px 14px; }
+  .admin-body { gap: 10px; }
   .admin-shell-actions { width: 100%; }
   .admin-link-home,
   .admin-mobile-nav-trigger { flex: 1 1 calc(50% - 4px); }

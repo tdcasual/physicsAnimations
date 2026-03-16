@@ -104,6 +104,16 @@ describe("catalog homepage section helper", () => {
     expect(mounted.host.textContent).toContain("教学工作区");
     expect(mounted.host.textContent).toContain("最近课堂入口");
     expect(mounted.host.textContent).toContain("已固定演示");
+    expect(mounted.host.textContent).not.toContain("最近入口与固定演示。");
+    expect(mounted.host.textContent).not.toContain("课前回放与课中重开。");
+    expect(mounted.host.textContent).not.toContain("把常用演示固定在这里。");
+    expect(mounted.host.querySelector(".catalog-workbench")).not.toBeNull();
+    expect(mounted.host.querySelector(".catalog-stage-rail")).not.toBeNull();
+    expect(mounted.host.querySelector(".catalog-workspace-strip")).not.toBeNull();
+    expect(mounted.host.querySelector(".catalog-workspace-item")).not.toBeNull();
+    expect(mounted.host.querySelector(".catalog-workbench-columns")).not.toBeNull();
+    expect(mounted.host.querySelector(".catalog-workbench-column")).not.toBeNull();
+    expect(mounted.host.querySelector(".catalog-workspace-pill")).toBeNull();
 
     mounted.cleanup();
   });

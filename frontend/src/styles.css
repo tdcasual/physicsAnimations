@@ -116,73 +116,62 @@ a {
 .topbar-inner {
   width: min(var(--content-max-width), calc(100% - 32px));
   margin: 0 auto;
-  padding: 16px 0;
+}
+
+.topbar-shell-panel {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 12px;
+  padding: 10px 0 9px;
 }
 
 .topbar-lead {
   display: flex;
-  align-items: flex-end;
-  gap: 14px;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   flex: 1 1 auto;
 }
 
-.brand-stack {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-
 .brand-link {
   display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 38px;
   text-decoration: none;
   color: inherit;
 }
 
-.brand-copy {
+.brand-lockup {
   display: grid;
-  gap: 4px;
+  min-width: 0;
+  gap: 1px;
 }
 
-.brand-meta {
-  color: color-mix(in oklab, var(--accent-copper-strong) 82%, var(--text));
-  font-size: calc(11px * var(--ui-scale));
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.brand-title {
+.brand-mark {
   font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
-  font-size: clamp(1.35rem, 1.05rem + 0.95vw, 1.9rem);
+  font-size: clamp(1.02rem, 0.94rem + 0.34vw, 1.16rem);
   font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.02;
-}
-
-.brand-subcopy {
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-  max-width: 34ch;
-}
-
-.topbar-note {
-  margin: 0;
-  padding-left: 14px;
-  border-left: 1px solid color-mix(in oklab, var(--line-strong) 30%, var(--border));
-  color: color-mix(in oklab, var(--muted) 84%, var(--text));
-  font-size: calc(12px * var(--ui-scale));
-  letter-spacing: 0.04em;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .topbar-actions,
 .actions {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.topbar-action-cluster {
+  display: grid;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: end;
   gap: 8px;
 }
 
@@ -206,8 +195,8 @@ a {
 .topbar-environment-shell {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
+  gap: 8px;
+  min-height: 40px;
 }
 
 .topbar-utility-label {
@@ -224,6 +213,11 @@ a {
   gap: 8px;
   opacity: 0;
   transform: translateY(-6px);
+}
+
+.topbar-mobile-utility-group {
+  display: grid;
+  gap: 8px;
 }
 
 .btn {
@@ -275,7 +269,7 @@ a {
 
 .app-main {
   width: min(var(--content-max-width), calc(100% - 32px));
-  margin: 18px auto 28px;
+  margin: 14px auto 28px;
   padding: 0;
 }
 
@@ -290,11 +284,55 @@ a {
 }
 
 .admin-page-header {
+  --admin-page-tone: color-mix(in oklab, var(--accent) 18%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 12px;
   flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in oklab, var(--admin-page-tone) 42%, var(--surface)), color-mix(in oklab, var(--surface) 96%, var(--paper))),
+    var(--surface);
+  box-shadow: 0 22px 46px -36px color-mix(in oklab, var(--admin-page-tone) 48%, transparent);
+}
+
+.admin-page-header--dashboard {
+  --admin-page-tone: color-mix(in oklab, var(--accent) 26%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--accent) 52%, var(--text));
+}
+
+.admin-page-header--content {
+  --admin-page-tone: color-mix(in oklab, var(--accent) 20%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--accent) 48%, var(--text));
+}
+
+.admin-page-header--uploads {
+  --admin-page-tone: color-mix(in oklab, var(--accent-copper) 28%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--accent-copper-strong) 62%, var(--text));
+}
+
+.admin-page-header--library {
+  --admin-page-tone: color-mix(in oklab, var(--accent-copper) 32%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--accent-copper-strong) 66%, var(--text));
+}
+
+.admin-page-header--taxonomy {
+  --admin-page-tone: color-mix(in oklab, var(--line-strong) 28%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--line-strong) 62%, var(--text));
+}
+
+.admin-page-header--system {
+  --admin-page-tone: color-mix(in oklab, var(--line-strong) 24%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--line-strong) 62%, var(--text));
+}
+
+.admin-page-header--account {
+  --admin-page-tone: color-mix(in oklab, var(--accent-copper) 18%, transparent);
+  --admin-page-tone-ink: color-mix(in oklab, var(--accent-copper-strong) 60%, var(--text));
 }
 
 .admin-page-header :is(h1, h2, h3) {
@@ -309,7 +347,7 @@ a {
 
 .admin-page-kicker {
   margin: 0;
-  color: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
+  color: var(--admin-page-tone-ink);
   font-size: calc(12px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -322,24 +360,81 @@ a {
   color: var(--muted);
 }
 
+.admin-page-intro--supporting {
+  max-width: 40ch;
+}
+
 .admin-page-meta {
   display: grid;
   gap: 4px;
   min-width: min(100%, 240px);
   max-width: 40ch;
   padding: 10px 12px;
-  border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
+  border: 1px solid color-mix(in oklab, var(--admin-page-tone) 58%, var(--border));
   border-radius: 16px;
   background:
-    linear-gradient(135deg, color-mix(in oklab, var(--accent-copper) 8%, var(--surface)), color-mix(in oklab, var(--surface) 96%, var(--paper))),
+    linear-gradient(135deg, color-mix(in oklab, var(--admin-page-tone) 28%, var(--surface)), color-mix(in oklab, var(--surface) 96%, var(--paper))),
     var(--surface);
-  box-shadow: 0 18px 38px -32px color-mix(in oklab, var(--accent) 28%, transparent);
+  box-shadow: 0 18px 38px -32px color-mix(in oklab, var(--admin-page-tone) 44%, transparent);
   color: var(--muted);
 }
 
 .admin-page-meta strong {
   color: var(--text);
   font-size: calc(15px * var(--ui-scale));
+}
+
+.admin-page-meta-copy {
+  margin: 0;
+}
+
+.admin-task-copy--supporting {
+  margin: 0;
+}
+
+.admin-optional-disclosure {
+  margin: 0;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 16%, var(--border));
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
+  overflow: hidden;
+}
+
+.admin-optional-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 12px;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 600;
+}
+
+.admin-optional-summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-optional-disclosure > .admin-optional-summary::after {
+  content: "展开";
+  color: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-optional-disclosure[open] > .admin-optional-summary::after {
+  content: "收起";
+}
+
+.admin-optional-fields {
+  display: grid;
+  gap: 10px;
+  padding: 0 12px 12px;
 }
 
 .admin-page-meta-list {
@@ -353,7 +448,7 @@ a {
   align-items: center;
   min-height: 28px;
   padding: 4px 10px;
-  border: 1px solid color-mix(in oklab, var(--accent) 12%, var(--border));
+  border: 1px solid color-mix(in oklab, var(--admin-page-tone) 44%, var(--border));
   border-radius: 999px;
   background: color-mix(in oklab, var(--surface) 92%, var(--paper));
   color: color-mix(in oklab, var(--muted) 84%, var(--text));
@@ -361,7 +456,7 @@ a {
 }
 
 .admin-page-meta-label {
-  color: color-mix(in oklab, var(--accent-copper-strong) 68%, var(--text));
+  color: var(--admin-page-tone-ink);
   font-size: calc(11px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -534,34 +629,64 @@ input[type="radio"] {
 @media (max-width: 480px) {
   .topbar-inner {
     width: calc(100% - 20px);
-    padding: 12px 0;
-    align-items: flex-start;
+  }
+
+  .topbar-shell-panel {
+    padding: 4px 4px 3px;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 4px 8px;
   }
 
   .topbar-lead {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     width: 100%;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-wrap: wrap;
+    align-items: center;
+    justify-content: stretch;
+    gap: 4px 8px;
   }
 
-  .brand-stack {
-    width: 100%;
+  .brand-link {
+    gap: 8px;
+    min-height: 34px;
   }
 
-  .topbar-note {
-    padding-left: 0;
-    border-left: 0;
+  .brand-mark {
+    font-size: clamp(0.95rem, 0.88rem + 0.5vw, 1.02rem);
+    line-height: 1;
+  }
+
+  .btn-nav-home,
+  .topbar-mobile-toggle {
+    padding-inline: 12px;
+  }
+
+  .topbar .btn {
+    min-height: 40px;
+    padding: 7px 12px;
+    font-size: calc(12px * var(--ui-scale));
+  }
+
+  .topbar-home-link {
+    justify-self: end;
+    align-self: start;
   }
 
   .topbar-actions {
     width: 100%;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
+  }
+
+  .topbar-action-cluster {
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-auto-flow: row;
+    align-items: center;
+    gap: 4px 8px;
   }
 
   .actions {
@@ -588,12 +713,21 @@ input[type="radio"] {
   }
 
   .topbar-primary-actions {
+    grid-column: 1;
     flex: 1 1 auto;
     align-items: stretch;
+    gap: 4px;
+    flex-wrap: nowrap;
+  }
+
+  .topbar-admin-link {
+    display: none;
   }
 
   .topbar-mobile-toggle {
     display: inline-flex !important;
+    grid-column: 2;
+    grid-row: 1;
     flex: 0 0 auto;
   }
 
@@ -604,15 +738,24 @@ input[type="radio"] {
   .topbar-mobile-utility-panel {
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     max-height: 0;
     overflow: hidden;
+    margin-top: 2px;
     padding-top: 0;
     transition:
       max-height 180ms ease,
       padding-top 180ms ease,
       opacity 160ms ease,
       transform 160ms ease;
+  }
+
+  .topbar-mobile-utility-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topbar-mobile-utility-group--account {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .topbar-mobile-utility-copy {
@@ -625,14 +768,19 @@ input[type="radio"] {
   }
 
   .topbar-mobile-utility-panel.is-open {
-    max-height: 220px;
-    padding-top: 8px;
+    max-height: 200px;
+    padding-top: 6px;
     opacity: 1;
     transform: translateY(0);
   }
 
-  .topbar-mobile-utility-panel .btn {
+  .topbar-mobile-utility-panel .btn,
+  .topbar-mobile-admin-link {
     width: 100%;
+  }
+
+  .topbar--viewer .topbar-home-link {
+    display: none;
   }
 
   .app-main {
@@ -648,6 +796,51 @@ input[type="radio"] {
 
   .admin-actions .btn {
     flex: 1 1 calc(50% - 6px);
+  }
+
+  .admin-page-header {
+    gap: 8px;
+    padding: 12px 14px;
+  }
+
+  .admin-page-kicker {
+    display: none;
+  }
+
+  .admin-page-copy {
+    gap: 2px;
+  }
+
+  .admin-page-intro--supporting {
+    display: none;
+  }
+
+  .admin-page-meta-label {
+    display: none;
+  }
+
+  .admin-page-meta-copy {
+    display: none;
+  }
+
+  .admin-page-meta {
+    min-width: 0;
+    width: 100%;
+    padding: 7px 10px;
+    gap: 3px;
+    box-shadow: none;
+  }
+
+  .admin-task-copy--supporting {
+    display: none;
+  }
+
+  .admin-optional-summary {
+    padding: 8px 10px;
+  }
+
+  .admin-optional-fields {
+    padding: 0 10px 10px;
   }
 }
 

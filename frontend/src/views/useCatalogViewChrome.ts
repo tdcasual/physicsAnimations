@@ -84,14 +84,14 @@ export function useCatalogViewChrome(input: {
 
   watchEffect(() => {
     if (input.loading.value) {
-      document.title = "正在加载目录 - 我的学科演示集";
+      document.title = "正在加载目录 - 我的科学演示集";
       return;
     }
     if (input.loadError.value) {
-      document.title = "加载目录失败 - 我的学科演示集";
+      document.title = "加载目录失败 - 我的科学演示集";
       return;
     }
-    document.title = `${input.heroTitle.value} - 我的学科演示集`;
+    document.title = `${input.heroTitle.value} - 我的科学演示集`;
   });
 
   return {

@@ -70,15 +70,20 @@ function onInputFile(event: Event) {
     />
   </label>
 
-  <label class="field">
-    <span>描述（可选）</span>
-    <textarea
-      :value="props.description"
-      class="field-input field-textarea"
-      :disabled="props.saving"
-      @input="emit('update:description', ($event.target as HTMLTextAreaElement).value)"
-    />
-  </label>
+  <details class="admin-optional-disclosure">
+    <summary class="admin-optional-summary">补充描述（可选）</summary>
+    <div class="admin-optional-fields">
+      <label class="field">
+        <span>描述（可选）</span>
+        <textarea
+          :value="props.description"
+          class="field-input field-textarea"
+          :disabled="props.saving"
+          @input="emit('update:description', ($event.target as HTMLTextAreaElement).value)"
+        />
+      </label>
+    </div>
+  </details>
 
   <div class="actions admin-actions">
     <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('submit')">上传</button>

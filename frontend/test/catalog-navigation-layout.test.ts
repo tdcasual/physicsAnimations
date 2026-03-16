@@ -7,19 +7,40 @@ function readFile(relPath: string): string {
 }
 
 describe("catalog navigation homepage layout", () => {
-  it("keeps a light hero with search, a compact overview rail, and primary quick actions", () => {
+  it("keeps a light hero with a denser mainline, single status band, and primary quick actions", () => {
     const source = [
       readFile("src/views/CatalogView.vue"),
       readFile("src/components/catalog/CatalogHeroSection.vue"),
     ].join("\n");
 
     expect(source).toMatch(/class="catalog-hero"/);
-    expect(source).toMatch(/class="catalog-hero-overview"/);
-    expect(source).toMatch(/class="catalog-overview-card"/);
+    expect(source).toMatch(/class="catalog-hero-mainline"/);
+    expect(source).toMatch(/class="catalog-hero-toolbar"/);
+    expect(source).toMatch(/class="catalog-hero-support catalog-hero-support--status"/);
+    expect(source).toMatch(/class="catalog-hero-status-strip"/);
+    expect(source).toMatch(/catalog-hero-status-item--lead/);
     expect(source).toMatch(/class="catalog-hero-search"/);
+    expect(source).toMatch(/catalog-search-field--toolbar/);
+    expect(source).not.toMatch(/class="catalog-hero-primary"/);
+    expect(source).not.toMatch(/catalog-hero-overview/);
+    expect(source).not.toMatch(/catalog-overview-card/);
+    expect(source).not.toMatch(/catalog-hero-note/);
+    expect(source).not.toMatch(/catalog-hero-map/);
     expect(source).not.toMatch(/class="catalog-hero-status"/);
     expect(source).not.toMatch(/class="catalog-hero-itinerary"/);
     expect(source).toMatch(/继续浏览|浏览资源库/);
+  });
+
+  it("reduces hero explanation to one restrained status payload instead of focus and next-step cards", () => {
+    const source = readFile("src/views/CatalogView.vue");
+
+    expect(source).toMatch(/const heroStatusItems = computed/);
+    expect(source).not.toMatch(/heroOverviewCards/);
+    expect(source).not.toMatch(/label:\s*"当前聚焦"/);
+    expect(source).not.toMatch(/label:\s*"下一步"/);
+    expect(source).not.toMatch(/label:\s*"当前范围"/);
+    expect(source).not.toMatch(/label:\s*"优先入口"/);
+    expect(source).not.toMatch(/label:\s*"资源补充"/);
   });
 
   it("introduces a compact quick-access band for common categories and shortcuts", () => {
@@ -28,10 +49,16 @@ describe("catalog navigation homepage layout", () => {
       readFile("src/components/catalog/CatalogQuickAccessBand.vue"),
     ].join("\n");
 
+    expect(source).toMatch(/class="catalog-stage"/);
     expect(source).toMatch(/class="catalog-quick-access"/);
+    expect(source).toMatch(/catalog-stage-band/);
     expect(source).toMatch(/class="catalog-quick-access-band"/);
     expect(source).toMatch(/class="catalog-quick-access-copy"/);
+    expect(source).toMatch(/catalog-quick-access-label/);
+    expect(source).not.toMatch(/catalog-quick-access-title/);
+    expect(source).not.toMatch(/catalog-quick-access-note/);
     expect(source).not.toMatch(/catalog-quick-access"[^>]*>\s*<div class="catalog-section-heading"/);
+    expect(source).not.toMatch(/data-tone="atlas"/);
     expect(source).toMatch(/常用分类|快捷入口/);
   });
 
@@ -39,6 +66,9 @@ describe("catalog navigation homepage layout", () => {
     const source = readFile("src/views/CatalogView.vue");
 
     expect(source).toMatch(/class="catalog-section"/);
+    expect(source).toMatch(/catalog-section--flat/);
+    expect(source).toMatch(/catalog-section--archive/);
+    expect(source).toMatch(/catalog-empty--inline/);
     expect(source).toMatch(/class="catalog-section-badge"/);
     expect(source).toMatch(/推荐演示|资源库精选|当前分类/);
   });
@@ -61,8 +91,12 @@ describe("catalog navigation homepage layout", () => {
       readFile("src/components/catalog/CatalogTeacherWorkspaceSummary.vue"),
     ].join("\n");
 
-    expect(view).not.toMatch(/catalog-workspace-summary/);
-    expect(quickAccess).toMatch(/catalog-workspace-summary/);
+    expect(view).not.toMatch(/catalog-workbench/);
+    expect(quickAccess).toMatch(/catalog-workbench/);
+    expect(quickAccess).toMatch(/catalog-stage-rail/);
+    expect(quickAccess).toMatch(/catalog-workspace-strip/);
+    expect(quickAccess).not.toMatch(/catalog-workbench-note/);
+    expect(quickAccess).not.toMatch(/catalog-workbench-column-note/);
     expect(quickAccess).toMatch(/教学工作区/);
   });
 });

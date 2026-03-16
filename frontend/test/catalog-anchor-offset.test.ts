@@ -15,6 +15,7 @@ describe("catalog anchor offsets", () => {
     expect(viewSource).toMatch(/id="catalog-library"/);
     expect(viewSource).toMatch(/id="catalog-all"/);
     expect(cssSource).toMatch(/\.catalog-section\[id\]\s*\{[\s\S]*scroll-margin-top:\s*calc\(/);
+    expect(cssSource).toMatch(/scroll-margin-top:\s*calc\([\s\S]*var\(--app-topbar-height,\s*0px\)/);
     expect(cssSource).toMatch(/scroll-margin-top:\s*calc\([\s\S]*env\(safe-area-inset-top,\s*0px\)/);
   });
 });

@@ -7,13 +7,17 @@ function read(relPath: string): string {
 }
 
 describe("subject-neutral visible copy", () => {
-  it("uses a subject-neutral brand title and catalog fallback wording", () => {
+  it("uses a compact topbar brand while keeping document and catalog wording subject-neutral", () => {
     const app = read("src/App.vue");
+    const chrome = read("src/views/useCatalogViewChrome.ts");
     const state = read("src/features/catalog/useCatalogViewState.ts");
     const service = read("src/features/catalog/catalogService.ts");
 
-    expect(app).toMatch(/我的学科演示集/);
+    expect(app).toMatch(/科学演示集/);
+    expect(app).not.toMatch(/我的科学演示集/);
     expect(app).not.toMatch(/我的物理动画集/);
+    expect(app).not.toMatch(/我的学科演示集/);
+    expect(chrome).toMatch(/我的科学演示集/);
     expect(state).toMatch(/"学科"/);
     expect(service).toMatch(/title:\s*"学科"/);
   });

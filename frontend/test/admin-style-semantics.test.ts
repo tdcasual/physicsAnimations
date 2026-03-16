@@ -11,9 +11,21 @@ describe("admin style semantics", () => {
     const css = read("src/styles.css");
     expect(css).toMatch(/\.admin-card\s*\{/);
     expect(css).toMatch(/\.admin-page-header\s*\{/);
+    expect(css).toMatch(/\.admin-page-header--dashboard\s*\{/);
+    expect(css).toMatch(/\.admin-page-header--content\s*\{/);
+    expect(css).toMatch(/\.admin-page-header--uploads\s*\{/);
+    expect(css).toMatch(/\.admin-page-header--library\s*\{/);
+    expect(css).toMatch(/\.admin-page-header--taxonomy\s*\{/);
+    expect(css).toMatch(/\.admin-page-header--system\s*\{/);
+    expect(css).toMatch(/\.admin-page-header--account\s*\{/);
     expect(css).toMatch(/\.admin-page-kicker\s*\{/);
     expect(css).toMatch(/\.admin-page-intro\s*\{/);
+    expect(css).toMatch(/\.admin-page-intro--supporting\s*\{/);
     expect(css).toMatch(/\.admin-page-meta\s*\{/);
+    expect(css).toMatch(/\.admin-page-meta-copy\s*\{/);
+    expect(css).toMatch(/\.admin-optional-disclosure\s*\{/);
+    expect(css).toMatch(/\.admin-optional-summary\s*\{/);
+    expect(css).toMatch(/\.admin-optional-fields\s*\{/);
     expect(css).toMatch(/\.admin-workspace-grid\s*\{/);
     expect(css).toMatch(/\.admin-field\s*\{/);
     expect(css).toMatch(/\.admin-input\s*\{/);
@@ -23,6 +35,7 @@ describe("admin style semantics", () => {
   });
 
   it("applies shared classes in core admin views", () => {
+    const dashboard = read("src/views/admin/AdminDashboardView.vue");
     const content = read("src/views/admin/AdminContentView.vue");
     const contentCreate = read("src/views/admin/content/ContentCreateForm.vue");
     const contentEdit = read("src/views/admin/content/ContentEditPanel.vue");
@@ -46,18 +59,40 @@ describe("admin style semantics", () => {
     const libraryColumnsCombined = [libraryFolderColumn, libraryAssetColumn, libraryInspectorColumn].join("\n");
     const taxonomyCombined = [taxonomy, taxonomyTree, taxonomyGroupPanel, taxonomyCategoryPanel].join("\n");
     const systemCombined = [system, systemStatusPanel, systemWizardSteps].join("\n");
+    const dashboardCombined = [dashboard].join("\n");
 
-    for (const source of [content, uploads, taxonomy, system]) {
+    for (const source of [dashboardCombined, content, uploads, taxonomy, system]) {
       expect(source).toMatch(/admin-card/);
     }
     expect(libraryColumnsCombined).toMatch(/admin-card/);
 
-    for (const source of [content, libraryCombined, uploads, taxonomy, system, account]) {
+    for (const source of [dashboardCombined, content, libraryCombined, uploads, taxonomy, system, account]) {
       expect(source).toMatch(/admin-page-header/);
       expect(source).toMatch(/admin-page-kicker/);
       expect(source).toMatch(/admin-page-intro/);
       expect(source).toMatch(/admin-page-meta/);
     }
+
+    expect(dashboardCombined).toMatch(/admin-task-copy--supporting/);
+
+    for (const source of [dashboardCombined, content, uploads]) {
+      expect(source).toMatch(/admin-page-intro--supporting/);
+      expect(source).toMatch(/admin-page-meta-copy/);
+    }
+
+    for (const source of [contentCreate, uploadsCreate]) {
+      expect(source).toMatch(/admin-optional-disclosure/);
+      expect(source).toMatch(/admin-optional-summary/);
+      expect(source).toMatch(/admin-optional-fields/);
+    }
+
+    expect(dashboardCombined).toMatch(/admin-page-header--dashboard/);
+    expect(content).toMatch(/admin-page-header--content/);
+    expect(libraryCombined).toMatch(/admin-page-header--library/);
+    expect(uploads).toMatch(/admin-page-header--uploads/);
+    expect(taxonomyCombined).toMatch(/admin-page-header--taxonomy/);
+    expect(systemCombined).toMatch(/admin-page-header--system/);
+    expect(account).toMatch(/admin-page-header--account/);
 
     for (const source of [content, libraryCombined, uploads, taxonomy, system]) {
       expect(source).toMatch(/admin-workspace-grid/);

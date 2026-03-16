@@ -12,6 +12,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     execArgv: ["--import", LOCALSTORAGE_SHIM],
+    setupFiles: ["./test/setup.ts"],
   },
   build: {
     outDir: "dist",

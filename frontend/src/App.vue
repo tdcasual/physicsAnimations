@@ -22,21 +22,25 @@ const modalCardRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
 const isLoginRoute = computed(() => String(route.path || "") === "/login");
 const isCatalogRoute = computed(() => String(route.path || "") === "/");
-const classroomModeLabel = computed(() => `课堂模式${classroomModeEnabled.value ? "开" : "关"}`);
-const topbarNote = computed(() => {
+const isAdminShellRoute = computed(() => {
   const currentPath = String(route.path || "");
-  if (currentPath.startsWith("/admin")) {
-    return "管理工作台 · 上传演示 · 资源归档";
+  return currentPath.startsWith("/admin") || currentPath === "/login";
+});
+const classroomModeLabel = computed(() => `课堂模式${classroomModeEnabled.value ? "开" : "关"}`);
+const showAdminShortcut = computed(() => auth.loggedIn && !isAdminShellRoute.value);
+const topbarModeClass = computed(() => {
+  const currentPath = String(route.path || "");
+  if (isAdminShellRoute.value) {
+    return "topbar--admin";
   }
   if (currentPath.startsWith("/viewer")) {
-    return "演示舞台 · 返回目录可继续检索";
+    return "topbar--viewer";
   }
   if (currentPath.startsWith("/library")) {
-    return "资源档案 · 文件夹浏览";
+    return "topbar--library";
   }
-  return "检索课堂演示 · 分章浏览 · 资源归档";
+  return "topbar--catalog";
 });
-
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 let bodyOverflowBeforeLogin = "";
 let topbarResizeObserver: ResizeObserver | null = null;
@@ -231,69 +235,77 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="app-shell">
-    <header ref="topbarRef" class="topbar">
+    <header ref="topbarRef" :class="['topbar', topbarModeClass]">
       <div class="topbar-inner">
-        <div class="topbar-lead">
-          <div class="brand-stack">
+        <div class="topbar-shell-panel">
+          <div class="topbar-lead">
             <RouterLink to="/" class="brand brand-link" aria-label="返回目录">
-              <div class="brand-copy">
-                <div class="brand-meta">教学实验图谱</div>
-                <div class="brand-title">我的学科演示集</div>
-                <div class="brand-subcopy">更快找到课堂演示与资源</div>
-              </div>
+              <span class="brand-lockup">
+                <span class="brand-mark">科学演示集</span>
+              </span>
             </RouterLink>
-            <p class="topbar-note">{{ topbarNote }}</p>
+
+            <RouterLink v-if="!isCatalogRoute" to="/" class="btn btn-ghost btn-nav-home topbar-home-link" aria-label="浏览首页">
+              <span class="topbar-home-label">首页</span>
+            </RouterLink>
           </div>
 
-          <RouterLink v-if="!isCatalogRoute" to="/" class="btn btn-ghost btn-nav-home">浏览首页</RouterLink>
-        </div>
+          <div class="topbar-actions actions">
+            <div class="topbar-action-cluster">
+              <div class="topbar-primary-actions">
+                <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
+                  登录
+                </button>
+                <template v-else-if="auth.loggedIn">
+                  <RouterLink v-if="showAdminShortcut" to="/admin/dashboard" class="btn btn-primary topbar-admin-link">管理</RouterLink>
+                  <button type="button" class="btn btn-ghost topbar-logout-button" @click="logout">退出</button>
+                </template>
+              </div>
 
-        <div class="topbar-actions actions">
-          <div class="topbar-primary-actions">
-            <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
-              登录
-            </button>
-            <template v-if="auth.loggedIn">
-              <RouterLink to="/admin/dashboard" class="btn btn-primary">管理</RouterLink>
-              <button type="button" class="btn btn-ghost" @click="logout">退出</button>
-            </template>
-          </div>
-
-          <button
-            type="button"
-            class="btn btn-ghost topbar-mobile-toggle"
-            aria-label="切换环境设置"
-            :aria-expanded="topbarUtilityOpen ? 'true' : 'false'"
-            aria-controls="topbar-mobile-utility-panel"
-            @click="toggleTopbarUtilityPanel"
-          >
-            环境
-          </button>
-
-          <div class="topbar-environment-shell">
-            <div class="topbar-environment-copy">
-              <span class="topbar-utility-label">环境偏好</span>
-              <span class="topbar-utility-note">放大与主题仅影响当前设备</span>
-            </div>
-            <div class="topbar-utility-actions">
-              <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-                {{ classroomModeLabel }}
+              <button
+                type="button"
+                class="btn btn-ghost topbar-mobile-toggle"
+                aria-label="打开更多操作"
+                :aria-expanded="topbarUtilityOpen ? 'true' : 'false'"
+                aria-controls="topbar-mobile-utility-panel"
+                @click="toggleTopbarUtilityPanel"
+              >
+                更多
               </button>
-              <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
-            </div>
-          </div>
 
-          <div
-            id="topbar-mobile-utility-panel"
-            class="topbar-mobile-utility-panel"
-            :class="{ 'is-open': topbarUtilityOpen }"
-            :aria-hidden="topbarUtilityOpen ? 'false' : 'true'"
-          >
-            <div class="topbar-mobile-utility-copy">环境偏好</div>
-            <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-              {{ classroomModeLabel }}
-            </button>
-            <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
+              <div class="topbar-environment-shell">
+                <div class="topbar-environment-copy">
+                  <span class="topbar-utility-label">环境偏好</span>
+                  <span class="topbar-utility-note">放大与主题仅影响当前设备</span>
+                </div>
+                <div class="topbar-utility-actions">
+                  <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
+                    {{ classroomModeLabel }}
+                  </button>
+                  <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              id="topbar-mobile-utility-panel"
+              class="topbar-mobile-utility-panel"
+              :class="{ 'is-open': topbarUtilityOpen }"
+              :aria-hidden="topbarUtilityOpen ? 'false' : 'true'"
+            >
+              <div v-if="showAdminShortcut" class="topbar-mobile-utility-group topbar-mobile-utility-group--account">
+                <div class="topbar-mobile-utility-copy">工作区</div>
+                <RouterLink to="/admin/dashboard" class="btn btn-ghost topbar-mobile-admin-link">进入管理</RouterLink>
+              </div>
+
+              <div class="topbar-mobile-utility-group">
+                <div class="topbar-mobile-utility-copy">环境偏好</div>
+                <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
+                  {{ classroomModeLabel }}
+                </button>
+                <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

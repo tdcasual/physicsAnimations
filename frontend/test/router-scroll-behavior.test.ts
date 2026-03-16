@@ -59,4 +59,18 @@ describe("router scroll behavior", () => {
 
     expect(position).toEqual({ el: "#catalog-current" });
   });
+
+  it("does not request missing admin hash anchors during redirect-style navigation", async () => {
+    const router = createAppRouter({ history: createMemoryHistory("/") });
+    const scrollBehavior = router.options.scrollBehavior;
+    expect(scrollBehavior).toBeTypeOf("function");
+
+    const position = await scrollBehavior!(
+      { path: "/admin/content", hash: "#batch" } as never,
+      { path: "/login" } as never,
+      null,
+    );
+
+    expect(position).toEqual({ left: 0, top: 0 });
+  });
 });
