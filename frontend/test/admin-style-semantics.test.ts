@@ -40,9 +40,6 @@ describe("admin style semantics", () => {
     const contentEdit = read("src/views/admin/content/ContentEditPanel.vue");
     const libraryTemplate = read("src/views/admin/library/AdminLibraryView.template.html");
     const libraryStyle = read("src/views/admin/library/AdminLibraryView.css");
-    const libraryFolderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
-    const libraryAssetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
-    const libraryInspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
     const uploads = read("src/views/admin/AdminUploadsView.vue");
     const uploadsCreate = read("src/views/admin/uploads/UploadsCreateForm.vue");
     const uploadsEdit = read("src/views/admin/uploads/UploadsEditPanel.vue");
@@ -55,7 +52,6 @@ describe("admin style semantics", () => {
     const systemWizardSteps = read("src/views/admin/system/SystemWizardSteps.vue");
     const account = read("src/views/admin/AdminAccountView.vue");
     const libraryCombined = [libraryTemplate, libraryStyle].join("\n");
-    const libraryColumnsCombined = [libraryFolderColumn, libraryAssetColumn, libraryInspectorColumn].join("\n");
     const taxonomyCombined = [taxonomy, taxonomyTree, taxonomyGroupPanel, taxonomyCategoryPanel].join("\n");
     const systemCombined = [system, systemStatusPanel, systemWizardSteps].join("\n");
     const dashboardCombined = [dashboard].join("\n");
@@ -63,7 +59,7 @@ describe("admin style semantics", () => {
     for (const source of [dashboardCombined, content, uploads, taxonomy, system]) {
       expect(source).toMatch(/admin-card/);
     }
-    expect(libraryColumnsCombined).toMatch(/admin-card/);
+    expect(libraryCombined).toMatch(/admin-card/);
 
     for (const source of [dashboardCombined, content, libraryCombined, uploads, taxonomy, system, account]) {
       expect(source).toMatch(/admin-page-header/);

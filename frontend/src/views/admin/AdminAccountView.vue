@@ -230,6 +230,10 @@ async function submit() {
   gap: 12px;
 }
 
+form.admin-card {
+  max-width: 480px;
+}
+
 .current-user {
   color: var(--muted);
   font-size: calc(14px * var(--ui-scale));

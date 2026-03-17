@@ -27,7 +27,7 @@ describe("admin visual polish", () => {
       read("src/components/admin/AdminShellHeader.vue"),
     ].join("\n");
 
-    expect(source).toMatch(/admin-nav-shell::before/);
+    expect(source).toMatch(/admin-nav-bar::before/);
     expect(source).toMatch(/\.admin-link:hover\s*\{/);
     expect(source).toMatch(/\.admin-shell-status-strip\s*\{/);
     expect(source).toMatch(/\.admin-nav-group-summary\s*\{/);
@@ -42,8 +42,8 @@ describe("admin visual polish", () => {
   it("adds motion when the mobile workspace menu opens", () => {
     const source = read("src/views/admin/AdminLayoutView.vue");
 
-    expect(source).toMatch(/\.admin-nav-shell\s*\{[\s\S]*transition:/);
-    expect(source).toMatch(/\.admin-nav-shell\.is-open\s*\{[\s\S]*animation:/);
+    expect(source).toMatch(/\.admin-nav-bar\s*\{[\s\S]*transition:/);
+    expect(source).toMatch(/\.admin-nav-bar\.is-open\s*\{[\s\S]*animation:/);
   });
 
   it("compresses repeated admin shell copy on mobile instead of stacking full desktop framing", () => {

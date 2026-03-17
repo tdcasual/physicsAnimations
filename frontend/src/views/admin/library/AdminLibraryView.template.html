@@ -37,8 +37,8 @@
       </aside>
     </div>
 
-    <div class="library-workbench library-grid">
-      <LibraryFolderColumn>
+    <div class="library-workbench">
+      <aside class="library-sidebar admin-card">
         <div class="column-head">
           <h3>文件夹</h3>
           <div class="asset-meta">按分类与关键词定位课堂素材</div>
@@ -94,9 +94,10 @@
         <div class="admin-actions">
           <button type="button" class="btn btn-primary" :disabled="vm.ui.savingFolder" @click="vm.actions.createFolderEntry">创建文件夹</button>
         </div>
-      </LibraryFolderColumn>
+      </aside>
 
-      <LibraryAssetColumn>
+      <div class="library-main-grid">
+      <section class="library-asset-area admin-card">
         <div class="column-head">
           <h3>资源列表</h3>
           <div class="selected-folder">{{ vm.data.selectedFolder?.name || "未选择文件夹" }}</div>
@@ -160,23 +161,28 @@
           <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets || !vm.selection.assetBatchMoveFolderId" @click="vm.actions.runAssetBatchMove">
             批量移动
           </button>
-          <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchOpenMode('embed')">
-            批量设为演示
-          </button>
-          <button
-            type="button"
-            class="btn btn-ghost"
-            :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets"
-            @click="vm.actions.runAssetBatchOpenMode('download')"
-          >
-            批量设为下载
-          </button>
-          <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchDelete">
-            批量删除
-          </button>
-          <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasUndoAssets" @click="vm.actions.runAssetBatchUndo">
-            撤销最近删除
-          </button>
+          <details class="batch-more-menu">
+            <summary class="btn btn-ghost">更多批量操作</summary>
+            <div class="batch-more-menu-body">
+              <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchOpenMode('embed')">
+                批量设为演示
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost"
+                :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets"
+                @click="vm.actions.runAssetBatchOpenMode('download')"
+              >
+                批量设为下载
+              </button>
+              <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchDelete">
+                批量删除
+              </button>
+              <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasUndoAssets" @click="vm.actions.runAssetBatchUndo">
+                撤销最近删除
+              </button>
+            </div>
+          </details>
         </div>
         <div v-if="vm.selection.assetBatchResult" class="asset-batch-result">
           <div class="asset-meta">
@@ -216,16 +222,21 @@
             </div>
             <div class="asset-actions-inline">
               <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="openAssetEditor(asset)">编辑</button>
-              <button
-                type="button"
-                class="btn btn-ghost"
-                :disabled="vm.ui.savingAsset"
-                @click="vm.actions.switchAssetOpenMode(asset, asset.openMode === 'embed' ? 'download' : 'embed')"
-              >
-                {{ asset.openMode === "embed" ? "设为仅下载" : "设为演示" }}
-              </button>
-              <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.renameAssetDisplayName(asset)">重命名显示名</button>
-              <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.removeAsset(asset.id)">删除</button>
+              <details class="asset-more-menu">
+                <summary class="btn btn-ghost">更多</summary>
+                <div class="asset-more-menu-body">
+                  <button
+                    type="button"
+                    class="btn btn-ghost"
+                    :disabled="vm.ui.savingAsset"
+                    @click="vm.actions.switchAssetOpenMode(asset, asset.openMode === 'embed' ? 'download' : 'embed')"
+                  >
+                    {{ asset.openMode === "embed" ? "设为仅下载" : "设为演示" }}
+                  </button>
+                  <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.renameAssetDisplayName(asset)">重命名显示名</button>
+                  <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.removeAsset(asset.id)">删除</button>
+                </div>
+              </details>
             </div>
           </article>
           <div v-if="vm.data.selectedFolderId && vm.filters.sortedFilteredFolderAssets.length === 0" class="empty">{{ selectedFolderAssetsEmptyText() }}</div>
@@ -246,9 +257,9 @@
           </article>
           <div v-if="vm.data.deletedAssets.length === 0" class="empty">当前文件夹暂无已删除资源。</div>
         </div>
-      </LibraryAssetColumn>
+      </section>
 
-      <LibraryInspectorColumn>
+      <aside class="library-inspector-area admin-card">
         <div ref="inspectorTopRef" class="library-inspector-top library-mobile-focus-anchor" aria-hidden="true" />
         <div class="library-panel-tabs">
           <button type="button" class="panel-tab" :class="{ active: vm.panels.activePanelTab === 'folder' }" @click="vm.actions.setActivePanelTab('folder')">
@@ -522,7 +533,8 @@
             <div v-else-if="vm.logs.filteredOperationLogs.length === 0" class="empty">当前筛选条件下暂无记录。</div>
           </div>
         </OperationLogPanel>
-      </LibraryInspectorColumn>
+      </aside>
+      </div>
     </div>
 
     <div v-if="vm.ui.feedback" class="admin-feedback library-admin-feedback" :class="{ error: vm.ui.feedbackError, success: !vm.ui.feedbackError }">

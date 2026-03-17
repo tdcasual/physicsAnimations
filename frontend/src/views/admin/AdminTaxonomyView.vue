@@ -193,6 +193,11 @@ async function openCategoryEditor(categoryId: string) {
 .taxonomy-editor-slot {
   display: grid;
   align-content: start;
+  position: sticky;
+  align-self: start;
+  top: calc(var(--app-topbar-height, 0px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  overflow: auto;
 }
 
 .taxonomy-mobile-editor-top {
@@ -212,5 +217,13 @@ async function openCategoryEditor(categoryId: string) {
 .error-text {
   color: var(--danger);
   font-size: calc(13px * var(--ui-scale));
+}
+
+@media (max-width: 960px) {
+  .taxonomy-editor-slot {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
 }
 </style>

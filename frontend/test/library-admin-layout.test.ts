@@ -21,9 +21,6 @@ function readLibrarySources() {
   const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
   const panelSections = read("src/features/library/useLibraryPanelSections.ts");
   const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
-  const folderColumn = read("src/views/admin/library/LibraryFolderColumn.vue");
-  const assetColumn = read("src/views/admin/library/LibraryAssetColumn.vue");
-  const inspectorColumn = read("src/views/admin/library/LibraryInspectorColumn.vue");
   const folderPanel = read("src/views/admin/library/panels/FolderPanel.vue");
   const assetPanel = read("src/views/admin/library/panels/AssetPanel.vue");
   const embedPanel = read("src/views/admin/library/panels/EmbedPanel.vue");
@@ -46,9 +43,6 @@ function readLibrarySources() {
     assetEditorActions,
     panelSections,
     adminLifecycle,
-    folderColumn,
-    assetColumn,
-    inspectorColumn,
     folderPanel,
     assetPanel,
     embedPanel,
@@ -71,9 +65,6 @@ function readLibrarySources() {
       assetEditorActions,
       panelSections,
       adminLifecycle,
-      folderColumn,
-      assetColumn,
-      inspectorColumn,
       folderPanel,
       assetPanel,
       embedPanel,
@@ -98,37 +89,40 @@ describe("admin library layout", () => {
     expect(style).not.toMatch(/^\s*\.library-header\s*\{/m);
   });
 
-  it("uses a three-column workbench with panel tabs and scoped search", () => {
-    const { template, combined } = readLibrarySources();
+  it("uses a sidebar-plus-main workbench with panel tabs and scoped search", () => {
+    const { template, style } = readLibrarySources();
     expect(template).toMatch(/library-workbench/);
     expect(template).not.toMatch(/library-quick-actions/);
-    expect(combined).toMatch(/library-column-left/);
-    expect(combined).toMatch(/library-column-middle/);
-    expect(combined).toMatch(/library-column-right/);
+    expect(template).toMatch(/library-sidebar/);
+    expect(template).toMatch(/library-main-grid/);
+    expect(template).toMatch(/library-asset-area/);
+    expect(template).toMatch(/library-inspector-area/);
+    expect(style).toMatch(/\.library-sidebar\s*\{/);
+    expect(style).toMatch(/\.library-main-grid\s*\{/);
     expect(template).toMatch(/library-panel-tabs/);
     expect(template).toMatch(/panel-section-toggle/);
-    expect(combined).toMatch(/togglePanelSection/);
     expect(template).toMatch(/folder-search-input/);
     expect(template).toMatch(/asset-search-input/);
     expect(template).toMatch(/profile-search-input/);
   });
 
-  it("biases the desktop workbench toward a wider inspector column and relaxes tabs into adaptive rows", () => {
+  it("uses a two-level grid with sticky sidebar and adaptive main area", () => {
     const { style } = readLibrarySources();
 
-    expect(style).toMatch(/\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*minmax\(240px,\s*0\.78fr\)\s*minmax\(340px,\s*1\.02fr\)\s*minmax\(400px,\s*1\.3fr\)/);
+    expect(style).toMatch(/\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*260px\s+minmax\(0,\s*1fr\)/);
+    expect(style).toMatch(/\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(400px,\s*1\.3fr\)/);
+    expect(style).toMatch(/\.library-sidebar\s*\{[\s\S]*position:\s*sticky/);
+    expect(style).toMatch(/\.library-inspector-area\s*\{[\s\S]*position:\s*sticky/);
     expect(style).toMatch(/\.library-panel-tabs\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(150px,\s*1fr\)\)/);
-    expect(style).toMatch(/@media\s*\(max-width:\s*1360px\)\s*\{[\s\S]*\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*minmax\(250px,\s*0\.92fr\)\s*minmax\(360px,\s*1\.08fr\)/);
-    expect(style).toMatch(/@media\s*\(max-width:\s*1360px\)\s*\{[\s\S]*\.library-column-right\s*\{[\s\S]*grid-column:\s*1\s*\/\s*-1/);
+    expect(style).toMatch(/@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*1fr/);
+    expect(style).toMatch(/@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-inspector-area\s*\{[\s\S]*position:\s*static/);
+    expect(style).toMatch(/@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*\.library-sidebar\s*\{[\s\S]*position:\s*static/);
   });
 
-  it("composes workbench columns via dedicated column components", () => {
+  it("composes workbench areas with inline semantic elements and panel components", () => {
     const {
       view,
       template,
-      folderColumn,
-      assetColumn,
-      inspectorColumn,
       folderPanel,
       assetPanel,
       embedPanel,
@@ -138,12 +132,15 @@ describe("admin library layout", () => {
     } =
       readLibrarySources();
 
-    expect(view).toMatch(/import LibraryFolderColumn/);
-    expect(view).toMatch(/import LibraryAssetColumn/);
-    expect(view).toMatch(/import LibraryInspectorColumn/);
-    expect(template).toMatch(/<LibraryFolderColumn>/);
-    expect(template).toMatch(/<LibraryAssetColumn>/);
-    expect(template).toMatch(/<LibraryInspectorColumn>/);
+    expect(view).not.toMatch(/import LibraryFolderColumn/);
+    expect(view).not.toMatch(/import LibraryAssetColumn/);
+    expect(view).not.toMatch(/import LibraryInspectorColumn/);
+    expect(template).not.toMatch(/<LibraryFolderColumn>/);
+    expect(template).not.toMatch(/<LibraryAssetColumn>/);
+    expect(template).not.toMatch(/<LibraryInspectorColumn>/);
+    expect(template).toMatch(/library-sidebar/);
+    expect(template).toMatch(/library-asset-area/);
+    expect(template).toMatch(/library-inspector-area/);
     expect(view).toMatch(/import FolderPanel/);
     expect(view).toMatch(/import AssetPanel/);
     expect(view).toMatch(/import EmbedPanel/);
@@ -159,9 +156,6 @@ describe("admin library layout", () => {
     expect(template).not.toMatch(/v-model="vm\.drafts\.embedScriptUrl"/);
     expect(template).not.toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"/);
 
-    expect(folderColumn).toMatch(/library-column-left/);
-    expect(assetColumn).toMatch(/library-column-middle/);
-    expect(inspectorColumn).toMatch(/library-column-right/);
     expect(folderPanel).toMatch(/panel-content/);
     expect(assetPanel).toMatch(/panel-content/);
     expect(embedPanel).toMatch(/panel-content/);

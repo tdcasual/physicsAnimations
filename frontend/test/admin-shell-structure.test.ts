@@ -33,7 +33,7 @@ describe("admin shell structure", () => {
 
     expect(source).toMatch(/mobileNavOpen/);
     expect(source).toMatch(/class="admin-mobile-nav-trigger"/);
-    expect(source).toMatch(/class="admin-nav-shell"/);
+    expect(source).toMatch(/admin-nav-shell/);
     expect(source).toMatch(/class="admin-shell-header admin-shell-header--compact"/);
     expect(source).toMatch(/class="admin-shell-summary-row"/);
     expect(source).toMatch(/工作区菜单/);

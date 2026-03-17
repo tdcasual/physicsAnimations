@@ -71,20 +71,40 @@
 
 .library-workbench {
   display: grid;
-  grid-template-columns: minmax(240px, 0.78fr) minmax(340px, 1.02fr) minmax(400px, 1.3fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: 16px;
   align-items: start;
 }
 
-.library-column {
-  display: grid;
-  gap: 10px;
+.library-sidebar {
+  position: sticky;
+  align-self: start;
+  top: calc(var(--app-topbar-height, 0px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.library-column-left,
-.library-column-middle,
-.library-column-right {
+.library-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 1.3fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.library-asset-area,
+.library-inspector-area {
+  display: grid;
+  gap: 10px;
   min-height: 200px;
+}
+
+.library-inspector-area {
+  position: sticky;
+  align-self: start;
+  top: calc(var(--app-topbar-height, 0px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  overflow: auto;
 }
 
 .column-head {
@@ -222,6 +242,72 @@
 
 .batch-move-folder {
   min-width: 150px;
+}
+
+.batch-more-menu {
+  position: relative;
+}
+
+.batch-more-menu > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.batch-more-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.batch-more-menu-body {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -8px color-mix(in oklab, var(--text) 12%, transparent);
+}
+
+.batch-more-menu-body .btn {
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.asset-more-menu {
+  position: relative;
+}
+
+.asset-more-menu > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.asset-more-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.asset-more-menu-body {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  min-width: 140px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -8px color-mix(in oklab, var(--text) 12%, transparent);
+}
+
+.asset-more-menu-body .btn {
+  justify-content: flex-start;
+  white-space: nowrap;
 }
 
 .folder-list,
@@ -384,17 +470,15 @@
   padding: 0 2px;
 }
 
-@media (max-width: 1360px) {
-  .library-workbench {
-    grid-template-columns: minmax(250px, 0.92fr) minmax(360px, 1.08fr);
+@media (max-width: 1200px) {
+  .library-main-grid {
+    grid-template-columns: 1fr;
   }
 
-  .library-column-right {
-    grid-column: 1 / -1;
-  }
-
-  .library-panel-tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .library-inspector-area {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 }
 
@@ -405,6 +489,12 @@
 
   .library-workbench {
     grid-template-columns: 1fr;
+  }
+
+  .library-sidebar {
+    position: static;
+    max-height: none;
+    overflow: visible;
   }
 
   .asset-filter-row {

@@ -3,9 +3,6 @@ import { reactive, ref } from "vue";
 import type { LibraryAsset } from "../../features/library/types";
 import { useLibraryAdminState } from "../../features/library/useLibraryAdminState";
 import { createAdminLibraryMobileInspectorFocus } from "./library/useAdminLibraryMobileInspectorFocus";
-import LibraryAssetColumn from "./library/LibraryAssetColumn.vue";
-import LibraryFolderColumn from "./library/LibraryFolderColumn.vue";
-import LibraryInspectorColumn from "./library/LibraryInspectorColumn.vue";
 import AssetPanel from "./library/panels/AssetPanel.vue";
 import EmbedPanel from "./library/panels/EmbedPanel.vue";
 import EmbedProfileCreatePanel from "./library/panels/EmbedProfileCreatePanel.vue";
@@ -47,12 +44,6 @@ function selectedFolderAssetsEmptyText(): string {
 
 function embedProfilesEmptyText(): string {
   return vm.filters.profileSearchQuery.trim() ? "暂无匹配 Embed 平台。" : "暂无 Embed 平台。";
-}
-
-function currentPanelLabel(): string {
-  if (vm.panels.activePanelTab === "folder") return "文件夹设置";
-  if (vm.panels.activePanelTab === "asset") return "资源上传与编辑";
-  return "Embed 平台管理";
 }
 </script>
 

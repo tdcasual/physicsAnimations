@@ -147,14 +147,15 @@ onBeforeUnmount(() => {
         aria-label="关闭工作区菜单"
         @click="closeMobileNav"
       />
-      <aside
+      <nav
         id="admin-nav-shell"
         ref="adminNavShellRef"
-        class="admin-nav-shell"
+        class="admin-nav-bar"
         :class="{ 'is-open': mobileNavOpen }"
         @keydown="handleMobileNavKeydown"
+        @focusin="onAdminNavFocusIn"
       >
-        <nav ref="adminNavRef" class="admin-nav" @focusin="onAdminNavFocusIn">
+        <div ref="adminNavRef" class="admin-nav">
           <section v-for="group in adminNavGroups" :key="group.id" class="admin-nav-group">
             <div class="admin-nav-group-title">{{ group.title }}</div>
             <div class="admin-nav-group-links">
@@ -163,8 +164,8 @@ onBeforeUnmount(() => {
               </RouterLink>
             </div>
           </section>
-        </nav>
-      </aside>
+        </div>
+      </nav>
 
       <div class="admin-body">
         <RouterView />
