@@ -41,11 +41,33 @@
 
 :global(.topbar-more-panel) {
   border-top: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--surface) 92%, var(--paper) 8%);
 }
 
 :global(.topbar-more-group + .topbar-more-group) {
   padding-top: 6px;
   border-top: 1px solid var(--border);
+}
+
+:global(.topbar-more-trigger) {
+  position: relative;
+}
+
+:global(.topbar-more-trigger::after) {
+  content: "↘";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-soft);
+  font-size: 12px;
+  transition: transform 140ms ease, color 140ms ease;
+}
+
+:global(.topbar-more-trigger.is-open::after) {
+  transform: translateY(-50%) rotate(180deg);
+  color: var(--text);
 }
 
 :global(.topbar .btn) {

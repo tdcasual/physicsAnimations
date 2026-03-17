@@ -5,7 +5,7 @@ const path = require("node:path");
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const { CATALOG_READY_SELECTORS, waitForCatalogReadyState } = require("./lib/catalog_ready_state");
-const { loginFromCatalog, readSessionToken } = require("./lib/smoke_admin_auth");
+const { loginFromCatalog, readSessionToken, revealTopbarAuthActions } = require("./lib/smoke_admin_auth");
 const { ensureSpaDistFresh } = require("./lib/ensure_spa_dist_fresh");
 const { findOpenPort, startServer, stopServer, waitForHealth } = require("./lib/smoke_runtime");
 const { captureViewportSuite } = require("./lib/ui_audit_capture_runtime");
@@ -177,6 +177,7 @@ async function run() {
         captureFullPage,
         waitForCatalogReadyState,
         loginFromCatalog,
+        revealTopbarAuthActions,
         readSessionToken,
         createTemporaryViewerFixture,
         deleteTemporaryViewerFixture,
@@ -204,6 +205,7 @@ async function run() {
         captureFullPage,
         waitForCatalogReadyState,
         loginFromCatalog,
+        revealTopbarAuthActions,
         readSessionToken,
         createTemporaryViewerFixture,
         deleteTemporaryViewerFixture,

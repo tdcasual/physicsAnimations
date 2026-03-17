@@ -113,6 +113,15 @@ describe("admin library layout", () => {
     expect(template).toMatch(/profile-search-input/);
   });
 
+  it("biases the desktop workbench toward a wider inspector column and relaxes tabs into adaptive rows", () => {
+    const { style } = readLibrarySources();
+
+    expect(style).toMatch(/\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*minmax\(240px,\s*0\.78fr\)\s*minmax\(340px,\s*1\.02fr\)\s*minmax\(400px,\s*1\.3fr\)/);
+    expect(style).toMatch(/\.library-panel-tabs\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(150px,\s*1fr\)\)/);
+    expect(style).toMatch(/@media\s*\(max-width:\s*1360px\)\s*\{[\s\S]*\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*minmax\(250px,\s*0\.92fr\)\s*minmax\(360px,\s*1\.08fr\)/);
+    expect(style).toMatch(/@media\s*\(max-width:\s*1360px\)\s*\{[\s\S]*\.library-column-right\s*\{[\s\S]*grid-column:\s*1\s*\/\s*-1/);
+  });
+
   it("composes workbench columns via dedicated column components", () => {
     const {
       view,

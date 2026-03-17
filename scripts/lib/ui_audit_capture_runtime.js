@@ -77,6 +77,7 @@ async function captureViewportSuite({
   captureFullPage,
   waitForCatalogReadyState,
   loginFromCatalog,
+  revealTopbarAuthActions,
   readSessionToken,
   createTemporaryViewerFixture,
   deleteTemporaryViewerFixture,
@@ -101,7 +102,8 @@ async function captureViewportSuite({
       fullPage: captureFullPage,
     });
 
-    await page.getByRole("banner").getByRole("button", { name: "登录" }).click();
+    const loginButton = await revealTopbarAuthActions(page);
+    await loginButton.click();
     await page.getByRole("dialog", { name: "管理员登录" }).waitFor({ state: "visible", timeout: 10000 });
     await capturePage(page, path.join(outputDir, `${tag}-${viewportName}-login-modal.png`), { fullPage: false });
 

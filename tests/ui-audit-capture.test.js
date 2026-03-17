@@ -48,3 +48,10 @@ test("ui audit capture accepts either a visible manage shortcut or an admin redi
   assert.match(source, /waitForURL\(\(url\)\s*=>\s*url\.pathname\.startsWith\("\/admin"\)/);
   assert.match(source, /getByRole\("button",\s*\{\s*name:\s*"退出"/);
 });
+
+test("ui audit capture and smoke auth helpers can reveal auth actions from the mobile more panel", () => {
+  const source = readUiAuditSources();
+  assert.match(source, /revealTopbarAuthActions/);
+  assert.match(source, /topbar-more-trigger/);
+  assert.match(source, /topbar-more-panel/);
+});

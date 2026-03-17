@@ -4,7 +4,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import { resolveAdminRedirect } from "./router/redirect";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
-import { resolveTopbarModeClass, resolveTopbarSearchTarget } from "./features/app/appShellTopbar";
+import { resolveTopbarModeClass, resolveTopbarSearchState } from "./features/app/appShellTopbar";
 import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
 import { applyStoredTheme, toggleTheme } from "./features/theme/theme";
 import { useCatalogSearch } from "./features/catalog/catalogSearch";
@@ -31,35 +31,27 @@ const isAdminShellRoute = computed(() => {
 const classroomModeLabel = computed(() => `课堂模式${classroomModeEnabled.value ? "开" : "关"}`);
 const showAdminShortcut = computed(() => auth.loggedIn && !isAdminShellRoute.value);
 const catalogQuery = useCatalogSearch();
-
+const topbarSearchState = computed(() => resolveTopbarSearchState(String(route.path || "")));
+const topbarMoreSummary = computed(() => (auth.loggedIn ? "账号与后台" : "设置与登录"));
 function onTopbarSearch(event: Event) {
   catalogQuery.value = (event.target as HTMLInputElement).value;
-  const nextPath = resolveTopbarSearchTarget(String(route.path || ""));
-  if (nextPath) {
-    router.push(nextPath);
-  }
 }
-const topbarModeClass = computed(() => {
-  return resolveTopbarModeClass(String(route.path || ""));
-});
+const topbarModeClass = computed(() => resolveTopbarModeClass(String(route.path || "")));
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 let bodyOverflowBeforeLogin = "";
 let topbarResizeObserver: ResizeObserver | null = null;
-
 function openLogin() {
   topbarUtilityOpen.value = false;
   lastFocusedBeforeLogin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   loginOpen.value = true;
   loginError.value = "";
 }
-
 function closeLogin() {
   loginOpen.value = false;
   loginError.value = "";
   loginUsername.value = "";
   loginPassword.value = "";
 }
-
 function getModalFocusables(): HTMLElement[] {
   if (!modalCardRef.value) return [];
   const focusable = modalCardRef.value.querySelectorAll<HTMLElement>(
@@ -73,15 +65,12 @@ function getModalFocusables(): HTMLElement[] {
 
 function handleLoginModalKeydown(event: KeyboardEvent) {
   if (!loginOpen.value) return;
-
   if (event.key === "Escape") {
     event.preventDefault();
     closeLogin();
     return;
   }
-
   if (event.key !== "Tab") return;
-
   const focusables = getModalFocusables();
   if (focusables.length === 0) return;
   const first = focusables[0];
@@ -96,27 +85,22 @@ function handleLoginModalKeydown(event: KeyboardEvent) {
     }
     return;
   }
-
   if (!inModal || active === last) {
     event.preventDefault();
     first.focus();
   }
 }
-
 function clearLoginError() {
   if (!loginError.value) return;
   loginError.value = "";
 }
-
 function toggleTopbarUtilityPanel() {
   topbarUtilityOpen.value = !topbarUtilityOpen.value;
 }
-
 function toggleClassroom() {
   classroomModeEnabled.value = toggleClassroomMode();
   topbarUtilityOpen.value = false;
 }
-
 function toggleThemeMode() {
   toggleTheme();
   topbarUtilityOpen.value = false;
@@ -208,7 +192,6 @@ watch(loginOpen, async (open) => {
     loginUsernameInputRef.value?.focus();
     return;
   }
-
   window.removeEventListener("keydown", handleLoginModalKeydown);
   document.body.style.overflow = bodyOverflowBeforeLogin;
   bodyOverflowBeforeLogin = "";
@@ -245,24 +228,30 @@ onBeforeUnmount(() => {
                 <span class="brand-mark">科学演示集</span>
               </span>
             </RouterLink>
-
             <RouterLink v-if="!isCatalogRoute" to="/" class="btn btn-ghost btn-nav-home topbar-home-link" aria-label="浏览首页">
               <span class="topbar-home-label">首页</span>
             </RouterLink>
-
-            <label class="topbar-search-field">
+            <label v-if="topbarSearchState.kind === 'input'" class="topbar-search-field">
               <span class="sr-only">搜索</span>
               <input
                 :value="catalogQuery"
                 class="topbar-search"
                 type="search"
-                placeholder="演示集..."
+                :placeholder="topbarSearchState.placeholder"
                 autocomplete="off"
                 @input="onTopbarSearch"
               />
             </label>
+            <RouterLink
+              v-else
+              :to="topbarSearchState.target || '/'"
+              class="topbar-search-launch"
+              :aria-label="topbarSearchState.placeholder"
+            >
+              <span class="topbar-search-launch-kicker">查找演示</span>
+              <span class="topbar-search-launch-label">{{ topbarSearchState.placeholder }}</span>
+            </RouterLink>
           </div>
-
           <div class="topbar-actions">
             <!-- 电脑端：直接平铺所有按钮 -->
             <div class="topbar-inline-actions">
@@ -278,18 +267,19 @@ onBeforeUnmount(() => {
                 <button type="button" class="btn btn-ghost topbar-logout-button" @click="logout">退出</button>
               </template>
             </div>
-
             <!-- 手机端：折叠到"更多"按钮 -->
             <button
               type="button"
               class="btn btn-ghost topbar-more-trigger"
+              :class="{ 'is-open': topbarUtilityOpen }"
               :aria-expanded="topbarUtilityOpen ? 'true' : 'false'"
               aria-controls="topbar-more-panel"
+              :aria-label="`更多：${topbarMoreSummary}`"
               @click="toggleTopbarUtilityPanel"
             >
-              更多
+              <span class="topbar-more-trigger-label">更多</span>
+              <span class="topbar-more-trigger-meta">{{ topbarMoreSummary }}</span>
             </button>
-
             <div
               id="topbar-more-panel"
               class="topbar-more-panel"
@@ -297,12 +287,14 @@ onBeforeUnmount(() => {
               :aria-hidden="topbarUtilityOpen ? 'false' : 'true'"
             >
               <div class="topbar-more-group">
+                <p class="topbar-more-group-label">界面与课堂</p>
                 <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
                   {{ classroomModeLabel }}
                 </button>
                 <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
               </div>
               <div class="topbar-more-group">
+                <p class="topbar-more-group-label">{{ auth.loggedIn ? "账号与后台" : "登录与后台" }}</p>
                 <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
                   登录
                 </button>
@@ -316,11 +308,9 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </header>
-
     <main class="app-main">
       <RouterView />
     </main>
-
     <div v-if="loginOpen" class="modal-backdrop" @click="closeLogin">
       <div
         ref="modalCardRef"
@@ -347,7 +337,6 @@ onBeforeUnmount(() => {
               @input="clearLoginError"
             />
           </label>
-
           <label class="field">
             <span>密码</span>
             <input
@@ -362,9 +351,7 @@ onBeforeUnmount(() => {
               @input="clearLoginError"
             />
           </label>
-
           <div v-if="loginError" class="error">{{ loginError }}</div>
-
           <div class="modal-actions">
             <button type="button" class="btn btn-ghost" @click="closeLogin">取消</button>
             <button type="submit" class="btn btn-primary" :disabled="auth.loading">登录</button>

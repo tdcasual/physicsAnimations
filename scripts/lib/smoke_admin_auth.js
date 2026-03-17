@@ -3,10 +3,27 @@ function resolveUrl(baseUrl, pathName) {
   return new URL(pathName, baseUrl).toString();
 }
 
+async function revealTopbarAuthActions(page) {
+  const banner = page.getByRole("banner");
+  const inlineLoginButton = banner.locator(".topbar-inline-actions").getByRole("button", { name: "登录" });
+  if (await inlineLoginButton.isVisible().catch(() => false)) {
+    return inlineLoginButton;
+  }
+
+  const moreTrigger = page.locator(".topbar-more-trigger").first();
+  await moreTrigger.waitFor({ state: "visible", timeout: 10000 });
+  if ((await moreTrigger.getAttribute("aria-expanded").catch(() => null)) !== "true") {
+    await moreTrigger.click();
+  }
+  await page.locator(".topbar-more-panel.is-open").waitFor({ state: "visible", timeout: 10000 });
+  const panelLoginButton = banner.locator(".topbar-more-panel").getByRole("button", { name: "登录" });
+  await panelLoginButton.waitFor({ state: "visible", timeout: 10000 });
+  return panelLoginButton;
+}
+
 async function loginFromCatalog(page, username, password, baseUrl = "") {
   await page.goto(resolveUrl(baseUrl, "/"), { waitUntil: "networkidle" });
-  const loginButton = page.getByRole("banner").getByRole("button", { name: "登录" });
-  await loginButton.waitFor({ state: "visible", timeout: 10000 });
+  const loginButton = await revealTopbarAuthActions(page);
   await loginButton.click();
 
   const dialog = page.getByRole("dialog", { name: "管理员登录" });
@@ -43,4 +60,5 @@ module.exports = {
   ensureAdminDashboard,
   loginFromCatalog,
   readSessionToken,
+  revealTopbarAuthActions,
 };
