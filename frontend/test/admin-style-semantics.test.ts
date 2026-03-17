@@ -69,15 +69,7 @@ describe("admin style semantics", () => {
     for (const source of [dashboardCombined, content, libraryCombined, uploads, taxonomy, system, account]) {
       expect(source).toMatch(/admin-page-header/);
       expect(source).toMatch(/admin-page-kicker/);
-      expect(source).toMatch(/admin-page-intro/);
       expect(source).toMatch(/admin-page-meta/);
-    }
-
-    expect(dashboardCombined).toMatch(/admin-task-copy--supporting/);
-
-    for (const source of [dashboardCombined, content, uploads]) {
-      expect(source).toMatch(/admin-page-intro--supporting/);
-      expect(source).toMatch(/admin-page-meta-copy/);
     }
 
     for (const source of [contentCreate, uploadsCreate]) {

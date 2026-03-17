@@ -41,30 +41,30 @@ describe("app shell copy", () => {
     expect(source).toMatch(/>\s*首页\s*</);
   });
 
-  it("uses a leaner topbar grouping model for compact brand and action hierarchy", () => {
+  it("uses a mobile more-panel and desktop inline-actions for compact brand and action hierarchy", () => {
     const source = readFile("src/App.vue");
 
     expect(source).toMatch(/class="brand-lockup"/);
     expect(source).toMatch(/class="brand-mark"/);
-    expect(source).toMatch(/class="topbar-primary-actions"/);
-    expect(source).toMatch(/class="topbar-action-cluster"/);
-    expect(source).toMatch(/class="topbar-environment-shell"/);
+    expect(source).toMatch(/topbar-more-trigger/);
+    expect(source).toMatch(/topbar-more-panel/);
+    expect(source).toMatch(/topbar-inline-actions/);
   });
 
-  it("frames utility controls as environment settings instead of peer navigation", () => {
+  it("frames utility controls as preference settings inside the more panel", () => {
     const source = readFile("src/App.vue");
 
-    expect(source).toMatch(/环境偏好/);
     expect(source).toMatch(/昼夜主题/);
+    expect(source).toMatch(/topbar-more-group/);
     expect(source).not.toMatch(/>\s*界面\s*</);
   });
 
-  it("adds a small environment copy block so settings read as secondary context", () => {
+  it("uses grouped actions inside the more panel and inline actions on desktop", () => {
     const source = readFile("src/App.vue");
 
-    expect(source).toMatch(/topbar-environment-copy/);
-    expect(source).toMatch(/topbar-utility-note/);
-    expect(source).toMatch(/放大与主题仅影响当前设备/);
+    expect(source).toMatch(/topbar-more-group/);
+    expect(source).toMatch(/topbar-inline-actions/);
+    expect(source).not.toMatch(/topbar-utility-note/);
   });
 
   it("hides the redundant admin shortcut once the user is already inside admin routes", () => {
@@ -73,7 +73,6 @@ describe("app shell copy", () => {
     expect(source).toMatch(/const showAdminShortcut = computed/);
     expect(source).toMatch(/v-if="showAdminShortcut"/);
     expect(source).toMatch(/topbar-admin-link/);
-    expect(source).toMatch(/topbar-mobile-admin-link/);
   });
 
   it("binds route-aware topbar tone classes so browsing and work modes read faster", () => {
@@ -83,5 +82,14 @@ describe("app shell copy", () => {
     expect(source).toMatch(/topbar--viewer/);
     expect(source).toMatch(/topbar--admin/);
     expect(source).toMatch(/topbar--library/);
+  });
+
+  it("places a global search box in the topbar next to the brand", () => {
+    const source = readFile("src/App.vue");
+
+    expect(source).toMatch(/class="topbar-search"/);
+    expect(source).toMatch(/topbar-search-field/);
+    expect(source).toMatch(/onTopbarSearch/);
+    expect(source).toMatch(/useCatalogSearch/);
   });
 });

@@ -5,7 +5,7 @@ function safeText(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
-export function sortByOrderAndTitle<T extends { order?: number; title?: string }>(list: T[]): T[] {
+function sortByOrderAndTitle<T extends { order?: number; title?: string }>(list: T[]): T[] {
   const out = [...(list || [])];
   out.sort((a, b) => {
     const orderDiff = (Number(b?.order || 0) - Number(a?.order || 0));

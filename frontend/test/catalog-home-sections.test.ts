@@ -76,7 +76,6 @@ describe("catalog homepage section helper", () => {
   });
 
   it("adds a teaching workspace summary with current-class momentum and pinned-demo status", async () => {
-    const buildWorkspaceSummary = (catalogViewStateModule as any).buildCatalogTeacherWorkspaceSummary;
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
@@ -93,24 +92,18 @@ describe("catalog homepage section helper", () => {
       recentItems: sampleItems.slice(0, 2),
       favoriteItems: sampleItems.slice(2, 3),
       favoriteIds: new Set<string>(["item-3"]),
-        workspaceSummary: buildWorkspaceSummary({
-          recentItems: sampleItems.slice(0, 2),
-          favoriteItems: sampleItems.slice(2, 3),
-        }),
       },
       { plugins: [router] },
     );
 
     expect(mounted.host.textContent).toContain("教学工作区");
-    expect(mounted.host.textContent).toContain("最近课堂入口");
-    expect(mounted.host.textContent).toContain("已固定演示");
+    expect(mounted.host.textContent).toContain("最近查看");
+    expect(mounted.host.textContent).toContain("已收藏");
     expect(mounted.host.textContent).not.toContain("最近入口与固定演示。");
     expect(mounted.host.textContent).not.toContain("课前回放与课中重开。");
     expect(mounted.host.textContent).not.toContain("把常用演示固定在这里。");
     expect(mounted.host.querySelector(".catalog-workbench")).not.toBeNull();
     expect(mounted.host.querySelector(".catalog-stage-rail")).not.toBeNull();
-    expect(mounted.host.querySelector(".catalog-workspace-strip")).not.toBeNull();
-    expect(mounted.host.querySelector(".catalog-workspace-item")).not.toBeNull();
     expect(mounted.host.querySelector(".catalog-workbench-columns")).not.toBeNull();
     expect(mounted.host.querySelector(".catalog-workbench-column")).not.toBeNull();
     expect(mounted.host.querySelector(".catalog-workspace-pill")).toBeNull();

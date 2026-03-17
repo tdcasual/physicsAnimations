@@ -54,12 +54,6 @@ function currentPanelLabel(): string {
   if (vm.panels.activePanelTab === "asset") return "资源上传与编辑";
   return "Embed 平台管理";
 }
-
-function currentLibraryFocusText(): string {
-  const selectedFolder = vm.data.selectedFolder;
-  if (!selectedFolder) return "先从左侧文件夹列表选择一个课堂素材范围。";
-  return `当前文件夹：${selectedFolder.name || selectedFolder.id} · ${vm.data.selectedFolderAssetCount} 个资源`;
-}
 </script>
 
 <template src="./library/AdminLibraryView.template.html"></template>

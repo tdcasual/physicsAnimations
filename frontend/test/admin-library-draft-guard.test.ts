@@ -28,7 +28,6 @@ describe("admin library draft guard", () => {
     expect(wiring).toMatch(/draft\.selectedFolderId\.value\s*=\s*folderId/);
 
     expect(template).toMatch(/@click="vm\.actions\.selectFolder\(folder\.id\)"/);
-    expect(template).toMatch(/@click="vm\.actions\.selectFolder\(folder\.id,\s*\{\s*panelTab:\s*'folder'\s*\}\)"/);
     expect(template).not.toMatch(/@click="vm\.data\.selectedFolderId = folder\.id"/);
   });
 

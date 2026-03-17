@@ -16,9 +16,7 @@ describe("admin visual polish", () => {
     expect(dashboard).toMatch(/admin-task-card/);
     expect(dashboard).toMatch(/admin-task-card--queue/);
     expect(dashboard).toMatch(/admin-task-card--focus/);
-    expect(dashboard).toMatch(/admin-task-copy--supporting/);
     expect(dashboard).toMatch(/admin-task-card--secondary/);
-    expect(dashboard).toMatch(/admin-task-copy--secondary/);
     expect(dashboard).toMatch(/admin-signal-card--metric/);
     expect(dashboard).toMatch(/下一步/);
     expect(dashboard).toMatch(/今日工作台/);
@@ -65,15 +63,7 @@ describe("admin visual polish", () => {
   });
 
   it("treats dashboard, content, and uploads headers as compact operational framing on mobile", () => {
-    const dashboard = read("src/views/admin/AdminDashboardView.vue");
-    const content = read("src/views/admin/AdminContentView.vue");
-    const uploads = read("src/views/admin/AdminUploadsView.vue");
     const css = read("src/styles.css");
-
-    for (const source of [dashboard, content, uploads]) {
-      expect(source).toMatch(/admin-page-intro--supporting/);
-      expect(source).toMatch(/admin-page-meta-copy/);
-    }
 
     expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-page-intro--supporting\s*\{[\s\S]*display:\s*none/);
     expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-page-meta-copy\s*\{[\s\S]*display:\s*none/);
@@ -81,12 +71,9 @@ describe("admin visual polish", () => {
   });
 
   it("compacts the dashboard lead task and create forms without removing optional metadata access", () => {
-    const dashboard = read("src/views/admin/AdminDashboardView.vue");
     const contentCreate = read("src/views/admin/content/ContentCreateForm.vue");
     const uploadsCreate = read("src/views/admin/uploads/UploadsCreateForm.vue");
     const css = read("src/styles.css");
-
-    expect(dashboard).toMatch(/admin-task-copy--supporting/);
 
     for (const source of [contentCreate, uploadsCreate]) {
       expect(source).toMatch(/admin-optional-disclosure/);

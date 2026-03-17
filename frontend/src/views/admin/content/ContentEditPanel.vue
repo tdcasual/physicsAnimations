@@ -47,7 +47,7 @@ const emit = defineEmits<{
     {{ props.actionFeedback }}
   </div>
 
-  <div v-if="!props.selectedItem" class="empty">请先在左侧选择一条内容进行编辑。</div>
+  <div v-if="!props.selectedItem" class="empty">选择条目以编辑</div>
 
   <div v-else class="editor-form">
     <label class="field" :class="{ 'has-error': props.editTitleError }">

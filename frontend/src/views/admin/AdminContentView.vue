@@ -27,14 +27,10 @@ async function openContentEditor(item: AdminItemRow) {
       <div class="admin-page-copy">
         <p class="admin-page-kicker">内容编修</p>
         <h2>内容管理</h2>
-        <p class="admin-page-intro admin-page-intro--supporting">整理目录入口所需的标题与状态。</p>
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前节奏</span>
-        <strong>{{ vm.editingId ? "编辑详情已展开" : "先补新条目" }}</strong>
-        <span class="admin-page-meta-copy">
-          {{ vm.editingId ? "右侧面板保持聚焦，适合连续修订标题与排序。" : "先创建或筛选条目，再在右侧完成发布设定。" }}
-        </span>
+        <strong>{{ vm.editingId ? "编辑中" : "待创建" }}</strong>
       </div>
     </header>
 
@@ -130,7 +126,7 @@ async function openContentEditor(item: AdminItemRow) {
 
 h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-scale));
 }
 
 .field-textarea {
@@ -196,7 +192,7 @@ h3 {
 
 :deep(.item-meta) {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -226,7 +222,7 @@ h3 {
 }
 
 .action-feedback {
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -235,19 +231,19 @@ h3 {
 }
 
 .action-feedback.success {
-  color: #15803d;
+  color: var(--success);
 }
 
 .checkbox {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .error-text {
   color: var(--danger);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 :deep(.empty) {
@@ -267,7 +263,7 @@ h3 {
 
 :deep(.meta) {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   overflow-wrap: anywhere;
 }
 

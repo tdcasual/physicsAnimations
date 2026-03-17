@@ -130,7 +130,7 @@ function onToggle(groupId: string, event: Event) {
 
 h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-scale));
 }
 
 .toolbar {
@@ -161,7 +161,7 @@ h3 {
 
 .meta-line {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
 }
 
 .tree-list {
@@ -201,7 +201,7 @@ h3 {
 
 .group-title,
 .category-title {
-  font-size: 14px;
+  font-size: calc(14px * var(--ui-scale));
   font-weight: 600;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -209,7 +209,7 @@ h3 {
 
 .group-meta,
 .category-meta {
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -239,7 +239,7 @@ h3 {
 .tag {
   margin-left: 6px;
   display: inline-block;
-  font-size: 11px;
+  font-size: calc(11px * var(--ui-scale));
   color: color-mix(in srgb, var(--danger) 70%, var(--text));
 }
 
@@ -247,12 +247,12 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
 .btn-xs {
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   padding: 4px 8px;
 }
 
@@ -262,7 +262,7 @@ h3 {
   border-radius: 8px;
   padding: 12px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .empty-inline {

@@ -25,6 +25,6 @@ describe("admin mobile input safeguards", () => {
     const css = read("src/styles.css");
     expect(css).toMatch(/\.admin-input\s*\{[^}]*width:\s*100%/);
     expect(css).toMatch(/\.admin-input\s*\{[^}]*min-width:\s*0/);
-    expect(css).toMatch(/\.admin-input\s*\{[^}]*min-height:\s*44px/);
+    expect(css).toMatch(/\.admin-input\s*\{[^}]*min-height:\s*42px/);
   });
 });

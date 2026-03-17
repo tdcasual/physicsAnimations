@@ -1,5 +1,6 @@
 <script setup lang="ts">
-defineProps<{ vm: any }>();
+import type { useLibraryAdminState } from "../../../../features/library/useLibraryAdminState";
+defineProps<{ vm: ReturnType<typeof useLibraryAdminState> }>();
 </script>
 
 <template>

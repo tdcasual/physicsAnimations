@@ -23,10 +23,11 @@ describe("login flow consistency", () => {
     expect(source).not.toMatch(/await router\.replace\(\"\/admin\/dashboard\"\)/);
   });
 
-  it("keeps primary auth actions separate from shell environment settings", () => {
+  it("places auth actions inside the mobile more-panel and desktop inline-actions", () => {
     const source = read("src/App.vue");
-    expect(source).toMatch(/class="topbar-primary-actions"[\s\S]*class="topbar-environment-shell"/);
-    expect(source).toMatch(/aria-label="打开更多操作"/);
+    expect(source).toMatch(/topbar-more-panel[\s\S]*topbar-more-group/);
+    expect(source).toMatch(/topbar-more-trigger/);
+    expect(source).toMatch(/topbar-inline-actions/);
   });
 
   it("disables auto-capitalization and auto-correct in app-shell login modal inputs", () => {

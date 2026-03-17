@@ -17,7 +17,7 @@ describe("catalog mobile filter behavior", () => {
   });
 
   it("hides the mobile trigger on wide screens and shows a controlled panel on small screens", () => {
-    const css = readFile("src/styles.css");
+    const css = readFile("src/views/CatalogView.css");
 
     expect(css).toMatch(/\.catalog-mobile-filter-trigger\s*\{[\s\S]*display:\s*none/);
     expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-mobile-filter-trigger\s*\{[\s\S]*display:\s*inline-flex/);

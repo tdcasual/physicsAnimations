@@ -1,14 +1,14 @@
 <script setup lang="ts">
 defineProps<{
   title: string;
-  copy: string;
+  hint?: string;
 }>();
 </script>
 
 <template>
   <div class="catalog-teacher-empty catalog-teacher-empty--compact catalog-teacher-empty--inline">
     <strong>{{ title }}</strong>
-    <span v-if="copy">{{ copy }}</span>
+    <span v-if="hint" class="catalog-teacher-empty-hint">{{ hint }}</span>
   </div>
 </template>
 
@@ -17,14 +17,17 @@ defineProps<{
   display: grid;
   gap: 2px;
   padding: 10px 0 0;
-  border-top: 1px dashed color-mix(in oklab, var(--line-strong) 18%, var(--border));
+  border-top: 1px dashed var(--border);
   background: transparent;
   color: var(--muted);
-  align-content: start;
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  min-height: 80px;
 }
 
 .catalog-teacher-empty--compact {
-  min-height: 0;
+  min-height: 60px;
 }
 
 .catalog-teacher-empty--inline {
@@ -39,8 +42,9 @@ defineProps<{
   line-height: 1.25;
 }
 
-.catalog-teacher-empty span {
+.catalog-teacher-empty-hint {
   font-size: calc(12px * var(--ui-scale, 1));
   line-height: 1.45;
 }
+
 </style>

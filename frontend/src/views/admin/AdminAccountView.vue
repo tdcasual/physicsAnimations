@@ -135,12 +135,10 @@ async function submit() {
       <div class="admin-page-copy">
         <p class="admin-page-kicker">权限与身份</p>
         <h2>账号设置</h2>
-        <p class="admin-page-intro">保持管理员身份信息可追踪、可恢复，避免课前切换设备时出现登录阻塞。</p>
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前账号</span>
         <strong>{{ auth.username || "未命名管理员" }}</strong>
-        <span>更新用户名或密码后会立即刷新当前登录身份。</span>
       </div>
     </header>
     <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
@@ -234,6 +232,6 @@ async function submit() {
 
 .current-user {
   color: var(--muted);
-  font-size: 14px;
+  font-size: calc(14px * var(--ui-scale));
 }
 </style>

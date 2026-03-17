@@ -1,5 +1,6 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { getCatalogItemHref } from "./catalogLink";
+import { useCatalogSearch } from "./catalogSearch";
 import { loadCatalogData } from "./catalogService";
 import { computeCatalogView, filterFoldersByCatalogContext } from "./catalogState";
 import type { CatalogData, CatalogItem } from "./types";
@@ -125,53 +126,6 @@ export function buildCatalogTeacherQuickAccess(
   };
 }
 
-export function buildCatalogTeacherWorkspaceSummary(input: {
-  recentItems: CatalogItem[];
-  favoriteItems: CatalogItem[];
-}): Array<{ label: string; value: string; note: string }> {
-  const recentCount = input.recentItems.length;
-  const favoriteCount = input.favoriteItems.length;
-
-  return [
-    {
-      label: "最近课堂入口",
-      value: recentCount ? `${recentCount} 个最近演示` : "等待第一次课堂启动",
-      note: recentCount
-        ? "从最近打开过的内容继续回放或重开。"
-        : "先打开一个演示即可建立最近入口。",
-    },
-    {
-      label: "已固定演示",
-      value: favoriteCount ? `${favoriteCount} 个常用演示` : "还没有固定演示",
-      note: favoriteCount
-        ? "高频内容已固定，下次可直接进入。"
-        : "把高频演示固定在这里，下次不用重搜。",
-    },
-  ];
-}
-
-export function buildCatalogHeroActions(input: {
-  currentItemsCount: number;
-  libraryHighlightsCount: number;
-}): {
-  continueHref: string;
-  secondaryHref: string;
-  secondaryLabel: string;
-} {
-  const hasCurrentItems = Number(input.currentItemsCount || 0) > 0;
-  const hasLibraryHighlights = Number(input.libraryHighlightsCount || 0) > 0;
-
-  return {
-    continueHref: hasCurrentItems
-      ? "#catalog-current"
-      : hasLibraryHighlights
-        ? "#catalog-library"
-        : "#catalog-all",
-    secondaryHref: hasLibraryHighlights ? "#catalog-library" : "#catalog-all",
-    secondaryLabel: hasLibraryHighlights ? "浏览资源库" : "浏览全部内容",
-  };
-}
-
 function readViewState(): CatalogViewStateSnapshot | null {
   try {
     return parseCatalogViewState(localStorage.getItem(VIEW_STATE_KEY));
@@ -183,7 +137,7 @@ function readViewState(): CatalogViewStateSnapshot | null {
 export function useCatalogViewState() {
   const loading = ref(false);
   const loadError = ref("");
-  const query = ref("");
+  const query = useCatalogSearch();
   const selectedGroupId = ref("physics");
   const selectedCategoryId = ref("all");
   const catalog = ref<CatalogData>({ groups: {} });
@@ -259,37 +213,9 @@ export function useCatalogViewState() {
   const recentItems = computed(() => teacherQuickAccess.value.recentItems);
   const favoriteItems = computed(() => teacherQuickAccess.value.favoriteItems);
   const favoriteIds = computed(() => new Set(teacherQuickAccess.value.prunedFavoriteEntries.map((entry) => entry.id)));
-  const teacherWorkspaceSummary = computed(() =>
-    buildCatalogTeacherWorkspaceSummary({
-      recentItems: recentItems.value,
-      favoriteItems: favoriteItems.value,
-    }),
-  );
-  const heroActions = computed(() =>
-    buildCatalogHeroActions({
-      currentItemsCount: currentItems.value.length,
-      libraryHighlightsCount: libraryHighlights.value.length,
-    }),
-  );
-
   const heroTitle = computed(() => {
-    if (activeCategory.value) return `${activeCategory.value.title} 导航`;
-    return `${activeGroup.value?.title || "学科"}导航`;
-  });
-
-  const heroDescription = computed(() => {
-    if (query.value.trim()) {
-      return `按“${query.value.trim()}”筛选，可直接进入结果。`;
-    }
-    if (activeCategory.value) {
-      return `${activeCategory.value.title} 的演示与资源入口。`;
-    }
-    return "先缩小范围，再进入演示。";
-  });
-
-  const currentSectionTitle = computed(() => {
     if (activeCategory.value) return activeCategory.value.title;
-    return `${activeGroup.value?.title || "当前分组"} 全部内容`;
+    return activeGroup.value?.title || "学科";
   });
 
   function getItemHref(item: CatalogItem): string {
@@ -378,16 +304,10 @@ export function useCatalogViewState() {
     recentItems,
     favoriteItems,
     favoriteIds,
-    teacherWorkspaceSummary,
     currentItems,
     recommendedItems,
     libraryHighlights,
-    continueBrowseHref: computed(() => heroActions.value.continueHref),
-    secondaryBrowseHref: computed(() => heroActions.value.secondaryHref),
-    secondaryBrowseLabel: computed(() => heroActions.value.secondaryLabel),
     heroTitle,
-    heroDescription,
-    currentSectionTitle,
     getItemHref,
     refreshTeacherQuickAccess,
     selectGroup,

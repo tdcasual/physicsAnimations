@@ -1,5 +1,6 @@
 <script setup lang="ts">
-defineProps<{ vm: any }>();
+import type { useLibraryAdminState } from "../../../../features/library/useLibraryAdminState";
+defineProps<{ vm: ReturnType<typeof useLibraryAdminState> }>();
 </script>
 
 <template>
@@ -75,7 +76,7 @@ defineProps<{ vm: any }>();
           <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.cancelEmbedProfileEdit">取消</button>
         </div>
       </div>
-      <div v-else class="empty">在平台列表点击“编辑”后，可在此修改平台配置。</div>
+      <div v-else class=”empty”>选择平台以编辑</div>
     </div>
   </div>
 </template>

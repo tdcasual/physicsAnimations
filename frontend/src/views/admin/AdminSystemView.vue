@@ -60,12 +60,10 @@ const {
       <div class="admin-page-copy">
         <p class="admin-page-kicker">同步与巡检</p>
         <h2>系统设置向导</h2>
-        <p class="admin-page-intro">先确认连接与访问模式，再安排同步和 Embed 更新节奏，避免课前公开目录失联。</p>
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前节奏</span>
-        <strong>{{ canSyncNow ? "验证完成，可执行同步" : "先完成连接校验" }}</strong>
-        <span>{{ canSyncNow ? "左侧向导确认后，可在当前页直接执行同步和更新。" : "先逐步校验存储、路径和权限，再推进同步动作。" }}</span>
+        <strong>{{ canSyncNow ? "可执行同步" : "待校验" }}</strong>
       </div>
     </header>
 
@@ -148,11 +146,11 @@ const {
 
 .error-text {
   color: var(--danger);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .success-text {
-  color: #15803d;
-  font-size: 13px;
+  color: var(--success);
+  font-size: calc(13px * var(--ui-scale));
 }
 </style>

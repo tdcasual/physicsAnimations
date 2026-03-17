@@ -7,20 +7,13 @@ function readFile(relPath: string): string {
 }
 
 describe("catalog navigation homepage layout", () => {
-  it("keeps a light hero with a denser mainline, single status band, and primary quick actions", () => {
-    const source = [
-      readFile("src/views/CatalogView.vue"),
-      readFile("src/components/catalog/CatalogHeroSection.vue"),
-    ].join("\n");
+  it("replaces the hero with a sr-only heading and keeps the stage container clean", () => {
+    const source = readFile("src/views/CatalogView.vue");
 
-    expect(source).toMatch(/class="catalog-hero"/);
-    expect(source).toMatch(/class="catalog-hero-mainline"/);
-    expect(source).toMatch(/class="catalog-hero-toolbar"/);
-    expect(source).toMatch(/class="catalog-hero-support catalog-hero-support--status"/);
-    expect(source).toMatch(/class="catalog-hero-status-strip"/);
-    expect(source).toMatch(/catalog-hero-status-item--lead/);
-    expect(source).toMatch(/class="catalog-hero-search"/);
-    expect(source).toMatch(/catalog-search-field--toolbar/);
+    expect(source).toMatch(/class="sr-only"/);
+    expect(source).toMatch(/class="catalog-stage"/);
+    expect(source).not.toMatch(/class="catalog-hero"/);
+    expect(source).not.toMatch(/class="catalog-hero-mainline"/);
     expect(source).not.toMatch(/class="catalog-hero-primary"/);
     expect(source).not.toMatch(/catalog-hero-overview/);
     expect(source).not.toMatch(/catalog-overview-card/);
@@ -28,13 +21,21 @@ describe("catalog navigation homepage layout", () => {
     expect(source).not.toMatch(/catalog-hero-map/);
     expect(source).not.toMatch(/class="catalog-hero-status"/);
     expect(source).not.toMatch(/class="catalog-hero-itinerary"/);
-    expect(source).toMatch(/继续浏览|浏览资源库/);
+    expect(source).not.toMatch(/CatalogHeroSection/);
   });
 
-  it("reduces hero explanation to one restrained status payload instead of focus and next-step cards", () => {
+  it("moves the search box into the global topbar for cross-route access", () => {
+    const appSource = readFile("src/App.vue");
+
+    expect(appSource).toMatch(/class="topbar-search"/);
+    expect(appSource).toMatch(/topbar-search-field/);
+    expect(appSource).toMatch(/onTopbarSearch/);
+  });
+
+  it("no longer inlines heroStatusItems in the catalog view", () => {
     const source = readFile("src/views/CatalogView.vue");
 
-    expect(source).toMatch(/const heroStatusItems = computed/);
+    expect(source).not.toMatch(/const heroStatusItems = computed/);
     expect(source).not.toMatch(/heroOverviewCards/);
     expect(source).not.toMatch(/label:\s*"当前聚焦"/);
     expect(source).not.toMatch(/label:\s*"下一步"/);
@@ -69,18 +70,14 @@ describe("catalog navigation homepage layout", () => {
     expect(source).toMatch(/catalog-section--flat/);
     expect(source).toMatch(/catalog-section--archive/);
     expect(source).toMatch(/catalog-empty--inline/);
-    expect(source).toMatch(/class="catalog-section-badge"/);
     expect(source).toMatch(/推荐演示|资源库精选|当前分类/);
   });
 
-  it("delegates hero and quick-access presentation to dedicated page components", () => {
+  it("delegates quick-access presentation to a dedicated page component", () => {
     const source = readFile("src/views/CatalogView.vue");
 
-    expect(source).toMatch(/import CatalogHeroSection/);
     expect(source).toMatch(/import CatalogQuickAccessBand/);
-    expect(source).toMatch(/<CatalogHeroSection/);
     expect(source).toMatch(/<CatalogQuickAccessBand/);
-    expect(source).not.toMatch(/class="catalog-hero"/);
     expect(source).not.toMatch(/class="catalog-quick-access"/);
   });
 

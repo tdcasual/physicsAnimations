@@ -40,7 +40,7 @@ function onIntervalInput(event: Event) {
     <div class="panel-heading">
       <div>
         <h3>Embed 自动更新</h3>
-        <p class="panel-hint">统一管理 GeoGebra 资源包和远程 Embed 平台镜像，默认 20 天执行一次。</p>
+        <p class="panel-hint">默认 20 天自动执行</p>
       </div>
       <span class="status-chip" :data-status="statusLabel">{{ statusLabel }}</span>
     </div>
@@ -124,29 +124,29 @@ function onIntervalInput(event: Event) {
 
 .panel-hint {
   margin: 6px 0 0;
-  color: var(--text-muted);
-  font-size: 13px;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .status-chip {
   border-radius: 999px;
   padding: 4px 10px;
-  background: rgba(99, 102, 241, 0.12);
-  color: #4338ca;
-  font-size: 12px;
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: calc(12px * var(--ui-scale));
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .status-chip[data-status="ok"] {
-  background: rgba(22, 163, 74, 0.12);
-  color: #166534;
+  background: var(--success-bg);
+  color: var(--success);
 }
 
 .status-chip[data-status="partial_failure"],
 .status-chip[data-status="failed"] {
-  background: rgba(220, 38, 38, 0.12);
-  color: #991b1b;
+  background: color-mix(in oklab, var(--danger) 12%, transparent);
+  color: var(--danger);
 }
 
 .settings-grid,
@@ -171,12 +171,12 @@ function onIntervalInput(event: Event) {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 .field-label {
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--muted);
 }
 
 .status-item {
@@ -184,12 +184,12 @@ function onIntervalInput(event: Event) {
   gap: 4px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.04);
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
 }
 
 .status-item span {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--muted);
 }
 
 .status-item strong {
@@ -202,12 +202,12 @@ function onIntervalInput(event: Event) {
 }
 
 .success-text {
-  color: #15803d;
+  color: var(--success);
 }
 
 .pending-text,
 .save-hint {
-  color: var(--text-secondary);
+  color: var(--muted);
 }
 
 @media (max-width: 640px) {

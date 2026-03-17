@@ -184,8 +184,8 @@ function onModeChange() {
   gap: 10px;
 }
 
-h3 { margin: 0; font-size: 16px; }
-h4 { margin: 0; font-size: 15px; }
+h3 { margin: 0; font-size: calc(16px * var(--ui-scale)); }
+h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 
 .summary-grid span {
   color: var(--muted);
@@ -213,7 +213,7 @@ h4 { margin: 0; font-size: 15px; }
   background: color-mix(in srgb, var(--surface) 92%, var(--bg));
   color: inherit;
   cursor: pointer;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   text-align: left;
 }
 
@@ -227,7 +227,7 @@ h4 { margin: 0; font-size: 15px; }
 }
 
 .step-hint {
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -266,7 +266,7 @@ h4 { margin: 0; font-size: 15px; }
 
 .mode-card span {
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .summary-grid {
@@ -296,12 +296,12 @@ h4 { margin: 0; font-size: 15px; }
 .validate-text,
 .save-disabled-hint,
 .continue-disabled-hint {
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
 .validate-text.ok {
-  color: #15803d;
+  color: var(--success);
 }
 
 .empty {
@@ -319,7 +319,7 @@ h4 { margin: 0; font-size: 15px; }
     grid-template-columns: 1fr;
   }
   .step-hint {
-    font-size: 13px;
+    font-size: calc(13px * var(--ui-scale));
     line-height: 1.35;
   }
   .wizard-panel {

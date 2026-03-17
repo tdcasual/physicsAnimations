@@ -10,7 +10,7 @@ const props = defineProps<{
   badge: string;
   items: CatalogItem[];
   emptyTitle: string;
-  emptyCopy: string;
+  emptyHint?: string;
   fallbackHash: string;
   favoriteIds: Set<string>;
 }>();
@@ -33,10 +33,6 @@ function getNavigationProps(item: CatalogItem): Record<string, string> {
   return isCatalogAppRoute(href) ? { to: href } : { href };
 }
 
-function itemKicker(item: CatalogItem): string {
-  return item.type === "link" ? "网页演示" : "本地演示";
-}
-
 function isFavorited(itemId: string): boolean {
   return props.favoriteIds.has(itemId);
 }
@@ -45,7 +41,7 @@ function isFavorited(itemId: string): boolean {
 <template>
   <section :id="props.sectionId" class="catalog-workbench-column">
     <div class="catalog-workbench-column-head">
-      <h2 class="catalog-workbench-column-title">{{ props.title }}</h2>
+      <h3 class="catalog-workbench-column-title">{{ props.title }}</h3>
       <div class="catalog-workbench-column-badge">{{ props.badge }}</div>
     </div>
 
@@ -59,22 +55,21 @@ function isFavorited(itemId: string): boolean {
         >
           <div class="catalog-teacher-thumb">
             <img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" />
-            <div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 1) || "?" }}</div>
+            <div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || "?" }}</div>
           </div>
           <div class="catalog-teacher-body">
-            <div class="catalog-card-kicker">{{ itemKicker(item) }}</div>
             <div class="catalog-teacher-title">{{ item.title }}</div>
-            <div class="catalog-teacher-desc">{{ item.description || "点击查看详情…" }}</div>
+            <div v-if="item.description" class="catalog-teacher-desc">{{ item.description }}</div>
           </div>
         </component>
 
-        <button type="button" class="catalog-teacher-action" @click="emit('toggle-favorite', item.id)">
+        <button type="button" class="catalog-teacher-action" :class="{ 'catalog-teacher-action--active': isFavorited(item.id) }" @click="emit('toggle-favorite', item.id)">
           {{ isFavorited(item.id) ? "已收藏" : "收藏" }}
         </button>
       </article>
     </div>
 
-    <CatalogTeacherWorkspaceEmptyState v-else :title="props.emptyTitle" :copy="props.emptyCopy" />
+    <CatalogTeacherWorkspaceEmptyState v-else :title="props.emptyTitle" :hint="props.emptyHint" />
   </section>
 </template>
 
@@ -86,7 +81,7 @@ function isFavorited(itemId: string): boolean {
 
 .catalog-workbench-column-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
@@ -96,21 +91,22 @@ function isFavorited(itemId: string): boolean {
 }
 
 .catalog-workbench-column-title {
-  font-size: clamp(1.05rem, 0.98rem + 0.22vw, 1.22rem);
+  font-size: clamp(1rem, 0.94rem + 0.2vw, 1.12rem);
   line-height: 1.12;
   min-width: 0;
 }
 
 .catalog-workbench-column-badge {
   flex: 0 0 auto;
-  min-height: 28px;
-  padding: 4px 9px;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
-  border-radius: 999px;
+  min-height: 24px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
   background: transparent;
-  color: color-mix(in oklab, var(--accent-strong) 50%, var(--text));
-  font-size: calc(12px * var(--ui-scale, 1));
-  font-weight: 700;
+  color: var(--accent);
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 600;
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
@@ -124,8 +120,14 @@ function isFavorited(itemId: string): boolean {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   align-items: center;
-  padding: 8px 0;
-  border-top: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
+  padding: 8px 4px;
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  transition: background-color 140ms ease;
+}
+
+.catalog-teacher-row:hover {
+  background: var(--surface-ink);
 }
 
 .catalog-teacher-row:first-child {
@@ -145,9 +147,8 @@ function isFavorited(itemId: string): boolean {
 .catalog-teacher-thumb {
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--surface) 70%, var(--paper)), color-mix(in oklab, var(--accent) 10%, var(--surface)));
+  border-radius: var(--radius-m);
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -168,6 +169,7 @@ function isFavorited(itemId: string): boolean {
 .catalog-teacher-title {
   font-weight: 700;
   line-height: 1.2;
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -185,13 +187,20 @@ function isFavorited(itemId: string): boolean {
 .catalog-teacher-action {
   min-height: 34px;
   width: fit-content;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 16%, var(--border));
-  border-radius: 999px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
   padding: 6px 10px;
-  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
+  background: var(--surface);
   color: inherit;
   cursor: pointer;
   font-size: calc(12px * var(--ui-scale, 1));
+  font-weight: 500;
+}
+
+.catalog-teacher-action--active {
+  border-color: var(--accent);
+  background: oklch(58% 0.18 30 / 0.08);
+  color: var(--accent-strong);
   font-weight: 600;
 }
 

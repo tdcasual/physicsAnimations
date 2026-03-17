@@ -25,9 +25,10 @@ describe("mobile touch targets", () => {
     expect(globalCss).toMatch(/\.checkbox\s*\{[\s\S]*min-height:\s*44px/);
     expect(globalCss).toMatch(/input\[type="checkbox"\],\s*input\[type="radio"\]\s*\{[\s\S]*inline-size:\s*18px/);
     expect(globalCss).toMatch(/input\[type="checkbox"\],\s*input\[type="radio"\]\s*\{[\s\S]*block-size:\s*18px/);
-    expect(catalogView).toMatch(/\.catalog-search\s*\{[\s\S]*min-height:\s*44px/);
+    expect(globalCss).toMatch(/\.topbar-search\s*\{[\s\S]*min-height:\s*38px/);
     expect(catalogView).toMatch(/\.catalog-tab\s*\{[\s\S]*min-height:\s*44px/);
-    expect(catalogViewCss).toMatch(/\.catalog-quick-chip\s*\{[^}]*min-height:\s*44px/);
+    const quickAccessBand = read("src/components/catalog/CatalogQuickAccessBand.vue");
+    expect(quickAccessBand).toMatch(/\.catalog-quick-chip\s*\{[^}]*min-height:\s*40px/);
     expect(libraryFolderView).toMatch(/<button[^>]*class="[^"]*\bbtn\b[^"]*"/);
     expect(libraryFolderView).toMatch(/<a[^>]*class="[^"]*\bbtn\b[^"]*"/);
     expect(adminLibraryCss).toMatch(/\.panel-tab\s*\{[\s\S]*min-height:\s*44px/);

@@ -6,6 +6,7 @@ import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
 import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
 import { applyStoredTheme, toggleTheme } from "./features/theme/theme";
+import { useCatalogSearch } from "./features/catalog/catalogSearch";
 
 const router = useRouter();
 const route = useRoute();
@@ -28,6 +29,14 @@ const isAdminShellRoute = computed(() => {
 });
 const classroomModeLabel = computed(() => `课堂模式${classroomModeEnabled.value ? "开" : "关"}`);
 const showAdminShortcut = computed(() => auth.loggedIn && !isAdminShellRoute.value);
+const catalogQuery = useCatalogSearch();
+
+function onTopbarSearch(event: Event) {
+  catalogQuery.value = (event.target as HTMLInputElement).value;
+  if (String(route.path || "") !== "/") {
+    router.push("/");
+  }
+}
 const topbarModeClass = computed(() => {
   const currentPath = String(route.path || "");
   if (isAdminShellRoute.value) {
@@ -248,11 +257,60 @@ onBeforeUnmount(() => {
             <RouterLink v-if="!isCatalogRoute" to="/" class="btn btn-ghost btn-nav-home topbar-home-link" aria-label="浏览首页">
               <span class="topbar-home-label">首页</span>
             </RouterLink>
+
+            <label class="topbar-search-field">
+              <span class="sr-only">搜索</span>
+              <input
+                :value="catalogQuery"
+                class="topbar-search"
+                type="search"
+                placeholder="演示集..."
+                autocomplete="off"
+                @input="onTopbarSearch"
+              />
+            </label>
           </div>
 
-          <div class="topbar-actions actions">
-            <div class="topbar-action-cluster">
-              <div class="topbar-primary-actions">
+          <div class="topbar-actions">
+            <!-- 电脑端：直接平铺所有按钮 -->
+            <div class="topbar-inline-actions">
+              <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
+                {{ classroomModeLabel }}
+              </button>
+              <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
+              <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
+                登录
+              </button>
+              <template v-else-if="auth.loggedIn">
+                <RouterLink v-if="showAdminShortcut" to="/admin/dashboard" class="btn btn-primary topbar-admin-link">管理</RouterLink>
+                <button type="button" class="btn btn-ghost topbar-logout-button" @click="logout">退出</button>
+              </template>
+            </div>
+
+            <!-- 手机端：折叠到"更多"按钮 -->
+            <button
+              type="button"
+              class="btn btn-ghost topbar-more-trigger"
+              :aria-expanded="topbarUtilityOpen ? 'true' : 'false'"
+              aria-controls="topbar-more-panel"
+              @click="toggleTopbarUtilityPanel"
+            >
+              更多
+            </button>
+
+            <div
+              id="topbar-more-panel"
+              class="topbar-more-panel"
+              :class="{ 'is-open': topbarUtilityOpen }"
+              :aria-hidden="topbarUtilityOpen ? 'false' : 'true'"
+            >
+              <div class="topbar-more-group">
+                <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
+                  {{ classroomModeLabel }}
+                </button>
+                <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
+              </div>
+              <div class="topbar-more-group">
                 <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
                   登录
                 </button>
@@ -260,50 +318,6 @@ onBeforeUnmount(() => {
                   <RouterLink v-if="showAdminShortcut" to="/admin/dashboard" class="btn btn-primary topbar-admin-link">管理</RouterLink>
                   <button type="button" class="btn btn-ghost topbar-logout-button" @click="logout">退出</button>
                 </template>
-              </div>
-
-              <button
-                type="button"
-                class="btn btn-ghost topbar-mobile-toggle"
-                aria-label="打开更多操作"
-                :aria-expanded="topbarUtilityOpen ? 'true' : 'false'"
-                aria-controls="topbar-mobile-utility-panel"
-                @click="toggleTopbarUtilityPanel"
-              >
-                更多
-              </button>
-
-              <div class="topbar-environment-shell">
-                <div class="topbar-environment-copy">
-                  <span class="topbar-utility-label">环境偏好</span>
-                  <span class="topbar-utility-note">放大与主题仅影响当前设备</span>
-                </div>
-                <div class="topbar-utility-actions">
-                  <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-                    {{ classroomModeLabel }}
-                  </button>
-                  <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
-                </div>
-              </div>
-            </div>
-
-            <div
-              id="topbar-mobile-utility-panel"
-              class="topbar-mobile-utility-panel"
-              :class="{ 'is-open': topbarUtilityOpen }"
-              :aria-hidden="topbarUtilityOpen ? 'false' : 'true'"
-            >
-              <div v-if="showAdminShortcut" class="topbar-mobile-utility-group topbar-mobile-utility-group--account">
-                <div class="topbar-mobile-utility-copy">工作区</div>
-                <RouterLink to="/admin/dashboard" class="btn btn-ghost topbar-mobile-admin-link">进入管理</RouterLink>
-              </div>
-
-              <div class="topbar-mobile-utility-group">
-                <div class="topbar-mobile-utility-copy">环境偏好</div>
-                <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-                  {{ classroomModeLabel }}
-                </button>
-                <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
               </div>
             </div>
           </div>

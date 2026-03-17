@@ -6,7 +6,6 @@ interface QuickCategory {
 
 const props = defineProps<{
   quickCategories: QuickCategory[];
-  hasLibraryHighlights: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -18,7 +17,7 @@ const emit = defineEmits<{
   <section class="catalog-quick-access" :class="'catalog-stage-band'">
     <div class="catalog-quick-access-band">
       <div class="catalog-quick-access-copy">
-        <p class="catalog-quick-access-label">快捷入口</p>
+        <span class="catalog-quick-access-label">快捷入口</span>
       </div>
       <div class="catalog-chip-list catalog-chip-list--quick">
         <button
@@ -30,7 +29,6 @@ const emit = defineEmits<{
         >
           {{ category.title }}
         </button>
-        <a v-if="props.hasLibraryHighlights" href="#catalog-library" class="catalog-quick-chip catalog-quick-chip-link">资源库</a>
       </div>
     </div>
   </section>
@@ -44,24 +42,23 @@ const emit = defineEmits<{
 
 .catalog-quick-access-band {
   display: grid;
-  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 10px 18px;
-  align-items: start;
+  align-items: center;
 }
 
 .catalog-quick-access-copy {
   display: flex;
   align-items: center;
   min-width: 0;
+  min-height: 40px;
 }
 
 .catalog-quick-access-label {
   margin: 0;
-  color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
-  font-size: calc(11px * var(--ui-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  color: var(--accent);
+  font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 600;
 }
 
 .catalog-chip-list {
@@ -76,35 +73,31 @@ const emit = defineEmits<{
 }
 
 .catalog-quick-chip {
-  border: 1px solid color-mix(in oklab, var(--accent) 18%, var(--border));
-  border-radius: 999px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
   min-height: 40px;
   padding: 7px 12px;
-  background: color-mix(in oklab, var(--paper) 74%, var(--surface));
+  background: var(--surface-raised);
   color: inherit;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
   font-size: calc(13px * var(--ui-scale, 1));
-  font-weight: 600;
+  font-weight: 500;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
 .catalog-quick-chip:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--accent) 42%, var(--border));
-  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
+  border-color: var(--accent);
+  box-shadow: var(--shadow-s);
 }
 
 .catalog-quick-chip:focus-visible {
   outline: none;
-  border-color: color-mix(in oklab, var(--accent) 56%, var(--border));
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 15%, transparent);
-}
-
-.catalog-quick-chip-link {
-  border-color: color-mix(in oklab, var(--accent-copper) 42%, var(--border));
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px oklch(0% 0 0 / 0.08);
 }
 
 @media (max-width: 640px) {

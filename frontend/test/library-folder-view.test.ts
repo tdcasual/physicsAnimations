@@ -7,13 +7,11 @@ function read(relPath: string): string {
 }
 
 describe("library folder view", () => {
-  it("adds archive-style folder framing and richer asset metadata hooks", () => {
+  it("adds archive-style folder framing", () => {
     const source = read("src/views/LibraryFolderView.vue");
 
     expect(source).toMatch(/library-folder-hero/);
     expect(source).toMatch(/library-folder-summary/);
-    expect(source).toMatch(/asset-kicker/);
-    expect(source).toMatch(/library-folder-count/);
   });
 
   it("assigns explicit visual states to embed-ready and download-only assets", () => {
@@ -93,12 +91,10 @@ describe("library folder view", () => {
     expect(source).not.toMatch(/void router\.replace\("\/"\)/);
   });
 
-  it("offers quick shortcuts back to recent and favorite teaching flows", () => {
+  it("no longer includes quick shortcut links in the folder view", () => {
     const source = read("src/views/LibraryFolderView.vue");
 
-    expect(source).toMatch(/回到最近课堂入口/);
-    expect(source).toMatch(/查看已固定演示/);
-    expect(source).toMatch(/#catalog-recent/);
-    expect(source).toMatch(/#catalog-favorites/);
+    expect(source).not.toMatch(/回到最近课堂入口/);
+    expect(source).not.toMatch(/查看已固定演示/);
   });
 });

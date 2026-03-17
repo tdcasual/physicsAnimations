@@ -146,7 +146,7 @@ const scanRemoteModel = computed({
       </label>
     </div>
 
-    <div v-else class="empty">local 模式无需 WebDAV 配置，下一步可直接保存。</div>
+    <div v-else class="empty">local 模式，无需配置。</div>
 
     <div class="actions admin-actions">
       <button type="button" class="btn btn-ghost" @click="emit('go-prev')">上一步</button>
@@ -166,7 +166,7 @@ const scanRemoteModel = computed({
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 @media (max-width: 640px) {

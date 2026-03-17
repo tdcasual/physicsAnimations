@@ -13,7 +13,7 @@ defineProps<{
     <article v-for="item in summary" :key="item.label" class="catalog-workspace-item">
       <span class="catalog-workspace-label">{{ item.label }}</span>
       <strong class="catalog-workspace-value">{{ item.value }}</strong>
-      <span class="catalog-workspace-note">{{ item.note }}</span>
+      <span v-if="item.note" class="catalog-workspace-note">{{ item.note }}</span>
     </article>
   </div>
 </template>
@@ -32,7 +32,7 @@ defineProps<{
 
 .catalog-workspace-item + .catalog-workspace-item {
   padding-top: 8px;
-  border-top: 1px solid color-mix(in oklab, var(--line-strong) 10%, var(--border));
+  border-top: 1px solid var(--border);
 }
 
 .catalog-workspace-label,
@@ -60,7 +60,7 @@ defineProps<{
     padding-top: 0;
     padding-inline-start: 14px;
     border-top: 0;
-    border-inline-start: 1px solid color-mix(in oklab, var(--line-strong) 10%, var(--border));
+    border-inline-start: 1px solid var(--border);
   }
 }
 </style>

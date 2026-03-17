@@ -84,12 +84,10 @@ async function openCategoryEditor(categoryId: string) {
       <div class="admin-page-copy">
         <p class="admin-page-kicker">目录编排</p>
         <h2>分类管理</h2>
-        <p class="admin-page-intro">把公开目录的分章结构和课堂检索路径保持一致，避免入口命名和实际内容脱节。</p>
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前焦点</span>
-        <strong>{{ selection ? "正在调整分类结构" : "等待选择节点" }}</strong>
-        <span>{{ selection ? "左侧树负责导航，右侧编辑区承接大类与二级分类的连续修订。" : "先从左侧选择大类或二级分类，再进入对应编辑面板。" }}</span>
+        <strong>{{ selection ? "编辑中" : "待选择" }}</strong>
       </div>
     </header>
     <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
@@ -180,7 +178,7 @@ async function openCategoryEditor(categoryId: string) {
           />
         </div>
 
-        <div v-else class="admin-card empty">请选择左侧的大类或二级分类进行编辑。</div>
+        <div v-else class="admin-card empty">选择节点以编辑</div>
       </div>
     </div>
   </section>
@@ -208,11 +206,11 @@ async function openCategoryEditor(categoryId: string) {
 .empty {
   border: 1px dashed var(--border);
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .error-text {
   color: var(--danger);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 </style>

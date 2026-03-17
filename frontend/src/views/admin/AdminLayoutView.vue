@@ -7,29 +7,29 @@ const adminNavGroups = [
   {
     id: "workspace",
     title: "内容管理",
-    summary: "3 项常用操作 · 内容修订优先",
+    summary: "内容与上传",
     items: [
-      { to: "/admin/dashboard", label: "概览", description: "查看当前站点入口、工作区状态与常用入口。" },
-      { to: "/admin/content", label: "内容", description: "管理演示内容、说明文案和展示组织。" },
-      { to: "/admin/uploads", label: "上传", description: "补充新素材并安排进入内容流。" },
+      { to: "/admin/dashboard", label: "概览", description: "站点概况" },
+      { to: "/admin/content", label: "内容", description: "演示条目管理" },
+      { to: "/admin/uploads", label: "上传", description: "素材入库" },
     ],
   },
   {
     id: "library",
     title: "资源结构",
-    summary: "2 个归档入口 · 优先补齐素材组织",
+    summary: "文件与分类",
     items: [
-      { to: "/admin/library", label: "资源库", description: "整理资源文件夹、封面和素材归档。" },
-      { to: "/admin/taxonomy", label: "分类", description: "维护导航分组与课堂分类结构。" },
+      { to: "/admin/library", label: "资源库", description: "文件夹与素材" },
+      { to: "/admin/taxonomy", label: "分类", description: "分类结构" },
     ],
   },
   {
     id: "system",
     title: "系统设置",
-    summary: "2 个系统面板 · 发布前集中巡检",
+    summary: "配置与账号",
     items: [
-      { to: "/admin/system", label: "系统", description: "查看运行配置、引导流程和系统级设置。" },
-      { to: "/admin/account", label: "账号", description: "管理账户信息与后台使用偏好。" },
+      { to: "/admin/system", label: "系统", description: "同步与配置" },
+      { to: "/admin/account", label: "账号", description: "密码与身份" },
     ],
   },
 ] as const;
@@ -188,7 +188,6 @@ onBeforeUnmount(() => {
         <nav ref="adminNavRef" class="admin-nav" @focusin="onAdminNavFocusIn">
           <section v-for="group in adminNavGroups" :key="group.id" class="admin-nav-group">
             <div class="admin-nav-group-title">{{ group.title }}</div>
-            <div class="admin-nav-group-summary">{{ group.summary }}</div>
             <div class="admin-nav-group-links">
               <RouterLink v-for="item in group.items" :key="item.to" class="admin-link" active-class="active" :to="item.to">
                 {{ item.label }}
@@ -214,129 +213,144 @@ onBeforeUnmount(() => {
 }
 
 .admin-layout-view--workspace {
-  --admin-shell-accent: color-mix(in oklab, var(--accent) 82%, var(--accent-copper) 18%);
-  --admin-shell-accent-quiet: color-mix(in oklab, var(--accent-copper) 62%, var(--surface));
+  --admin-shell-accent: var(--accent);
+  --admin-shell-accent-quiet: oklch(62% 0.14 55 / 0.2);
 }
 
 .admin-layout-view--library {
-  --admin-shell-accent: color-mix(in oklab, var(--accent-copper) 78%, var(--accent) 22%);
-  --admin-shell-accent-quiet: color-mix(in oklab, var(--accent-copper-strong) 48%, var(--surface));
+  --admin-shell-accent: var(--accent-copper);
+  --admin-shell-accent-quiet: oklch(62% 0.14 55 / 0.15);
 }
 
 .admin-layout-view--system {
-  --admin-shell-accent: color-mix(in oklab, var(--line-strong) 72%, var(--accent) 28%);
-  --admin-shell-accent-quiet: color-mix(in oklab, var(--line-strong) 38%, var(--surface));
+  --admin-shell-accent: var(--line-strong);
+  --admin-shell-accent-quiet: oklch(82% 0.01 250 / 0.3);
 }
 
 .admin-layout-view h1 { margin: 0; }
+
 .admin-nav-shell {
   position: relative;
   overflow: hidden;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
-  border-radius: 20px;
-  background: color-mix(in oklab, var(--surface) 94%, var(--paper));
-  box-shadow: 0 24px 52px -38px color-mix(in oklab, var(--ink) 26%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  padding: 14px;
+  transition: opacity 160ms ease;
 }
+
 .admin-nav-shell::before {
   content: "";
   position: absolute;
-  inset: 0 auto auto 0;
-  width: 100%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--admin-shell-accent) 48%, var(--border)), transparent);
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, oklch(58% 0.18 30 / 0.03), transparent 40%);
 }
+
 .admin-body,
-.admin-nav-group { display: grid; gap: 8px; }
+.admin-nav-group { display: grid; gap: 10px; }
+
 .admin-nav-group-title {
   margin: 0;
   color: var(--muted);
-  font-size: calc(12px * var(--ui-scale, 1));
-  font-weight: 700;
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
+
 .admin-shell-status-label {
   margin: 0;
-  color: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
+  color: var(--accent);
   font-size: calc(11px * var(--ui-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
 .admin-shell-status-strip {
   display: grid;
   gap: 4px;
 }
+
 .admin-nav-group-links { display: flex; gap: 8px; flex-wrap: wrap; }
-.admin-shell { display: grid; grid-template-columns: minmax(236px, 276px) minmax(0, 1fr); gap: 14px; align-items: start; }
+
+.admin-shell {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
 .admin-nav-backdrop { display: none; }
-.admin-nav-shell {
-  padding: 12px;
-  transition: opacity 180ms ease, transform 180ms ease;
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--admin-shell-accent-quiet) 10%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
-}
+
 .admin-nav { display: grid; gap: 10px; }
+
 .admin-nav-group {
-  padding: 10px;
-  border: 1px solid color-mix(in oklab, var(--admin-shell-accent) 10%, var(--border));
-  border-radius: 15px;
-  background: color-mix(in oklab, var(--surface) 92%, var(--paper));
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg);
 }
+
 .admin-nav-group-summary {
   color: var(--muted);
   font-size: calc(12px * var(--ui-scale, 1));
   line-height: 1.5;
 }
+
 .admin-link,
 .admin-mobile-nav-trigger {
-  border: 1px solid color-mix(in oklab, var(--line-strong) 16%, var(--border));
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
   padding: 6px 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: inherit;
-  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
+  background: var(--surface);
+  font-family: inherit;
   font-size: calc(13px * var(--ui-scale, 1));
-  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+  font-weight: 500;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
+
 .admin-link { min-height: 44px; text-decoration: none; }
 .admin-mobile-nav-trigger { min-height: 44px; }
+
 .admin-link:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--admin-shell-accent) 34%, var(--border));
-  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--admin-shell-accent) 42%, transparent);
+  border-color: var(--line-strong);
+  background: var(--bg);
 }
+
 .admin-mobile-nav-trigger:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in oklab, var(--admin-shell-accent) 34%, var(--border));
-  box-shadow: 0 14px 26px -22px color-mix(in oklab, var(--admin-shell-accent) 42%, transparent);
+  border-color: var(--line-strong);
+  background: var(--bg);
 }
+
 .admin-link:active,
-.admin-mobile-nav-trigger:active { transform: translateY(0) scale(0.985); }
+.admin-mobile-nav-trigger:active {
+  transform: scale(0.98);
+}
+
 .admin-link.active,
 .admin-mobile-nav-trigger {
-  border-color: color-mix(in oklab, var(--admin-shell-accent) 55%, var(--border));
+  border-color: var(--admin-shell-accent);
 }
+
 .admin-link.active {
-  background: color-mix(in oklab, var(--admin-shell-accent) 16%, var(--surface));
-  color: color-mix(in oklab, var(--admin-shell-accent) 60%, var(--text));
+  background: oklch(58% 0.18 30 / 0.08);
+  color: var(--accent-strong);
+  font-weight: 600;
 }
+
 .admin-link-home { white-space: nowrap; }
 .admin-mobile-nav-trigger { display: none; cursor: pointer; }
 
 @keyframes admin-shell-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 900px) {
@@ -358,16 +372,18 @@ onBeforeUnmount(() => {
     z-index: 4;
     border: 0;
     padding: 0;
-    background: rgba(15, 23, 42, 0.28);
+    background: oklch(16% 0.025 250 / 0.35);
   }
   .admin-nav-shell {
     display: none;
-    padding: 12px;
-    transform-origin: top center;
+    padding: 14px;
     position: relative;
-    z-index: 5;
+    z-index: var(--z-nav);
   }
-  .admin-nav-shell.is-open { display: block; animation: admin-shell-in 180ms ease; }
+  .admin-nav-shell.is-open {
+    display: block;
+    animation: admin-shell-in 160ms ease;
+  }
   .admin-nav {
     display: flex;
     gap: 12px;

@@ -216,18 +216,18 @@ const createCategoryHiddenModel = computed({
 
 h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-scale));
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .meta-line {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
 }
 
 .action-feedback {
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -236,7 +236,7 @@ h3 {
 }
 
 .action-feedback.success {
-  color: #15803d;
+  color: var(--success);
 }
 
 .form-grid {
@@ -253,7 +253,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -268,7 +268,7 @@ h3 {
   min-height: 44px;
   padding: 10px 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .subaccordion-body {

@@ -7,31 +7,20 @@ function read(relPath: string): string {
 }
 
 describe("catalog visual polish", () => {
-  it("turns the hero into a denser mainline plus one restrained status strip", () => {
-    const vue = [
-      read("src/views/CatalogView.vue"),
-      read("src/components/catalog/CatalogHeroSection.vue"),
-    ].join("\n");
+  it("removes the hero section entirely in favor of a sr-only heading", () => {
+    const vue = read("src/views/CatalogView.vue");
     const css = read("src/views/CatalogView.css");
 
-    expect(vue).toMatch(/catalog-hero-mainline/);
-    expect(vue).toMatch(/catalog-hero-toolbar/);
-    expect(vue).toMatch(/catalog-search-field--toolbar/);
-    expect(vue).toMatch(/catalog-hero-support--status/);
-    expect(vue).toMatch(/catalog-hero-status-strip/);
-    expect(vue).toMatch(/catalog-hero-status-item--lead/);
+    expect(vue).toMatch(/class="sr-only"/);
+    expect(vue).not.toMatch(/CatalogHeroSection/);
+    expect(vue).not.toMatch(/catalog-hero-mainline/);
+    expect(vue).not.toMatch(/catalog-hero-toolbar/);
     expect(vue).not.toMatch(/catalog-hero-overview--summary/);
     expect(vue).not.toMatch(/catalog-overview-card--focus/);
     expect(vue).not.toMatch(/catalog-hero-note/);
     expect(vue).not.toMatch(/catalog-hero-map/);
-    expect(vue).toMatch(/catalog-card-kicker/);
-    expect(css).toMatch(/\.catalog-hero-mainline\s*\{/);
-    expect(css).toMatch(/\.catalog-hero-toolbar\s*\{/);
-    expect(css).toMatch(/\.catalog-search-field--toolbar\s*\{/);
-    expect(css).toMatch(/\.catalog-hero-support--status\s*\{/);
-    expect(css).toMatch(/\.catalog-hero-status-strip\s*\{/);
-    expect(css).toMatch(/\.catalog-hero-status-item--lead\s*\{/);
-    expect(css).toMatch(/\.catalog-card-kicker\s*\{/);
+    expect(css).not.toMatch(/\.catalog-hero-mainline\s*\{/);
+    expect(css).not.toMatch(/\.catalog-hero-toolbar\s*\{/);
   });
 
   it("turns quick access into a denser tool band instead of a roomy section shell", () => {
@@ -40,6 +29,7 @@ describe("catalog visual polish", () => {
       read("src/components/catalog/CatalogQuickAccessBand.vue"),
     ].join("\n");
     const css = read("src/views/CatalogView.css");
+    const bandVue = read("src/components/catalog/CatalogQuickAccessBand.vue");
 
     expect(vue).toMatch(/catalog-stage/);
     expect(vue).toMatch(/catalog-stage-band/);
@@ -51,22 +41,16 @@ describe("catalog visual polish", () => {
     expect(vue).not.toMatch(/data-tone="atlas"/);
     expect(css).toMatch(/\.catalog-stage\s*\{/);
     expect(css).toMatch(/\.catalog-stage-band\s*\{/);
-    expect(css).toMatch(/\.catalog-quick-access-band\s*\{/);
-    expect(css).toMatch(/\.catalog-quick-access-copy\s*\{/);
-    expect(css).toMatch(/\.catalog-quick-access-label\s*\{/);
+    expect(bandVue).toMatch(/\.catalog-quick-access-band\s*\{/);
+    expect(bandVue).toMatch(/\.catalog-quick-access-copy\s*\{/);
+    expect(bandVue).toMatch(/\.catalog-quick-access-label\s*\{/);
     expect(css).not.toMatch(/\.catalog-quick-access-title\s*\{/);
     expect(css).not.toMatch(/\.catalog-quick-access-note\s*\{/);
   });
 
-  it("compresses the hero explanation into one status band without duplicate browse instructions", () => {
-    const vue = [
-      read("src/views/CatalogView.vue"),
-      read("src/components/catalog/CatalogHeroSection.vue"),
-    ].join("\n");
-    const css = read("src/views/CatalogView.css");
+  it("removes the hero status band and duplicate browse instructions", () => {
+    const vue = read("src/views/CatalogView.vue");
 
-    expect(vue).toMatch(/catalog-hero-status-strip/);
-    expect(vue).toMatch(/catalog-hero-status-item/);
     expect(vue).not.toMatch(/catalog-hero-overview/);
     expect(vue).not.toMatch(/catalog-overview-card/);
     expect(vue).not.toMatch(/heroOverviewCards/);
@@ -74,36 +58,27 @@ describe("catalog visual polish", () => {
     expect(vue).not.toMatch(/浏览提示/);
     expect(vue).not.toMatch(/class="catalog-hero-status"/);
     expect(vue).not.toMatch(/catalog-hero-itinerary/);
-    expect(css).toMatch(/\.catalog-hero-status-strip\s*\{/);
-    expect(css).toMatch(/\.catalog-hero-status-item\s*\{/);
   });
 
-  it("splits the hero into primary actions and lighter supporting guidance", () => {
-    const vue = [
-      read("src/views/CatalogView.vue"),
-      read("src/components/catalog/CatalogHeroSection.vue"),
-    ].join("\n");
+  it("no longer has a hero section with primary actions", () => {
+    const vue = read("src/views/CatalogView.vue");
     const css = read("src/views/CatalogView.css");
 
-    expect(vue).toMatch(/catalog-hero-mainline/);
-    expect(vue).toMatch(/catalog-hero-toolbar/);
+    expect(vue).not.toMatch(/catalog-hero-mainline/);
+    expect(vue).not.toMatch(/catalog-hero-toolbar/);
     expect(vue).not.toMatch(/catalog-hero-primary/);
-    expect(vue).toMatch(/catalog-hero-support/);
-    expect(css).toMatch(/\.catalog-hero-mainline\s*\{/);
-    expect(css).toMatch(/\.catalog-hero-toolbar\s*\{/);
-    expect(css).toMatch(/\.catalog-hero-support\s*\{/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-hero-actions\s*\{[\s\S]*grid-template-columns:/);
+    expect(css).not.toMatch(/\.catalog-hero-mainline\s*\{/);
+    expect(css).not.toMatch(/\.catalog-hero-toolbar\s*\{/);
   });
 
-  it("adds a layered hero surface and interactive card feedback", () => {
+  it("adds a layered stage surface and interactive card feedback", () => {
     const css = read("src/views/CatalogView.css");
 
-    expect(css).toMatch(/\.catalog-hero::before/);
-    expect(css).toMatch(/\.catalog-card:hover\s*\{[\s\S]*transform:\s*translateY\(/);
-    expect(css).toMatch(/\.catalog-quick-chip:hover\s*\{[\s\S]*border-color:/);
-    expect(css).toMatch(/@keyframes\s+catalog-hero-rise/);
-    expect(css).toMatch(/\.catalog-hero-copy\s*\{[\s\S]*animation:\s*catalog-hero-rise/);
-    expect(css).toMatch(/\.catalog-hero-status-strip\s*\{[\s\S]*animation:\s*catalog-hero-rise/);
+    expect(css).toMatch(/\.catalog-stage\s*\{[\s\S]*border:/);
+    expect(css).toMatch(/\.catalog-card:hover\s*\{[\s\S]*box-shadow:/);
+    const bandVue2 = read("src/components/catalog/CatalogQuickAccessBand.vue");
+    expect(bandVue2).toMatch(/\.catalog-quick-chip:hover\s*\{[\s\S]*border-color:/);
+    expect(css).toMatch(/@keyframes\s+catalog-panel-in/);
   });
 
   it("gives the mobile filter panel explicit motion states", () => {

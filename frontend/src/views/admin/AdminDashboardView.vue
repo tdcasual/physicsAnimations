@@ -44,12 +44,10 @@ onMounted(async () => {
       <div class="admin-page-copy dashboard-copy">
         <p class="admin-page-kicker dashboard-kicker">今日工作台</p>
         <h2>概览</h2>
-        <p class="admin-page-intro admin-page-intro--supporting dashboard-intro">先做最近课堂会用到的动作。</p>
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前节奏</span>
-        <strong>{{ loading ? "正在刷新工作区" : "先做课堂相关任务" }}</strong>
-        <span class="admin-page-meta-copy">{{ loading ? "正在同步站点信号和工作区入口。" : "上传、内容与资源整理优先，整体巡检随后。" }}</span>
+        <strong>{{ loading ? "刷新中" : "就绪" }}</strong>
         <div class="admin-actions">
           <button type="button" class="btn btn-ghost" :disabled="loading" @click="reload">刷新</button>
         </div>
@@ -68,7 +66,6 @@ onMounted(async () => {
           </div>
           <p class="admin-task-kicker">下一步</p>
           <h3>补充或修订即将上课的演示</h3>
-          <p class="admin-task-copy admin-task-copy--supporting">上传新素材并补全标题说明，让目录入口能马上使用。</p>
           <div class="admin-task-actions">
             <RouterLink class="btn btn-primary" to="/admin/uploads">上传素材</RouterLink>
             <RouterLink class="btn btn-ghost" to="/admin/content">整理内容</RouterLink>
@@ -82,7 +79,6 @@ onMounted(async () => {
           </div>
           <p class="admin-task-kicker">归档</p>
           <h3>检查资源库结构</h3>
-          <p class="admin-task-copy admin-task-copy--secondary">如果课堂要用完整文件或容器页，先到资源库整理封面和素材结构。</p>
           <div class="admin-task-actions">
             <RouterLink class="btn btn-ghost" to="/admin/library">打开资源库</RouterLink>
           </div>
@@ -95,7 +91,6 @@ onMounted(async () => {
           </div>
           <p class="admin-task-kicker">巡检</p>
           <h3>确认系统和分类配置</h3>
-          <p class="admin-task-copy admin-task-copy--secondary">发布前回看分类与系统设置，避免目录入口和同步配置脱节。</p>
           <div class="admin-task-actions">
             <RouterLink class="btn btn-ghost" to="/admin/taxonomy">分类</RouterLink>
             <RouterLink class="btn btn-ghost" to="/admin/system">系统</RouterLink>
@@ -112,22 +107,22 @@ onMounted(async () => {
           <article class="admin-signal-card admin-signal-card--metric admin-card">
             <div class="label">全部内容</div>
             <div class="value">{{ stats.total }}</div>
-            <div class="signal-copy">当前可进入公开目录的总演示数</div>
+            <div class="signal-copy">公开演示总数</div>
           </article>
           <article class="admin-signal-card admin-signal-card--metric admin-card">
             <div class="label">上传内容</div>
             <div class="value">{{ stats.uploadTotal }}</div>
-            <div class="signal-copy">已进入站内托管与截图流程的资源</div>
+            <div class="signal-copy">站内托管</div>
           </article>
           <article class="admin-signal-card admin-signal-card--metric admin-card">
             <div class="label">外链内容</div>
             <div class="value">{{ stats.linkTotal }}</div>
-            <div class="signal-copy">仍依赖外部页面或镜像访问的资源</div>
+            <div class="signal-copy">外链依赖</div>
           </article>
           <article class="admin-signal-card admin-signal-card--metric admin-card">
             <div class="label">二级分类</div>
             <div class="value">{{ stats.categoryTotal }}</div>
-            <div class="signal-copy">影响首页导航分章和课堂筛选的目录节点</div>
+            <div class="signal-copy">分类节点</div>
           </article>
         </div>
       </section>
@@ -151,7 +146,7 @@ onMounted(async () => {
 .admin-task-kicker {
   margin: 0;
   color: color-mix(in oklab, var(--accent-copper-strong) 70%, var(--text));
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -200,7 +195,7 @@ h3 {
   gap: 8px;
   flex-wrap: wrap;
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   letter-spacing: 0.04em;
 }
 
@@ -268,7 +263,7 @@ h3 {
 
 .label {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -276,7 +271,7 @@ h3 {
 
 .value {
   font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
-  font-size: 34px;
+  font-size: calc(34px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -292,7 +287,7 @@ h3 {
 
 .error-text {
   color: var(--danger);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 @media (max-width: 640px) {

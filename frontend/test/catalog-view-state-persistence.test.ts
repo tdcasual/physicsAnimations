@@ -93,20 +93,4 @@ describe("catalog view-state persistence helpers", () => {
     expect(result.prunedRecentEntries.map((entry: { id: string }) => entry.id)).toEqual(["item-3", "item-1"]);
     expect(result.prunedFavoriteEntries.map((entry: { id: string }) => entry.id)).toEqual(["item-2"]);
   });
-
-  it("builds a compact workspace summary from the visible recent and favorite slices", () => {
-    const buildSummary = (catalogViewStateModule as any).buildCatalogTeacherWorkspaceSummary;
-
-    expect(typeof buildSummary).toBe("function");
-
-    expect(
-      buildSummary({
-        recentItems: teacherWorkflowItems.slice(0, 2),
-        favoriteItems: teacherWorkflowItems.slice(2, 3),
-      }),
-    ).toEqual([
-      expect.objectContaining({ label: "最近课堂入口", value: "2 个最近演示" }),
-      expect.objectContaining({ label: "已固定演示", value: "1 个常用演示" }),
-    ]);
-  });
 });

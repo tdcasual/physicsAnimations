@@ -74,8 +74,8 @@ describe("admin shell structure", () => {
 
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-kicker\s*\{[\s\S]*display:\s*none/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-summary-row\s*\{[\s\S]*display:\s*none/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-header\s*\{[\s\S]*padding:\s*12px\s*14px/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-header h1\s*\{[\s\S]*font-size:\s*clamp\(1\.7rem,\s*9vw,\s*2\.25rem\)/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-header\s*\{[\s\S]*padding:\s*14px\s*16px/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-header h1\s*\{[\s\S]*font-size:\s*clamp\(1\.5rem,\s*7vw,\s*2rem\)/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-status-strip\s*\{[\s\S]*display:\s*flex/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-ops\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-actions\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);

@@ -100,7 +100,7 @@ const categoryFormHiddenModel = computed({
       {{ actionFeedback }}
     </div>
 
-    <div class="hint">提示：要新增二级分类，请先在左侧选择对应的大类。</div>
+    <div class="hint">选择大类后可新增分类</div>
   </div>
 </template>
 
@@ -116,18 +116,18 @@ const categoryFormHiddenModel = computed({
 
 h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-scale));
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .meta-line {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
 }
 
 .action-feedback {
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -136,7 +136,7 @@ h3 {
 }
 
 .action-feedback.success {
-  color: #15803d;
+  color: var(--success);
 }
 
 .form-grid {
@@ -149,7 +149,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -164,7 +164,7 @@ h3 {
   min-height: 44px;
   padding: 10px 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .subaccordion-body {
@@ -182,6 +182,6 @@ h3 {
   border-radius: 8px;
   padding: 12px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 </style>

@@ -27,14 +27,10 @@ async function openUploadEditor(item: AdminItemRow) {
       <div class="admin-page-copy">
         <p class="admin-page-kicker">资源归档</p>
         <h2>上传管理</h2>
-        <p class="admin-page-intro admin-page-intro--supporting">先把素材入库，再补齐检索信息。</p>
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前节奏</span>
-        <strong>{{ vm.editingId ? "素材编辑中" : "准备新上传" }}</strong>
-        <span class="admin-page-meta-copy">
-          {{ vm.editingId ? "右侧面板会承接当前素材的发布与排序调整。" : "上传完成后，再补标题、分类和说明。" }}
-        </span>
+        <strong>{{ vm.editingId ? "编辑中" : "待上传" }}</strong>
       </div>
     </header>
 
@@ -128,7 +124,7 @@ async function openUploadEditor(item: AdminItemRow) {
 
 h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: calc(16px * var(--ui-scale));
 }
 
 .field-textarea {
@@ -194,7 +190,7 @@ h3 {
 
 :deep(.item-meta) {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   overflow-wrap: anywhere;
   word-break: break-word;
 }
@@ -224,7 +220,7 @@ h3 {
 }
 
 .action-feedback {
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -233,19 +229,19 @@ h3 {
 }
 
 .action-feedback.success {
-  color: #15803d;
+  color: var(--success);
 }
 
 .checkbox {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .error-text {
   color: var(--danger);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 :deep(.empty) {
@@ -265,7 +261,7 @@ h3 {
 
 :deep(.meta) {
   color: var(--muted);
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   overflow-wrap: anywhere;
 }
 

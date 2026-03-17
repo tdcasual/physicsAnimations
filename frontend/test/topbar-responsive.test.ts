@@ -7,18 +7,17 @@ function readFile(relPath: string): string {
 }
 
 describe("topbar responsive layout", () => {
-  it("defines a mobile breakpoint that collapses utility controls into a compact disclosure panel", () => {
+  it("provides a mobile more-panel and desktop inline-actions that work on all screen sizes", () => {
     const app = readFile("src/App.vue");
     const css = readFile("src/styles.css");
 
-    expect(app).toMatch(/topbar-mobile-toggle/);
-    expect(app).toMatch(/topbar-mobile-utility-panel/);
-    expect(app).toMatch(/topbar-environment-shell/);
+    expect(app).toMatch(/topbar-more-trigger/);
+    expect(app).toMatch(/topbar-more-panel/);
+    expect(app).toMatch(/topbar-inline-actions/);
+    expect(css).toMatch(/\.topbar-more-panel\s*\{[\s\S]*max-height:\s*0/);
+    expect(css).toMatch(/\.topbar-more-panel\.is-open\s*\{[\s\S]*max-height:\s*200px/);
+    expect(css).toMatch(/\.topbar-more-group\s*\{[\s\S]*display:\s*grid/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)/);
-    expect(css).toMatch(/\.topbar-mobile-toggle\s*\{[\s\S]*display:\s*none\s*!important/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-mobile-toggle\s*\{[\s\S]*display:\s*inline-flex\s*!important/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-environment-shell\s*\{[\s\S]*display:\s*none/);
-    expect(css).toMatch(/\.topbar-mobile-utility-panel\s*\{[\s\S]*opacity:/);
   });
 
   it("uses dynamic viewport units to avoid iOS 100vh jump", () => {
@@ -44,9 +43,8 @@ describe("topbar responsive layout", () => {
   it("adds dedicated topbar groups that stack cleanly on narrow screens", () => {
     const css = readFile("src/styles.css");
     expect(css).toMatch(/\.brand-lockup\s*\{[\s\S]*display:\s*grid/);
-    expect(css).toMatch(/\.topbar-primary-actions\s*\{[\s\S]*display:\s*flex/);
-    expect(css).toMatch(/\.topbar-action-cluster\s*\{[\s\S]*display:\s*grid/);
-    expect(css).toMatch(/\.topbar-environment-shell\s*\{[\s\S]*display:\s*flex/);
+    expect(css).toMatch(/\.topbar-more-panel\s*\{[\s\S]*display:\s*grid/);
+    expect(css).toMatch(/\.topbar-more-group\s*\{[\s\S]*display:\s*grid/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-actions\s*\{[\s\S]*width:\s*100%/);
   });
 
@@ -76,14 +74,14 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.brand-mark\s*\{[\s\S]*font-size:/);
   });
 
-  it("trims mobile viewer topbar density by hiding duplicate home access and moving admin entry behind the more panel", () => {
+  it("uses a more trigger on mobile and inline actions on desktop instead of separate toggle and environment shell", () => {
     const app = readFile("src/App.vue");
     const css = readFile("src/styles.css");
 
+    expect(app).toMatch(/topbar-more-trigger/);
+    expect(app).toMatch(/topbar-inline-actions/);
     expect(app).toMatch(/topbar-admin-link/);
-    expect(app).toMatch(/topbar-mobile-admin-link/);
     expect(app).toMatch(/>\s*更多\s*</);
-    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-admin-link\s*\{[\s\S]*display:\s*none/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--viewer\s+\.topbar-home-link\s*\{[\s\S]*display:\s*none/);
   });
 
@@ -93,12 +91,21 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-shell-panel\s*\{[\s\S]*padding:\s*4px\s*4px\s*3px/);
   });
 
-  it("turns the mobile utility disclosure into a compact drawer with a divider instead of another loose block", () => {
-    const css = readFile("src.styles.css".replace(".", "/"));
+  it("uses a unified more-panel with border dividers instead of separate mobile drawer", () => {
     const shellCss = readFile("src/AppShell.css");
 
-    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-mobile-utility-panel\s*\{[\s\S]*margin-top:/);
-    expect(shellCss).toMatch(/topbar-mobile-utility-panel/);
+    expect(shellCss).toMatch(/topbar-more-panel/);
     expect(shellCss).toMatch(/border-top:/);
+    expect(shellCss).toMatch(/topbar-more-group/);
+  });
+
+  it("adapts the topbar search field for narrow screens", () => {
+    const css = readFile("src/styles.css");
+
+    expect(css).toMatch(/\.topbar-search-field\s*\{/);
+    expect(css).toMatch(/\.topbar-search\s*\{/);
+    expect(css).toMatch(/\.topbar-search:focus-visible\s*\{/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-search-field\s*\{[\s\S]*max-width:\s*none/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar-search\s*\{[\s\S]*min-height:\s*34px/);
   });
 });

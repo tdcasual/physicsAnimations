@@ -47,74 +47,13 @@ const normalizedScreenshotSrc = computed(() => {
   return normalizePublicUrl(model.value.screenshotUrl);
 });
 
-const hintText = computed(() => {
-  if (model.value?.status !== "ready") return "";
-  return model.value.hintText;
-});
-
-const modeStateText = computed(() => {
-  if (model.value?.status !== "ready") return "";
-  if (!model.value.showModeToggle) return "";
-  return screenshotMode.value ? "截图模式" : "交互模式";
-});
-
-const stageModeLabel = computed(() => {
+const stageStatusLabel = computed(() => {
   if (model.value?.status !== "ready") return "准备中";
-  if (screenshotVisible.value) return "讲台截图";
+  if (screenshotVisible.value) return "截图模式";
   if (interactiveStarted.value) {
     return model.value.deferInteractiveStart ? "交互预演" : "课堂演示";
   }
   return "待命状态";
-});
-
-const stageTransitionText = computed(() => {
-  if (model.value?.status !== "ready") return "正在准备舞台…";
-  if (stageTransitionState.value === "mode-shift") {
-    if (screenshotVisible.value) return "切换到截图模式";
-    if (interactiveStarted.value) {
-      return model.value.deferInteractiveStart ? "切换到交互预演" : "切换到课堂演示";
-    }
-    return "切回待命";
-  }
-  if (screenshotVisible.value) return "静态画面已就绪。";
-  if (interactiveStarted.value) {
-    return model.value.deferInteractiveStart
-      ? "已进入交互预演，可快速试跑关键交互。"
-      : "课堂演示已就绪，可直接聚焦内容。";
-  }
-  return "舞台待命，等待进入交互。";
-});
-
-const viewerRailStateText = computed(() => {
-  if (model.value?.status !== "ready") return "";
-  if (modeStateText.value) return modeStateText.value;
-  if (screenshotVisible.value) return "讲台截图";
-  if (interactiveStarted.value) {
-    return model.value.deferInteractiveStart ? "交互预演" : "课堂演示";
-  }
-  return "待命状态";
-});
-
-const viewerRailSupportText = computed(() => {
-  if (model.value?.status !== "ready") return "";
-  if (screenshotVisible.value) return "先看构图，再决定是否进入交互。";
-  if (model.value.deferInteractiveStart && interactiveStarted.value) {
-    return "交互预演已开启，可快速确认关键动作。";
-  }
-  if (model.value.deferInteractiveStart) return "外链默认待命，避免无效加载打断课堂节奏。";
-  return "当前内容可直接作为课堂舞台使用。";
-});
-
-const viewerBarSummary = computed(() => {
-  if (loading.value) return "正在准备舞台。";
-  if (model.value?.status === "error") return model.value.message;
-  if (screenshotVisible.value) return "先看构图，再切换交互或打开原页面。";
-  if (interactiveStarted.value) {
-    return model.value?.deferInteractiveStart
-      ? "已进入交互预演。"
-      : "课堂舞台已就绪。";
-  }
-  return "舞台待命，可继续进入交互。";
 });
 
 const showDeferredFallback = computed(() => {
@@ -280,7 +219,6 @@ onBeforeUnmount(() => {
         <button type="button" class="viewer-back viewer-btn" @click="goBack">← 返回</button>
         <div class="viewer-bar-copy">
           <div class="viewer-title-block">
-            <p class="viewer-kicker">课堂演示舞台</p>
             <div class="viewer-title">
               {{
                 loading
@@ -291,7 +229,6 @@ onBeforeUnmount(() => {
               }}
             </div>
           </div>
-          <p class="viewer-bar-summary">{{ viewerBarSummary }}</p>
         </div>
       </div>
 
@@ -339,20 +276,14 @@ onBeforeUnmount(() => {
     <div v-else-if="model?.status === 'error'" class="viewer-empty">{{ model.message }}</div>
 
     <div v-else-if="showDeferredFallback" class="viewer-empty viewer-empty--deferred">
-      当前无法提供预览截图。你可以直接打开原页面，或手动尝试交互加载该外链。
+      无预览，可打开原页面查看。
     </div>
 
     <ViewerStageShell
       v-else-if="model?.status === 'ready'"
       :screenshot-visible="screenshotVisible"
       :interactive-started="interactiveStarted"
-      :mode-state-text="modeStateText"
-      :viewer-rail-state-text="viewerRailStateText"
-      :show-hint="model.showHint"
-      :hint-text="hintText"
-      :viewer-rail-support-text="viewerRailSupportText"
-      :stage-mode-label="stageModeLabel"
-      :stage-transition-text="stageTransitionText"
+      :stage-status-label="stageStatusLabel"
       :screenshot-url="model.screenshotUrl || ''"
       :normalized-screenshot-src="normalizedScreenshotSrc"
       :frame-src="frameSrc"
@@ -376,31 +307,27 @@ onBeforeUnmount(() => {
 .viewer-bar {
   position: sticky;
   top: var(--app-topbar-height, 0px);
-  z-index: 5;
+  z-index: var(--z-nav);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
-  border-radius: 22px;
-  background:
-    linear-gradient(135deg, color-mix(in oklab, var(--accent) 10%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
-    var(--surface);
-  padding: 14px 16px;
-  box-shadow: 0 26px 48px -36px color-mix(in oklab, var(--ink) 24%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  padding: 16px 20px;
 }
 
 .viewer-bar--compact {
   gap: 10px;
-  padding: 12px 14px;
-  border-radius: 20px;
+  padding: 14px 18px;
 }
 
 .viewer-bar-left {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -425,29 +352,20 @@ onBeforeUnmount(() => {
 .viewer-kicker,
 .viewer-rail-label,
 .viewer-stage-kicker {
-  margin: 0;
-  color: color-mix(in oklab, var(--accent-copper-strong) 72%, var(--text));
-  font-size: calc(11px * var(--ui-scale, 1));
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  display: none;
 }
 
 .viewer-title {
-  font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
-  font-size: clamp(1.2rem, 1.02rem + 0.55vw, 1.65rem);
-  font-weight: 600;
+  font-size: clamp(1.2rem, 1rem + 0.5vw, 1.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
 .viewer-bar-summary {
-  margin: 0;
-  max-width: 48ch;
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale, 1));
-  line-height: 1.45;
+  display: none;
 }
 
 .viewer-actions {
@@ -459,60 +377,47 @@ onBeforeUnmount(() => {
 }
 
 .viewer-btn {
-  border: 1px solid color-mix(in oklab, var(--line-strong) 16%, var(--border));
-  border-radius: 999px;
-  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 8px 14px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
+  background: var(--surface);
   text-decoration: none;
   color: inherit;
+  font-family: inherit;
   font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 500;
   cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.viewer-btn:hover {
+  border-color: var(--line-strong);
+  background: var(--bg);
 }
 
 .viewer-empty {
-  border: 1px dashed color-mix(in oklab, var(--line-strong) 18%, var(--border));
-  border-radius: 18px;
-  padding: 22px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-m);
+  padding: 24px;
   color: var(--muted);
-  background: color-mix(in oklab, var(--surface) 84%, var(--paper));
+  background: var(--surface);
 }
 
 @media (max-width: 640px) {
   .viewer-bar--compact {
-    gap: 6px;
-    padding: 8px 10px;
-  }
-
-  .viewer-bar-left {
     gap: 8px;
+    padding: 10px 12px;
   }
 
-  .viewer-bar-copy {
-    gap: 2px;
-  }
-
-  .viewer-title-block {
-    gap: 1px;
-  }
-
-  .viewer-kicker {
-    display: none;
-  }
-
-  .viewer-title {
-    font-size: clamp(1.06rem, 0.96rem + 0.4vw, 1.32rem);
-  }
-
-  .viewer-bar-summary {
-    display: none;
-  }
-
-  .viewer-actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
+  .viewer-bar-left { gap: 8px; }
+  .viewer-bar-copy { gap: 2px; }
+  .viewer-title-block { gap: 1px; }
+  .viewer-kicker { display: none; }
+  .viewer-title { font-size: clamp(1.05rem, 0.95rem + 0.4vw, 1.3rem); }
+  .viewer-bar-summary { display: none; }
+  .viewer-actions { width: 100%; justify-content: flex-start; }
 }
 </style>

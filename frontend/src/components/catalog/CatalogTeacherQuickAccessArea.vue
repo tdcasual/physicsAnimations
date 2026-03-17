@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import CatalogTeacherWorkspaceSummary from "./CatalogTeacherWorkspaceSummary.vue";
 import type { CatalogItem } from "../../features/catalog/types";
 import CatalogTeacherQuickAccessSection from "./CatalogTeacherQuickAccessSection.vue";
 
@@ -7,11 +6,6 @@ defineProps<{
   recentItems: CatalogItem[];
   favoriteItems: CatalogItem[];
   favoriteIds: Set<string>;
-  workspaceSummary?: Array<{
-    label: string;
-    value: string;
-    note: string;
-  }>;
 }>();
 
 const emit = defineEmits<{
@@ -23,17 +17,16 @@ const emit = defineEmits<{
 <template>
   <section class="catalog-teacher-quick-access catalog-workbench catalog-stage-rail" aria-label="教学快捷入口">
     <div class="catalog-workbench-head">
-      <p class="catalog-workbench-kicker">教学工作区</p>
+      <h2 class="catalog-workbench-title">教学工作区</h2>
     </div>
-    <CatalogTeacherWorkspaceSummary v-if="workspaceSummary?.length" :summary="workspaceSummary" />
     <div class="catalog-workbench-columns">
       <CatalogTeacherQuickAccessSection
         section-id="catalog-recent"
         title="最近查看"
-        :badge="recentItems.length ? `${recentItems.length}` : '待开'"
+        :badge="recentItems.length ? `${recentItems.length}` : '0'"
         :items="recentItems"
-        empty-title="先打开一个演示"
-        empty-copy=""
+        empty-title="暂无记录"
+        empty-hint="浏览演示后将自动记录"
         fallback-hash="#catalog-recent"
         :favorite-ids="favoriteIds"
         @open-item="emit('open-item', $event)"
@@ -42,10 +35,10 @@ const emit = defineEmits<{
       <CatalogTeacherQuickAccessSection
         section-id="catalog-favorites"
         title="收藏演示"
-        :badge="favoriteItems.length ? `${favoriteItems.length}` : '未藏'"
+        :badge="favoriteItems.length ? `${favoriteItems.length}` : '0'"
         :items="favoriteItems"
-        empty-title="收藏后会固定在这里"
-        empty-copy=""
+        empty-title="暂无收藏"
+        empty-hint="点击收藏按钮添加"
         fallback-hash="#catalog-favorites"
         :favorite-ids="favoriteIds"
         @open-item="emit('open-item', $event)"
@@ -59,11 +52,14 @@ const emit = defineEmits<{
 .catalog-teacher-quick-access {
   display: grid;
   gap: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  padding: 16px;
+  background: var(--surface-raised);
 }
 
 .catalog-workbench {
   min-width: 0;
-  padding: 0;
 }
 
 .catalog-workbench-head {
@@ -73,16 +69,13 @@ const emit = defineEmits<{
   gap: 12px;
 }
 
-.catalog-workbench-kicker {
+.catalog-workbench-title {
   margin: 0;
-}
-
-.catalog-workbench-kicker {
-  color: color-mix(in oklab, var(--accent-copper-strong) 78%, var(--text));
-  font-size: calc(12px * var(--ui-scale, 1));
+  color: var(--accent);
+  font-size: clamp(1.15rem, 1rem + 0.3vw, 1.35rem);
   font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  padding-left: 10px;
+  border-left: 3px solid var(--accent);
 }
 
 .catalog-workbench-columns {
@@ -91,7 +84,7 @@ const emit = defineEmits<{
 }
 
 .catalog-workbench-column + .catalog-workbench-column {
-  border-top: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
+  border-top: 1px solid var(--border);
   padding-top: 10px;
 }
 
@@ -103,7 +96,7 @@ const emit = defineEmits<{
 
   .catalog-workbench-column + .catalog-workbench-column {
     border-top: 0;
-    border-inline-start: 1px solid color-mix(in oklab, var(--line-strong) 12%, var(--border));
+    border-inline-start: 1px solid var(--border);
     padding-top: 0;
     padding-inline-start: 14px;
   }

@@ -112,7 +112,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
@@ -175,7 +175,7 @@
 }
 
 .field-error-text {
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   color: var(--danger);
   line-height: 1.35;
 }
@@ -211,7 +211,7 @@
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -230,7 +230,7 @@
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 8px;
   padding: 0 8px;
-  font-size: 12px;
+  font-size: calc(12px * var(--ui-scale));
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -280,15 +280,15 @@
 }
 
 .recent-action-item.success {
-  border-color: color-mix(in oklab, #16a34a 44%, var(--border));
+  border-color: color-mix(in oklab, var(--success) 44%, var(--border));
 }
 
 .recent-action-item.error {
-  border-color: color-mix(in oklab, #dc2626 44%, var(--border));
+  border-color: color-mix(in oklab, var(--danger) 44%, var(--border));
 }
 
 .recent-action-item.info {
-  border-color: color-mix(in oklab, #2563eb 34%, var(--border));
+  border-color: color-mix(in oklab, var(--info) 34%, var(--border));
 }
 
 .editor-panel {
@@ -412,7 +412,7 @@
 .folder-meta,
 .asset-meta,
 .selected-folder {
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -423,7 +423,7 @@
   border-radius: 14px;
   padding: 12px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .library-admin-feedback {
