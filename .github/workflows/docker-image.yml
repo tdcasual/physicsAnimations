@@ -17,6 +17,10 @@ on:
 env:
   REGISTRY: ghcr.io
 
+concurrency:
+  group: docker-image-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify-qa:
     runs-on: ubuntu-latest
