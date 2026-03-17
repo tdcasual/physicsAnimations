@@ -227,7 +227,7 @@ a {
 }
 
 /* 手机端"更多"按钮，电脑端隐藏 */
-.topbar-more-trigger {
+.topbar-more-trigger.btn {
   display: none;
   flex: 0 0 auto;
   white-space: nowrap;
@@ -772,7 +772,7 @@ input[type="radio"] {
   /* 手机端：隐藏平铺按钮，显示"更多"触发器和面板 */
   .topbar-inline-actions { display: none; }
 
-  .topbar-more-trigger {
+  .topbar-more-trigger.btn {
     display: inline-flex;
   }
 
