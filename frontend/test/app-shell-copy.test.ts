@@ -1,9 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function readFile(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return readExpandedSource(relPath);
 }
 
 describe("app shell copy", () => {
@@ -76,7 +75,10 @@ describe("app shell copy", () => {
   });
 
   it("binds route-aware topbar tone classes so browsing and work modes read faster", () => {
-    const source = readFile("src/App.vue");
+    const source = [
+      readFile("src/App.vue"),
+      readFile("src/features/app/appShellTopbar.ts"),
+    ].join("\n");
 
     expect(source).toMatch(/topbar--catalog/);
     expect(source).toMatch(/topbar--viewer/);

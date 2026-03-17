@@ -1,16 +1,23 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function readFile(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return readExpandedSource(relPath);
 }
 
 describe("admin shell structure", () => {
+  it("moves grouped admin navigation config and layout styles into dedicated modules", () => {
+    const source = readFile("src/views/admin/AdminLayoutView.vue");
+
+    expect(source).toMatch(/features\/admin\/adminNavConfig/);
+    expect(source).toMatch(/<style\s+src="\.\/AdminLayoutView\.css"><\/style>/);
+  });
+
   it("organizes admin modules into grouped workspace navigation", () => {
     const source = [
       readFile("src/views/admin/AdminLayoutView.vue"),
       readFile("src/components/admin/AdminShellHeader.vue"),
+      readFile("src/features/admin/adminNavConfig.ts"),
     ].join("\n");
 
     expect(source).toMatch(/admin-nav-group/);
@@ -21,6 +28,7 @@ describe("admin shell structure", () => {
     const source = [
       readFile("src/views/admin/AdminLayoutView.vue"),
       readFile("src/components/admin/AdminShellHeader.vue"),
+      readFile("src/features/admin/adminNavConfig.ts"),
     ].join("\n");
 
     expect(source).toMatch(/mobileNavOpen/);

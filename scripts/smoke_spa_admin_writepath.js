@@ -5,6 +5,7 @@ const path = require("path");
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const logger = require("../server/lib/logger");
+const { ensureAdminDashboard, loginFromCatalog, readSessionToken } = require("./lib/smoke_admin_auth");
 const { ensureSpaDistFresh } = require("./lib/ensure_spa_dist_fresh");
 const { findOpenPort, waitForHealth, startServer, stopServer } = require("./lib/smoke_runtime");
 
@@ -105,46 +106,31 @@ async function run() {
         void dialog.dismiss();
       });
 
-      await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+      await loginFromCatalog(page, username, password, baseUrl);
+      authToken = await readSessionToken(page);
+      await ensureAdminDashboard(page, baseUrl);
 
-      await page.getByRole("banner").getByRole("button", { name: "登录" }).click();
-      const loginDialog = page.getByRole("dialog", { name: "管理员登录" });
-      await loginDialog.getByRole("textbox", { name: "用户名" }).fill(username);
-      await loginDialog.getByRole("textbox", { name: "密码" }).fill(password);
-      await loginDialog.getByRole("button", { name: "登录" }).click();
-
-      await page.getByRole("link", { name: "管理" }).waitFor({ state: "visible", timeout: 10000 });
-      authToken = await page.evaluate(() => sessionStorage.getItem("pa_admin_token") || "");
-
-      await page.getByRole("link", { name: "管理" }).click();
-      await page.waitForURL(/\/admin\/dashboard$/, { timeout: 10000 });
-
-      await page.getByRole("link", { name: "内容" }).click();
+      const adminNav = page.locator(".admin-nav");
+      await adminNav.getByRole("link", { name: "内容", exact: true }).click();
       await page.waitForURL(/\/admin\/content$/, { timeout: 10000 });
       await page.getByRole("heading", { name: "内容管理" }).waitFor({ state: "visible", timeout: 10000 });
 
-      const addPanel = page.locator(".admin-panel", {
-        has: page.getByRole("heading", { name: "添加网页链接" }),
-      });
-      const listPanel = page.locator(".admin-panel", {
-        has: page.getByRole("heading", { name: "内容列表" }),
-      });
+      await page.getByRole("heading", { name: "添加网页链接" }).waitFor({ state: "visible", timeout: 10000 });
+      await page.getByRole("heading", { name: "内容列表" }).waitFor({ state: "visible", timeout: 10000 });
 
       const smokeToken = `spa-write-${Date.now()}`;
       const smokeUrl = `https://example.com/${smokeToken}`;
       const smokeTitle = `Smoke Link ${smokeToken}`;
-      const smokeDescription = `自动化写路径校验 ${smokeToken}`;
 
-      await addPanel.locator('input[type="url"]').fill(smokeUrl);
-      await addPanel.locator('input[type="text"]').fill(smokeTitle);
-      await addPanel.locator("textarea").fill(smokeDescription);
+      await page.getByLabel("链接").fill(smokeUrl);
+      await page.getByLabel("标题（可选）").fill(smokeTitle);
 
       const createResponsePromise = page.waitForResponse(
         (response) =>
           response.request().method() === "POST" && response.url().includes("/api/items"),
         { timeout: 10000 },
       );
-      const addButton = addPanel.getByRole("button", { name: "添加" });
+      const addButton = page.getByRole("button", { name: "添加" });
       await addButton.click();
       const createResponse = await createResponsePromise;
       if (!createResponse.ok()) {
@@ -155,12 +141,12 @@ async function run() {
       createdId = typeof createdItem?.id === "string" ? createdItem.id : "";
       await waitUntilEnabled(addButton);
 
-      const listSearch = listPanel.locator('input[type="search"]');
+      const listSearch = page.getByPlaceholder("搜索内容...");
       const searchResponsePromise = waitForItemsRefresh(page);
       await listSearch.fill(smokeTitle);
       await searchResponsePromise;
 
-      const createdCard = listPanel.locator(".item-card", { hasText: smokeTitle }).first();
+      const createdCard = page.locator(".item-card", { hasText: smokeTitle }).first();
       await createdCard.waitFor({ state: "visible", timeout: 10000 });
 
       const cardText = await createdCard.innerText();
@@ -186,7 +172,7 @@ async function run() {
       }
       createdId = "";
 
-      const remainingCount = await listPanel.locator(".item-card", { hasText: smokeTitle }).count();
+      const remainingCount = await page.locator(".item-card", { hasText: smokeTitle }).count();
       if (remainingCount > 0) {
         throw new Error(`expected created item to be removed, but found ${remainingCount} matching card(s)`);
       }

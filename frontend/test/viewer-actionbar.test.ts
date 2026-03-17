@@ -1,12 +1,17 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return readExpandedSource(relPath);
 }
 
 describe("viewer action bar", () => {
+  it("loads viewer shell styles from a dedicated stylesheet instead of keeping the full block inline", () => {
+    const source = read("src/views/ViewerView.vue");
+
+    expect(source).toMatch(/<style\s+src="\.\/ViewerView\.css"><\/style>/);
+  });
+
   it("keeps action bar sticky below the shared topbar and pairs it with a staged presentation shell", () => {
     const source = [
       read("src/views/ViewerView.vue"),

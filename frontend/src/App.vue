@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import { resolveAdminRedirect } from "./router/redirect";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
+import { resolveTopbarModeClass, resolveTopbarSearchTarget } from "./features/app/appShellTopbar";
 import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
 import { applyStoredTheme, toggleTheme } from "./features/theme/theme";
 import { useCatalogSearch } from "./features/catalog/catalogSearch";
@@ -33,22 +34,13 @@ const catalogQuery = useCatalogSearch();
 
 function onTopbarSearch(event: Event) {
   catalogQuery.value = (event.target as HTMLInputElement).value;
-  if (String(route.path || "") !== "/") {
-    router.push("/");
+  const nextPath = resolveTopbarSearchTarget(String(route.path || ""));
+  if (nextPath) {
+    router.push(nextPath);
   }
 }
 const topbarModeClass = computed(() => {
-  const currentPath = String(route.path || "");
-  if (isAdminShellRoute.value) {
-    return "topbar--admin";
-  }
-  if (currentPath.startsWith("/viewer")) {
-    return "topbar--viewer";
-  }
-  if (currentPath.startsWith("/library")) {
-    return "topbar--library";
-  }
-  return "topbar--catalog";
+  return resolveTopbarModeClass(String(route.path || ""));
 });
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 let bodyOverflowBeforeLogin = "";

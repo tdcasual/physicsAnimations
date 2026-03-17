@@ -1,12 +1,17 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return readExpandedSource(relPath);
 }
 
 describe("library folder view", () => {
+  it("loads archive card styles from a dedicated stylesheet", () => {
+    const source = read("src/views/LibraryFolderView.vue");
+
+    expect(source).toMatch(/<style\s+scoped\s+src="\.\/LibraryFolderView\.css"><\/style>/);
+  });
+
   it("adds archive-style folder framing", () => {
     const source = read("src/views/LibraryFolderView.vue");
 
@@ -16,13 +21,12 @@ describe("library folder view", () => {
 
   it("assigns explicit visual states to embed-ready and download-only assets", () => {
     const source = read("src/views/LibraryFolderView.vue");
-    const styleBlock = source.split("<style scoped>")[1] ?? "";
 
     expect(source).toMatch(/asset-card--embed/);
     expect(source).toMatch(/asset-card--download/);
     expect(source).toMatch(/asset-state-badge/);
-    expect(styleBlock).toMatch(/\.asset-card--embed\s*\{/);
-    expect(styleBlock).toMatch(/\.asset-card--download\s*\{/);
+    expect(source).toMatch(/\.asset-card--embed\s*\{/);
+    expect(source).toMatch(/\.asset-card--download\s*\{/);
   });
 
   it("renders a single download action for download-only assets while keeping embed preview actions", () => {
@@ -67,21 +71,19 @@ describe("library folder view", () => {
 
   it("wraps long unbroken asset names and metadata on narrow mobile cards", () => {
     const source = read("src/views/LibraryFolderView.vue");
-    const styleBlock = source.split("<style scoped>")[1] ?? "";
 
-    expect(styleBlock).toMatch(/\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(styleBlock).toMatch(/\.asset-name\s*\{[\s\S]*word-break:\s*break-word/);
-    expect(styleBlock).toMatch(/\.asset-meta\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(styleBlock).toMatch(/\.asset-meta\s*\{[\s\S]*word-break:\s*break-word/);
+    expect(source).toMatch(/\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(source).toMatch(/\.asset-name\s*\{[\s\S]*word-break:\s*break-word/);
+    expect(source).toMatch(/\.asset-meta\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(source).toMatch(/\.asset-meta\s*\{[\s\S]*word-break:\s*break-word/);
   });
 
   it("wraps long folder heading text on mobile to avoid page-level horizontal overflow", () => {
     const source = read("src/views/LibraryFolderView.vue");
-    const styleBlock = source.split("<style scoped>")[1] ?? "";
 
-    expect(styleBlock).toMatch(/\.library-head h2\s*\{[\s\S]*min-width:\s*0/);
-    expect(styleBlock).toMatch(/\.library-head h2\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(styleBlock).toMatch(/\.library-head h2\s*\{[\s\S]*word-break:\s*break-word/);
+    expect(source).toMatch(/\.library-head h2\s*\{[\s\S]*min-width:\s*0/);
+    expect(source).toMatch(/\.library-head h2\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(source).toMatch(/\.library-head h2\s*\{[\s\S]*word-break:\s*break-word/);
   });
 
   it("falls back to the catalog library section for direct-entry back navigation", () => {

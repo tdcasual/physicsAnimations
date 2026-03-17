@@ -6,6 +6,7 @@ const { Blob } = require("node:buffer");
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const logger = require("../server/lib/logger");
+const { loginFromCatalog, readSessionToken } = require("./lib/smoke_admin_auth");
 const { ensureSpaDistFresh } = require("./lib/ensure_spa_dist_fresh");
 const { findOpenPort, waitForHealth, startServer, stopServer } = require("./lib/smoke_runtime");
 
@@ -75,17 +76,11 @@ async function run() {
         pageErrors.push(error?.message || String(error));
       });
 
-      await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-      await page.getByRole("banner").getByRole("button", { name: "登录" }).click();
-      const loginDialog = page.getByRole("dialog", { name: "管理员登录" });
-      await loginDialog.getByRole("textbox", { name: "用户名" }).fill(username);
-      await loginDialog.getByRole("textbox", { name: "密码" }).fill(password);
-      await loginDialog.getByRole("button", { name: "登录" }).click();
-      await page.getByRole("link", { name: "管理" }).waitFor({ state: "visible", timeout: 10000 });
+      await loginFromCatalog(page, username, password, baseUrl);
 
       await page.goto(`${baseUrl}/admin/library`, { waitUntil: "networkidle" });
       await page.getByRole("heading", { name: "资源库管理" }).waitFor({ state: "visible", timeout: 10000 });
-      authToken = await page.evaluate(() => sessionStorage.getItem("pa_admin_token") || "");
+      authToken = await readSessionToken(page);
       if (!authToken) throw new Error("missing auth token after login");
 
       const createdFolder = await requestJson(baseUrl, authToken, "/api/library/folders", {

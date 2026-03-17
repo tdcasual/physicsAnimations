@@ -1,0 +1,192 @@
+.admin-layout-view {
+  --admin-shell-accent: var(--accent);
+  --admin-shell-accent-quiet: var(--accent-copper);
+  display: grid;
+  gap: 14px;
+}
+
+.admin-layout-view--workspace {
+  --admin-shell-accent: var(--accent);
+  --admin-shell-accent-quiet: oklch(62% 0.14 55 / 0.2);
+}
+
+.admin-layout-view--library {
+  --admin-shell-accent: var(--accent-copper);
+  --admin-shell-accent-quiet: oklch(62% 0.14 55 / 0.15);
+}
+
+.admin-layout-view--system {
+  --admin-shell-accent: var(--line-strong);
+  --admin-shell-accent-quiet: oklch(82% 0.01 250 / 0.3);
+}
+
+.admin-layout-view h1 { margin: 0; }
+
+.admin-nav-shell {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  padding: 14px;
+  transition: opacity 160ms ease;
+}
+
+.admin-nav-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, oklch(58% 0.18 30 / 0.03), transparent 40%);
+}
+
+.admin-body,
+.admin-nav-group { display: grid; gap: 10px; }
+
+.admin-nav-group-title {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-shell-status-label {
+  margin: 0;
+  color: var(--accent);
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-shell-status-strip {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-nav-group-links { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.admin-shell {
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-nav-backdrop { display: none; }
+
+.admin-nav { display: grid; gap: 10px; }
+
+.admin-nav-group {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg);
+}
+
+.admin-nav-group-summary {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale, 1));
+  line-height: 1.5;
+}
+
+.admin-link,
+.admin-mobile-nav-trigger {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  background: var(--surface);
+  font-family: inherit;
+  font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 500;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.admin-link { min-height: 44px; text-decoration: none; }
+.admin-mobile-nav-trigger { min-height: 44px; }
+
+.admin-link:hover {
+  border-color: var(--line-strong);
+  background: var(--bg);
+}
+
+.admin-mobile-nav-trigger:hover {
+  border-color: var(--line-strong);
+  background: var(--bg);
+}
+
+.admin-link:active,
+.admin-mobile-nav-trigger:active {
+  transform: scale(0.98);
+}
+
+.admin-link.active,
+.admin-mobile-nav-trigger {
+  border-color: var(--admin-shell-accent);
+}
+
+.admin-link.active {
+  background: oklch(58% 0.18 30 / 0.08);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.admin-link-home { white-space: nowrap; }
+.admin-mobile-nav-trigger { display: none; cursor: pointer; }
+
+@keyframes admin-shell-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 900px) {
+  .admin-shell { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 640px) {
+  .admin-shell-header { padding: 14px; flex-direction: column; }
+  .admin-shell-header--compact { padding: 12px 14px; }
+  .admin-body { gap: 10px; }
+  .admin-shell-actions { width: 100%; }
+  .admin-link-home,
+  .admin-mobile-nav-trigger { flex: 1 1 calc(50% - 4px); }
+  .admin-mobile-nav-trigger { display: inline-flex; }
+  .admin-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    border: 0;
+    padding: 0;
+    background: oklch(16% 0.025 250 / 0.35);
+  }
+  .admin-nav-shell {
+    display: none;
+    padding: 14px;
+    position: relative;
+    z-index: var(--z-nav);
+  }
+  .admin-nav-shell.is-open {
+    display: block;
+    animation: admin-shell-in 160ms ease;
+  }
+  .admin-nav {
+    display: flex;
+    gap: 12px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+  }
+  .admin-nav-group { flex: 0 0 min(240px, 84vw); }
+  .admin-nav-group-links { flex-wrap: wrap; }
+  .admin-link { flex: 0 0 auto; }
+}

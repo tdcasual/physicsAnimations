@@ -1,10 +1,9 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { resolveBackNavigationMode, resolveBackNavigationTarget } from "../src/features/navigation/backNavigation";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return readExpandedSource(relPath);
 }
 
 describe("return navigation behavior", () => {

@@ -5,6 +5,7 @@ const path = require("path");
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const logger = require("../server/lib/logger");
+const { ensureAdminDashboard, loginFromCatalog } = require("./lib/smoke_admin_auth");
 const { ensureSpaDistFresh } = require("./lib/ensure_spa_dist_fresh");
 const { findOpenPort, waitForHealth, startServer, stopServer } = require("./lib/smoke_runtime");
 
@@ -54,17 +55,8 @@ async function run() {
         pageErrors.push(error?.message || String(error));
       });
 
-      await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-
-      await page.getByRole("banner").getByRole("button", { name: "登录" }).click();
-      const loginDialog = page.getByRole("dialog", { name: "管理员登录" });
-      await loginDialog.getByRole("textbox", { name: "用户名" }).fill(username);
-      await loginDialog.getByRole("textbox", { name: "密码" }).fill(password);
-      await loginDialog.getByRole("button", { name: "登录" }).click();
-
-      await page.getByRole("link", { name: "管理" }).waitFor({ state: "visible", timeout: 10000 });
-      await page.getByRole("link", { name: "管理" }).click();
-      await page.waitForURL(/\/admin\/dashboard$/, { timeout: 10000 });
+      await loginFromCatalog(page, username, password, baseUrl);
+      await ensureAdminDashboard(page, baseUrl);
 
       const adminPages = [
         { nav: "内容", heading: "内容管理", url: /\/admin\/content$/ },
@@ -73,9 +65,10 @@ async function run() {
         { nav: "系统", heading: "系统设置", url: /\/admin\/system$/ },
         { nav: "账号", heading: "账号设置", url: /\/admin\/account$/ },
       ];
+      const adminNav = page.locator(".admin-nav");
 
       for (const pageCase of adminPages) {
-        await page.getByRole("link", { name: pageCase.nav }).click();
+        await adminNav.getByRole("link", { name: pageCase.nav, exact: true }).click();
         await page.waitForURL(pageCase.url, { timeout: 10000 });
         await page.getByRole("heading", { name: pageCase.heading }).waitFor({ state: "visible", timeout: 10000 });
       }

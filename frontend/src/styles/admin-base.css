@@ -1,0 +1,282 @@
+.admin-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+/* ── Admin page header ── */
+.admin-page-header {
+  --admin-page-tone: var(--accent);
+  --admin-page-tone-ink: var(--accent-strong);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+}
+
+.admin-page-header--dashboard {
+  --admin-page-tone: var(--accent);
+  --admin-page-tone-ink: var(--accent-strong);
+}
+
+.admin-page-header--content {
+  --admin-page-tone: var(--accent);
+  --admin-page-tone-ink: var(--accent-strong);
+}
+
+.admin-page-header--uploads {
+  --admin-page-tone: var(--accent-copper);
+  --admin-page-tone-ink: var(--accent-copper-strong);
+}
+
+.admin-page-header--library {
+  --admin-page-tone: var(--accent-copper);
+  --admin-page-tone-ink: var(--accent-copper-strong);
+}
+
+.admin-page-header--taxonomy {
+  --admin-page-tone: var(--line-strong);
+  --admin-page-tone-ink: var(--ink-soft);
+}
+
+.admin-page-header--system {
+  --admin-page-tone: var(--line-strong);
+  --admin-page-tone-ink: var(--ink-soft);
+}
+
+.admin-page-header--account {
+  --admin-page-tone: var(--accent-copper);
+  --admin-page-tone-ink: var(--accent-copper-strong);
+}
+
+.admin-page-header :is(h1, h2, h3) { margin: 0; }
+
+.admin-page-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.admin-page-kicker {
+  margin: 0;
+  color: var(--admin-page-tone-ink);
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-page-intro {
+  margin: 0;
+  max-width: 56ch;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.admin-page-intro--supporting {
+  max-width: 40ch;
+}
+
+.admin-page-meta {
+  display: grid;
+  gap: 6px;
+  min-width: min(100%, 240px);
+  max-width: 40ch;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.admin-page-meta strong {
+  color: var(--text);
+  font-size: calc(15px * var(--ui-scale));
+}
+
+.admin-page-meta-copy { margin: 0; }
+
+.admin-task-copy--supporting { margin: 0; }
+
+/* ── Admin optional disclosure ── */
+.admin-optional-disclosure {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.admin-optional-summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 10px 14px;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 600;
+}
+
+.admin-optional-summary::-webkit-details-marker { display: none; }
+
+.admin-optional-disclosure > .admin-optional-summary::after {
+  content: "展开";
+  color: var(--accent);
+  font-size: calc(12px * var(--ui-scale));
+  font-weight: 600;
+}
+
+.admin-optional-disclosure[open] > .admin-optional-summary::after {
+  content: "收起";
+}
+
+.admin-optional-fields {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.admin-page-meta-list {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.admin-page-meta-list > * {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+}
+
+.admin-page-meta-label {
+  color: var(--admin-page-tone-ink);
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── Admin workspace ── */
+.admin-workspace-grid {
+  --admin-workspace-columns: minmax(0, 1.35fr) minmax(280px, 1fr);
+  display: grid;
+  grid-template-columns: var(--admin-workspace-columns);
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-workspace-grid > * { min-width: 0; }
+
+.admin-workspace-grid--balanced {
+  --admin-workspace-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+
+.admin-page-stack {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+/* ── Form elements ── */
+.admin-field {
+  display: grid;
+  gap: 6px;
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--muted);
+}
+
+.admin-input {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  transition: border-color 140ms ease;
+}
+
+.admin-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.admin-textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.admin-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-actions .btn-primary {
+  min-inline-size: 96px;
+}
+
+.admin-feedback {
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--muted);
+}
+
+.admin-feedback.error { color: var(--danger); }
+.admin-feedback.success { color: var(--success); }
+
+
+@media (max-width: 640px) {
+  .admin-actions { justify-content: stretch; }
+  .admin-actions .btn { flex: 1 1 calc(50% - 6px); }
+
+  .admin-page-header {
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .admin-page-kicker { display: none; }
+  .admin-page-copy { gap: 2px; }
+  .admin-page-intro--supporting { display: none; }
+  .admin-page-meta-label { display: none; }
+  .admin-page-meta-copy { display: none; }
+
+  .admin-page-meta {
+    min-width: 0;
+    width: 100%;
+    padding: 7px 10px;
+    gap: 4px;
+  }
+
+  .admin-task-copy--supporting { display: none; }
+  .admin-optional-summary { padding: 8px 12px; }
+  .admin-optional-fields { padding: 0 12px 12px; }
+}
+
+@media (max-width: 960px) {
+  .admin-page-header { align-items: flex-start; }
+  .admin-workspace-grid { grid-template-columns: 1fr; }
+}

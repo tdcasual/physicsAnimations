@@ -5,6 +5,7 @@ const path = require("path");
 const { chromium } = require("playwright-chromium");
 const { buildPlaywrightEnv } = require("../server/lib/playwrightEnv");
 const logger = require("../server/lib/logger");
+const { waitForCatalogReadyState } = require("./lib/catalog_ready_state");
 const { ensureSpaDistFresh } = require("./lib/ensure_spa_dist_fresh");
 const { findOpenPort, waitForHealth, startServer, stopServer } = require("./lib/smoke_runtime");
 
@@ -267,14 +268,14 @@ async function run() {
       await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
       await page.getByRole("navigation", { name: "大类" }).waitFor({ state: "visible", timeout: 10000 });
       await page.getByRole("navigation", { name: "分类" }).waitFor({ state: "visible", timeout: 10000 });
-      await page.locator(".catalog-search").waitFor({ state: "visible", timeout: 10000 });
+      await waitForCatalogReadyState(page);
 
       if (expectedGroupTitle) {
         await chooseGroup(page, expectedGroupTitle);
       }
       await page.getByRole("navigation", { name: "分类" }).getByRole("button", { name: "全部" }).click();
 
-      const searchInput = page.locator(".catalog-search");
+      const searchInput = page.locator(".topbar-search");
       await searchInput.fill(smokeTitle);
 
       const card = page.locator(".catalog-card", { hasText: smokeTitle }).first();
