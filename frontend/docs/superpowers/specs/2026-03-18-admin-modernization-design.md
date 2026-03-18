@@ -64,6 +64,8 @@ Merges `ContentListPanel.vue` and `UploadsListPanel.vue`.
 
 Merges `ContentEditPanel.vue` and `UploadsEditPanel.vue`.
 
+Both panels share the same core fields (title, description, category, order, published, hidden). The only structural difference is the category options source (`groupedCategoryOptions` for content, `categoryOptions` for uploads). Both are passed as the same `categoryOptions` prop — the parent view provides the appropriate list. No slots needed; the form fields are identical.
+
 **Props:**
 - `editingItem: AdminItemRow | null`
 - `categoryOptions: { value: string; label: string }[]`
@@ -101,11 +103,20 @@ Replaces:
 
 ### 3.1 VM injection
 
+Use a typed `InjectionKey` for type safety:
+
+```ts
+// src/features/library/libraryVmKey.ts
+import type { InjectionKey } from 'vue';
+import type { LibraryAdminState } from './useLibraryAdminState';
+export const libraryVmKey: InjectionKey<LibraryAdminState> = Symbol('libraryVm');
+```
+
 ```
 AdminLibraryView.vue
   ├─ const vm = reactive(useLibraryAdminState())
-  ├─ provide('libraryVm', vm)
-  └─ Child components: inject('libraryVm')
+  ├─ provide(libraryVmKey, vm)
+  └─ Child components: inject(libraryVmKey)!
 ```
 
 Parent template reduces from 543 lines to ~40 lines (layout skeleton only).
@@ -131,12 +142,14 @@ Parent template reduces from 543 lines to ~40 lines (layout skeleton only).
 
 ### 3.4 CSS split
 
-`AdminLibraryView.css` (508 lines) splits into:
+`AdminLibraryView.css` splits into:
 
 - `library-base.css` — workbench grid, metric grid, responsive breakpoints
 - `library-sidebar.css` — folder sidebar styles
 - `library-asset-list.css` — asset list, batch toolbar, dropdown menus
 - `library-inspector.css` — panel tabs, section toggles, editor styles
+
+`AdminLibraryActivity.css` (operation log + deleted-assets styles) is merged into `library-asset-list.css` (deleted-assets section) and the new `LibraryOperationLog.vue` scoped style (log-specific styles).
 
 ---
 
@@ -155,6 +168,8 @@ Current: 22 props, 17 emits in one component combining three forms.
 ### 4.2 Integration
 
 `AdminTaxonomyView.vue` uses `v-if` to switch between forms based on selection state. Props sourced from `useTaxonomyAdminDraftState`.
+
+`TaxonomyTreePanel.vue` and `CategoryEditorPanel.vue` remain unchanged — they are already well-scoped single-responsibility components.
 
 ---
 
@@ -178,11 +193,28 @@ const AdminAccountView = () => import('../views/admin/AdminAccountView.vue')
 
 ## 6. Test Strategy
 
-- Update regex assertions in existing tests for renamed/moved files and unified class names
-- Add smoke tests for new shared components (`AdminItemListPanel`, `AdminItemEditPanel`)
-- Add smoke tests for new library sub-components
-- Run full test suite after each decomposition step to catch regressions
-- Existing composable tests remain unchanged (state layer is not modified)
+### 6.1 Tests requiring path/assertion updates
+
+- `test/admin-style-semantics.test.ts` — remove reads of deleted column/panel files, update `admin-card` source checks
+- `test/library-admin-layout.test.ts` — update `readLibrarySources()` to read new sub-components instead of deleted files; update grid/layout assertions
+- `test/admin-visual-polish.test.ts` — update library template source path
+- `test/admin-mobile-edit-panel-focus.test.ts` — rewrite to test `useAdminMobileFocus` generic helper
+- `test/admin-taxonomy-mobile-edit-focus.test.ts` — rewrite to test `useAdminMobileFocus`
+- `test/admin-content-*.test.ts` — update component references from `ContentListPanel`/`ContentEditPanel` to `AdminItemListPanel`/`AdminItemEditPanel`
+- `test/admin-uploads-*.test.ts` — same updates for uploads
+
+### 6.2 New tests
+
+- Smoke test for `AdminItemListPanel` (renders items, emits search/select/edit/remove)
+- Smoke test for `AdminItemEditPanel` (renders form, emits save/cancel)
+- Smoke test for library sub-components (each renders with injected vm)
+- Smoke test for `CreateGroupForm`, `EditGroupForm`, `CreateCategoryForm`
+
+### 6.3 Unchanged tests
+
+- All composable tests (`useLibraryAdminState`, `useTaxonomyAdmin`, etc.) — state layer is not modified
+- `test/admin-shell-structure.test.ts` — layout shell unchanged
+- `test/admin-account-*.test.ts` — AccountView unchanged
 
 ---
 
@@ -203,6 +235,7 @@ const AdminAccountView = () => import('../views/admin/AdminAccountView.vue')
 - `src/components/admin/AdminItemEditPanel.vue`
 - `src/components/admin/admin-item-list.css`
 - `src/features/admin/composables/useAdminMobileFocus.ts`
+- `src/features/library/libraryVmKey.ts`
 - `src/views/admin/library/LibraryFolderSidebar.vue`
 - `src/views/admin/library/LibraryAssetList.vue`
 - `src/views/admin/library/LibraryInspectorPanel.vue`
@@ -230,6 +263,7 @@ const AdminAccountView = () => import('../views/admin/AdminAccountView.vue')
 ### Deleted files
 - `src/views/admin/library/AdminLibraryView.template.html`
 - `src/views/admin/library/AdminLibraryView.css`
+- `src/views/admin/library/AdminLibraryActivity.css`
 - `src/views/admin/library/panels/FolderPanel.vue`
 - `src/views/admin/library/panels/AssetPanel.vue`
 - `src/views/admin/library/panels/EmbedPanel.vue`
