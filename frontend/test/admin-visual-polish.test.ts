@@ -64,6 +64,7 @@ describe("admin visual polish", () => {
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-status-strip\s*\{[\s\S]*display:\s*none/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-strip\s*\{[\s\S]*position:\s*sticky[\s\S]*top:\s*calc\(var\(--app-topbar-height,\s*0px\)\s*\+\s*8px\)/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-summary\s*\{[\s\S]*display:\s*none/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-links\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-link-copy\s*\{[\s\S]*display:\s*none/);
   });
 

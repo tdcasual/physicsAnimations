@@ -92,7 +92,7 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-search-launch\s*\{[\s\S]*display:\s*none/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-search-field\s*\{[\s\S]*display:\s*none/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-home-link\s*\{[\s\S]*display:\s*none/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-trigger-meta\s*\{[\s\S]*display:\s*none/);
+    expect(app).not.toMatch(/topbar-more-trigger-meta/);
   });
 
   it("keeps the admin mobile more trigger visually centered instead of crowding the topbar corner", () => {
@@ -103,6 +103,7 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-actions\s*\{[\s\S]*align-items:\s*center/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-trigger\.btn\s*\{[\s\S]*min-height:\s*36px[\s\S]*padding:\s*0\s*28px\s*0\s*12px[\s\S]*align-items:\s*center[\s\S]*justify-content:\s*center[\s\S]*gap:\s*0/);
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-trigger-label\s*\{[\s\S]*line-height:\s*1/);
+    expect(css).toMatch(/\.topbar-more-trigger\.btn\s*\{[\s\S]*align-items:\s*center[\s\S]*justify-content:\s*center[\s\S]*gap:\s*0/);
     expect(shellCss).toMatch(/:global\(\.topbar--admin\s+\.topbar-more-trigger::after\)\s*\{[\s\S]*right:\s*10px[\s\S]*font-size:\s*10px/);
   });
 

@@ -288,7 +288,6 @@ onBeforeUnmount(() => {
               @click="toggleTopbarUtilityPanel"
             >
               <span class="topbar-more-trigger-label">更多</span>
-              <span class="topbar-more-trigger-meta">{{ topbarMoreSummary }}</span>
             </button>
             <div
               id="topbar-more-panel"

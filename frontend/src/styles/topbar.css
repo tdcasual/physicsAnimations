@@ -176,21 +176,16 @@
 }
 
 .topbar-more-trigger.btn {
-  align-items: flex-start;
-  gap: 2px;
-  text-align: left;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  text-align: center;
   padding-right: 30px;
 }
 
 .topbar-more-trigger-label {
   font-weight: 700;
   line-height: 1.05;
-}
-
-.topbar-more-trigger-meta {
-  color: var(--text-soft);
-  font-size: calc(11px * var(--ui-scale));
-  line-height: 1.15;
 }
 
 @media (min-width: 1280px) {
@@ -401,10 +396,6 @@
 
   .topbar--admin .topbar-more-trigger-label {
     line-height: 1;
-  }
-
-  .topbar--admin .topbar-more-trigger-meta {
-    display: none;
   }
 
   .topbar--admin .topbar-more-panel {
