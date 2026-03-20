@@ -84,6 +84,36 @@ describe("topbar responsive layout", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--viewer\s+\.topbar-home-link\s*\{[\s\S]*display:\s*none/);
   });
 
+  it("switches admin routes into a tighter mobile utility bar instead of keeping catalog search chrome", () => {
+    const app = readFile("src/App.vue");
+    const css = readFile("src/styles.css");
+
+    expect(app).toMatch(/isAdminShellRoute/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-search-launch\s*\{[\s\S]*display:\s*none/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-search-field\s*\{[\s\S]*display:\s*none/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-home-link\s*\{[\s\S]*display:\s*none/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-trigger-meta\s*\{[\s\S]*display:\s*none/);
+  });
+
+  it("keeps the admin mobile more trigger visually centered instead of crowding the topbar corner", () => {
+    const css = readFile("src/styles.css");
+    const shellCss = readFile("src/AppShell.css");
+
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-shell-panel\s*\{[\s\S]*padding:\s*6px\s*2px\s*5px/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-actions\s*\{[\s\S]*align-items:\s*center/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-trigger\.btn\s*\{[\s\S]*min-height:\s*36px[\s\S]*padding:\s*0\s*28px\s*0\s*12px[\s\S]*align-items:\s*center[\s\S]*justify-content:\s*center[\s\S]*gap:\s*0/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-trigger-label\s*\{[\s\S]*line-height:\s*1/);
+    expect(shellCss).toMatch(/:global\(\.topbar--admin\s+\.topbar-more-trigger::after\)\s*\{[\s\S]*right:\s*10px[\s\S]*font-size:\s*10px/);
+  });
+
+  it("opens the admin mobile more panel as a roomy dropdown instead of a cramped action rail", () => {
+    const css = readFile("src/styles.css");
+
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-actions\s*\{[\s\S]*position:\s*relative/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-panel\s*\{[\s\S]*position:\s*absolute[\s\S]*right:\s*0[\s\S]*top:\s*calc\(100%\s*\+\s*8px\)[\s\S]*min-width:\s*min\(220px,\s*calc\(100vw\s*-\s*24px\)\)[\s\S]*width:\s*min\(236px,\s*calc\(100vw\s*-\s*24px\)\)/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*480px\)\s*\{[\s\S]*\.topbar--admin\s+\.topbar-more-panel\s+\.btn\s*\{[\s\S]*justify-content:\s*flex-start[\s\S]*text-align:\s*left/);
+  });
+
   it("keeps the compact brand row off the shell edge on the smallest screens", () => {
     const css = readFile("src/styles.css");
 

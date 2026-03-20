@@ -184,4 +184,15 @@ h3 {
   color: var(--muted);
   font-size: calc(13px * var(--ui-scale));
 }
+
+@media (max-width: 640px) {
+  .actions {
+    position: sticky;
+    bottom: 0;
+    padding-top: 10px;
+    padding-bottom: 2px;
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--surface) 35%, transparent), color-mix(in oklab, var(--surface) 96%, var(--paper)) 32%);
+  }
+}
 </style>

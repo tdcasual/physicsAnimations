@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+import { computed, onBeforeUnmount, reactive, ref, watch } from "vue";
 import type { AdminItemRow } from "../../features/admin/adminApi";
 import { useUploadAdmin } from "../../features/admin/uploads/useUploadAdmin";
 import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
@@ -9,16 +9,40 @@ import UploadsListPanel from "./uploads/UploadsListPanel.vue";
 
 const vm = reactive(useUploadAdmin());
 const uploadEditorPanelRef = ref<HTMLElement | null>(null);
+const mobileEditorSheetMaxWidth = 640;
+const isEditorSheetOpen = computed(() => Boolean(vm.selectedItem));
 const { focusEditPanel: focusUploadEditPanel } = createAdminMobileEditPanelFocus({
   panelRef: uploadEditorPanelRef,
   maxWidth: 1024,
 });
+let bodyOverflowBeforeEditorSheet = "";
+
+function isMobileEditorSheetViewport() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia(`(max-width: ${mobileEditorSheetMaxWidth}px)`).matches;
+}
 
 async function openUploadEditor(item: AdminItemRow) {
   vm.beginEdit(item);
   if (vm.editingId !== item.id) return;
+  if (isMobileEditorSheetViewport()) return;
   await focusUploadEditPanel();
 }
+
+watch(isEditorSheetOpen, (open) => {
+  if (open && isMobileEditorSheetViewport()) {
+    bodyOverflowBeforeEditorSheet = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return;
+  }
+
+  document.body.style.overflow = bodyOverflowBeforeEditorSheet;
+  bodyOverflowBeforeEditorSheet = "";
+});
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = bodyOverflowBeforeEditorSheet;
+});
 </script>
 
 <template>
@@ -67,7 +91,18 @@ async function openUploadEditor(item: AdminItemRow) {
         />
       </div>
 
-      <aside ref="uploadEditorPanelRef" class="editor-panel admin-card admin-mobile-focus-anchor">
+      <button
+        v-if="vm.selectedItem"
+        type="button"
+        class="editor-sheet-backdrop"
+        aria-label="关闭编辑抽屉"
+        @click="vm.resetEdit"
+      />
+
+      <aside
+        ref="uploadEditorPanelRef"
+        :class="['editor-panel', 'editor-panel--sheet', 'admin-card', 'admin-mobile-focus-anchor', { 'is-open': isEditorSheetOpen }]"
+      >
         <UploadsEditPanel
           :selected-item="vm.selectedItem"
           :action-feedback="vm.actionFeedback"
@@ -81,6 +116,7 @@ async function openUploadEditor(item: AdminItemRow) {
           :edit-published="vm.editPublished"
           :edit-hidden="vm.editHidden"
           :saving="vm.saving"
+          :show-sheet-close="Boolean(vm.selectedItem)"
           @update:edit-title="
             vm.editTitle = $event;
             vm.clearFieldErrors('editTitle');
@@ -91,6 +127,7 @@ async function openUploadEditor(item: AdminItemRow) {
           @update:edit-published="vm.editPublished = $event"
           @update:edit-hidden="vm.editHidden = $event"
           @reset-edit="vm.resetEdit"
+          @close-edit="vm.resetEdit"
           @save-edit="vm.saveEdit"
         />
       </aside>
@@ -116,6 +153,10 @@ async function openUploadEditor(item: AdminItemRow) {
   max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+}
+
+.editor-sheet-backdrop {
+  display: none;
 }
 
 .admin-mobile-focus-anchor {
@@ -275,8 +316,57 @@ h3 {
 }
 
 @media (max-width: 640px) {
+  .editor-sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--z-modal) - 2);
+    border: 0;
+    padding: 0;
+    background: oklch(16% 0.025 250 / 0.32);
+  }
+
+  .editor-panel--sheet {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 0;
+    top: auto;
+    z-index: calc(var(--z-modal) - 1);
+    max-height: min(78dvh, 720px);
+    overflow: auto;
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -20px 48px -30px color-mix(in oklab, var(--accent) 28%, transparent);
+    transform: translateY(calc(100% + 16px));
+    transition: transform 180ms ease;
+    pointer-events: none;
+  }
+
+  .editor-panel--sheet.is-open {
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
   :deep(.list-header) {
     gap: 6px;
+  }
+
+  :deep(.list-search) {
+    width: 100%;
+  }
+
+  :deep(.item-head) {
+    gap: 8px;
+  }
+
+  :deep(.item-actions) {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  :deep(.item-actions > *) {
+    min-width: 0;
   }
 
   :deep(.list-heading) {

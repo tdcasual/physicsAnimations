@@ -47,10 +47,22 @@
 
 .admin-body { display: grid; gap: 10px; }
 
+.admin-mobile-nav-strip,
+.admin-mobile-nav-links,
+.admin-nav-sheet-heading {
+  display: none;
+}
+
 .admin-nav-group {
-  display: flex;
-  gap: 6px;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(108px, auto) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.admin-nav-group-copy {
+  display: grid;
+  gap: 2px;
 }
 
 .admin-nav-group-title {
@@ -150,8 +162,46 @@
 .admin-link-home { white-space: nowrap; }
 .admin-mobile-nav-trigger { display: none; cursor: pointer; }
 
+@media (min-width: 960px) {
+  .admin-layout-view {
+    gap: 12px;
+  }
+
+  .admin-shell {
+    gap: 12px;
+  }
+
+  .admin-nav-bar {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .admin-nav {
+    gap: 12px;
+  }
+
+  .admin-nav-group {
+    grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .admin-nav-group-title {
+    font-size: calc(10px * var(--ui-scale, 1));
+  }
+
+  .admin-nav-group-summary {
+    font-size: calc(11px * var(--ui-scale, 1));
+    line-height: 1.35;
+  }
+
+  .admin-link {
+    min-height: 40px;
+    padding: 5px 10px;
+  }
+}
+
 @keyframes admin-shell-in {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -167,46 +217,181 @@
   }
 
   .admin-nav-group {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 640px) {
-  .admin-shell-header { padding: 14px; flex-direction: column; }
-  .admin-shell-header--compact { padding: 12px 14px; }
+  .admin-shell {
+    gap: 8px;
+  }
+
   .admin-body { gap: 10px; }
-  .admin-shell-actions { width: 100%; }
-  .admin-link-home,
-  .admin-mobile-nav-trigger { flex: 1 1 calc(50% - 4px); }
-  .admin-mobile-nav-trigger { display: inline-flex; }
+
+  .admin-mobile-nav-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: stretch;
+    position: sticky;
+    top: calc(var(--app-topbar-height, 0px) + 8px);
+    z-index: calc(var(--z-raised, 2) + 1);
+    padding: 10px 12px;
+    border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
+    border-radius: 16px;
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--accent) 4%, var(--surface)), color-mix(in oklab, var(--surface) 94%, var(--paper))),
+      var(--surface);
+    box-shadow: 0 18px 30px -30px color-mix(in oklab, var(--accent) 28%, transparent);
+  }
+
+  .admin-mobile-nav-group {
+    display: grid;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .admin-mobile-nav-kicker {
+    display: none;
+  }
+
+  .admin-mobile-nav-group strong {
+    font-size: calc(13px * var(--ui-scale, 1));
+    line-height: 1.15;
+  }
+
+  .admin-mobile-nav-summary {
+    display: none;
+  }
+
+  .admin-mobile-nav-trigger {
+    display: inline-flex;
+    align-self: center;
+    min-height: 42px;
+    padding-inline: 12px;
+    white-space: nowrap;
+    border-radius: 999px;
+  }
+
+  .admin-mobile-nav-links {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(108px, 44vw);
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-link--mobile-strip {
+    min-height: 56px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    white-space: normal;
+  }
+
+  .admin-mobile-nav-link-label {
+    font-weight: 700;
+  }
+
+  .admin-mobile-nav-link-copy {
+    display: none;
+  }
+
   .admin-nav-backdrop {
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 4;
+    z-index: calc(var(--z-nav, 20) - 1);
     border: 0;
     padding: 0;
     background: oklch(16% 0.025 250 / 0.35);
   }
+
   .admin-nav-bar {
     display: none;
-    position: relative;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
     z-index: var(--z-nav);
-    flex-direction: column;
-    align-items: stretch;
+    grid-auto-rows: min-content;
+    max-height: min(72vh, 620px);
+    overflow: auto;
+    padding: 16px;
+    border-radius: 24px;
+    box-shadow: 0 28px 60px -38px color-mix(in oklab, var(--accent) 36%, transparent);
   }
+
   .admin-nav-bar.is-open {
-    display: flex;
+    display: grid;
     animation: admin-shell-in 160ms ease;
   }
+
+  .admin-nav-sheet-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-nav-sheet-copy {
+    display: grid;
+    gap: 3px;
+  }
+
+  .admin-nav-sheet-copy p {
+    margin: 0;
+    color: var(--muted);
+    font-size: calc(12px * var(--ui-scale, 1));
+    line-height: 1.35;
+  }
+
+  .admin-nav-sheet-kicker {
+    color: var(--accent);
+    font-size: calc(11px * var(--ui-scale, 1));
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .admin-nav-sheet-close {
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--surface) 84%, var(--paper));
+    color: inherit;
+    font-family: inherit;
+  }
+
   .admin-nav {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
+    overflow: visible;
   }
+
   .admin-nav-group {
-    flex-wrap: wrap;
+    grid-template-columns: 1fr;
+    padding: 12px;
+    border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--surface) 92%, var(--paper));
   }
-  .admin-nav-group-links { flex-wrap: wrap; }
-  .admin-link { flex: 0 0 auto; }
+
+  .admin-nav-group-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .admin-link {
+    flex: 0 0 auto;
+    width: 100%;
+  }
 }

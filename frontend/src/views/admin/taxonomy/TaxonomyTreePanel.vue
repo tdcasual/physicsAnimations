@@ -53,13 +53,15 @@ function onToggle(groupId: string, event: Event) {
         placeholder="搜索大类或分类（标题 / ID）..."
         autocomplete="off"
       />
-      <label class="checkbox toolbar-check">
-        <input v-model="showHiddenModel" type="checkbox" />
-        <span>显示隐藏项</span>
-      </label>
-      <div class="toolbar-actions">
-        <button type="button" class="btn btn-ghost" @click="emit('collapse-all')">全部收起</button>
-        <button type="button" class="btn btn-ghost" @click="emit('expand-all')">全部展开</button>
+      <div class="tree-mobile-toolbar">
+        <label class="checkbox toolbar-check">
+          <input v-model="showHiddenModel" type="checkbox" />
+          <span>显示隐藏项</span>
+        </label>
+        <div class="toolbar-actions">
+          <button type="button" class="btn btn-ghost" @click="emit('collapse-all')">全部收起</button>
+          <button type="button" class="btn btn-ghost" @click="emit('expand-all')">全部展开</button>
+        </div>
       </div>
     </div>
 
@@ -135,14 +137,26 @@ h3 {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
+  grid-template-columns: minmax(220px, 1fr) auto;
   gap: 10px;
   align-items: center;
+}
+
+.tree-mobile-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 960px) {
   .toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .tree-mobile-toolbar {
+    justify-content: flex-start;
   }
 }
 
@@ -268,5 +282,30 @@ h3 {
 .empty-inline {
   border-style: dotted;
   padding: 10px;
+}
+
+@media (max-width: 640px) {
+  .tree-mobile-toolbar {
+    display: grid;
+    gap: 8px;
+  }
+
+  .toolbar-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .group-summary {
+    align-items: flex-start;
+  }
+
+  .group-summary .btn-xs {
+    min-height: 40px;
+    padding-inline: 10px;
+  }
+
+  .category-item {
+    padding: 10px;
+  }
 }
 </style>

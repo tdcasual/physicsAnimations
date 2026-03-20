@@ -51,7 +51,14 @@ async function submit() {
     <div class="login-panel">
       <div class="login-intro">
         <h1>管理员登录</h1>
+        <p class="login-copy">登录后可进入内容、资源库、分类与系统配置工作台，更适合在电脑端完成整理、核查与维护。</p>
       </div>
+
+      <aside class="login-note" aria-label="桌面登录说明">
+        <span class="login-note-label">桌面工作流</span>
+        <strong>内容、资源库、分类与系统配置</strong>
+        <p>登录后会优先回到你刚才准备处理的后台页面，适合连续整理内容、上传素材和检查分类配置。</p>
+      </aside>
 
       <form class="login-form" @submit.prevent="submit">
         <label class="field">
@@ -113,6 +120,13 @@ async function submit() {
   gap: 8px;
 }
 
+.login-copy {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+  line-height: 1.55;
+}
+
 .login-kicker {
   display: none;
 }
@@ -126,17 +140,41 @@ async function submit() {
   background: var(--bg);
 }
 
+.login-note {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
+}
+
+.login-note-label {
+  color: var(--accent);
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-note strong {
+  font-size: calc(16px * var(--ui-scale));
+  line-height: 1.2;
+}
+
+.login-note p {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+  line-height: 1.55;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(1.6rem, 1.2rem + 0.6vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.1;
-}
-
-.login-copy,
-.login-note {
-  display: none;
 }
 
 .actions {
@@ -151,8 +189,37 @@ h1 {
   font-size: calc(13px * var(--ui-scale));
 }
 
+@media (min-width: 960px) {
+  .login-view {
+    width: min(1180px, 100%);
+  }
+
+  .login-panel {
+    grid-template-columns: minmax(0, 1.05fr) minmax(280px, 0.95fr);
+    align-items: start;
+  }
+
+  .login-intro {
+    gap: 10px;
+  }
+
+  .login-note {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+  }
+
+  .login-form {
+    grid-column: 1;
+    padding: 22px;
+  }
+}
+
 @media (max-width: 640px) {
   .login-view { margin: 20px auto; }
+  .login-copy {
+    display: none;
+  }
   .actions > * { flex: 1 1 calc(50% - 4px); }
 }
 </style>

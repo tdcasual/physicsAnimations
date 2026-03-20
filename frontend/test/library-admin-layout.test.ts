@@ -89,14 +89,28 @@ describe("admin library layout", () => {
     expect(style).not.toMatch(/^\s*\.library-header\s*\{/m);
   });
 
+  it("adds a desktop support row that pairs scale metrics with workflow guidance while keeping mobile quieter", () => {
+    const { template, style } = readLibrarySources();
+
+    expect(template).toMatch(/library-page-shell/);
+    expect(template).toMatch(/library-workspace-summary/);
+    expect(template).toMatch(/library-focus-panel/);
+    expect(style).toMatch(/@media\s*\(min-width:\s*1100px\)\s*\{[\s\S]*\.library-page-shell\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*0\.9fr\)\s*minmax\(280px,\s*1\.1fr\)/);
+    expect(style).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.library-focus-panel\s*\{[\s\S]*display:\s*none/);
+  });
+
   it("uses a sidebar-plus-main workbench with panel tabs and scoped search", () => {
     const { template, style } = readLibrarySources();
     expect(template).toMatch(/library-workbench/);
-    expect(template).not.toMatch(/library-quick-actions/);
     expect(template).toMatch(/library-sidebar/);
     expect(template).toMatch(/library-main-grid/);
     expect(template).toMatch(/library-asset-area/);
     expect(template).toMatch(/library-inspector-area/);
+    expect(template).toMatch(/library-mobile-taskbar/);
+    expect(template).toMatch(/library-mobile-primary-actions/);
+    expect(template).toMatch(/library-mobile-sheet/);
+    expect(template).toMatch(/library-mobile-tools/);
+    expect(template).toMatch(/library-mobile-deleted-toggle/);
     expect(style).toMatch(/\.library-sidebar\s*\{/);
     expect(style).toMatch(/\.library-main-grid\s*\{/);
     expect(template).toMatch(/library-panel-tabs/);
@@ -171,6 +185,8 @@ describe("admin library layout", () => {
     expect(view).toMatch(/const vm = reactive\(useLibraryAdminState\(\)\);/);
     expect(view).not.toMatch(/const\s*\{[\s\S]*\}\s*=\s*useLibraryAdminState\(\);/);
     expect(template).toMatch(/vm\./);
+    expect(view).toMatch(/mobileLibraryToolsOpen/);
+    expect(view).toMatch(/mobileDeletedAssetsOpen/);
   });
 
   it("binds template state through grouped vm buckets instead of flat fields", () => {

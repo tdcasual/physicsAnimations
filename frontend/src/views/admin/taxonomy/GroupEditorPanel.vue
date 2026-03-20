@@ -15,6 +15,7 @@ const props = defineProps<{
   groupFormTitle: string;
   groupFormOrder: number;
   groupFormHidden: boolean;
+  createOnly?: boolean;
   createCategoryId: string;
   createCategoryTitle: string;
   createCategoryOrder: number;
@@ -129,78 +130,80 @@ const createCategoryHiddenModel = computed({
       {{ actionFeedback }}
     </div>
 
-    <div class="panel-divider" />
+    <template v-if="!createOnly">
+      <div class="panel-divider" />
 
-    <h3>大类：{{ selectedGroup.title || selectedGroup.id }} ({{ selectedGroup.id }})</h3>
-    <div class="meta-line">
-      分类 {{ Number(selectedGroup.categoryCount || 0) }} · 内容 {{ Number(selectedGroup.count || 0) }}
-    </div>
+      <h3>大类：{{ selectedGroup.title || selectedGroup.id }} ({{ selectedGroup.id }})</h3>
+      <div class="meta-line">
+        分类 {{ Number(selectedGroup.categoryCount || 0) }} · 内容 {{ Number(selectedGroup.count || 0) }}
+      </div>
 
-    <div class="form-grid">
-      <label class="field field-span">
-        <span>标题</span>
-        <input v-model="groupFormTitleModel" class="field-input" type="text" :disabled="saving" />
-      </label>
+      <div class="form-grid">
+        <label class="field field-span">
+          <span>标题</span>
+          <input v-model="groupFormTitleModel" class="field-input" type="text" :disabled="saving" />
+        </label>
 
-      <details class="subaccordion" :open="groupFormHiddenModel || Number(groupFormOrderModel || 0) !== 0">
-        <summary>高级设置</summary>
-        <div class="form-grid subaccordion-body">
-          <label class="field">
-            <span>排序（越大越靠前）</span>
-            <input v-model.number="groupFormOrderModel" class="field-input" type="number" :disabled="saving" />
-          </label>
-          <label class="checkbox">
-            <input v-model="groupFormHiddenModel" type="checkbox" :disabled="saving" />
-            <span>隐藏该大类（首页不显示）</span>
-          </label>
-        </div>
-      </details>
-    </div>
+        <details class="subaccordion" :open="groupFormHiddenModel || Number(groupFormOrderModel || 0) !== 0">
+          <summary>高级设置</summary>
+          <div class="form-grid subaccordion-body">
+            <label class="field">
+              <span>排序（越大越靠前）</span>
+              <input v-model.number="groupFormOrderModel" class="field-input" type="number" :disabled="saving" />
+            </label>
+            <label class="checkbox">
+              <input v-model="groupFormHiddenModel" type="checkbox" :disabled="saving" />
+              <span>隐藏该大类（首页不显示）</span>
+            </label>
+          </div>
+        </details>
+      </div>
 
-    <div class="actions admin-actions">
-      <button
-        type="button"
-        class="btn"
-        :class="selectedGroup.id === defaultGroupId ? 'btn-ghost' : 'btn-danger'"
-        :disabled="saving"
-        @click="emit('reset-or-delete-group')"
-      >
-        {{ selectedGroup.id === defaultGroupId ? "重置" : "删除" }}
-      </button>
-      <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('save-group')">保存</button>
-    </div>
+      <div class="actions admin-actions">
+        <button
+          type="button"
+          class="btn"
+          :class="selectedGroup.id === defaultGroupId ? 'btn-ghost' : 'btn-danger'"
+          :disabled="saving"
+          @click="emit('reset-or-delete-group')"
+        >
+          {{ selectedGroup.id === defaultGroupId ? "重置" : "删除" }}
+        </button>
+        <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('save-group')">保存</button>
+      </div>
 
-    <h3>新增二级分类</h3>
-    <div class="form-grid">
-      <label class="field">
-        <span>分类 ID（英文/数字）</span>
-        <input id="taxonomy-category-create-id" v-model="createCategoryIdModel" class="field-input" type="text" :disabled="saving" />
-      </label>
+      <h3>新增二级分类</h3>
+      <div class="form-grid">
+        <label class="field">
+          <span>分类 ID（英文/数字）</span>
+          <input id="taxonomy-category-create-id" v-model="createCategoryIdModel" class="field-input" type="text" :disabled="saving" />
+        </label>
 
-      <label class="field">
-        <span>标题</span>
-        <input v-model="createCategoryTitleModel" class="field-input" type="text" :disabled="saving" />
-      </label>
+        <label class="field">
+          <span>标题</span>
+          <input v-model="createCategoryTitleModel" class="field-input" type="text" :disabled="saving" />
+        </label>
 
-      <details class="subaccordion" :open="createCategoryHiddenModel || Number(createCategoryOrderModel || 0) !== 0">
-        <summary>高级设置</summary>
-        <div class="form-grid subaccordion-body">
-          <label class="field">
-            <span>排序（越大越靠前）</span>
-            <input v-model.number="createCategoryOrderModel" class="field-input" type="number" :disabled="saving" />
-          </label>
-          <label class="checkbox">
-            <input v-model="createCategoryHiddenModel" type="checkbox" :disabled="saving" />
-            <span>隐藏该分类（首页不显示）</span>
-          </label>
-        </div>
-      </details>
-    </div>
+        <details class="subaccordion" :open="createCategoryHiddenModel || Number(createCategoryOrderModel || 0) !== 0">
+          <summary>高级设置</summary>
+          <div class="form-grid subaccordion-body">
+            <label class="field">
+              <span>排序（越大越靠前）</span>
+              <input v-model.number="createCategoryOrderModel" class="field-input" type="number" :disabled="saving" />
+            </label>
+            <label class="checkbox">
+              <input v-model="createCategoryHiddenModel" type="checkbox" :disabled="saving" />
+              <span>隐藏该分类（首页不显示）</span>
+            </label>
+          </div>
+        </details>
+      </div>
 
-    <div class="actions admin-actions">
-      <button type="button" class="btn btn-ghost" :disabled="saving" @click="emit('reset-create-category')">重置</button>
-      <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('create-category')">创建</button>
-    </div>
+      <div class="actions admin-actions">
+        <button type="button" class="btn btn-ghost" :disabled="saving" @click="emit('reset-create-category')">重置</button>
+        <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('create-category')">创建</button>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -284,5 +287,16 @@ h3 {
 .panel-divider {
   border-top: 1px dashed var(--border);
   margin-top: 2px;
+}
+
+@media (max-width: 640px) {
+  .actions {
+    position: sticky;
+    bottom: 0;
+    padding-top: 10px;
+    padding-bottom: 2px;
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--surface) 35%, transparent), color-mix(in oklab, var(--surface) 96%, var(--paper)) 32%);
+  }
 }
 </style>

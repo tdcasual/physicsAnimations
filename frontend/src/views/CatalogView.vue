@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { RouterLink } from "vue-router";
 import CatalogQuickAccessBand from "../components/catalog/CatalogQuickAccessBand.vue";
 import CatalogTeacherQuickAccessArea from "../components/catalog/CatalogTeacherQuickAccessArea.vue";
@@ -61,6 +62,37 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
   selectGroup,
   selectCategory,
 });
+
+const stageFeaturedKind = computed<"current" | "recommended" | "archive" | null>(() => {
+  if (currentItems.value.length) return "current";
+  if (recommendedItems.value.length) return "recommended";
+  if (view.value.items.length) return "archive";
+  return null;
+});
+
+const stageFeaturedItems = computed(() => {
+  if (stageFeaturedKind.value === "current") return currentItems.value.slice(0, 4);
+  if (stageFeaturedKind.value === "recommended") return recommendedItems.value.slice(0, 4);
+  if (stageFeaturedKind.value === "archive") return view.value.items.slice(0, 4);
+  return [];
+});
+
+const stageFeaturedTitle = computed(() => {
+  if (stageFeaturedKind.value === "current") return "当前分类";
+  if (stageFeaturedKind.value === "recommended") return "推荐演示";
+  if (stageFeaturedKind.value === "archive") return "先从这些演示开始";
+  return "";
+});
+
+const stageFeaturedCopy = computed(() => {
+  if (stageFeaturedKind.value === "current") return "桌面端优先把当前筛选里的演示放到首屏，浏览时不用先穿过辅助信息区。";
+  if (stageFeaturedKind.value === "recommended") return "当前分类还没形成清晰入口时，先从推荐演示进入，再继续展开完整目录。";
+  if (stageFeaturedKind.value === "archive") return "当前没有前置精选时，先给出一组可直接打开的演示，避免首屏只剩导航与空状态。";
+  return "";
+});
+
+const showCurrentSection = computed(() => hasCatalogGroups.value && currentItems.value.length > 0 && stageFeaturedKind.value !== "current");
+const showRecommendedSection = computed(() => recommendedItems.value.length > 0 && stageFeaturedKind.value !== "recommended");
 </script>
 
 <template>
@@ -70,14 +102,37 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
     <template v-else>
       <section class="catalog-stage">
         <h1 class="sr-only">{{ heroTitle }}</h1>
+        <div class="catalog-stage-layout">
+          <div class="catalog-stage-primary">
+            <CatalogQuickAccessBand
+              v-if="quickCategories.length || libraryHighlights.length"
+              :quick-categories="quickCategories"
+              @select-category="selectCategory"
+            />
 
-        <CatalogQuickAccessBand
-          v-if="quickCategories.length || libraryHighlights.length"
-          :quick-categories="quickCategories"
-          @select-category="selectCategory"
-        />
+            <section v-if="stageFeaturedItems.length" class="catalog-stage-feature">
+              <div class="catalog-stage-feature-head">
+                <p class="catalog-stage-kicker">桌面优先浏览</p>
+                <h2 class="catalog-section-title catalog-stage-feature-title">{{ stageFeaturedTitle }}</h2>
+                <p class="catalog-section-copy catalog-stage-feature-copy">{{ stageFeaturedCopy }}</p>
+              </div>
+              <div class="catalog-card-strip catalog-card-strip--stage">
+                <component
+                  :is="getCardNavigationComponent(getItemHref(item))"
+                  v-for="item in stageFeaturedItems"
+                  :key="`stage-${item.id}`"
+                  class="catalog-card"
+                  v-bind="getCardNavigationProps(getItemHref(item))"
+                >
+                  <div class="catalog-thumb"><img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || '?' }}</div></div>
+                  <div class="catalog-card-body"><div class="catalog-card-title">{{ item.title }}</div><div v-if="item.description" class="catalog-card-desc">{{ item.description }}</div></div>
+                </component>
+              </div>
+            </section>
+          </div>
 
-        <CatalogTeacherQuickAccessArea :recent-items="recentItems" :favorite-items="favoriteItems" :favorite-ids="favoriteIds" @open-item="rememberWorkflowFallbackHash" @toggle-favorite="toggleCatalogFavorite" />
+          <CatalogTeacherQuickAccessArea :recent-items="recentItems" :favorite-items="favoriteItems" :favorite-ids="favoriteIds" @open-item="rememberWorkflowFallbackHash" @toggle-favorite="toggleCatalogFavorite" />
+        </div>
       </section>
 
       <section v-if="hasCatalogGroups" class="catalog-section catalog-section-nav catalog-section--map catalog-section--flat">
@@ -133,7 +188,7 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
         </nav>
       </section>
 
-      <section v-if="hasCatalogGroups && currentItems.length" id="catalog-current" class="catalog-section catalog-section--current catalog-section--flat">
+      <section v-if="showCurrentSection" id="catalog-current" class="catalog-section catalog-section--current catalog-section--flat">
         <h2 class="catalog-section-title">当前分类</h2>
         <div class="catalog-card-strip">
           <component :is="getCardNavigationComponent(getItemHref(item))" v-for="item in currentItems" :key="`current-${item.id}`" class="catalog-card" v-bind="getCardNavigationProps(getItemHref(item))">
@@ -143,7 +198,7 @@ const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseG
         </div>
       </section>
 
-      <section v-if="recommendedItems.length" class="catalog-section catalog-section--recommended catalog-section--flat">
+      <section v-if="showRecommendedSection" class="catalog-section catalog-section--recommended catalog-section--flat">
         <h2 class="catalog-section-title">推荐演示</h2>
         <div class="catalog-card-strip">
           <component :is="getCardNavigationComponent(getItemHref(item))" v-for="item in recommendedItems" :key="item.id" class="catalog-card" v-bind="getCardNavigationProps(getItemHref(item))">

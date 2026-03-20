@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { RouterLink } from "vue-router";
 
 const props = defineProps<{
@@ -12,26 +11,17 @@ const props = defineProps<{
     title: string;
     summary: string;
   };
-  mobileNavOpen: boolean;
 }>();
-
-const emit = defineEmits<{
-  (event: "toggle-mobile-nav"): void;
-}>();
-
-const triggerButtonRef = ref<HTMLButtonElement | null>(null);
-
-defineExpose({
-  focusTrigger() {
-    triggerButtonRef.value?.focus();
-  },
-});
 </script>
 
 <template>
   <header class="admin-shell-header admin-shell-header--compact" :class="['admin-shell-header--dense']">
     <div class="admin-shell-copy">
-      <h1>管理后台</h1>
+      <span class="admin-shell-mobile-context">{{ props.currentAdminGroup.title }}</span>
+      <h1 class="admin-shell-title">
+        <span class="admin-shell-title-desktop">管理后台</span>
+        <span class="admin-shell-title-mobile">{{ props.currentAdminSection.label }}</span>
+      </h1>
       <p class="admin-shell-description">当前模块：{{ props.currentAdminSection.label }} · {{ props.currentAdminSection.description }}</p>
       <div class="admin-shell-summary-row">
         <strong class="admin-shell-module-chip">{{ props.currentAdminSection.label }}</strong>
@@ -39,22 +29,15 @@ defineExpose({
       </div>
     </div>
     <div class="admin-shell-ops">
-      <div class="admin-shell-status-strip admin-shell-pulse">
-        <span class="admin-shell-status-label">当前焦点</span>
-        <strong>{{ props.currentAdminSection.label }}</strong>
-      </div>
-      <div class="admin-shell-actions">
-        <RouterLink class="admin-link admin-link-home" to="/">主页面</RouterLink>
-        <button
-          ref="triggerButtonRef"
-          type="button"
-          class="admin-mobile-nav-trigger"
-          :aria-expanded="props.mobileNavOpen ? 'true' : 'false'"
-          aria-controls="admin-nav-shell"
-          @click="emit('toggle-mobile-nav')"
-        >
-          工作区菜单
-        </button>
+      <div class="admin-shell-toolbar">
+        <div class="admin-shell-status-strip admin-shell-pulse">
+          <span class="admin-shell-status-label">当前焦点</span>
+          <strong>{{ props.currentAdminSection.label }}</strong>
+          <span class="admin-shell-status-copy">{{ props.currentAdminGroup.summary }}</span>
+        </div>
+        <div class="admin-shell-actions">
+          <RouterLink class="admin-link admin-link-home" to="/">主页面</RouterLink>
+        </div>
       </div>
     </div>
   </header>
@@ -82,12 +65,36 @@ defineExpose({
   align-items: stretch;
 }
 
-.admin-shell-header h1 {
+.admin-shell-title {
   margin: 0;
   font-size: clamp(1.6rem, 2.5vw, 2.2rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
+}
+
+.admin-shell-title-desktop,
+.admin-shell-title-mobile {
+  display: block;
+}
+
+.admin-shell-title-mobile {
+  display: none;
+}
+
+.admin-shell-mobile-context {
+  display: none;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale, 1));
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
 
 .admin-shell-copy {
@@ -190,10 +197,22 @@ defineExpose({
   justify-items: end;
   gap: 10px;
   flex: 0 1 340px;
+  min-width: 0;
 }
 
 .admin-shell-pulse {
+  flex: 1 1 220px;
   min-width: min(100%, 300px);
+}
+
+.admin-shell-toolbar {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .admin-shell-actions {
@@ -201,6 +220,7 @@ defineExpose({
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  flex: 0 0 auto;
 }
 
 .admin-shell-actions .admin-link-home,
@@ -208,52 +228,138 @@ defineExpose({
   min-height: 40px;
 }
 
-@media (max-width: 900px) {
-  .admin-shell-header--dense { flex-direction: column; }
-  .admin-shell-ops { width: 100%; justify-items: stretch; }
-  .admin-shell-actions { justify-content: flex-start; }
-}
-
-@media (max-width: 640px) {
+@media (min-width: 960px) {
   .admin-shell-header {
-    gap: 8px;
-    padding: 14px 16px;
+    align-items: center;
+    gap: 18px;
+    padding: 12px 18px;
   }
 
-  .admin-shell-header h1 {
-    font-size: clamp(1.5rem, 7vw, 2rem);
-    line-height: 1.05;
+  .admin-shell-copy {
+    gap: 4px;
+    flex: 1 1 auto;
   }
 
-  .admin-shell-copy { flex: initial; gap: 4px; }
-  .admin-shell-kicker { display: none; }
-  .admin-shell-summary-row { display: none; }
+  .admin-shell-title {
+    font-size: clamp(1.38rem, 1.2rem + 0.7vw, 1.82rem);
+  }
 
-  .admin-shell-description,
-  .admin-shell-note,
-  .admin-shell-summary-copy,
-  .admin-shell-status-copy { display: none; }
+  .admin-shell-description {
+    display: none;
+  }
+
+  .admin-shell-summary-row {
+    gap: 10px;
+  }
+
+  .admin-shell-summary-copy {
+    font-size: calc(12px * var(--ui-scale, 1));
+    line-height: 1.4;
+  }
 
   .admin-shell-ops {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0;
+    flex: 0 1 420px;
+  }
+
+  .admin-shell-toolbar {
     align-items: center;
-    flex: initial;
-    gap: 8px;
-    width: 100%;
+    justify-content: flex-end;
   }
 
   .admin-shell-status-strip {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
-    gap: 6px;
-    padding: 6px 9px;
-    max-width: none;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 10px;
     min-width: 0;
+    max-width: none;
   }
 
-  .admin-shell-status-label { display: none; }
+  .admin-shell-status-copy {
+    display: none;
+  }
+
+  .admin-shell-actions .admin-link-home,
+  .admin-shell-actions .admin-mobile-nav-trigger {
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-shell-header--dense { flex-direction: column; }
+  .admin-shell-ops { width: 100%; justify-items: stretch; }
+  .admin-shell-toolbar { justify-content: flex-start; }
+  .admin-shell-actions { justify-content: flex-start; }
+}
+
+@media (max-width: 640px) {
+  .admin-shell-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px;
+    border: 0;
+    padding: 2px 2px 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .admin-shell-title {
+    font-size: clamp(1.18rem, 5.4vw, 1.44rem);
+    line-height: 1.08;
+  }
+
+  .admin-shell-title-desktop {
+    display: none;
+  }
+
+  .admin-shell-title-mobile {
+    display: block;
+  }
+
+  .admin-shell-mobile-context {
+    display: inline-flex;
+    min-height: 24px;
+    padding: 2px 8px;
+    font-size: calc(11px * var(--ui-scale, 1));
+  }
+
+  .admin-shell-copy {
+    flex: initial;
+    gap: 4px;
+  }
+  .admin-shell-kicker { display: none; }
+  .admin-shell-summary-row { display: none; }
+
+  .admin-shell-description,
+  .admin-shell-note,
+  .admin-shell-summary-copy { display: none; }
+
+  .admin-shell-ops {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    flex: initial;
+    gap: 0;
+    width: auto;
+  }
+
+  .admin-shell-toolbar {
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .admin-shell-status-strip {
+    display: none;
+  }
+
+  .admin-shell-status-label {
+    display: none;
+  }
 
   .admin-shell-status-strip strong {
     line-height: 1.1;
@@ -264,20 +370,23 @@ defineExpose({
   }
 
   .admin-shell-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: stretch;
+    justify-content: flex-end;
     width: auto;
   }
 
-  .admin-link-home { display: none; }
+  .admin-link-home {
+    min-height: 36px;
+    padding-inline: 12px;
+    border-radius: 999px;
+  }
 
   .admin-shell-actions .admin-link-home,
   .admin-shell-actions .admin-mobile-nav-trigger { min-height: 38px; }
 
-  .admin-shell-actions .admin-mobile-nav-trigger {
-    padding-inline: 14px;
-    white-space: nowrap;
+  .admin-shell-status-copy {
+    display: block;
+    font-size: calc(12px * var(--ui-scale, 1));
+    line-height: 1.35;
   }
 }
 </style>

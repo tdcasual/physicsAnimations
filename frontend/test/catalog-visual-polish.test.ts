@@ -126,4 +126,32 @@ describe("catalog visual polish", () => {
     expect(vue).not.toMatch(/class="catalog-section catalog-section--teacher"/);
     expect(vue).toMatch(/教学工作区/);
   });
+
+  it("collapses the teaching workspace behind a compact summary toggle on mobile", () => {
+    const area = read("src/components/catalog/CatalogTeacherQuickAccessArea.vue");
+
+    expect(area).toMatch(/mobileWorkbenchOpen/);
+    expect(area).toMatch(/catalog-workbench-summary/);
+    expect(area).toMatch(/展开教学工作区|收起教学工作区/);
+    expect(area).toMatch(/catalog-workbench-disclosure/);
+    expect(area).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-workbench-summary\s*\{[\s\S]*display:\s*grid/);
+    expect(area).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-workbench-disclosure\s*\{[\s\S]*grid-template-rows:\s*0fr/);
+    expect(area).toMatch(/\.catalog-workbench-disclosure\.is-open\s*\{[\s\S]*grid-template-rows:\s*1fr/);
+  });
+
+  it("promotes browseable content into the desktop stage instead of spending the first screen on support rails alone", () => {
+    const view = read("src/views/CatalogView.vue");
+    const css = read("src/views/CatalogView.css");
+    const area = read("src/components/catalog/CatalogTeacherQuickAccessArea.vue");
+
+    expect(view).toMatch(/stageFeaturedItems/);
+    expect(view).toMatch(/catalog-stage-layout/);
+    expect(view).toMatch(/catalog-stage-primary/);
+    expect(view).toMatch(/catalog-stage-feature/);
+    expect(view).toMatch(/catalog-card-strip--stage/);
+    expect(css).toMatch(/@media\s*\(min-width:\s*960px\)\s*\{[\s\S]*\.catalog-stage-layout\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1\.35fr\)\s*minmax\(280px,\s*0\.85fr\)/);
+    expect(css).toMatch(/@media\s*\(min-width:\s*960px\)\s*\{[\s\S]*\.catalog-card-strip--stage\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+    expect(area).toMatch(/@media\s*\(min-width:\s*960px\)\s*\{[\s\S]*\.catalog-teacher-quick-access\s*\{[\s\S]*padding:\s*14px/);
+    expect(area).toMatch(/:deep\(\.catalog-teacher-empty\)/);
+  });
 });

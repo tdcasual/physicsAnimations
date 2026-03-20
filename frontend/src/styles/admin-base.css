@@ -248,18 +248,66 @@
 .admin-feedback.error { color: var(--danger); }
 .admin-feedback.success { color: var(--success); }
 
+@media (min-width: 960px) {
+  .admin-page-header {
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+  }
+
+  .admin-page-copy {
+    gap: 4px;
+  }
+
+  .admin-page-intro {
+    max-width: 48ch;
+    font-size: calc(12px * var(--ui-scale));
+  }
+
+  .admin-page-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-width: auto;
+    max-width: none;
+    padding: 8px 12px;
+  }
+
+  .admin-page-meta-list {
+    flex-wrap: nowrap;
+  }
+
+  .admin-page-meta strong {
+    font-size: calc(14px * var(--ui-scale));
+    white-space: nowrap;
+  }
+
+  .admin-actions {
+    justify-content: flex-start;
+  }
+}
+
 
 @media (max-width: 640px) {
+  .admin-card {
+    padding: 14px;
+    gap: 10px;
+    border-radius: 18px;
+  }
+
   .admin-actions { justify-content: stretch; }
   .admin-actions .btn { flex: 1 1 calc(50% - 6px); }
 
   .admin-page-header {
     gap: 10px;
-    padding: 14px 16px;
+    padding: 12px 12px 10px;
   }
 
   .admin-page-kicker { display: none; }
-  .admin-page-copy { gap: 2px; }
+  .admin-page-copy { gap: 4px; }
+  .admin-page-copy :is(h1, h2, h3) { font-size: clamp(1.26rem, 6vw, 1.62rem); }
+  .admin-page-intro { display: none; }
   .admin-page-intro--supporting { display: none; }
   .admin-page-meta-label { display: none; }
   .admin-page-meta-copy { display: none; }
@@ -267,13 +315,28 @@
   .admin-page-meta {
     min-width: 0;
     width: 100%;
-    padding: 7px 10px;
-    gap: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: color-mix(in oklab, var(--surface) 84%, var(--paper));
+  }
+
+  .admin-page-meta strong {
+    font-size: calc(14px * var(--ui-scale));
+  }
+
+  .admin-page-meta-list {
+    display: none;
   }
 
   .admin-task-copy--supporting { display: none; }
   .admin-optional-summary { padding: 8px 12px; }
   .admin-optional-fields { padding: 0 12px 12px; }
+  .admin-workspace-grid { gap: 12px; }
+  .admin-page-stack { gap: 12px; }
 }
 
 @media (max-width: 960px) {

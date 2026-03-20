@@ -32,11 +32,15 @@ describe("admin shell structure", () => {
     ].join("\n");
 
     expect(source).toMatch(/mobileNavOpen/);
+    expect(source).toMatch(/class="admin-mobile-nav-strip"/);
+    expect(source).toMatch(/class="admin-mobile-nav-links"/);
+    expect(source).toMatch(/currentAdminGroup\.items/);
+    expect(source).toMatch(/class="admin-nav-sheet-heading"/);
     expect(source).toMatch(/class="admin-mobile-nav-trigger"/);
     expect(source).toMatch(/admin-nav-shell/);
     expect(source).toMatch(/class="admin-shell-header admin-shell-header--compact"/);
-    expect(source).toMatch(/class="admin-shell-summary-row"/);
-    expect(source).toMatch(/工作区菜单/);
+    expect(source).toMatch(/class="admin-shell-mobile-context"/);
+    expect(source).toMatch(/切换模块/);
   });
 
   it("applies denser shell hooks and group-specific workspace tone classes", () => {
@@ -64,6 +68,7 @@ describe("admin shell structure", () => {
     expect(source).toMatch(/admin-shell-status-strip/);
     expect(source).toMatch(/admin-shell-status-copy/);
     expect(source).toMatch(/admin-nav-group-summary/);
+    expect(source).toMatch(/admin-mobile-nav-group/);
     expect(source).not.toMatch(/admin-context-card--active/);
     expect(source).not.toMatch(/admin-context-chip--count/);
     expect(descriptionMatches.length).toBeLessThanOrEqual(1);
@@ -77,17 +82,43 @@ describe("admin shell structure", () => {
     expect(source).not.toMatch(/class="admin-shell-header admin-shell-header--compact"/);
   });
 
-  it("treats the mobile shell header as a compact operations strip instead of repeating desktop framing", () => {
-    const source = readFile("src/components/admin/AdminShellHeader.vue");
+  it("treats the mobile shell header as a contextual admin app bar instead of repeating desktop framing", () => {
+    const source = [readFile("src/components/admin/AdminShellHeader.vue"), readFile("src/views/admin/AdminLayoutView.css")].join("\n");
 
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-kicker\s*\{[\s\S]*display:\s*none/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-mobile-context\s*\{[\s\S]*display:\s*inline-flex/);
     expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-summary-row\s*\{[\s\S]*display:\s*none/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-header\s*\{[\s\S]*padding:\s*14px\s*16px/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-header h1\s*\{[\s\S]*font-size:\s*clamp\(1\.5rem,\s*7vw,\s*2rem\)/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-status-strip\s*\{[\s\S]*display:\s*flex/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-ops\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-actions\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-status-label\s*\{[\s\S]*display:\s*none/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-link-home\s*\{[\s\S]*display:\s*none/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-header\s*\{[\s\S]*border:\s*0[\s\S]*padding:\s*2px\s*2px\s*0/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-title\s*\{[\s\S]*font-size:\s*clamp\(1\.18rem,\s*5\.4vw,\s*1\.44rem\)/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-status-strip\s*\{[\s\S]*display:\s*none/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-strip\s*\{[\s\S]*display:\s*grid[\s\S]*position:\s*sticky/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-links\s*\{[\s\S]*display:\s*grid[\s\S]*grid-auto-columns:\s*minmax\(108px,\s*44vw\)/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-link-copy\s*\{[\s\S]*display:\s*none/);
+    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-nav-bar\s*\{[\s\S]*position:\s*fixed[\s\S]*bottom:\s*12px/);
+  });
+
+  it("reframes library and taxonomy mobile views as progressive-disclosure task flows", () => {
+    const library = [
+      readFile("src/views/admin/AdminLibraryView.vue"),
+      readFile("src/views/admin/library/AdminLibraryView.template.html"),
+      readFile("src/views/admin/library/AdminLibraryView.css"),
+    ].join("\n");
+    const taxonomy = [
+      readFile("src/views/admin/AdminTaxonomyView.vue"),
+      readFile("src/views/admin/taxonomy/TaxonomyTreePanel.vue"),
+      readFile("src/views/admin/taxonomy/GroupEditorPanel.vue"),
+      readFile("src/views/admin/taxonomy/CategoryEditorPanel.vue"),
+    ].join("\n");
+
+    expect(library).toMatch(/library-mobile-taskbar/);
+    expect(library).toMatch(/library-mobile-primary-actions/);
+    expect(library).toMatch(/library-mobile-sheet/);
+    expect(library).toMatch(/openMobileLibrarySheet/);
+    expect(library).toMatch(/closeMobileLibrarySheet/);
+
+    expect(taxonomy).toMatch(/taxonomy-mobile-actions/);
+    expect(taxonomy).toMatch(/taxonomy-editor-sheet/);
+    expect(taxonomy).toMatch(/taxonomy-editor-sheet-backdrop/);
+    expect(taxonomy).toMatch(/openCreateGroupSheet/);
+    expect(taxonomy).toMatch(/closeMobileEditorSheet/);
   });
 });

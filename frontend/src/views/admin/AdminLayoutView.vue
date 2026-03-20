@@ -6,9 +6,9 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 const adminNavRef = ref<HTMLElement | null>(null);
+const adminMobileLinksRef = ref<HTMLElement | null>(null);
 const adminNavShellRef = ref<HTMLElement | null>(null);
-const adminNavTriggerRef = ref<HTMLElement | null>(null);
-const adminHeaderRef = ref<{ focusTrigger: () => void } | null>(null);
+const adminNavTriggerRef = ref<HTMLButtonElement | null>(null);
 const mobileNavOpen = ref(false);
 const currentAdminGroup = computed(
   () => adminNavGroups.find((group) => group.items.some((item) => route.path.startsWith(item.to))) ?? adminNavGroups[0],
@@ -20,7 +20,6 @@ let bodyOverflowBeforeMobileNav = "";
 
 function openMobileNav() {
   lastFocusedBeforeMobileNav = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-  adminNavTriggerRef.value = lastFocusedBeforeMobileNav;
   mobileNavOpen.value = true;
 }
 
@@ -45,12 +44,15 @@ function scrollAdminNavLinkIntoView(target: HTMLElement | null) {
   target.scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 
+function findActiveAdminLink(container: HTMLElement | null): HTMLElement | null {
+  if (!container) return null;
+  return container.querySelector<HTMLElement>(".admin-link.active, .admin-link.router-link-exact-active");
+}
+
 async function scrollActiveAdminLinkIntoView() {
   await nextTick();
-  const nav = adminNavRef.value;
-  if (!nav) return;
-  const active = nav.querySelector<HTMLElement>(".admin-link.active, .admin-link.router-link-exact-active");
-  scrollAdminNavLinkIntoView(active);
+  scrollAdminNavLinkIntoView(findActiveAdminLink(adminNavRef.value));
+  scrollAdminNavLinkIntoView(findActiveAdminLink(adminMobileLinksRef.value));
 }
 
 watch(
@@ -117,11 +119,7 @@ watch(mobileNavOpen, async (open) => {
   bodyOverflowBeforeMobileNav = "";
   const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value;
   lastFocusedBeforeMobileNav = null;
-  if (restoreTarget) {
-    restoreTarget.focus();
-    return;
-  }
-  adminHeaderRef.value?.focusTrigger();
+  restoreTarget?.focus();
 });
 
 onBeforeUnmount(() => {
@@ -131,15 +129,40 @@ onBeforeUnmount(() => {
 
 <template>
   <section :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]" @keydown.esc.window="closeMobileNav">
-    <AdminShellHeader
-      ref="adminHeaderRef"
-      :current-admin-section="currentAdminSection"
-      :current-admin-group="currentAdminGroup"
-      :mobile-nav-open="mobileNavOpen"
-      @toggle-mobile-nav="toggleMobileNav"
-    />
+    <AdminShellHeader :current-admin-section="currentAdminSection" :current-admin-group="currentAdminGroup" />
 
     <div class="admin-shell">
+      <div class="admin-mobile-nav-strip">
+        <div class="admin-mobile-nav-group">
+          <span class="admin-mobile-nav-kicker">当前分组</span>
+          <strong>{{ currentAdminGroup.title }}</strong>
+          <span class="admin-mobile-nav-summary">{{ currentAdminGroup.summary }}</span>
+        </div>
+        <button
+          ref="adminNavTriggerRef"
+          type="button"
+          class="admin-mobile-nav-trigger"
+          :aria-expanded="mobileNavOpen ? 'true' : 'false'"
+          aria-controls="admin-nav-shell"
+          @click="toggleMobileNav"
+        >
+          切换模块
+        </button>
+      </div>
+
+      <div ref="adminMobileLinksRef" class="admin-mobile-nav-links" aria-label="当前分组页面">
+        <RouterLink
+          v-for="item in currentAdminGroup.items"
+          :key="item.to"
+          class="admin-link admin-link--mobile-strip"
+          active-class="active"
+          :to="item.to"
+        >
+          <span class="admin-mobile-nav-link-label">{{ item.label }}</span>
+          <span class="admin-mobile-nav-link-copy">{{ item.description }}</span>
+        </RouterLink>
+      </div>
+
       <button
         v-if="mobileNavOpen"
         type="button"
@@ -155,9 +178,20 @@ onBeforeUnmount(() => {
         @keydown="handleMobileNavKeydown"
         @focusin="onAdminNavFocusIn"
       >
+        <div class="admin-nav-sheet-heading">
+          <div class="admin-nav-sheet-copy">
+            <span class="admin-nav-sheet-kicker">工作区导航</span>
+            <strong>切换模块</strong>
+            <p>{{ currentAdminSection.label }} · {{ currentAdminGroup.summary }}</p>
+          </div>
+          <button type="button" class="admin-nav-sheet-close" @click="closeMobileNav">关闭</button>
+        </div>
         <div ref="adminNavRef" class="admin-nav">
           <section v-for="group in adminNavGroups" :key="group.id" class="admin-nav-group">
-            <div class="admin-nav-group-title">{{ group.title }}</div>
+            <div class="admin-nav-group-copy">
+              <div class="admin-nav-group-title">{{ group.title }}</div>
+              <div class="admin-nav-group-summary">{{ group.summary }}</div>
+            </div>
             <div class="admin-nav-group-links">
               <RouterLink v-for="item in group.items" :key="item.to" class="admin-link" active-class="active" :to="item.to">
                 {{ item.label }}

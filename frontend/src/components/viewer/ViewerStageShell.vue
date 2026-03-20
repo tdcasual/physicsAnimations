@@ -124,8 +124,16 @@ const emit = defineEmits<{
 
 @media (max-width: 640px) {
   .viewer-stage-frame--priority {
-    padding: 10px;
+    padding: 8px;
     border-radius: var(--radius-l);
+  }
+
+  .viewer-stage-screen {
+    min-height: min(68dvh, calc(100dvh - var(--app-topbar-height, 0px) - 164px));
+  }
+
+  .viewer-frame {
+    min-height: min(68dvh, calc(100dvh - var(--app-topbar-height, 0px) - 164px));
   }
 }
 

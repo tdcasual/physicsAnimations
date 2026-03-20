@@ -70,6 +70,11 @@
   color: var(--text);
 }
 
+:global(.topbar--admin .topbar-more-trigger::after) {
+  right: 10px;
+  font-size: 10px;
+}
+
 :global(.topbar .btn) {
   transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }

@@ -22,21 +22,31 @@ const topbarUtilityOpen = ref(false);
 const topbarRef = ref<HTMLElement | null>(null);
 const modalCardRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
-const isLoginRoute = computed(() => String(route.path || "") === "/login");
-const isCatalogRoute = computed(() => String(route.path || "") === "/");
+const currentPath = computed(() => String(route.path || ""));
+const isLoginRoute = computed(() => currentPath.value === "/login");
+const isCatalogRoute = computed(() => currentPath.value === "/");
 const isAdminShellRoute = computed(() => {
-  const currentPath = String(route.path || "");
-  return currentPath.startsWith("/admin") || currentPath === "/login";
+  return currentPath.value.startsWith("/admin") || currentPath.value === "/login";
 });
+const isAdminRoute = computed(() => currentPath.value.startsWith("/admin"));
+const isViewerRoute = computed(() => currentPath.value.startsWith("/viewer"));
+const isLibraryRoute = computed(() => currentPath.value.startsWith("/library"));
 const classroomModeLabel = computed(() => `课堂模式${classroomModeEnabled.value ? "开" : "关"}`);
 const showAdminShortcut = computed(() => auth.loggedIn && !isAdminShellRoute.value);
 const catalogQuery = useCatalogSearch();
-const topbarSearchState = computed(() => resolveTopbarSearchState(String(route.path || "")));
+const topbarSearchState = computed(() => resolveTopbarSearchState(currentPath.value));
 const topbarMoreSummary = computed(() => (auth.loggedIn ? "账号与后台" : "设置与登录"));
 function onTopbarSearch(event: Event) {
   catalogQuery.value = (event.target as HTMLInputElement).value;
 }
-const topbarModeClass = computed(() => resolveTopbarModeClass(String(route.path || "")));
+const topbarModeClass = computed(() => resolveTopbarModeClass(currentPath.value));
+const appMainClasses = computed(() => ({
+  "app-main--catalog": isCatalogRoute.value,
+  "app-main--admin": isAdminRoute.value,
+  "app-main--login": isLoginRoute.value,
+  "app-main--viewer": isViewerRoute.value,
+  "app-main--library": isLibraryRoute.value,
+}));
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 let bodyOverflowBeforeLogin = "";
 let topbarResizeObserver: ResizeObserver | null = null;
@@ -308,7 +318,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </header>
-    <main class="app-main">
+    <main :class="['app-main', appMainClasses]">
       <RouterView />
     </main>
     <div v-if="loginOpen" class="modal-backdrop" @click="closeLogin">

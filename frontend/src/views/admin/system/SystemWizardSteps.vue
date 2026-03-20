@@ -313,8 +313,22 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 
 @media (max-width: 640px) {
   .step-list {
-    grid-template-columns: 1fr;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(180px, 72vw);
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
   }
+
+  .step-item {
+    min-width: 0;
+  }
+
+  .step-button {
+    min-height: 48px;
+  }
+
   .mode-grid {
     grid-template-columns: 1fr;
   }
@@ -329,7 +343,7 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
     justify-content: stretch;
   }
   .actions .btn {
-    flex: 1 1 calc(50% - 6px);
+    flex: 1 1 calc(50% - 4px);
   }
   .wizard-step3-actions { display: grid; grid-template-columns: 1fr; }
   .wizard-step3-actions .btn { width: 100%; flex: 1 1 auto; }

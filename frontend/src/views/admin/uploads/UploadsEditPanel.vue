@@ -19,6 +19,7 @@ const props = defineProps<{
   editPublished: boolean;
   editHidden: boolean;
   saving: boolean;
+  showSheetClose?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -30,13 +31,19 @@ const emit = defineEmits<{
   "update:editHidden": [value: boolean];
   "reset-edit": [];
   "save-edit": [id: string];
+  "close-edit": [];
 }>();
 </script>
 
 <template>
   <div class="editor-header">
-    <h3>编辑面板</h3>
-    <div class="meta" v-if="props.selectedItem">{{ props.selectedItem.id }}</div>
+    <div class="editor-header-copy">
+      <h3>编辑面板</h3>
+      <div class="meta" v-if="props.selectedItem">{{ props.selectedItem.id }}</div>
+    </div>
+    <button v-if="props.showSheetClose" type="button" class="btn btn-ghost editor-close" :disabled="props.saving" @click="emit('close-edit')">
+      收起
+    </button>
   </div>
 
   <div
@@ -131,3 +138,36 @@ const emit = defineEmits<{
     </div>
   </div>
 </template>
+
+<style scoped>
+.editor-header-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.editor-close {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .editor-header {
+    align-items: flex-start;
+  }
+
+  .editor-close {
+    display: inline-flex;
+    min-height: 38px;
+    padding-inline: 12px;
+    white-space: nowrap;
+  }
+
+  .editor-footer {
+    position: sticky;
+    bottom: 0;
+    margin-inline: -2px;
+    padding-top: 12px;
+    background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 10%, transparent), var(--surface) 28%);
+  }
+}
+</style>

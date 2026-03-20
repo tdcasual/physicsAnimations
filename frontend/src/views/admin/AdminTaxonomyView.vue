@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, onBeforeUnmount, ref, watch } from "vue";
 import { useTaxonomyAdmin } from "../../features/admin/taxonomy/useTaxonomyAdmin";
 import { createAdminTaxonomyMobileEditorFocus } from "./taxonomy/useAdminTaxonomyMobileEditorFocus";
 import CategoryEditorPanel from "./taxonomy/CategoryEditorPanel.vue";
@@ -7,9 +7,13 @@ import GroupEditorPanel from "./taxonomy/GroupEditorPanel.vue";
 import TaxonomyTreePanel from "./taxonomy/TaxonomyTreePanel.vue";
 
 const taxonomy = useTaxonomyAdmin();
+type TaxonomyMobileSheetMode = "create-group" | "group" | "category" | null;
+
 const editorTopRef = ref<HTMLElement | null>(null);
 const groupEditorRef = ref<HTMLElement | null>(null);
 const categoryEditorRef = ref<HTMLElement | null>(null);
+const activeMobileEditorSheet = ref<TaxonomyMobileSheetMode>(null);
+const mobileEditorSheetMaxWidth = 640;
 const { focusEditorTarget } = createAdminTaxonomyMobileEditorFocus({
   editorTopRef,
   groupEditorRef,
@@ -64,18 +68,91 @@ const {
   saveCategory,
   resetOrDeleteCategory,
 } = taxonomy;
+const isMobileEditorSheetOpen = computed(() => Boolean(activeMobileEditorSheet.value));
+const mobileSelectionSummary = computed(() => {
+  if (selection.value?.kind === "group" && selectedGroup.value) {
+    return `当前编辑大类：${selectedGroup.value.title || selectedGroup.value.id}`;
+  }
+  if (selection.value?.kind === "category" && selectedCategory.value) {
+    return `当前编辑分类：${selectedCategory.value.title || selectedCategory.value.id}`;
+  }
+  return "先在树中选择节点，再进入编辑。";
+});
+const mobilePrimaryActionLabel = computed(() => {
+  if (isMobileEditorSheetOpen.value) return "关闭编辑";
+  if (selection.value) return "编辑当前节点";
+  return "等待选择";
+});
+let bodyOverflowBeforeTaxonomySheet = "";
+
+function isMobileEditorSheetViewport() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  return window.matchMedia(`(max-width: ${mobileEditorSheetMaxWidth}px)`).matches;
+}
+
+function closeMobileEditorSheet() {
+  activeMobileEditorSheet.value = null;
+}
+
+async function openCreateGroupSheet() {
+  selectGroup(selectedGroup.value?.id || DEFAULT_GROUP_ID);
+  if (selection.value?.kind !== "group") return;
+  activeMobileEditorSheet.value = "create-group";
+  if (isMobileEditorSheetViewport()) return;
+  await focusEditorTarget("group");
+}
+
+async function openCurrentSelectionSheet() {
+  if (!selection.value) return;
+  if (selection.value.kind === "group") {
+    activeMobileEditorSheet.value = "group";
+    if (isMobileEditorSheetViewport()) return;
+    await focusEditorTarget("group");
+    return;
+  }
+  activeMobileEditorSheet.value = "category";
+  if (isMobileEditorSheetViewport()) return;
+  await focusEditorTarget("category");
+}
+
+async function handleMobilePrimaryAction() {
+  if (isMobileEditorSheetOpen.value) {
+    closeMobileEditorSheet();
+    return;
+  }
+  await openCurrentSelectionSheet();
+}
 
 async function openGroupEditor(groupId: string, options: { focusCreate?: boolean } = {}) {
   selectGroup(groupId, options);
   if (selection.value?.kind !== "group" || selection.value.id !== groupId) return;
+  activeMobileEditorSheet.value = options.focusCreate ? "group" : "group";
+  if (isMobileEditorSheetViewport()) return;
   await focusEditorTarget("group");
 }
 
 async function openCategoryEditor(categoryId: string) {
   selectCategory(categoryId);
   if (selection.value?.kind !== "category" || selection.value.id !== categoryId) return;
+  activeMobileEditorSheet.value = "category";
+  if (isMobileEditorSheetViewport()) return;
   await focusEditorTarget("category");
 }
+
+watch(isMobileEditorSheetOpen, (open) => {
+  if (open && isMobileEditorSheetViewport()) {
+    bodyOverflowBeforeTaxonomySheet = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return;
+  }
+
+  document.body.style.overflow = bodyOverflowBeforeTaxonomySheet;
+  bodyOverflowBeforeTaxonomySheet = "";
+});
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = bodyOverflowBeforeTaxonomySheet;
+});
 </script>
 
 <template>
@@ -89,8 +166,19 @@ async function openCategoryEditor(categoryId: string) {
         <span class="admin-page-meta-label">当前焦点</span>
         <strong>{{ selection ? "编辑中" : "待选择" }}</strong>
       </div>
-    </header>
-    <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
+  </header>
+  <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
+
+    <section class="taxonomy-mobile-actions admin-card">
+      <div class="taxonomy-mobile-summary">
+        <strong>{{ selection ? "已选节点" : "先选节点" }}</strong>
+        <span>{{ mobileSelectionSummary }}</span>
+      </div>
+      <button type="button" class="btn btn-ghost" @click="openCreateGroupSheet">新建大类</button>
+      <button type="button" class="btn btn-primary" :disabled="!selection && !isMobileEditorSheetOpen" @click="handleMobilePrimaryAction">
+        {{ mobilePrimaryActionLabel }}
+      </button>
+    </section>
 
     <div class="admin-workspace-grid admin-workspace-grid--balanced">
       <TaxonomyTreePanel
@@ -114,8 +202,23 @@ async function openCategoryEditor(categoryId: string) {
         @select-category="openCategoryEditor($event)"
       />
 
-      <div class="taxonomy-editor-slot">
+      <button
+        v-if="isMobileEditorSheetOpen"
+        type="button"
+        class="taxonomy-editor-sheet-backdrop"
+        aria-label="关闭分类编辑抽屉"
+        @click="closeMobileEditorSheet"
+      />
+
+      <div :class="['taxonomy-editor-slot', 'taxonomy-editor-sheet', { 'is-open': isMobileEditorSheetOpen }]">
         <div ref="editorTopRef" class="taxonomy-mobile-editor-top taxonomy-mobile-focus-anchor" aria-hidden="true" />
+        <div class="taxonomy-editor-sheet-header">
+          <div class="taxonomy-editor-sheet-copy">
+            <p class="admin-page-kicker">移动端编辑</p>
+            <strong>{{ activeMobileEditorSheet === "create-group" ? "新建大类" : "节点编辑" }}</strong>
+          </div>
+          <button type="button" class="btn btn-ghost" @click="closeMobileEditorSheet">关闭</button>
+        </div>
 
         <div v-if="selectedGroup" ref="groupEditorRef" class="taxonomy-mobile-focus-anchor">
           <GroupEditorPanel
@@ -132,6 +235,7 @@ async function openCategoryEditor(categoryId: string) {
             :group-form-title="groupFormTitle"
             :group-form-order="groupFormOrder"
             :group-form-hidden="groupFormHidden"
+            :create-only="activeMobileEditorSheet === 'create-group'"
             :create-category-id="createCategoryId"
             :create-category-title="createCategoryTitle"
             :create-category-order="createCategoryOrder"
@@ -190,6 +294,28 @@ async function openCategoryEditor(categoryId: string) {
   gap: 12px;
 }
 
+.taxonomy-mobile-actions,
+.taxonomy-editor-sheet-backdrop,
+.taxonomy-editor-sheet-header {
+  display: none;
+}
+
+.taxonomy-mobile-summary,
+.taxonomy-editor-sheet-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.taxonomy-mobile-summary :is(strong, span),
+.taxonomy-editor-sheet-copy :is(p, strong) {
+  margin: 0;
+}
+
+.taxonomy-mobile-summary span {
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
 .taxonomy-editor-slot {
   display: grid;
   align-content: start;
@@ -224,6 +350,68 @@ async function openCategoryEditor(categoryId: string) {
     position: static;
     max-height: none;
     overflow: visible;
+  }
+}
+
+@media (max-width: 640px) {
+  .taxonomy-mobile-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .taxonomy-mobile-summary {
+    grid-column: 1 / -1;
+  }
+
+  .taxonomy-editor-sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 34;
+    border: 0;
+    padding: 0;
+    background: color-mix(in oklab, var(--text) 22%, transparent);
+  }
+
+  .taxonomy-editor-sheet {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 35;
+    max-height: min(84dvh, 760px);
+    padding: 14px 14px 18px;
+    border-radius: 24px 24px 0 0;
+    overflow: auto;
+    transform: translateY(104%);
+    opacity: 0;
+    pointer-events: none;
+    box-shadow: 0 -24px 56px -36px color-mix(in oklab, var(--text) 28%, transparent);
+    transition: transform 220ms ease, opacity 220ms ease;
+  }
+
+  .taxonomy-editor-sheet.is-open {
+    display: grid;
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .taxonomy-editor-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    top: -14px;
+    margin: -14px -14px 10px;
+    padding: 14px;
+    border-bottom: 1px solid color-mix(in oklab, var(--accent) 16%, var(--border));
+    background:
+      linear-gradient(180deg, color-mix(in oklab, var(--surface) 97%, var(--paper)), color-mix(in oklab, var(--accent) 5%, var(--surface))),
+      var(--surface);
   }
 }
 </style>

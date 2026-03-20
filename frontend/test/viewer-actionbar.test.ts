@@ -142,4 +142,20 @@ describe("viewer action bar", () => {
     expect(source).toMatch(/\.viewer-back\s*\{[\s\S]*white-space:\s*nowrap/);
     expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-title\s*\{[\s\S]*font-size:\s*clamp\(1\.05rem,\s*0\.95rem \+ 0\.4vw,\s*1\.3rem\)/);
   });
+
+  it("switches viewer pages into a more immersive mobile shell with tighter shared chrome", () => {
+    const routeChrome = read("src/features/app/appShellTopbar.ts");
+    const viewerSource = [
+      read("src/views/ViewerView.vue"),
+      read("src/components/viewer/ViewerStageShell.vue"),
+    ].join("\n");
+    const css = read("src/styles.css");
+
+    expect(routeChrome).toMatch(/topbar--viewer/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.topbar--viewer\s+\.topbar-search-launch\s*\{[\s\S]*display:\s*none/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.topbar--viewer\s+\.topbar-search-field\s*\{[\s\S]*display:\s*none/);
+    expect(viewerSource).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-actions\s*\{[\s\S]*display:\s*grid/);
+    expect(viewerSource).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+    expect(viewerSource).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-stage-screen\s*\{[\s\S]*min-height:\s*min\(/);
+  });
 });
