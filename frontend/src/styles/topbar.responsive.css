@@ -1,0 +1,252 @@
+@media (min-width: 1280px) {
+  .topbar--catalog .topbar-inner,
+  .topbar--library .topbar-inner {
+    width: min(1280px, calc(100% - 64px));
+  }
+
+  .topbar--admin .topbar-inner {
+    width: min(1360px, calc(100% - 64px));
+  }
+
+  .topbar--viewer .topbar-inner {
+    width: min(1440px, calc(100% - 64px));
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar--viewer .topbar-search-field {
+    display: none;
+  }
+
+  .topbar--viewer .topbar-search-launch {
+    display: none;
+  }
+
+  .topbar--viewer .topbar-shell-panel {
+    gap: 10px;
+    padding-block: 8px;
+  }
+
+  .topbar--viewer .topbar-actions {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-inner { width: calc(100% - 24px); }
+
+  .topbar-shell-panel {
+    padding: 4px 4px 3px;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .topbar-lead {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+    align-items: center;
+    gap: 6px 10px;
+  }
+
+  .brand-link { gap: 8px; min-height: 34px; }
+  .brand-mark { font-size: clamp(0.9rem, 0.84rem + 0.4vw, 0.98rem); }
+
+  .btn-nav-home { padding-inline: 12px; }
+
+  .topbar .btn {
+    min-height: 40px;
+    padding: 7px 12px;
+    font-size: calc(12px * var(--ui-scale));
+  }
+
+  .topbar-home-link {
+    justify-self: end;
+    align-self: start;
+  }
+
+  .topbar-search-field {
+    max-width: none;
+    grid-column: 1 / -1;
+  }
+  .topbar-search-launch {
+    max-width: none;
+    grid-column: 1 / -1;
+  }
+  .topbar-search { min-height: 34px; font-size: calc(12px * var(--ui-scale)); }
+  .topbar-search-launch {
+    min-height: 36px;
+    padding: 8px 12px;
+  }
+  .topbar-search-launch-kicker { display: none; }
+  .topbar-search-launch-label { font-size: calc(12px * var(--ui-scale)); }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+  }
+
+  .topbar-utility-actions,
+  .actions .btn { flex: 0 0 auto; }
+
+  .topbar-more-panel .btn {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    padding-inline: 14px;
+  }
+
+  /* 手机端：隐藏平铺按钮，显示\"更多\"触发器和面板 */
+  .topbar-inline-actions { display: none; }
+
+  .topbar-more-trigger.btn {
+    display: inline-flex;
+    min-width: 118px;
+    padding-right: 30px;
+  }
+
+  .topbar-more-panel {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: max-height 160ms ease, padding-top 160ms ease,
+                opacity 140ms ease, transform 140ms ease;
+  }
+
+  .topbar-more-panel.is-open {
+    max-height: 200px;
+    padding-top: 6px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .topbar--viewer .topbar-shell-panel {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .topbar--viewer .topbar-lead {
+    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar--viewer .topbar-actions {
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
+  .topbar--viewer .topbar-more-trigger.btn {
+    min-width: auto;
+  }
+
+  .topbar--viewer .topbar-home-link { display: none; }
+
+  .topbar--admin .topbar-shell-panel {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 2px 5px;
+  }
+
+  .topbar--admin .topbar-lead {
+    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .topbar--admin .topbar-search-field {
+    display: none;
+  }
+
+  .topbar--admin .topbar-search-launch {
+    display: none;
+  }
+
+  .topbar--admin .topbar-home-link {
+    display: none;
+  }
+
+  .topbar--admin .topbar-actions {
+    width: auto;
+    margin-left: auto;
+    position: relative;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .topbar--admin .topbar-more-trigger.btn {
+    min-width: auto;
+    min-height: 36px;
+    padding: 0 28px 0 12px;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    text-align: center;
+    border-radius: 12px;
+  }
+
+  .topbar--admin .topbar-more-trigger-label {
+    line-height: 1;
+  }
+
+  .topbar--admin .topbar-more-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: min(220px, calc(100vw - 24px));
+    width: min(236px, calc(100vw - 24px));
+    gap: 10px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--surface) 94%, var(--paper) 6%);
+    box-shadow: none;
+    z-index: 1;
+  }
+
+  .topbar--admin .topbar-more-panel.is-open {
+    max-height: 260px;
+    padding: 10px;
+    border-color: var(--border);
+    box-shadow: var(--shadow-l);
+  }
+
+  .topbar--admin .topbar-more-group {
+    gap: 6px;
+  }
+
+  .topbar--admin .topbar-more-group-label {
+    padding-inline: 4px;
+  }
+
+  .topbar--admin .topbar-more-panel .btn {
+    min-height: 38px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .app-main {
+    width: calc(100% - 24px);
+    margin-top: 14px;
+  }
+}
+

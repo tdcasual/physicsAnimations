@@ -8,7 +8,7 @@ const route = useRoute();
 const adminNavRef = ref<HTMLElement | null>(null);
 const adminMobileLinksRef = ref<HTMLElement | null>(null);
 const adminNavShellRef = ref<HTMLElement | null>(null);
-const adminNavTriggerRef = ref<HTMLButtonElement | null>(null);
+const adminNavTriggerRef = ref<HTMLElement | null>(null);
 const mobileNavOpen = ref(false);
 const currentAdminGroup = computed(
   () => adminNavGroups.find((group) => group.items.some((item) => route.path.startsWith(item.to))) ?? adminNavGroups[0],

@@ -124,7 +124,7 @@ const emit = defineEmits<{
 
 @media (max-width: 640px) {
   .viewer-stage-frame--priority {
-    padding: 8px;
+    padding: 10px;
     border-radius: var(--radius-l);
   }
 

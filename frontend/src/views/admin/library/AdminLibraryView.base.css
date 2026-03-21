@@ -1,0 +1,292 @@
+.admin-library-view {
+  display: grid;
+  gap: 16px;
+}
+
+.library-page-shell {
+  display: grid;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.library-workspace-summary,
+.library-metrics-panel,
+.library-focus-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.library-workspace-summary :is(h3, p),
+.library-focus-panel :is(p, strong, span) {
+  margin: 0;
+}
+
+.library-workspace-summary h3,
+.library-focus-panel strong {
+  font-size: calc(16px * var(--ui-scale));
+  line-height: 1.18;
+}
+
+.library-workspace-summary p:last-child,
+.library-focus-panel span {
+  color: var(--muted);
+}
+
+.library-focus-panel {
+  align-content: start;
+  min-height: 100%;
+}
+
+.library-block-kicker {
+  margin: 0;
+  color: color-mix(in oklab, var(--accent-copper-strong) 70%, var(--text));
+  font-size: calc(11px * var(--ui-scale));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.library-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.library-metric-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in oklab, var(--accent) 14%, var(--border));
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 94%, var(--paper)), color-mix(in oklab, var(--accent) 4%, var(--surface))),
+    var(--surface);
+}
+
+.library-metric-card span {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+}
+
+.library-metric-card strong {
+  font-size: calc(20px * var(--ui-scale));
+  line-height: 1;
+}
+
+.library-mobile-taskbar,
+.library-mobile-sheet-backdrop,
+.library-mobile-sheet-header,
+.library-mobile-primary-actions {
+  display: none;
+}
+
+.library-mobile-task-copy,
+.library-mobile-sheet-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.library-mobile-task-copy :is(p, strong, span),
+.library-mobile-sheet-copy :is(p, strong) {
+  margin: 0;
+}
+
+.library-mobile-task-copy strong,
+.library-mobile-sheet-copy strong {
+  font-size: calc(16px * var(--ui-scale));
+  line-height: 1.2;
+}
+
+.library-mobile-task-copy span {
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.library-mobile-tools {
+  display: none;
+}
+
+.library-mobile-disclosure-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.library-mobile-disclosure-copy :is(strong, span) {
+  margin: 0;
+}
+
+.library-mobile-disclosure-copy strong {
+  font-size: calc(14px * var(--ui-scale));
+  line-height: 1.2;
+}
+
+.library-mobile-disclosure-copy span {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+}
+
+.library-mobile-tools-toggle,
+.library-mobile-deleted-toggle {
+  display: none;
+  width: 100%;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in oklab, var(--accent) 14%, var(--border));
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--surface) 96%, var(--paper)), color-mix(in oklab, var(--accent) 5%, var(--surface))),
+    var(--surface);
+  color: inherit;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.library-mobile-tools-body,
+.library-mobile-deleted-body {
+  display: grid;
+  gap: 10px;
+}
+
+.library-sidebar-top {
+  min-height: 0;
+}
+
+.library-workbench {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.library-sidebar {
+  position: sticky;
+  align-self: start;
+  top: calc(var(--app-topbar-height, 0px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.library-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(400px, 1.3fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.library-asset-area,
+.library-inspector-area {
+  display: grid;
+  gap: 10px;
+  min-height: 200px;
+}
+
+.library-inspector-area {
+  position: sticky;
+  align-self: start;
+  top: calc(var(--app-topbar-height, 0px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  overflow: auto;
+}
+
+.column-head {
+  display: grid;
+  gap: 4px;
+}
+
+.column-divider {
+  height: 1px;
+  background: color-mix(in oklab, var(--accent) 12%, var(--border));
+  margin: 4px 0 8px;
+}
+
+.library-panel-tabs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.panel-tab {
+  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--surface) 92%, var(--paper));
+  color: var(--muted);
+  min-height: 44px;
+  padding: 8px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: calc(12px * var(--ui-scale));
+  line-height: 1.35;
+  text-align: left;
+  white-space: normal;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+
+.panel-tab.active {
+  color: var(--text);
+  border-color: color-mix(in oklab, var(--accent) 48%, var(--border));
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface));
+  box-shadow: 0 14px 28px -24px color-mix(in oklab, var(--accent) 42%, transparent);
+}
+
+.panel-tab:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--accent) 28%, var(--border));
+}
+
+.panel-content {
+  display: grid;
+  gap: 10px;
+}
+
+.panel-section {
+  border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
+  border-radius: 14px;
+  padding: 10px;
+  background: color-mix(in oklab, var(--surface) 94%, var(--paper));
+}
+
+.panel-section-toggle {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  min-height: 44px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 600;
+}
+
+.panel-section-body {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.library-inspector-top {
+  min-height: 0;
+}
+
+.library-mobile-focus-anchor {
+  scroll-margin-top: calc(var(--app-topbar-height, 0px) + 16px);
+}
+
+.field.has-error .field-input {
+  border-color: color-mix(in oklab, var(--danger) 55%, var(--border));
+}
+
+.field-error-text {
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--danger);
+  line-height: 1.35;
+}
+

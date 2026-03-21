@@ -183,14 +183,11 @@ function onModeChange() {
   display: grid;
   gap: 10px;
 }
-
 h3 { margin: 0; font-size: calc(16px * var(--ui-scale)); }
 h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
-
 .summary-grid span {
   color: var(--muted);
 }
-
 .step-list {
   list-style: none;
   margin: 0;
@@ -199,12 +196,10 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 8px;
 }
-
 .step-item {
   display: grid;
   gap: 4px;
 }
-
 .step-button {
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -216,21 +211,17 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   font-size: calc(13px * var(--ui-scale));
   text-align: left;
 }
-
 .step-button.active {
   border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
   background: color-mix(in srgb, var(--primary) 15%, var(--surface));
 }
-
 .step-button.done {
   background: color-mix(in srgb, var(--primary) 11%, var(--surface));
 }
-
 .step-hint {
   font-size: calc(12px * var(--ui-scale));
   color: var(--muted);
 }
-
 .wizard-panel {
   border: 1px dashed var(--border);
   border-radius: 10px;
@@ -238,13 +229,11 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   display: grid;
   gap: 10px;
 }
-
 .mode-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 }
-
 .mode-card {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -254,11 +243,9 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   cursor: pointer;
   background: color-mix(in srgb, var(--surface) 94%, var(--bg));
 }
-
 .mode-card input {
   margin: 0;
 }
-
 .mode-card.active {
   border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
   background: color-mix(in srgb, var(--primary) 10%, var(--surface));
@@ -343,7 +330,7 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
     justify-content: stretch;
   }
   .actions .btn {
-    flex: 1 1 calc(50% - 4px);
+    flex: 1 1 calc(50% - 6px);
   }
   .wizard-step3-actions { display: grid; grid-template-columns: 1fr; }
   .wizard-step3-actions .btn { width: 100%; flex: 1 1 auto; }

@@ -1,0 +1,365 @@
+/* ── CatalogView: "Apparatus" editorial layout ────────────────── */
+
+.catalog-view {
+  display: grid;
+  gap: clamp(28px, 3.5vw, 48px);
+}
+
+/* ── Stage (container) ── */
+.catalog-stage {
+  position: relative;
+  display: grid;
+  gap: 18px;
+  padding: clamp(24px, 3vw, 40px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  background: var(--surface);
+}
+
+.catalog-stage > * {
+  position: relative;
+  z-index: var(--z-content);
+  min-width: 0;
+}
+
+/* ── Sections ── */
+.catalog-section {
+  position: relative;
+  min-width: 0;
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.catalog-section[id] {
+  scroll-margin-top: calc(var(--app-topbar-height, 0px) + env(safe-area-inset-top, 0px) + 20px);
+}
+
+.catalog-stage-band { padding-top: 8px; }
+
+.catalog-stage-rail {
+  padding-top: 16px;
+}
+
+.catalog-stage-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.catalog-stage-primary {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+
+.catalog-stage-feature {
+  display: grid;
+  gap: 14px;
+}
+
+.catalog-stage-feature-head {
+  display: grid;
+  gap: 6px;
+  max-width: 46ch;
+}
+
+.catalog-stage-kicker {
+  margin: 0;
+  color: color-mix(in oklab, var(--accent-copper-strong) 74%, var(--text));
+  font-size: calc(11px * var(--ui-scale, 1));
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.catalog-stage-feature-title {
+  margin-bottom: 0;
+}
+
+.catalog-stage-feature-copy {
+  max-width: 44ch;
+}
+
+.catalog-section-copy {
+  margin: 0;
+  color: var(--muted);
+  font-size: calc(14px * var(--ui-scale, 1));
+  max-width: 38ch;
+  line-height: 1.6;
+}
+
+.catalog-mobile-filter-label {
+  font-size: calc(11px * var(--ui-scale, 1));
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.catalog-tab:focus-visible,
+.catalog-quick-chip:focus-visible,
+.catalog-mobile-filter-trigger:focus-visible,
+.catalog-card:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+/* ── Action buttons and chips ── */
+.catalog-chip-list,
+.catalog-tabs,
+.catalog-mobile-filter-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.catalog-quick-chip,
+.catalog-tab,
+.catalog-card {
+  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease, transform 160ms ease;
+}
+
+/* ── Mobile filter ── */
+.catalog-mobile-filter-trigger {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  min-height: 42px;
+  padding: 10px 14px;
+  background: var(--surface);
+  color: inherit;
+  font-family: inherit;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.catalog-mobile-filter-panel {
+  display: none;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 14px;
+  background: var(--surface);
+  opacity: 0;
+  pointer-events: none;
+  max-height: 0;
+  overflow: hidden;
+  transform: translateY(-6px);
+  transition: opacity 160ms ease, transform 160ms ease, max-height 160ms ease;
+}
+
+.catalog-mobile-filter-panel.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  max-height: 600px;
+  overflow: visible;
+  transform: translateY(0);
+  animation: catalog-panel-in 160ms ease;
+}
+
+.catalog-mobile-filter-block {
+  display: grid;
+  gap: 8px;
+}
+
+/* ── Section title ── */
+.catalog-section-title {
+  margin: 0 0 16px;
+  font-size: clamp(1.25rem, 0.95rem + 0.5vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+/* ── Section variants ── */
+.catalog-section--flat {
+  background: transparent;
+  box-shadow: none;
+}
+
+.catalog-section--flat .catalog-card-strip,
+.catalog-section--flat .catalog-grid {
+  gap: 14px;
+}
+
+.catalog-section--map { padding-top: 4px; }
+.catalog-section--current { padding-top: 0; }
+.catalog-section--recommended { padding-top: 0; }
+.catalog-section--library { padding-top: 0; }
+
+.catalog-section--archive {
+  padding: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.catalog-section--archive .catalog-grid { gap: 14px; }
+
+/* ── Tabs ── */
+.catalog-section-nav {
+  display: grid;
+  gap: 10px;
+}
+
+.catalog-tabs {
+  overflow-x: auto;
+  padding-bottom: 4px;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+}
+
+.catalog-tab {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius-s);
+  padding: 6px 14px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--text);
+  font-family: inherit;
+  font-size: calc(13px * var(--ui-scale, 1));
+  font-weight: 500;
+}
+
+.catalog-tab:hover {
+  border-color: var(--line-strong);
+}
+
+.catalog-tab.active {
+  border-color: var(--accent);
+  background: oklch(58% 0.18 30 / 0.08);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+.catalog-select { appearance: none; }
+
+/* ── Empty / loading states ── */
+.catalog-state,
+.catalog-empty {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-m);
+  padding: 24px;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.catalog-empty {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
+.catalog-empty--inline {
+  padding: 12px 0 2px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+/* ── Card grid ── */
+.catalog-card-strip,
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--catalog-card-min-width, 220px), 1fr));
+  gap: 14px;
+}
+
+.catalog-card-strip--stage {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+/* ── Cards ── */
+.catalog-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.catalog-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-xl);
+}
+
+/* ── Card thumbnail ── */
+.catalog-thumb {
+  aspect-ratio: 16 / 9;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.catalog-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.catalog-thumb-placeholder {
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+}
+
+/* ── Card body ── */
+.catalog-card-body {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+}
+
+.catalog-card-title {
+  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: calc(15px * var(--ui-scale, 1));
+  line-height: 1.25;
+}
+
+.catalog-folder-card {
+  border-style: dashed;
+}
+
+.catalog-card-desc {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-size: calc(13px * var(--ui-scale, 1));
+  line-height: 1.5;
+}
+
+/* ── Animations ── */
+@keyframes catalog-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+

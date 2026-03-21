@@ -1,0 +1,265 @@
+.asset-filter-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.asset-batch-toolbar {
+  border: 1px dashed color-mix(in oklab, var(--accent) 18%, var(--border));
+  border-radius: 14px;
+  padding: 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  background: color-mix(in oklab, var(--surface) 92%, var(--paper));
+}
+
+.asset-batch-result {
+  border: 1px solid color-mix(in oklab, var(--accent) 14%, var(--border));
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+  background: color-mix(in oklab, var(--surface) 94%, var(--paper));
+}
+
+.batch-select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--muted);
+}
+
+.batch-move-folder {
+  min-width: 150px;
+}
+
+.batch-more-menu {
+  position: relative;
+}
+
+.batch-more-menu > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.batch-more-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.batch-more-menu-body {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -8px color-mix(in oklab, var(--text) 12%, transparent);
+}
+
+.batch-more-menu-body .btn {
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.asset-more-menu {
+  position: relative;
+}
+
+.asset-more-menu > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.asset-more-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.asset-more-menu-body {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: 2px;
+  min-width: 140px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px -8px color-mix(in oklab, var(--text) 12%, transparent);
+}
+
+.asset-more-menu-body .btn {
+  justify-content: flex-start;
+  white-space: nowrap;
+}
+
+.folder-list,
+.asset-list {
+  display: grid;
+  gap: 8px;
+}
+
+.asset-list-head {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 8px;
+  padding: 0 8px;
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.asset-list-head > :nth-child(3) {
+  display: none;
+}
+
+.editor-panel {
+  margin-top: 10px;
+  border: 1px solid color-mix(in oklab, var(--accent) 14%, var(--border));
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+  background: color-mix(in oklab, var(--surface) 94%, var(--paper));
+}
+
+.folder-item,
+.asset-item {
+  border: 1px solid color-mix(in oklab, var(--line-strong) 14%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--surface) 92%, var(--paper));
+  padding: 10px;
+  gap: 8px;
+}
+
+.folder-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.asset-item {
+  display: grid;
+}
+
+.asset-list > .asset-item {
+  grid-template-columns: 40px minmax(0, 1fr);
+  grid-template-areas:
+    "select main"
+    "select actions";
+  align-items: start;
+}
+
+.asset-list > .asset-item .asset-select-wrap {
+  grid-area: select;
+  align-self: center;
+}
+
+.asset-list > .asset-item .asset-main {
+  grid-area: main;
+}
+
+.asset-list > .asset-item .asset-actions-inline {
+  grid-area: actions;
+  justify-content: flex-start;
+}
+
+.asset-item.selected {
+  border-color: color-mix(in oklab, var(--accent) 52%, var(--border));
+  background: color-mix(in oklab, var(--accent) 8%, var(--surface));
+}
+
+.asset-select-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 44px;
+}
+
+.asset-select-checkbox {
+  width: 18px;
+  height: 18px;
+}
+
+.asset-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.asset-actions-inline {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.deleted-assets-list .asset-item {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.deleted-assets-list .asset-actions-inline {
+  justify-content: flex-start;
+}
+
+.folder-item.active {
+  border-color: color-mix(in oklab, var(--accent) 52%, var(--border));
+  box-shadow: 0 18px 34px -28px color-mix(in oklab, var(--accent) 42%, transparent);
+}
+
+.folder-pick {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.folder-name,
+.asset-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.folder-meta,
+.asset-meta,
+.selected-folder {
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--muted);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.empty {
+  border: 1px dashed color-mix(in oklab, var(--accent) 14%, var(--border));
+  border-radius: 14px;
+  padding: 12px;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.library-admin-feedback {
+  padding: 0 2px;
+}
+
