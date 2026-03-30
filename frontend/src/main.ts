@@ -6,7 +6,11 @@ import { vLazy } from './directives'
 
 // 设计系统（顺序很重要）
 import './styles/design-system.css'
+import './styles/a11y.css'
 import './styles.css'
+
+// 无障碍工具
+import { setupFocusVisible } from './utils/a11y'
 
 const app = createApp(App)
 app.use(createPinia())
@@ -16,6 +20,9 @@ app.use(router)
 app.directive('lazy', vLazy)
 
 app.mount('#app')
+
+// 初始化焦点可见性检测
+setupFocusVisible()
 
 // 注册 PWA Service Worker
 if ('serviceWorker' in navigator) {

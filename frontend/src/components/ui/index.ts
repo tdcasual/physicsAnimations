@@ -18,3 +18,6 @@ export { default as DataList } from './DataList.vue'
 export { default as EditorPanel } from './EditorPanel.vue'
 export { default as SearchField } from './SearchField.vue'
 export { default as VirtualList } from './VirtualList.vue'
+
+// 无障碍组件
+export { default as SkipLink } from '../SkipLink.vue'
