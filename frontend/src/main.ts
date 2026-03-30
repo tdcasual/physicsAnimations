@@ -10,10 +10,15 @@ import './styles/design-system.css'
 import './styles/a11y.css'
 import './styles.css'
 
-// 无障碍工具
+// 工具
 import { setupFocusVisible } from './utils/a11y'
+import { initSentry, initWebVitals } from './monitoring'
 
 const app = createApp(App)
+
+// 初始化 Sentry（必须在其他插件之前）
+initSentry(app)
+
 app.use(createPinia())
 app.use(router)
 app.use(i18n)
@@ -22,6 +27,9 @@ app.use(i18n)
 app.directive('lazy', vLazy)
 
 app.mount('#app')
+
+// 初始化 Web Vitals 监控
+initWebVitals()
 
 // 初始化焦点可见性检测
 setupFocusVisible()
@@ -32,6 +40,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/sw.js')
       .then(registration => {
+        // eslint-disable-next-line no-console
         console.log('SW registered:', registration.scope)
 
         // 监听 Service Worker 更新
@@ -41,6 +50,7 @@ if ('serviceWorker' in navigator) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // 有新版本可用
+                // eslint-disable-next-line no-console
                 console.log('New version available')
                 // 可以在这里触发更新提示
               }
@@ -49,6 +59,7 @@ if ('serviceWorker' in navigator) {
         })
       })
       .catch(error => {
+        // eslint-disable-next-line no-console
         console.log('SW registration failed:', error)
       })
   })

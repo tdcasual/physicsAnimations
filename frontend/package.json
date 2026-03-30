@@ -26,10 +26,13 @@
     "build-storybook": "storybook build"
   },
   "dependencies": {
+    "@sentry/browser": "^10.46.0",
+    "@sentry/vue": "^10.46.0",
     "pinia": "^3.0.4",
     "vue": "^3.5.13",
     "vue-i18n": "^11.3.0",
-    "vue-router": "^5.0.2"
+    "vue-router": "^5.0.2",
+    "web-vitals": "^5.2.0"
   },
   "devDependencies": {
     "@axe-core/cli": "^4.11.1",
