@@ -1,3 +1,6 @@
+// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
+import storybook from 'eslint-plugin-storybook'
+
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
 import pluginVue from 'eslint-plugin-vue'
@@ -15,15 +18,11 @@ export default [
       'playwright-report/**',
       'test-results/**',
     ],
-  },
-
-  // 基础配置
+  }, // 基础配置
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
-  prettierConfig,
-
-  // 通用规则
+  prettierConfig, // 通用规则
   {
     plugins: {
       prettier: prettierPlugin,
@@ -64,9 +63,7 @@ export default [
       'vue/multi-word-component-names': 'off',
       'vue/no-v-html': 'warn',
     },
-  },
-
-  // Vue 文件特殊配置
+  }, // Vue 文件特殊配置
   {
     files: ['**/*.vue'],
     languageOptions: {
@@ -86,9 +83,7 @@ export default [
       '@typescript-eslint/no-unused-vars': 'off', // Vue 文件中有很多未使用变量
       'vue/valid-v-on': 'off', // Vue 3 支持 .window 修饰符
     },
-  },
-
-  // 测试文件宽松配置
+  }, // 测试文件宽松配置
   {
     files: ['test/**/*.ts', 'e2e/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
     languageOptions: {
@@ -107,9 +102,7 @@ export default [
       'no-useless-escape': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
     },
-  },
-
-  // 配置文件宽松配置
+  }, // 配置文件宽松配置
   {
     files: ['*.config.ts', '*.config.mjs', '*.config.js', 'test/*.mjs'],
     languageOptions: {
@@ -124,9 +117,7 @@ export default [
       '@typescript-eslint/no-explicit-any': 'off',
       'no-console': 'off',
     },
-  },
-
-  // src 目录下的 TS 文件启用类型检查
+  }, // src 目录下的 TS 文件启用类型检查
   {
     files: ['src/**/*.ts'],
     languageOptions: {
@@ -134,6 +125,22 @@ export default [
         project: './tsconfig.json',
         tsconfigRootDir: import.meta.dirname,
       },
+    },
+  },
+  ...storybook.configs['flat/recommended'],
+  // Storybook 文件配置
+  {
+    files: ['**/*.stories.ts', '**/*.stories.js', '.storybook/**/*'],
+    rules: {
+      'storybook/no-renderer-packages': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 ]

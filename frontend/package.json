@@ -21,7 +21,9 @@
     "lint:fix": "eslint . --ext .ts,.vue,.mjs --fix",
     "format": "prettier --write \"src/**/*.{ts,vue,css}\" \"test/**/*.{ts,vue}\" \"e2e/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.{ts,vue,css}\" \"test/**/*.{ts,vue}\" \"e2e/**/*.ts\"",
-    "prepare": "husky"
+    "prepare": "husky",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "pinia": "^3.0.4",
@@ -33,7 +35,7 @@
     "@playwright/test": "^1.58.2",
     "@types/node": "^24.11.0",
     "@vitejs/plugin-vue": "^6.0.4",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "@vue/eslint-config-typescript": "^14.7.0",
     "eslint": "^10.1.0",
     "eslint-config-prettier": "^10.1.8",
@@ -47,7 +49,17 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2",
     "vite": "^7.3.1",
-    "vitest": "^4.0.18"
+    "vitest": "^4.0.18",
+    "storybook": "^10.3.3",
+    "@storybook/vue3-vite": "^10.3.3",
+    "@chromatic-com/storybook": "^5.1.1",
+    "@storybook/addon-vitest": "^10.3.3",
+    "@storybook/addon-a11y": "^10.3.3",
+    "@storybook/addon-docs": "^10.3.3",
+    "@storybook/addon-onboarding": "^10.3.3",
+    "eslint-plugin-storybook": "^10.3.3",
+    "playwright": "^1.58.2",
+    "@vitest/browser-playwright": "^4.0.18"
   },
   "overrides": {
     "rollup": "^4.59.0"

@@ -160,3 +160,6 @@ dist
 
 frontend/node_modules
 .playwright-cli/
+
+*storybook.log
+storybook-static
