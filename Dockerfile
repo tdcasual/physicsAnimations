@@ -1,34 +1,33 @@
-FROM node:24-bookworm-slim AS frontend-builder
+# 物理动画演示系统 - 前端 Docker 镜像
+
+# 构建阶段
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-COPY frontend/package.json frontend/package-lock.json ./frontend/
-RUN npm ci --ignore-scripts && npm --prefix frontend ci --ignore-scripts
+# 安装依赖
+COPY frontend/package*.json ./
+RUN npm ci
 
-COPY . .
-RUN npm run build:frontend
+# 复制源码
+COPY frontend/ ./
 
-FROM node:24-bookworm-slim AS runtime-base
+# 构建
+RUN npm run build
 
-ENV NODE_ENV=production
-ENV PORT=4173
+# 生产阶段
+FROM nginx:alpine
 
-WORKDIR /app
+# 复制构建产物
+COPY --from=builder /app/dist /usr/share/nginx/html
 
-COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --ignore-scripts
+# 复制 Nginx 配置
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
-COPY . .
-COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
 
-RUN mkdir -p content
+EXPOSE 80
 
-EXPOSE 4173
-
-CMD ["npm", "start"]
-
-FROM runtime-base AS runtime-browser
-RUN npx playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
-
-FROM runtime-base AS runtime
+CMD ["nginx", "-g", "daemon off;"]
