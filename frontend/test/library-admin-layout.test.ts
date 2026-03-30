@@ -1,32 +1,32 @@
-import { describe, expect, it } from "vitest";
-import { readExpandedSource } from "./helpers/sourceReader";
+import { describe, expect, it } from 'vitest'
+import { readExpandedSource } from './helpers/sourceReader'
 
 function read(relPath: string): string {
-  return readExpandedSource(relPath);
+  return readExpandedSource(relPath)
 }
 
 function readLibrarySources() {
-  const view = read("src/views/admin/AdminLibraryView.vue");
-  const template = read("src/views/admin/library/AdminLibraryView.template.html");
-  const style = read("src/views/admin/library/AdminLibraryView.css");
-  const state = read("src/features/library/useLibraryAdminState.ts");
-  const actionWiring = read("src/features/library/useLibraryAdminActionWiring.ts");
-  const dataActions = read("src/features/library/useLibraryAdminDataActions.ts");
-  const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
-  const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
-  const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
-  const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
-  const folderActions = read("src/features/library/useLibraryFolderActions.ts");
-  const assetCrudActions = read("src/features/library/useLibraryAssetCrudActions.ts");
-  const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
-  const panelSections = read("src/features/library/useLibraryPanelSections.ts");
-  const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
-  const folderPanel = read("src/views/admin/library/panels/FolderPanel.vue");
-  const assetPanel = read("src/views/admin/library/panels/AssetPanel.vue");
-  const embedPanel = read("src/views/admin/library/panels/EmbedPanel.vue");
-  const embedProfileCreatePanel = read("src/views/admin/library/panels/EmbedProfileCreatePanel.vue");
-  const embedProfileEditPanel = read("src/views/admin/library/panels/EmbedProfileEditPanel.vue");
-  const operationLogPanel = read("src/views/admin/library/panels/OperationLogPanel.vue");
+  const view = read('src/views/admin/AdminLibraryView.vue')
+  const template = read('src/views/admin/library/AdminLibraryView.template.html')
+  const style = read('src/views/admin/library/AdminLibraryView.css')
+  const state = read('src/features/library/useLibraryAdminState.ts')
+  const actionWiring = read('src/features/library/useLibraryAdminActionWiring.ts')
+  const dataActions = read('src/features/library/useLibraryAdminDataActions.ts')
+  const feedback = read('src/features/library/useLibraryAdminFeedback.ts')
+  const embedActions = read('src/features/library/useLibraryEmbedProfileActions.ts')
+  const assetSelection = read('src/features/library/useLibraryAssetSelection.ts')
+  const assetFilters = read('src/features/library/useLibraryAssetFilters.ts')
+  const folderActions = read('src/features/library/useLibraryFolderActions.ts')
+  const assetCrudActions = read('src/features/library/useLibraryAssetCrudActions.ts')
+  const assetEditorActions = read('src/features/library/useLibraryAssetEditorActions.ts')
+  const panelSections = read('src/features/library/useLibraryPanelSections.ts')
+  const adminLifecycle = read('src/features/library/useLibraryAdminLifecycle.ts')
+  const folderPanel = read('src/views/admin/library/panels/FolderPanel.vue')
+  const assetPanel = read('src/views/admin/library/panels/AssetPanel.vue')
+  const embedPanel = read('src/views/admin/library/panels/EmbedPanel.vue')
+  const embedProfileCreatePanel = read('src/views/admin/library/panels/EmbedProfileCreatePanel.vue')
+  const embedProfileEditPanel = read('src/views/admin/library/panels/EmbedProfileEditPanel.vue')
+  const operationLogPanel = read('src/views/admin/library/panels/OperationLogPanel.vue')
   return {
     view,
     template,
@@ -71,69 +71,85 @@ function readLibrarySources() {
       embedProfileCreatePanel,
       embedProfileEditPanel,
       operationLogPanel,
-    ].join("\n"),
-  };
+    ].join('\n'),
+  }
 }
 
-describe("admin library layout", () => {
-  it("adopts the shared admin page header and workspace semantics", () => {
-    const { template, style, combined } = readLibrarySources();
+describe('admin library layout', () => {
+  it('adopts the shared admin page header and workspace semantics', () => {
+    const { template, style, combined } = readLibrarySources()
 
-    expect(template).toMatch(/admin-page-header/);
-    expect(template).toMatch(/admin-page-header--library/);
-    expect(template).toMatch(/admin-page-kicker/);
-    expect(template).toMatch(/admin-page-meta/);
-    expect(template).toMatch(/admin-page-meta-list/);
-    expect(template).toMatch(/admin-workspace-grid/);
-    expect(combined).toMatch(/admin-page-stack/);
-    expect(style).not.toMatch(/^\s*\.library-header\s*\{/m);
-  });
+    expect(template).toMatch(/admin-page-header/)
+    expect(template).toMatch(/admin-page-header--library/)
+    expect(template).toMatch(/admin-page-kicker/)
+    expect(template).toMatch(/admin-page-meta/)
+    expect(template).toMatch(/admin-page-meta-list/)
+    expect(template).toMatch(/admin-workspace-grid/)
+    expect(combined).toMatch(/admin-page-stack/)
+    expect(style).not.toMatch(/^\s*\.library-header\s*\{/m)
+  })
 
-  it("adds a desktop support row that pairs scale metrics with workflow guidance while keeping mobile quieter", () => {
-    const { template, style } = readLibrarySources();
+  it('adds a desktop support row that pairs scale metrics with workflow guidance while keeping mobile quieter', () => {
+    const { template, style } = readLibrarySources()
 
-    expect(template).toMatch(/library-page-shell/);
-    expect(template).toMatch(/library-workspace-summary/);
-    expect(template).toMatch(/library-focus-panel/);
-    expect(style).toMatch(/@media\s*\(min-width:\s*1100px\)\s*\{[\s\S]*\.library-page-shell\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*0\.9fr\)\s*minmax\(280px,\s*1\.1fr\)/);
-    expect(style).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.library-focus-panel\s*\{[\s\S]*display:\s*none/);
-  });
+    expect(template).toMatch(/library-page-shell/)
+    expect(template).toMatch(/library-workspace-summary/)
+    expect(template).toMatch(/library-focus-panel/)
+    expect(style).toMatch(
+      /@media\s*\(min-width:\s*1100px\)\s*\{[\s\S]*\.library-page-shell\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*0\.9fr\)\s*minmax\(280px,\s*1\.1fr\)/
+    )
+    expect(style).toMatch(
+      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.library-focus-panel\s*\{[\s\S]*display:\s*none/
+    )
+  })
 
-  it("uses a sidebar-plus-main workbench with panel tabs and scoped search", () => {
-    const { template, style } = readLibrarySources();
-    expect(template).toMatch(/library-workbench/);
-    expect(template).toMatch(/library-sidebar/);
-    expect(template).toMatch(/library-main-grid/);
-    expect(template).toMatch(/library-asset-area/);
-    expect(template).toMatch(/library-inspector-area/);
-    expect(template).toMatch(/library-mobile-taskbar/);
-    expect(template).toMatch(/library-mobile-primary-actions/);
-    expect(template).toMatch(/library-mobile-sheet/);
-    expect(template).toMatch(/library-mobile-tools/);
-    expect(template).toMatch(/library-mobile-deleted-toggle/);
-    expect(style).toMatch(/\.library-sidebar\s*\{/);
-    expect(style).toMatch(/\.library-main-grid\s*\{/);
-    expect(template).toMatch(/library-panel-tabs/);
-    expect(template).toMatch(/panel-section-toggle/);
-    expect(template).toMatch(/folder-search-input/);
-    expect(template).toMatch(/asset-search-input/);
-    expect(template).toMatch(/profile-search-input/);
-  });
+  it('uses a sidebar-plus-main workbench with panel tabs and scoped search', () => {
+    const { template, style } = readLibrarySources()
+    expect(template).toMatch(/library-workbench/)
+    expect(template).toMatch(/library-sidebar/)
+    expect(template).toMatch(/library-main-grid/)
+    expect(template).toMatch(/library-asset-area/)
+    expect(template).toMatch(/library-inspector-area/)
+    expect(template).toMatch(/library-mobile-taskbar/)
+    expect(template).toMatch(/library-mobile-primary-actions/)
+    expect(template).toMatch(/library-mobile-sheet/)
+    expect(template).toMatch(/library-mobile-tools/)
+    expect(template).toMatch(/library-mobile-deleted-toggle/)
+    expect(style).toMatch(/\.library-sidebar\s*\{/)
+    expect(style).toMatch(/\.library-main-grid\s*\{/)
+    expect(template).toMatch(/library-panel-tabs/)
+    expect(template).toMatch(/panel-section-toggle/)
+    expect(template).toMatch(/folder-search-input/)
+    expect(template).toMatch(/asset-search-input/)
+    expect(template).toMatch(/profile-search-input/)
+  })
 
-  it("uses a two-level grid with sticky sidebar and adaptive main area", () => {
-    const { style } = readLibrarySources();
+  it('uses a two-level grid with sticky sidebar and adaptive main area', () => {
+    const { style } = readLibrarySources()
 
-    expect(style).toMatch(/\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*260px\s+minmax\(0,\s*1fr\)/);
-    expect(style).toMatch(/\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(400px,\s*1\.3fr\)/);
-    expect(style).toMatch(/\.library-sidebar\s*\{[\s\S]*position:\s*sticky/);
-    expect(style).toMatch(/\.library-inspector-area\s*\{[\s\S]*position:\s*sticky/);
-    expect(style).toMatch(/\.library-panel-tabs\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(150px,\s*1fr\)\)/);
-    expect(style).toMatch(/@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*1fr/);
-    expect(style).toMatch(/@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-inspector-area\s*\{[\s\S]*position:\s*static/);
-    expect(style).toMatch(/@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*\.library-sidebar\s*\{[\s\S]*position:\s*static/);
-  });
+    expect(style).toMatch(
+      /\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*260px\s+minmax\(0,\s*1fr\)/
+    )
+    expect(style).toMatch(
+      /\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(400px,\s*1\.3fr\)/
+    )
+    expect(style).toMatch(/\.library-sidebar\s*\{[\s\S]*position:\s*sticky/)
+    expect(style).toMatch(/\.library-inspector-area\s*\{[\s\S]*position:\s*sticky/)
+    expect(style).toMatch(
+      /\.library-panel-tabs\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(150px,\s*1fr\)\)/
+    )
+    expect(style).toMatch(
+      /@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*1fr/
+    )
+    expect(style).toMatch(
+      /@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-inspector-area\s*\{[\s\S]*position:\s*static/
+    )
+    expect(style).toMatch(
+      /@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*\.library-sidebar\s*\{[\s\S]*position:\s*static/
+    )
+  })
 
-  it("composes workbench areas with inline semantic elements and panel components", () => {
+  it('composes workbench areas with inline semantic elements and panel components', () => {
     const {
       view,
       template,
@@ -143,204 +159,213 @@ describe("admin library layout", () => {
       embedProfileCreatePanel,
       embedProfileEditPanel,
       operationLogPanel,
-    } =
-      readLibrarySources();
+    } = readLibrarySources()
 
-    expect(view).not.toMatch(/import LibraryFolderColumn/);
-    expect(view).not.toMatch(/import LibraryAssetColumn/);
-    expect(view).not.toMatch(/import LibraryInspectorColumn/);
-    expect(template).not.toMatch(/<LibraryFolderColumn>/);
-    expect(template).not.toMatch(/<LibraryAssetColumn>/);
-    expect(template).not.toMatch(/<LibraryInspectorColumn>/);
-    expect(template).toMatch(/library-sidebar/);
-    expect(template).toMatch(/library-asset-area/);
-    expect(template).toMatch(/library-inspector-area/);
-    expect(view).toMatch(/import FolderPanel/);
-    expect(view).toMatch(/import AssetPanel/);
-    expect(view).toMatch(/import EmbedPanel/);
-    expect(view).toMatch(/import EmbedProfileCreatePanel/);
-    expect(view).toMatch(/import EmbedProfileEditPanel/);
-    expect(view).toMatch(/import OperationLogPanel/);
-    expect(template).toMatch(/<FolderPanel/);
-    expect(template).toMatch(/<AssetPanel/);
-    expect(template).toMatch(/<EmbedPanel/);
-    expect(template).toMatch(/<EmbedProfileCreatePanel/);
-    expect(template).toMatch(/<EmbedProfileEditPanel/);
-    expect(template).toMatch(/<OperationLogPanel>/);
-    expect(template).not.toMatch(/v-model="vm\.drafts\.embedScriptUrl"/);
-    expect(template).not.toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"/);
+    expect(view).not.toMatch(/import LibraryFolderColumn/)
+    expect(view).not.toMatch(/import LibraryAssetColumn/)
+    expect(view).not.toMatch(/import LibraryInspectorColumn/)
+    expect(template).not.toMatch(/<LibraryFolderColumn>/)
+    expect(template).not.toMatch(/<LibraryAssetColumn>/)
+    expect(template).not.toMatch(/<LibraryInspectorColumn>/)
+    expect(template).toMatch(/library-sidebar/)
+    expect(template).toMatch(/library-asset-area/)
+    expect(template).toMatch(/library-inspector-area/)
+    expect(view).toMatch(/import FolderPanel/)
+    expect(view).toMatch(/import AssetPanel/)
+    expect(view).toMatch(/import EmbedPanel/)
+    expect(view).toMatch(/import EmbedProfileCreatePanel/)
+    expect(view).toMatch(/import EmbedProfileEditPanel/)
+    expect(view).toMatch(/import OperationLogPanel/)
+    expect(template).toMatch(/<FolderPanel/)
+    expect(template).toMatch(/<AssetPanel/)
+    expect(template).toMatch(/<EmbedPanel/)
+    expect(template).toMatch(/<EmbedProfileCreatePanel/)
+    expect(template).toMatch(/<EmbedProfileEditPanel/)
+    expect(template).toMatch(/<OperationLogPanel>/)
+    expect(template).not.toMatch(/v-model="vm\.drafts\.embedScriptUrl"/)
+    expect(template).not.toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"/)
 
-    expect(folderPanel).toMatch(/panel-content/);
-    expect(assetPanel).toMatch(/panel-content/);
-    expect(embedPanel).toMatch(/panel-content/);
-    expect(embedProfileCreatePanel).toMatch(/新增平台/);
-    expect(embedProfileCreatePanel).toMatch(/createEmbedProfileEntry/);
-    expect(embedProfileEditPanel).toMatch(/编辑平台/);
-    expect(embedProfileEditPanel).toMatch(/saveEmbedProfileEdit/);
-    expect(operationLogPanel).toMatch(/recent-action-log/);
-  });
+    expect(folderPanel).toMatch(/panel-content/)
+    expect(assetPanel).toMatch(/panel-content/)
+    expect(embedPanel).toMatch(/panel-content/)
+    expect(embedProfileCreatePanel).toMatch(/新增平台/)
+    expect(embedProfileCreatePanel).toMatch(/createEmbedProfileEntry/)
+    expect(embedProfileEditPanel).toMatch(/编辑平台/)
+    expect(embedProfileEditPanel).toMatch(/saveEmbedProfileEdit/)
+    expect(operationLogPanel).toMatch(/recent-action-log/)
+  })
 
-  it("consumes library admin state via a single vm object in the view shell", () => {
-    const { view, template } = readLibrarySources();
-    expect(view).toMatch(/const vm = reactive\(useLibraryAdminState\(\)\);/);
-    expect(view).not.toMatch(/const\s*\{[\s\S]*\}\s*=\s*useLibraryAdminState\(\);/);
-    expect(template).toMatch(/vm\./);
-    expect(view).toMatch(/mobileLibraryToolsOpen/);
-    expect(view).toMatch(/mobileDeletedAssetsOpen/);
-  });
+  it('consumes library admin state via a single vm object in the view shell', () => {
+    const { view, template } = readLibrarySources()
+    expect(view).toMatch(/const vm = reactive\(useLibraryAdminState\(\)\);/)
+    expect(view).not.toMatch(/const\s*\{[\s\S]*\}\s*=\s*useLibraryAdminState\(\);/)
+    expect(template).toMatch(/vm\./)
+    expect(view).toMatch(/mobileLibraryToolsOpen/)
+    expect(view).toMatch(/mobileDeletedAssetsOpen/)
+  })
 
-  it("binds template state through grouped vm buckets instead of flat fields", () => {
-    const { template } = readLibrarySources();
-    expect(template).toMatch(/vm\.ui\./);
-    expect(template).toMatch(/vm\.data\./);
-    expect(template).toMatch(/vm\.drafts\./);
-    expect(template).toMatch(/vm\.filters\./);
-    expect(template).toMatch(/vm\.selection\./);
-    expect(template).toMatch(/vm\.panels\./);
-    expect(template).toMatch(/vm\.logs\./);
-    expect(template).toMatch(/vm\.actions\./);
+  it('binds template state through grouped vm buckets instead of flat fields', () => {
+    const { template } = readLibrarySources()
+    expect(template).toMatch(/vm\.ui\./)
+    expect(template).toMatch(/vm\.data\./)
+    expect(template).toMatch(/vm\.drafts\./)
+    expect(template).toMatch(/vm\.filters\./)
+    expect(template).toMatch(/vm\.selection\./)
+    expect(template).toMatch(/vm\.panels\./)
+    expect(template).toMatch(/vm\.logs\./)
+    expect(template).toMatch(/vm\.actions\./)
 
-    expect(template).not.toMatch(/\bvm\.savingAsset\b/);
-    expect(template).not.toMatch(/\bvm\.folderName\b/);
-    expect(template).not.toMatch(/\bvm\.filteredFolders\b/);
-    expect(template).not.toMatch(/\bvm\.assetBatchResult\b/);
-    expect(template).not.toMatch(/\bvm\.activePanelTab\b/);
-    expect(template).not.toMatch(/\bvm\.operationLogFilter\b/);
-    expect(template).not.toMatch(/\bvm\.setActivePanelTab\b/);
-    expect(template).not.toMatch(/\bvm\.getFieldError\b/);
-    expect(template).not.toMatch(/\bvm\.clearOperationLogs\b/);
-  });
+    expect(template).not.toMatch(/\bvm\.savingAsset\b/)
+    expect(template).not.toMatch(/\bvm\.folderName\b/)
+    expect(template).not.toMatch(/\bvm\.filteredFolders\b/)
+    expect(template).not.toMatch(/\bvm\.assetBatchResult\b/)
+    expect(template).not.toMatch(/\bvm\.activePanelTab\b/)
+    expect(template).not.toMatch(/\bvm\.operationLogFilter\b/)
+    expect(template).not.toMatch(/\bvm\.setActivePanelTab\b/)
+    expect(template).not.toMatch(/\bvm\.getFieldError\b/)
+    expect(template).not.toMatch(/\bvm\.clearOperationLogs\b/)
+  })
 
-  it("provides batch actions and advanced filters for asset management", () => {
-    const { template, combined } = readLibrarySources();
-    expect(template).toMatch(/asset-mode-filter/);
-    expect(template).toMatch(/asset-profile-filter/);
-    expect(template).toMatch(/asset-sort-select/);
-    expect(template).toMatch(/asset-list-head/);
-    expect(template).toMatch(/asset-batch-toolbar/);
-    expect(template).toMatch(/asset-batch-result/);
-    expect(combined).toMatch(/runAssetBatchUndo/);
-    expect(template).toMatch(/deleted-assets-list/);
-    expect(combined).toMatch(/restoreDeletedAsset/);
-    expect(combined).toMatch(/removeDeletedAssetPermanently/);
-    expect(combined).toMatch(/deleteLibraryAssetPermanently/);
-    expect(template).toMatch(/永久删除/);
-    expect(combined).toMatch(/不可恢复/);
-    expect(combined).toMatch(/recent-action-log/);
-    expect(combined).toMatch(/recent-action-item/);
-    expect(combined).toMatch(/operationLogs/);
-    expect(template).toMatch(/operation-log-filter/);
-    expect(combined).toMatch(/clearOperationLogs/);
-    expect(combined).toMatch(/filteredOperationLogs/);
-    expect(template).toMatch(/asset-select-checkbox/);
-    expect(combined).toMatch(/runAssetBatchOpenMode/);
-    expect(combined).toMatch(/runAssetBatchDelete/);
-    expect(combined).toMatch(/runAssetBatchMove/);
-  });
+  it('provides batch actions and advanced filters for asset management', () => {
+    const { template, combined } = readLibrarySources()
+    expect(template).toMatch(/asset-mode-filter/)
+    expect(template).toMatch(/asset-profile-filter/)
+    expect(template).toMatch(/asset-sort-select/)
+    expect(template).toMatch(/asset-list-head/)
+    expect(template).toMatch(/asset-batch-toolbar/)
+    expect(template).toMatch(/asset-batch-result/)
+    expect(combined).toMatch(/runAssetBatchUndo/)
+    expect(template).toMatch(/deleted-assets-list/)
+    expect(combined).toMatch(/restoreDeletedAsset/)
+    expect(combined).toMatch(/removeDeletedAssetPermanently/)
+    expect(combined).toMatch(/deleteLibraryAssetPermanently/)
+    expect(template).toMatch(/永久删除/)
+    expect(combined).toMatch(/不可恢复/)
+    expect(combined).toMatch(/recent-action-log/)
+    expect(combined).toMatch(/recent-action-item/)
+    expect(combined).toMatch(/operationLogs/)
+    expect(template).toMatch(/operation-log-filter/)
+    expect(combined).toMatch(/clearOperationLogs/)
+    expect(combined).toMatch(/filteredOperationLogs/)
+    expect(template).toMatch(/asset-select-checkbox/)
+    expect(combined).toMatch(/runAssetBatchOpenMode/)
+    expect(combined).toMatch(/runAssetBatchDelete/)
+    expect(combined).toMatch(/runAssetBatchMove/)
+  })
 
-  it("moves batch action implementations into the asset selection composable", () => {
-    const { state, assetSelection } = readLibrarySources();
-    expect(state).not.toMatch(/async function runAssetBatchDelete/);
-    expect(state).not.toMatch(/async function runAssetBatchMove/);
-    expect(assetSelection).toMatch(/async function runAssetBatchDelete/);
-    expect(assetSelection).toMatch(/async function runAssetBatchMove/);
-  });
+  it('moves batch action implementations into the asset selection composable', () => {
+    const { state, assetSelection } = readLibrarySources()
+    expect(state).not.toMatch(/async function runAssetBatchDelete/)
+    expect(state).not.toMatch(/async function runAssetBatchMove/)
+    expect(assetSelection).toMatch(/async function runAssetBatchDelete/)
+    expect(assetSelection).toMatch(/async function runAssetBatchMove/)
+  })
 
-  it("does not keep unused batch result setter bindings in the view layer", () => {
-    const { view } = readLibrarySources();
-    expect(view).not.toMatch(/\bsetAssetBatchResult\b/);
-  });
+  it('does not keep unused batch result setter bindings in the view layer', () => {
+    const { view } = readLibrarySources()
+    expect(view).not.toMatch(/\bsetAssetBatchResult\b/)
+  })
 
-  it("moves query/filter/sort logic into the asset filters composable", () => {
-    const { state, assetFilters } = readLibrarySources();
-    expect(state).not.toMatch(/const folderSearchQuery = ref/);
-    expect(state).not.toMatch(/const filteredFolderAssets = computed/);
-    expect(assetFilters).toMatch(/const folderSearchQuery = ref/);
-    expect(assetFilters).toMatch(/const filteredFolderAssets = computed/);
-    expect(assetFilters).toMatch(/const sortedFilteredFolderAssets = computed/);
-  });
+  it('moves query/filter/sort logic into the asset filters composable', () => {
+    const { state, assetFilters } = readLibrarySources()
+    expect(state).not.toMatch(/const folderSearchQuery = ref/)
+    expect(state).not.toMatch(/const filteredFolderAssets = computed/)
+    expect(assetFilters).toMatch(/const folderSearchQuery = ref/)
+    expect(assetFilters).toMatch(/const filteredFolderAssets = computed/)
+    expect(assetFilters).toMatch(/const sortedFilteredFolderAssets = computed/)
+  })
 
-  it("moves folder lifecycle actions into the folder actions composable", () => {
-    const { state, folderActions } = readLibrarySources();
-    expect(state).not.toMatch(/async function createFolderEntry/);
-    expect(state).not.toMatch(/async function saveFolderMeta/);
-    expect(state).not.toMatch(/async function uploadCover/);
-    expect(state).not.toMatch(/async function removeFolder/);
-    expect(folderActions).toMatch(/async function createFolderEntry/);
-    expect(folderActions).toMatch(/async function saveFolderMeta/);
-    expect(folderActions).toMatch(/async function uploadCover/);
-    expect(folderActions).toMatch(/async function removeFolder/);
-  });
+  it('moves folder lifecycle actions into the folder actions composable', () => {
+    const { state, folderActions } = readLibrarySources()
+    expect(state).not.toMatch(/async function createFolderEntry/)
+    expect(state).not.toMatch(/async function saveFolderMeta/)
+    expect(state).not.toMatch(/async function uploadCover/)
+    expect(state).not.toMatch(/async function removeFolder/)
+    expect(folderActions).toMatch(/async function createFolderEntry/)
+    expect(folderActions).toMatch(/async function saveFolderMeta/)
+    expect(folderActions).toMatch(/async function uploadCover/)
+    expect(folderActions).toMatch(/async function removeFolder/)
+  })
 
-  it("routes panel switching through setActivePanelTab to keep sections expanded", () => {
-    const { state, panelSections } = readLibrarySources();
-    expect(state).toMatch(/useLibraryPanelSections/);
-    expect(state).not.toMatch(/function setActivePanelTab/);
-    expect(panelSections).toMatch(/function setActivePanelTab/);
-    const directAssignments = panelSections.match(/activePanelTab\.value\s*=/g) ?? [];
-    expect(directAssignments.length).toBe(1);
-  });
+  it('routes panel switching through setActivePanelTab to keep sections expanded', () => {
+    const { state, panelSections } = readLibrarySources()
+    expect(state).toMatch(/useLibraryPanelSections/)
+    expect(state).not.toMatch(/function setActivePanelTab/)
+    expect(panelSections).toMatch(/function setActivePanelTab/)
+    const directAssignments = panelSections.match(/activePanelTab\.value\s*=/g) ?? []
+    expect(directAssignments.length).toBe(1)
+  })
 
-  it("guards folder asset reload against race conditions and unhandled errors", () => {
-    const { state, actionWiring, dataActions } = readLibrarySources();
-    expect(state).toMatch(/useLibraryAdminActionWiring/);
-    expect(actionWiring).toMatch(/useLibraryAdminDataActions/);
-    expect(dataActions).toMatch(/folderAssetsLoadSeq/);
-    expect(dataActions).toMatch(/const requestId = deps\.folderAssetsLoadSeq\.value \+ 1/);
-    expect(dataActions).toMatch(/requestId !== deps\.folderAssetsLoadSeq\.value \|\| deps\.selectedFolderId\.value !== folderId/);
-    expect(actionWiring).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/);
-    expect(dataActions).toMatch(/加载文件夹资源失败/);
-  });
+  it('guards folder asset reload against race conditions and unhandled errors', () => {
+    const { state, actionWiring, dataActions } = readLibrarySources()
+    expect(state).toMatch(/useLibraryAdminActionWiring/)
+    expect(actionWiring).toMatch(/useLibraryAdminDataActions/)
+    expect(dataActions).toMatch(/folderAssetsLoadSeq/)
+    expect(dataActions).toMatch(/const requestId = deps\.folderAssetsLoadSeq\.value \+ 1/)
+    expect(dataActions).toMatch(
+      /requestId !== deps\.folderAssetsLoadSeq\.value \|\| deps\.selectedFolderId\.value !== folderId/
+    )
+    expect(actionWiring).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/)
+    expect(dataActions).toMatch(/加载文件夹资源失败/)
+  })
 
-  it("guards folder list reload against stale responses under weak networks", () => {
-    const { dataActions } = readLibrarySources();
-    expect(dataActions).toMatch(/folderListLoadSeq/);
-    expect(dataActions).toMatch(/const requestId = deps\.folderListLoadSeq\.value \+ 1/);
-    expect(dataActions).toMatch(/deps\.folderListLoadSeq\.value = requestId/);
-    expect(dataActions).toMatch(/if \(requestId !== deps\.folderListLoadSeq\.value\) return/);
-  });
+  it('guards folder list reload against stale responses under weak networks', () => {
+    const { dataActions } = readLibrarySources()
+    expect(dataActions).toMatch(/folderListLoadSeq/)
+    expect(dataActions).toMatch(/const requestId = deps\.folderListLoadSeq\.value \+ 1/)
+    expect(dataActions).toMatch(/deps\.folderListLoadSeq\.value = requestId/)
+    expect(dataActions).toMatch(/if \(requestId !== deps\.folderListLoadSeq\.value\) return/)
+  })
 
-  it("splits saving state by domain to avoid full-page lock", () => {
-    const { state } = readLibrarySources();
-    expect(state).toMatch(/const savingFolder = ref\(false\)/);
-    expect(state).toMatch(/const savingAsset = ref\(false\)/);
-    expect(state).toMatch(/const savingEmbed = ref\(false\)/);
-    expect(state).toMatch(/const saving = computed\(\(\) => savingFolder\.value \|\| savingAsset\.value \|\| savingEmbed\.value\)/);
-    expect(state).not.toMatch(/saving\.value\s*=/);
-  });
+  it('splits saving state by domain to avoid full-page lock', () => {
+    const { state } = readLibrarySources()
+    expect(state).toMatch(/const savingFolder = ref\(false\)/)
+    expect(state).toMatch(/const savingAsset = ref\(false\)/)
+    expect(state).toMatch(/const savingEmbed = ref\(false\)/)
+    expect(state).toMatch(
+      /const saving = computed\(\(\) => savingFolder\.value \|\| savingAsset\.value \|\| savingEmbed\.value\)/
+    )
+    expect(state).not.toMatch(/saving\.value\s*=/)
+  })
 
-  it("renders inline field validation for key library admin forms", () => {
-    const { template, state, feedback, combined } = readLibrarySources();
-    expect(state).toMatch(/useLibraryAdminFeedback/);
-    expect(feedback).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/);
-    expect(feedback).toMatch(/function setFieldError/);
-    expect(feedback).toMatch(/function clearFieldErrors/);
-    expect(feedback).toMatch(/function getFieldError/);
-    expect(template).toMatch(/field-error-text/);
-    expect(template).toMatch(/has-error/);
-    expect(template).toMatch(/getFieldError\("createFolderName"\)/);
-    expect(template).toMatch(/getFieldError\("uploadAssetFile"\)/);
-    expect(template).toMatch(/getFieldError\("uploadAssetEmbedProfile"\)/);
-    expect(combined).toMatch(/getFieldError\("createEmbedProfileName"\)/);
-    expect(combined).toMatch(/getFieldError\("createEmbedScriptUrl"\)/);
-  });
+  it('renders inline field validation for key library admin forms', () => {
+    const { template, state, feedback, combined } = readLibrarySources()
+    expect(state).toMatch(/useLibraryAdminFeedback/)
+    expect(feedback).toMatch(/const fieldErrors = ref<Record<string, string>>\(\{\}\)/)
+    expect(feedback).toMatch(/function setFieldError/)
+    expect(feedback).toMatch(/function clearFieldErrors/)
+    expect(feedback).toMatch(/function getFieldError/)
+    expect(template).toMatch(/field-error-text/)
+    expect(template).toMatch(/has-error/)
+    expect(template).toMatch(/getFieldError\("createFolderName"\)/)
+    expect(template).toMatch(/getFieldError\("uploadAssetFile"\)/)
+    expect(template).toMatch(/getFieldError\("uploadAssetEmbedProfile"\)/)
+    expect(combined).toMatch(/getFieldError\("createEmbedProfileName"\)/)
+    expect(combined).toMatch(/getFieldError\("createEmbedScriptUrl"\)/)
+  })
 
-  it("prevents long names from breaking mobile row layout", () => {
-    const { style } = readLibrarySources();
-    expect(style).toMatch(/\.folder-pick\s*\{[\s\S]*min-width:\s*0;/);
-    expect(style).toMatch(/\.asset-main\s*\{[\s\S]*flex:\s*1;/);
-    expect(style).toMatch(/\.asset-main\s*\{[\s\S]*min-width:\s*0;/);
-    expect(style).toMatch(/\.folder-name,\s*\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
-    expect(style).toMatch(/\.folder-meta,\s*\.asset-meta,\s*\.selected-folder\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
-  });
+  it('prevents long names from breaking mobile row layout', () => {
+    const { style } = readLibrarySources()
+    expect(style).toMatch(/\.folder-pick\s*\{[\s\S]*min-width:\s*0;/)
+    expect(style).toMatch(/\.asset-main\s*\{[\s\S]*flex:\s*1;/)
+    expect(style).toMatch(/\.asset-main\s*\{[\s\S]*min-width:\s*0;/)
+    expect(style).toMatch(/\.folder-name,\s*\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere;/)
+    expect(style).toMatch(
+      /\.folder-meta,\s*\.asset-meta,\s*\.selected-folder\s*\{[\s\S]*overflow-wrap:\s*anywhere;/
+    )
+  })
 
-  it("disables mobile auto-correct and auto-capitalization for embed URL fields", () => {
-    const { combined } = readLibrarySources();
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
-  });
-});
+  it('disables mobile auto-correct and auto-capitalization for embed URL fields', () => {
+    const { combined } = readLibrarySources()
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocapitalize="none"/)
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocorrect="off"/)
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocapitalize="none"/)
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocorrect="off"/)
+    expect(combined).toMatch(
+      /v-model="vm\.drafts\.embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/
+    )
+    expect(combined).toMatch(
+      /v-model="vm\.drafts\.embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/
+    )
+  })
+})

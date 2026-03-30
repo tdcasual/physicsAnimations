@@ -1,87 +1,84 @@
-import { clearToken, getToken, me } from "../features/auth/authApi";
-import { resolveAdminRedirect } from "./redirect";
-import {
-  createRouter,
-  createWebHistory,
-  type RouterHistory,
-} from "vue-router";
-import { appRoutes } from "./routes";
+import { clearToken, getToken, me } from '../features/auth/authApi'
+import { resolveAdminRedirect } from './redirect'
+import { createRouter, createWebHistory, type RouterHistory } from 'vue-router'
+import { appRoutes } from './routes'
 
 export function createAppRouter({
   history = createWebHistory(import.meta.env.BASE_URL),
 }: { history?: RouterHistory } = {}) {
-  let validatedToken = "";
+  let validatedToken = ''
 
   const router = createRouter({
     history,
     routes: appRoutes,
     scrollBehavior(to, _from, savedPosition) {
-      const hasHashTarget = to.path === "/" && typeof to.hash === "string" && to.hash.trim();
-      const hasMeaningfulSavedPosition = !!savedPosition && (savedPosition.top !== 0 || savedPosition.left !== 0);
+      const hasHashTarget = to.path === '/' && typeof to.hash === 'string' && to.hash.trim()
+      const hasMeaningfulSavedPosition =
+        !!savedPosition && (savedPosition.top !== 0 || savedPosition.left !== 0)
 
       if (hasHashTarget && !hasMeaningfulSavedPosition) {
-        return { el: to.hash };
+        return { el: to.hash }
       }
-      if (savedPosition) return savedPosition;
-      return { left: 0, top: 0 };
+      if (savedPosition) return savedPosition
+      return { left: 0, top: 0 }
     },
-  });
+  })
 
-  router.beforeEach(async (to) => {
-    const isLoginPath = to.path === "/login";
-    const loginRedirect = resolveAdminRedirect(to.query.redirect);
+  router.beforeEach(async to => {
+    const isLoginPath = to.path === '/login'
+    const loginRedirect = resolveAdminRedirect(to.query.redirect)
 
     if (isLoginPath) {
-      const token = getToken();
+      const token = getToken()
       if (!token) {
-        validatedToken = "";
-        return true;
+        validatedToken = ''
+        return true
       }
 
       if (validatedToken === token) {
-        return loginRedirect;
+        return loginRedirect
       }
 
       try {
-        await me();
-        validatedToken = token;
-        return loginRedirect;
+        await me()
+        validatedToken = token
+        return loginRedirect
       } catch {
-        clearToken();
-        validatedToken = "";
-        return true;
+        clearToken()
+        validatedToken = ''
+        return true
       }
     }
 
-    const isAdminPath = to.path.startsWith("/admin");
-    if (!isAdminPath) return true;
+    const isAdminPath = to.path.startsWith('/admin')
+    if (!isAdminPath) return true
 
-    const token = getToken();
+    const token = getToken()
     if (!token) {
-      validatedToken = "";
+      validatedToken = ''
       return {
-        path: "/login",
+        path: '/login',
         query: { redirect: to.fullPath },
-      };
+      }
     }
 
-    if (validatedToken === token) return true;
+    if (validatedToken === token) return true
 
     try {
-      await me();
-      validatedToken = token;
-      return true;
+      await me()
+      validatedToken = token
+      return true
     } catch {
-      clearToken();
-      validatedToken = "";
+      clearToken()
+      validatedToken = ''
       return {
-        path: "/login",
+        path: '/login',
         query: { redirect: to.fullPath },
-      };
+      }
     }
-  });
+  })
 
-  return router;
+  return router
 }
 
-export const router = createAppRouter();
+export const router = createAppRouter()

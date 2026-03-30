@@ -1,7 +1,7 @@
-import { ref } from "vue";
+import { ref } from 'vue'
 
-const catalogQuery = ref("");
+const catalogQuery = ref('')
 
 export function useCatalogSearch() {
-  return catalogQuery;
+  return catalogQuery
 }

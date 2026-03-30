@@ -1,52 +1,55 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import type { TaxonomyCategory, TaxonomyGroup } from "../../../features/admin/taxonomyUiState";
+  import { computed } from 'vue'
+  import type { TaxonomyCategory, TaxonomyGroup } from '../../../features/admin/taxonomyUiState'
 
-const props = defineProps<{
-  saving: boolean;
-  selectedCategory: TaxonomyCategory;
-  allSortedGroups: TaxonomyGroup[];
-  canDeleteSelectedCategory: boolean;
-  categoryFormGroupId: string;
-  categoryFormTitle: string;
-  categoryFormOrder: number;
-  categoryFormHidden: boolean;
-  actionFeedback: string;
-  actionFeedbackError: boolean;
-}>();
+  const props = defineProps<{
+    saving: boolean
+    selectedCategory: TaxonomyCategory
+    allSortedGroups: TaxonomyGroup[]
+    canDeleteSelectedCategory: boolean
+    categoryFormGroupId: string
+    categoryFormTitle: string
+    categoryFormOrder: number
+    categoryFormHidden: boolean
+    actionFeedback: string
+    actionFeedbackError: boolean
+  }>()
 
-const emit = defineEmits<{
-  (event: "update:categoryFormGroupId", value: string): void;
-  (event: "update:categoryFormTitle", value: string): void;
-  (event: "update:categoryFormOrder", value: number): void;
-  (event: "update:categoryFormHidden", value: boolean): void;
-  (event: "save-category"): void;
-  (event: "reset-or-delete-category"): void;
-}>();
+  const emit = defineEmits<{
+    (event: 'update:categoryFormGroupId', value: string): void
+    (event: 'update:categoryFormTitle', value: string): void
+    (event: 'update:categoryFormOrder', value: number): void
+    (event: 'update:categoryFormHidden', value: boolean): void
+    (event: 'save-category'): void
+    (event: 'reset-or-delete-category'): void
+  }>()
 
-const categoryFormGroupIdModel = computed({
-  get: () => props.categoryFormGroupId,
-  set: (value: string) => emit("update:categoryFormGroupId", value),
-});
-const categoryFormTitleModel = computed({
-  get: () => props.categoryFormTitle,
-  set: (value: string) => emit("update:categoryFormTitle", value),
-});
-const categoryFormOrderModel = computed({
-  get: () => props.categoryFormOrder,
-  set: (value: number) => emit("update:categoryFormOrder", value),
-});
-const categoryFormHiddenModel = computed({
-  get: () => props.categoryFormHidden,
-  set: (value: boolean) => emit("update:categoryFormHidden", value),
-});
+  const categoryFormGroupIdModel = computed({
+    get: () => props.categoryFormGroupId,
+    set: (value: string) => emit('update:categoryFormGroupId', value),
+  })
+  const categoryFormTitleModel = computed({
+    get: () => props.categoryFormTitle,
+    set: (value: string) => emit('update:categoryFormTitle', value),
+  })
+  const categoryFormOrderModel = computed({
+    get: () => props.categoryFormOrder,
+    set: (value: number) => emit('update:categoryFormOrder', value),
+  })
+  const categoryFormHiddenModel = computed({
+    get: () => props.categoryFormHidden,
+    set: (value: boolean) => emit('update:categoryFormHidden', value),
+  })
 </script>
 
 <template>
   <div class="panel admin-card">
-    <h3>二级分类：{{ selectedCategory.title || selectedCategory.id }} ({{ selectedCategory.id }})</h3>
+    <h3
+      >二级分类：{{ selectedCategory.title || selectedCategory.id }} ({{ selectedCategory.id }})</h3
+    >
     <div class="meta-line">
-      内容 {{ Number(selectedCategory.count || 0) }} · 新增 {{ Number(selectedCategory.dynamicCount || 0) }}
+      内容 {{ Number(selectedCategory.count || 0) }} · 新增
+      {{ Number(selectedCategory.dynamicCount || 0) }}
     </div>
 
     <div class="form-grid">
@@ -61,15 +64,28 @@ const categoryFormHiddenModel = computed({
 
       <label class="field">
         <span>标题</span>
-        <input v-model="categoryFormTitleModel" class="field-input" type="text" :disabled="saving" />
+        <input
+          v-model="categoryFormTitleModel"
+          class="field-input"
+          type="text"
+          :disabled="saving"
+        />
       </label>
 
-      <details class="subaccordion" :open="categoryFormHiddenModel || Number(categoryFormOrderModel || 0) !== 0">
+      <details
+        class="subaccordion"
+        :open="categoryFormHiddenModel || Number(categoryFormOrderModel || 0) !== 0"
+      >
         <summary>高级设置</summary>
         <div class="form-grid subaccordion-body">
           <label class="field">
             <span>排序（越大越靠前）</span>
-            <input v-model.number="categoryFormOrderModel" class="field-input" type="number" :disabled="saving" />
+            <input
+              v-model.number="categoryFormOrderModel"
+              class="field-input"
+              type="number"
+              :disabled="saving"
+            />
           </label>
           <label class="checkbox">
             <input v-model="categoryFormHiddenModel" type="checkbox" :disabled="saving" />
@@ -87,9 +103,15 @@ const categoryFormHiddenModel = computed({
         :disabled="saving"
         @click="emit('reset-or-delete-category')"
       >
-        {{ canDeleteSelectedCategory ? "删除" : "重置" }}
+        {{ canDeleteSelectedCategory ? '删除' : '重置' }}
       </button>
-      <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('save-category')">保存</button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        :disabled="saving"
+        @click="emit('save-category')"
+        >保存</button
+      >
     </div>
 
     <div
@@ -105,94 +127,97 @@ const categoryFormHiddenModel = computed({
 </template>
 
 <style scoped>
-.panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  padding: 12px;
-  display: grid;
-  gap: 10px;
-}
-
-h3 {
-  margin: 0;
-  font-size: calc(16px * var(--ui-scale));
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-.meta-line {
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-}
-
-.action-feedback {
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
-}
-
-.action-feedback.error {
-  color: var(--danger);
-}
-
-.action-feedback.success {
-  color: var(--success);
-}
-
-.form-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-
-.checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
-}
-
-.subaccordion {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 8px;
-}
-
-.subaccordion > summary {
-  cursor: pointer;
-  min-height: 44px;
-  padding: 10px 0;
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale));
-}
-
-.subaccordion-body {
-  margin-top: 8px;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.hint {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale));
-}
-
-@media (max-width: 640px) {
-  .actions {
-    position: sticky;
-    bottom: 0;
-    padding-top: 10px;
-    padding-bottom: 2px;
-    background:
-      linear-gradient(180deg, color-mix(in oklab, var(--surface) 35%, transparent), color-mix(in oklab, var(--surface) 96%, var(--paper)) 32%);
+  .panel {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 12px;
+    display: grid;
+    gap: 10px;
   }
-}
+
+  h3 {
+    margin: 0;
+    font-size: calc(16px * var(--ui-scale));
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .meta-line {
+    color: var(--muted);
+    font-size: calc(12px * var(--ui-scale));
+  }
+
+  .action-feedback {
+    font-size: calc(13px * var(--ui-scale));
+    color: var(--muted);
+  }
+
+  .action-feedback.error {
+    color: var(--danger);
+  }
+
+  .action-feedback.success {
+    color: var(--success);
+  }
+
+  .form-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .checkbox {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: calc(13px * var(--ui-scale));
+    color: var(--muted);
+  }
+
+  .subaccordion {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 8px;
+  }
+
+  .subaccordion > summary {
+    cursor: pointer;
+    min-height: 44px;
+    padding: 10px 0;
+    color: var(--muted);
+    font-size: calc(13px * var(--ui-scale));
+  }
+
+  .subaccordion-body {
+    margin-top: 8px;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .hint {
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--muted);
+    font-size: calc(13px * var(--ui-scale));
+  }
+
+  @media (max-width: 640px) {
+    .actions {
+      position: sticky;
+      bottom: 0;
+      padding-top: 10px;
+      padding-bottom: 2px;
+      background: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--surface) 35%, transparent),
+        color-mix(in oklab, var(--surface) 96%, var(--paper)) 32%
+      );
+    }
+  }
 </style>

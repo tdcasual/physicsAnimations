@@ -1,141 +1,148 @@
-import type { ComputedRef, Ref } from "vue";
-import { getSystemInfo, updateSystemEmbedUpdater, updateSystemStorage, validateSystemStorage } from "../adminApi";
-import { buildSystemUpdatePayload } from "../systemFormState";
+import type { ComputedRef, Ref } from 'vue'
+import {
+  getSystemInfo,
+  updateSystemEmbedUpdater,
+  updateSystemStorage,
+  validateSystemStorage,
+} from '../adminApi'
+import { buildSystemUpdatePayload } from '../systemFormState'
 
-type WizardStep = 1 | 2 | 3 | 4;
+type WizardStep = 1 | 2 | 3 | 4
 
 type SystemWizardActionsParams = {
-  loading: Ref<boolean>;
-  saving: Ref<boolean>;
-  validating: Ref<boolean>;
-  syncing: Ref<boolean>;
-  savingEmbedUpdater: Ref<boolean>;
-  errorText: Ref<string>;
-  successText: Ref<string>;
-  validateText: Ref<string>;
-  validateOk: Ref<boolean>;
-  embedUpdaterErrorText: Ref<string>;
-  embedUpdaterSuccessText: Ref<string>;
-  wizardStep: Ref<WizardStep>;
-  mode: Ref<string>;
-  url: Ref<string>;
-  basePath: Ref<string>;
-  username: Ref<string>;
-  password: Ref<string>;
-  timeoutMs: Ref<number>;
-  scanRemote: Ref<boolean>;
-  embedUpdaterEnabled: Ref<boolean>;
-  embedUpdaterIntervalDays: Ref<number>;
-  remoteMode: ComputedRef<boolean>;
-  requiresWebdavUrl: ComputedRef<boolean>;
-  readOnlyMode: ComputedRef<boolean>;
-  canSyncNow: ComputedRef<boolean>;
-  setFieldError: (key: string, message: string) => void;
-  clearFieldErrors: (key?: string) => void;
-  applyStorage: (nextStorage: any, options?: { resetStep: boolean }) => void;
-  applyEmbedUpdater: (nextEmbedUpdater: any) => void;
-};
+  loading: Ref<boolean>
+  saving: Ref<boolean>
+  validating: Ref<boolean>
+  syncing: Ref<boolean>
+  savingEmbedUpdater: Ref<boolean>
+  errorText: Ref<string>
+  successText: Ref<string>
+  validateText: Ref<string>
+  validateOk: Ref<boolean>
+  embedUpdaterErrorText: Ref<string>
+  embedUpdaterSuccessText: Ref<string>
+  wizardStep: Ref<WizardStep>
+  mode: Ref<string>
+  url: Ref<string>
+  basePath: Ref<string>
+  username: Ref<string>
+  password: Ref<string>
+  timeoutMs: Ref<number>
+  scanRemote: Ref<boolean>
+  embedUpdaterEnabled: Ref<boolean>
+  embedUpdaterIntervalDays: Ref<number>
+  remoteMode: ComputedRef<boolean>
+  requiresWebdavUrl: ComputedRef<boolean>
+  readOnlyMode: ComputedRef<boolean>
+  canSyncNow: ComputedRef<boolean>
+  setFieldError: (key: string, message: string) => void
+  clearFieldErrors: (key?: string) => void
+  applyStorage: (nextStorage: any, options?: { resetStep: boolean }) => void
+  applyEmbedUpdater: (nextEmbedUpdater: any) => void
+}
 
-function resolveAuthError(status?: number, fallbackText = "操作失败。"): string {
-  return status === 401 ? "请先登录管理员账号。" : fallbackText;
+function resolveAuthError(status?: number, fallbackText = '操作失败。'): string {
+  return status === 401 ? '请先登录管理员账号。' : fallbackText
 }
 
 function isValidIntervalDays(value: number): boolean {
-  return Number.isFinite(value) && Number.isInteger(value) && value >= 1 && value <= 365;
+  return Number.isFinite(value) && Number.isInteger(value) && value >= 1 && value <= 365
 }
 
 export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
   async function loadSystem(options: { resetStep: boolean } = { resetStep: true }) {
-    ctx.loading.value = true;
-    ctx.errorText.value = "";
+    ctx.loading.value = true
+    ctx.errorText.value = ''
     try {
-      const data = await getSystemInfo();
-      ctx.applyStorage(data?.storage || {}, { resetStep: options.resetStep });
-      ctx.applyEmbedUpdater(data?.embedUpdater || {});
+      const data = await getSystemInfo()
+      ctx.applyStorage(data?.storage || {}, { resetStep: options.resetStep })
+      ctx.applyEmbedUpdater(data?.embedUpdater || {})
     } catch (err) {
-      const e = err as { status?: number; message?: string };
-      if (e?.message === "invalid_storage_mode") {
-        ctx.errorText.value = "系统配置中的存储模式无效，请修正后重试。";
-        return;
+      const e = err as { status?: number; message?: string }
+      if (e?.message === 'invalid_storage_mode') {
+        ctx.errorText.value = '系统配置中的存储模式无效，请修正后重试。'
+        return
       }
-      ctx.errorText.value = resolveAuthError(e?.status, "加载系统配置失败。");
+      ctx.errorText.value = resolveAuthError(e?.status, '加载系统配置失败。')
     } finally {
-      ctx.loading.value = false;
+      ctx.loading.value = false
     }
   }
 
   async function runValidation() {
     if (!ctx.remoteMode.value) {
-      ctx.validateOk.value = true;
-      ctx.validateText.value = "local 模式无需 WebDAV 连接校验。";
-      return;
+      ctx.validateOk.value = true
+      ctx.validateText.value = 'local 模式无需 WebDAV 连接校验。'
+      return
     }
-    if (!String(ctx.url.value || "").trim()) {
-      ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-      ctx.errorText.value = "请填写 WebDAV 地址。";
-      ctx.validateText.value = "";
-      ctx.validateOk.value = false;
-      return;
+    if (!String(ctx.url.value || '').trim()) {
+      ctx.setFieldError('webdavUrl', '请填写 WebDAV 地址。')
+      ctx.errorText.value = '请填写 WebDAV 地址。'
+      ctx.validateText.value = ''
+      ctx.validateOk.value = false
+      return
     }
-    ctx.clearFieldErrors("webdavUrl");
+    ctx.clearFieldErrors('webdavUrl')
 
-    ctx.validating.value = true;
-    ctx.errorText.value = "";
-    ctx.validateText.value = "";
-    ctx.validateOk.value = false;
+    ctx.validating.value = true
+    ctx.errorText.value = ''
+    ctx.validateText.value = ''
+    ctx.validateOk.value = false
     try {
       const webdavPayload: {
-        url: string;
-        basePath: string;
-        username: string;
-        password: string;
-        timeoutMs?: number;
+        url: string
+        basePath: string
+        username: string
+        password: string
+        timeoutMs?: number
       } = {
         url: ctx.url.value,
         basePath: ctx.basePath.value,
         username: ctx.username.value,
         password: ctx.password.value,
-      };
-      const timeoutForValidation = Number(ctx.timeoutMs.value);
+      }
+      const timeoutForValidation = Number(ctx.timeoutMs.value)
       if (Number.isFinite(timeoutForValidation)) {
-        webdavPayload.timeoutMs = Math.trunc(timeoutForValidation);
+        webdavPayload.timeoutMs = Math.trunc(timeoutForValidation)
       }
 
       await validateSystemStorage({
         webdav: webdavPayload,
-      });
-      ctx.validateOk.value = true;
-      ctx.validateText.value = "连接校验通过。";
+      })
+      ctx.validateOk.value = true
+      ctx.validateText.value = '连接校验通过。'
     } catch (err) {
-      const e = err as { data?: any };
-      const reason = String(e?.data?.reason || "").trim();
-      if (e?.data?.error === "webdav_missing_url") {
-        ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-        ctx.errorText.value = "请填写 WebDAV 地址。";
-        return;
+      const e = err as { data?: any }
+      const reason = String(e?.data?.reason || '').trim()
+      if (e?.data?.error === 'webdav_missing_url') {
+        ctx.setFieldError('webdavUrl', '请填写 WebDAV 地址。')
+        ctx.errorText.value = '请填写 WebDAV 地址。'
+        return
       }
-      ctx.validateText.value = reason ? `连接校验失败：${reason}` : "连接校验失败，请检查地址和账号配置。";
-      ctx.validateOk.value = false;
+      ctx.validateText.value = reason
+        ? `连接校验失败：${reason}`
+        : '连接校验失败，请检查地址和账号配置。'
+      ctx.validateOk.value = false
     } finally {
-      ctx.validating.value = false;
+      ctx.validating.value = false
     }
   }
 
   async function saveStorage() {
-    if (ctx.requiresWebdavUrl.value && !String(ctx.url.value || "").trim()) {
-      ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-      ctx.errorText.value = "请填写 WebDAV 地址。";
-      return;
+    if (ctx.requiresWebdavUrl.value && !String(ctx.url.value || '').trim()) {
+      ctx.setFieldError('webdavUrl', '请填写 WebDAV 地址。')
+      ctx.errorText.value = '请填写 WebDAV 地址。'
+      return
     }
-    ctx.clearFieldErrors("webdavUrl");
+    ctx.clearFieldErrors('webdavUrl')
     if (ctx.readOnlyMode.value) {
-      ctx.errorText.value = "当前为只读模式，无法保存配置。";
-      return;
+      ctx.errorText.value = '当前为只读模式，无法保存配置。'
+      return
     }
 
-    ctx.saving.value = true;
-    ctx.errorText.value = "";
-    ctx.successText.value = "";
+    ctx.saving.value = true
+    ctx.errorText.value = ''
+    ctx.successText.value = ''
     try {
       const payload = buildSystemUpdatePayload({
         mode: ctx.mode.value,
@@ -143,85 +150,87 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
         basePath: ctx.basePath.value,
         username: ctx.username.value,
         password: ctx.password.value,
-        timeoutRaw: Number.isFinite(ctx.timeoutMs.value) ? String(Math.trunc(ctx.timeoutMs.value)) : "",
+        timeoutRaw: Number.isFinite(ctx.timeoutMs.value)
+          ? String(Math.trunc(ctx.timeoutMs.value))
+          : '',
         scanRemote: ctx.scanRemote.value,
         sync: false,
-      });
-      const data = await updateSystemStorage(payload);
-      if (data?.storage) ctx.applyStorage(data.storage, { resetStep: false });
-      else await loadSystem({ resetStep: false });
+      })
+      const data = await updateSystemStorage(payload)
+      if (data?.storage) ctx.applyStorage(data.storage, { resetStep: false })
+      else await loadSystem({ resetStep: false })
 
-      ctx.successText.value = "系统配置已保存。";
-      ctx.wizardStep.value = 4;
+      ctx.successText.value = '系统配置已保存。'
+      ctx.wizardStep.value = 4
     } catch (err) {
-      const e = err as { status?: number; data?: any; message?: string };
-      if (e?.message === "invalid_storage_mode") {
-        ctx.errorText.value = "存储模式无效，请重新选择。";
-        return;
+      const e = err as { status?: number; data?: any; message?: string }
+      if (e?.message === 'invalid_storage_mode') {
+        ctx.errorText.value = '存储模式无效，请重新选择。'
+        return
       }
-      if (e?.data?.error === "webdav_missing_url") {
-        ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
-        ctx.errorText.value = "请填写 WebDAV 地址。";
-        return;
+      if (e?.data?.error === 'webdav_missing_url') {
+        ctx.setFieldError('webdavUrl', '请填写 WebDAV 地址。')
+        ctx.errorText.value = '请填写 WebDAV 地址。'
+        return
       }
-      ctx.errorText.value = resolveAuthError(e?.status, "保存系统配置失败。");
+      ctx.errorText.value = resolveAuthError(e?.status, '保存系统配置失败。')
     } finally {
-      ctx.saving.value = false;
+      ctx.saving.value = false
     }
   }
 
   async function saveEmbedUpdater() {
-    const intervalDays = Number(ctx.embedUpdaterIntervalDays.value);
+    const intervalDays = Number(ctx.embedUpdaterIntervalDays.value)
     if (!isValidIntervalDays(intervalDays)) {
-      ctx.embedUpdaterErrorText.value = "自动更新周期需为 1-365 天的整数。";
-      ctx.embedUpdaterSuccessText.value = "";
-      return;
+      ctx.embedUpdaterErrorText.value = '自动更新周期需为 1-365 天的整数。'
+      ctx.embedUpdaterSuccessText.value = ''
+      return
     }
 
-    ctx.savingEmbedUpdater.value = true;
-    ctx.embedUpdaterErrorText.value = "";
-    ctx.embedUpdaterSuccessText.value = "";
+    ctx.savingEmbedUpdater.value = true
+    ctx.embedUpdaterErrorText.value = ''
+    ctx.embedUpdaterSuccessText.value = ''
     try {
       const data = await updateSystemEmbedUpdater({
         enabled: ctx.embedUpdaterEnabled.value === true,
         intervalDays: Math.trunc(intervalDays),
-      });
-      if (data?.embedUpdater) ctx.applyEmbedUpdater(data.embedUpdater);
-      else await loadSystem({ resetStep: false });
-      ctx.embedUpdaterSuccessText.value = "自动更新设置已保存。";
+      })
+      if (data?.embedUpdater) ctx.applyEmbedUpdater(data.embedUpdater)
+      else await loadSystem({ resetStep: false })
+      ctx.embedUpdaterSuccessText.value = '自动更新设置已保存。'
     } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.data?.error === "invalid_embed_updater_interval_days") {
-        ctx.embedUpdaterErrorText.value = "自动更新周期需为 1-365 天的整数。";
-        return;
+      const e = err as { status?: number; data?: any }
+      if (e?.data?.error === 'invalid_embed_updater_interval_days') {
+        ctx.embedUpdaterErrorText.value = '自动更新周期需为 1-365 天的整数。'
+        return
       }
-      ctx.embedUpdaterErrorText.value = resolveAuthError(e?.status, "保存自动更新设置失败。");
+      ctx.embedUpdaterErrorText.value = resolveAuthError(e?.status, '保存自动更新设置失败。')
     } finally {
-      ctx.savingEmbedUpdater.value = false;
+      ctx.savingEmbedUpdater.value = false
     }
   }
 
   async function syncNow() {
-    if (!ctx.canSyncNow.value) return;
+    if (!ctx.canSyncNow.value) return
 
-    ctx.syncing.value = true;
-    ctx.errorText.value = "";
-    ctx.successText.value = "";
+    ctx.syncing.value = true
+    ctx.errorText.value = ''
+    ctx.successText.value = ''
     try {
       const data = await updateSystemStorage({
         mode: ctx.mode.value,
         sync: true,
         webdav: { scanRemote: ctx.scanRemote.value },
-      });
-      if (data?.storage) ctx.applyStorage(data.storage, { resetStep: false });
-      else await loadSystem({ resetStep: false });
+      })
+      if (data?.storage) ctx.applyStorage(data.storage, { resetStep: false })
+      else await loadSystem({ resetStep: false })
 
-      ctx.successText.value = "同步完成。";
+      ctx.successText.value = '同步完成。'
     } catch (err) {
-      const e = err as { status?: number };
-      ctx.errorText.value = resolveAuthError(e?.status, "同步失败。");
+      const e = err as { status?: number }
+      ctx.errorText.value = resolveAuthError(e?.status, '同步失败。')
     } finally {
-      ctx.syncing.value = false;
+      ctx.syncing.value = false
     }
   }
 
@@ -231,5 +240,5 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
     saveStorage,
     saveEmbedUpdater,
     syncNow,
-  };
+  }
 }

@@ -1,48 +1,48 @@
-import fs from "node:fs";
-import path from "node:path";
-import { describe, expect, it } from "vitest";
+import fs from 'node:fs'
+import path from 'node:path'
+import { describe, expect, it } from 'vitest'
 
 function readFile(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
 }
 
-describe("catalog navigation homepage layout", () => {
-  it("has a hero section with title and stats", () => {
-    const source = readFile("src/views/CatalogView.vue");
+describe('catalog navigation homepage layout', () => {
+  it('has a hero section with title and stats', () => {
+    const source = readFile('src/views/CatalogView.vue')
 
-    expect(source).toMatch(/class="catalog-hero"/);
-    expect(source).toMatch(/class="hero-title"/);
-    expect(source).toMatch(/class="hero-subtitle"/);
-    expect(source).toMatch(/高中物理动画演示/);
-  });
+    expect(source).toMatch(/class="catalog-hero"/)
+    expect(source).toMatch(/class="hero-title"/)
+    expect(source).toMatch(/class="hero-subtitle"/)
+    expect(source).toMatch(/高中物理动画演示/)
+  })
 
-  it("moves the search box into the global topbar for cross-route access", () => {
-    const appSource = readFile("src/App.vue");
+  it('moves the search box into the global topbar for cross-route access', () => {
+    const appSource = readFile('src/App.vue')
 
-    expect(appSource).toMatch(/class="topbar-search"/);
-    expect(appSource).toMatch(/topbar-search-field|onTopbarSearch/);
-  });
+    expect(appSource).toMatch(/class="topbar-search"/)
+    expect(appSource).toMatch(/topbar-search-field|onTopbarSearch/)
+  })
 
-  it("has navigation tabs for groups and categories", () => {
-    const source = readFile("src/views/CatalogView.vue");
+  it('has navigation tabs for groups and categories', () => {
+    const source = readFile('src/views/CatalogView.vue')
 
-    expect(source).toMatch(/class="nav-groups"/);
-    expect(source).toMatch(/class="nav-categories"/);
-    expect(source).toMatch(/class="nav-tab"/);
-  });
+    expect(source).toMatch(/class="nav-groups"/)
+    expect(source).toMatch(/class="nav-categories"/)
+    expect(source).toMatch(/class="nav-tab"/)
+  })
 
-  it("displays content in a responsive grid", () => {
-    const source = readFile("src/views/CatalogView.vue");
+  it('displays content in a responsive grid', () => {
+    const source = readFile('src/views/CatalogView.vue')
 
-    expect(source).toMatch(/class="items-grid"/);
-    expect(source).toMatch(/class="item-card"/);
-    expect(source).toMatch(/grid-template-columns/);
-  });
+    expect(source).toMatch(/class="items-grid"/)
+    expect(source).toMatch(/class="item-card"/)
+    expect(source).toMatch(/grid-template-columns/)
+  })
 
-  it("shows library highlights when available", () => {
-    const source = readFile("src/views/CatalogView.vue");
+  it('shows library highlights when available', () => {
+    const source = readFile('src/views/CatalogView.vue')
 
-    expect(source).toMatch(/class="catalog-library"/);
-    expect(source).toMatch(/资源库精选/);
-  });
-});
+    expect(source).toMatch(/class="catalog-library"/)
+    expect(source).toMatch(/资源库精选/)
+  })
+})

@@ -42,9 +42,9 @@ describe('favorites', () => {
         { id: 'demo1', favoritedAt: 1234567890 },
         { id: 'demo2', favoritedAt: 1234567891 },
       ]
-      
+
       const result = parseFavoriteDemos(JSON.stringify(data))
-      
+
       expect(result).toHaveLength(2)
       expect(result[0].id).toBe('demo1')
       expect(result[0].favoritedAt).toBe(1234567890)
@@ -76,9 +76,9 @@ describe('favorites', () => {
         { id: 'valid4', favoritedAt: 9999999999 }, // 有效
         { id: 'valid5' }, // 无效：缺少favoritedAt
       ]
-      
+
       const result = parseFavoriteDemos(JSON.stringify(data))
-      
+
       expect(result).toHaveLength(2)
       expect(result[0].id).toBe('valid')
       expect(result[1].id).toBe('valid4')
@@ -87,12 +87,10 @@ describe('favorites', () => {
 
   describe('serializeFavoriteDemos', () => {
     it('应正确序列化为JSON', () => {
-      const data: FavoriteDemoEntry[] = [
-        { id: 'demo1', favoritedAt: 1234567890 },
-      ]
-      
+      const data: FavoriteDemoEntry[] = [{ id: 'demo1', favoritedAt: 1234567890 }]
+
       const result = serializeFavoriteDemos(data)
-      
+
       expect(JSON.parse(result)).toEqual(data)
     })
 
@@ -101,12 +99,10 @@ describe('favorites', () => {
     })
 
     it('应清理数据（去除空白，确保数字）', () => {
-      const data = [
-        { id: ' demo1 ', favoritedAt: '1234567890' as any },
-      ]
-      
+      const data = [{ id: ' demo1 ', favoritedAt: '1234567890' as any }]
+
       const result = JSON.parse(serializeFavoriteDemos(data))
-      
+
       expect(result[0].id).toBe('demo1') // 去除空白
       expect(result[0].favoritedAt).toBe(1234567890) // 转为数字
     })
@@ -116,9 +112,9 @@ describe('favorites', () => {
     it('应从localStorage读取', () => {
       const data: FavoriteDemoEntry[] = [{ id: 'demo1', favoritedAt: 1234567890 }]
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       const result = readFavoriteDemos()
-      
+
       expect(localStorageMock.getItem).toHaveBeenCalledWith('pa_favorite_demos_v1')
       expect(result).toHaveLength(1)
     })
@@ -127,9 +123,9 @@ describe('favorites', () => {
       localStorageMock.getItem.mockImplementation(() => {
         throw new Error('localStorage error')
       })
-      
+
       const result = readFavoriteDemos()
-      
+
       expect(result).toEqual([])
     })
   })
@@ -137,9 +133,9 @@ describe('favorites', () => {
   describe('writeFavoriteDemos', () => {
     it('应写入localStorage', () => {
       const data: FavoriteDemoEntry[] = [{ id: 'demo1', favoritedAt: 1234567890 }]
-      
+
       writeFavoriteDemos(data)
-      
+
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
         'pa_favorite_demos_v1',
         JSON.stringify(data)
@@ -150,7 +146,7 @@ describe('favorites', () => {
       localStorageMock.setItem.mockImplementation(() => {
         throw new Error('localStorage error')
       })
-      
+
       expect(() => writeFavoriteDemos([{ id: 'demo1', favoritedAt: 1234567890 }])).not.toThrow()
     })
   })
@@ -159,14 +155,14 @@ describe('favorites', () => {
     it('应返回true当项目在收藏中', () => {
       const data: FavoriteDemoEntry[] = [{ id: 'demo1', favoritedAt: 1234567890 }]
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       expect(isFavoriteDemo('demo1')).toBe(true)
     })
 
     it('应返回false当项目不在收藏中', () => {
       const data: FavoriteDemoEntry[] = [{ id: 'demo1', favoritedAt: 1234567890 }]
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       expect(isFavoriteDemo('demo2')).toBe(false)
     })
 
@@ -179,9 +175,9 @@ describe('favorites', () => {
   describe('toggleFavoriteDemo', () => {
     it('应添加未收藏的项', () => {
       localStorageMock.getItem.mockReturnValue('[]')
-      
+
       const result = toggleFavoriteDemo('demo1')
-      
+
       expect(result.isFavorite).toBe(true)
       expect(result.entries).toHaveLength(1)
       expect(result.entries[0].id).toBe('demo1')
@@ -190,9 +186,9 @@ describe('favorites', () => {
     it('应移除已收藏的项', () => {
       const data: FavoriteDemoEntry[] = [{ id: 'demo1', favoritedAt: 1234567890 }]
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       const result = toggleFavoriteDemo('demo1')
-      
+
       expect(result.isFavorite).toBe(false)
       expect(result.entries).toHaveLength(0)
     })
@@ -203,18 +199,18 @@ describe('favorites', () => {
         { id: 'demo2', favoritedAt: 2000 },
       ]
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       const result = toggleFavoriteDemo('demo3', { now: 3000 })
-      
+
       expect(result.entries[0].id).toBe('demo3')
     })
 
     it('空id应返回原列表', () => {
       const data: FavoriteDemoEntry[] = [{ id: 'demo1', favoritedAt: 1000 }]
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       const result = toggleFavoriteDemo('')
-      
+
       expect(result.isFavorite).toBe(false)
       expect(result.entries).toEqual(data)
     })
@@ -225,9 +221,9 @@ describe('favorites', () => {
         favoritedAt: i * 1000,
       }))
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       const result = toggleFavoriteDemo('new-demo')
-      
+
       expect(result.entries).toHaveLength(24) // 默认限制24
       expect(result.entries[0].id).toBe('new-demo')
       expect(result.entries.some(e => e.id === 'demo24')).toBe(false) // 最旧的被移除
@@ -239,9 +235,9 @@ describe('favorites', () => {
         favoritedAt: i * 1000,
       }))
       localStorageMock.getItem.mockReturnValue(JSON.stringify(data))
-      
+
       const result = toggleFavoriteDemo('new-demo', { limit: 5 })
-      
+
       expect(result.entries).toHaveLength(5)
     })
   })

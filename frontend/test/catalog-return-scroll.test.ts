@@ -1,5 +1,5 @@
-import { nextTick } from "vue";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { nextTick } from 'vue'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   clearCatalogReturnScroll,
   parseCatalogReturnScroll,
@@ -7,125 +7,128 @@ import {
   resolveCatalogReturnScrollRestore,
   serializeCatalogReturnScroll,
   writeCatalogReturnScroll,
-} from "../src/features/catalog/catalogReturnScroll";
-import { mountCatalogViewChromeHarness } from "./helpers/catalogViewChromeHarness";
+} from '../src/features/catalog/catalogReturnScroll'
+import { mountCatalogViewChromeHarness } from './helpers/catalogViewChromeHarness'
 
-describe("catalog return scroll", () => {
+describe('catalog return scroll', () => {
   afterEach(() => {
-    clearCatalogReturnScroll();
-  });
+    clearCatalogReturnScroll()
+  })
 
-  it("uses a shared scrollTo mock in the jsdom test harness", () => {
-    expect(window.scrollTo).toBeTypeOf("function");
-    expect(vi.isMockFunction(window.scrollTo)).toBe(true);
-  });
+  it('uses a shared scrollTo mock in the jsdom test harness', () => {
+    expect(window.scrollTo).toBeTypeOf('function')
+    expect(vi.isMockFunction(window.scrollTo)).toBe(true)
+  })
 
-  it("round-trips one-shot return scroll snapshots", () => {
+  it('round-trips one-shot return scroll snapshots', () => {
     const raw = serializeCatalogReturnScroll({
-      catalogFullPath: "/#catalog-library",
-      destinationPath: "/viewer/demo",
+      catalogFullPath: '/#catalog-library',
+      destinationPath: '/viewer/demo',
       scrollY: 1933,
       timestamp: 1700000000000,
-    });
+    })
 
     expect(parseCatalogReturnScroll(raw)).toEqual({
-      catalogFullPath: "/#catalog-library",
-      destinationPath: "/viewer/demo",
+      catalogFullPath: '/#catalog-library',
+      destinationPath: '/viewer/demo',
       scrollY: 1933,
       timestamp: 1700000000000,
-    });
-  });
+    })
+  })
 
-  it("persists and reads exact catalog return scroll context", () => {
+  it('persists and reads exact catalog return scroll context', () => {
     writeCatalogReturnScroll({
-      catalogFullPath: "/",
-      destinationPath: "/viewer/demo",
+      catalogFullPath: '/',
+      destinationPath: '/viewer/demo',
       scrollY: 1800,
       timestamp: 1700000000000,
-    });
+    })
 
     expect(readCatalogReturnScroll()).toEqual({
-      catalogFullPath: "/",
-      destinationPath: "/viewer/demo",
+      catalogFullPath: '/',
+      destinationPath: '/viewer/demo',
       scrollY: 1800,
       timestamp: 1700000000000,
-    });
-  });
+    })
+  })
 
-  it("restores only for fresh history returns to the same catalog entry", () => {
+  it('restores only for fresh history returns to the same catalog entry', () => {
     const snapshot = {
-      catalogFullPath: "/#catalog-library",
-      destinationPath: "/library/folder/f_1",
+      catalogFullPath: '/#catalog-library',
+      destinationPath: '/library/folder/f_1',
       scrollY: 1933,
       timestamp: 1700000000000,
-    };
+    }
 
     expect(
       resolveCatalogReturnScrollRestore({
         snapshot,
-        currentFullPath: "/#catalog-library",
-        historyState: { forward: "/library/folder/f_1" },
+        currentFullPath: '/#catalog-library',
+        historyState: { forward: '/library/folder/f_1' },
         now: 1700000000500,
-      }),
-    ).toEqual(snapshot);
+      })
+    ).toEqual(snapshot)
 
     expect(
       resolveCatalogReturnScrollRestore({
         snapshot,
-        currentFullPath: "/",
-        historyState: { forward: "/library/folder/f_1" },
+        currentFullPath: '/',
+        historyState: { forward: '/library/folder/f_1' },
         now: 1700000000500,
-      }),
-    ).toBeNull();
+      })
+    ).toBeNull()
 
     expect(
       resolveCatalogReturnScrollRestore({
         snapshot,
-        currentFullPath: "/#catalog-library",
-        historyState: { forward: "/viewer/other" },
+        currentFullPath: '/#catalog-library',
+        historyState: { forward: '/viewer/other' },
         now: 1700000000500,
-      }),
-    ).toBeNull();
+      })
+    ).toBeNull()
 
     expect(
       resolveCatalogReturnScrollRestore({
         snapshot,
-        currentFullPath: "/#catalog-library",
-        historyState: { forward: "/library/folder/f_1" },
+        currentFullPath: '/#catalog-library',
+        historyState: { forward: '/library/folder/f_1' },
         now: 1700000600000,
-      }),
-    ).toBeNull();
-  });
+      })
+    ).toBeNull()
+  })
 
-  it("saves a one-shot return-scroll snapshot when leaving catalog and restores it when returning", async () => {
-    Object.defineProperty(window, "scrollY", { value: 1800, configurable: true });
+  it('saves a one-shot return-scroll snapshot when leaving catalog and restores it when returning', async () => {
+    Object.defineProperty(window, 'scrollY', { value: 1800, configurable: true })
 
-    const leavingHarness = await mountCatalogViewChromeHarness({ initialPath: "/" });
-    await leavingHarness.router.push("/viewer/demo");
+    const leavingHarness = await mountCatalogViewChromeHarness({ initialPath: '/' })
+    await leavingHarness.router.push('/viewer/demo')
 
     expect(readCatalogReturnScroll()).toEqual({
-      catalogFullPath: "/",
-      destinationPath: "/viewer/demo",
+      catalogFullPath: '/',
+      destinationPath: '/viewer/demo',
       scrollY: 1800,
       timestamp: expect.any(Number),
-    });
+    })
 
-    leavingHarness.cleanup();
+    leavingHarness.cleanup()
 
-    const scrollTo = vi.fn();
-    Object.defineProperty(window, "scrollTo", { value: scrollTo, configurable: true });
-    Object.defineProperty(window.history, "state", {
-      value: { forward: "/viewer/demo" },
+    const scrollTo = vi.fn()
+    Object.defineProperty(window, 'scrollTo', { value: scrollTo, configurable: true })
+    Object.defineProperty(window.history, 'state', {
+      value: { forward: '/viewer/demo' },
       configurable: true,
-    });
+    })
 
-    const restoringHarness = await mountCatalogViewChromeHarness({ initialPath: "/", loading: true });
-    restoringHarness.loading.value = false;
-    await nextTick();
-    await nextTick();
+    const restoringHarness = await mountCatalogViewChromeHarness({
+      initialPath: '/',
+      loading: true,
+    })
+    restoringHarness.loading.value = false
+    await nextTick()
+    await nextTick()
 
-    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 1800 });
+    expect(scrollTo).toHaveBeenCalledWith({ left: 0, top: 1800 })
 
-    restoringHarness.cleanup();
-  });
-});
+    restoringHarness.cleanup()
+  })
+})

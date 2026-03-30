@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   createLinkItem,
   createCategory,
@@ -16,195 +16,211 @@ import {
   updateGroup,
   updateSystemStorage,
   validateSystemStorage,
-} from "../src/features/admin/adminApi";
+} from '../src/features/admin/adminApi'
 
-const originalFetch = globalThis.fetch;
+const originalFetch = globalThis.fetch
 
 afterEach(() => {
-  vi.restoreAllMocks();
-  globalThis.fetch = originalFetch;
-  sessionStorage.clear();
-});
+  vi.restoreAllMocks()
+  globalThis.fetch = originalFetch
+  sessionStorage.clear()
+})
 
 function jsonResponse(payload: unknown, status = 200): Response {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { "content-type": "application/json" },
-  });
+    headers: { 'content-type': 'application/json' },
+  })
 }
 
-describe("adminApi", () => {
-  it("listAdminItems sends expected query parameters", async () => {
+describe('adminApi', () => {
+  it('listAdminItems sends expected query parameters', async () => {
     const fetchMock = vi.fn(async () =>
       jsonResponse({
-        items: [{ id: "x", type: "link", categoryId: "other", title: "X", description: "", src: "https://example.com" }],
+        items: [
+          {
+            id: 'x',
+            type: 'link',
+            categoryId: 'other',
+            title: 'X',
+            description: '',
+            src: 'https://example.com',
+          },
+        ],
         total: 1,
         page: 2,
         pageSize: 30,
-      }),
-    );
-    globalThis.fetch = fetchMock as typeof fetch;
+      })
+    )
+    globalThis.fetch = fetchMock as typeof fetch
 
     const data = await listAdminItems({
       page: 2,
       pageSize: 30,
-      q: "abc",
-      type: "upload",
-    });
+      q: 'abc',
+      type: 'upload',
+    })
 
-    expect(data.total).toBe(1);
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const [url] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
-    expect(url).toContain("/api/items?");
-    expect(url).toContain("page=2");
-    expect(url).toContain("pageSize=30");
-    expect(url).toContain("q=abc");
-    expect(url).toContain("type=upload");
-  });
+    expect(data.total).toBe(1)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    const [url] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?]
+    expect(url).toContain('/api/items?')
+    expect(url).toContain('page=2')
+    expect(url).toContain('pageSize=30')
+    expect(url).toContain('q=abc')
+    expect(url).toContain('type=upload')
+  })
 
-  it("createLinkItem and update/delete attach auth header", async () => {
-    sessionStorage.setItem("pa_admin_token", "token-1");
+  it('createLinkItem and update/delete attach auth header', async () => {
+    sessionStorage.setItem('pa_admin_token', 'token-1')
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/api/categories")) {
-        return jsonResponse({ groups: [], categories: [] });
+      const url = String(input)
+      if (url.includes('/api/categories')) {
+        return jsonResponse({ groups: [], categories: [] })
       }
-      return jsonResponse({ ok: true, id: "l_1" });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
+      return jsonResponse({ ok: true, id: 'l_1' })
+    })
+    globalThis.fetch = fetchMock as typeof fetch
 
     await createLinkItem({
-      url: "https://example.com",
-      categoryId: "other",
-      title: "标题",
-      description: "描述",
-    });
-    await updateAdminItem("l_1", { title: "标题2" });
-    await deleteAdminItem("l_1");
-    await listTaxonomy();
+      url: 'https://example.com',
+      categoryId: 'other',
+      title: '标题',
+      description: '描述',
+    })
+    await updateAdminItem('l_1', { title: '标题2' })
+    await deleteAdminItem('l_1')
+    await listTaxonomy()
 
-    const authCalls = fetchMock.mock.calls.filter((call) => String(call[0]).includes("/api/items"));
-    expect(authCalls.length).toBeGreaterThan(0);
+    const authCalls = fetchMock.mock.calls.filter(call => String(call[0]).includes('/api/items'))
+    expect(authCalls.length).toBeGreaterThan(0)
     for (const call of authCalls) {
-      const options = ((call as unknown as [RequestInfo | URL, RequestInit?])[1] || {}) as RequestInit;
-      const headers = options.headers as Record<string, string>;
-      expect(headers.Authorization).toBe("Bearer token-1");
+      const options = ((call as unknown as [RequestInfo | URL, RequestInit?])[1] ||
+        {}) as RequestInit
+      const headers = options.headers as Record<string, string>
+      expect(headers.Authorization).toBe('Bearer token-1')
     }
-  });
+  })
 
-  it("uploadHtmlItem posts multipart payload", async () => {
-    sessionStorage.setItem("pa_admin_token", "token-1");
-    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, id: "u_1" }));
-    globalThis.fetch = fetchMock as typeof fetch;
+  it('uploadHtmlItem posts multipart payload', async () => {
+    sessionStorage.setItem('pa_admin_token', 'token-1')
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, id: 'u_1' }))
+    globalThis.fetch = fetchMock as typeof fetch
 
-    const file = new File(["<html></html>"], "demo.html", { type: "text/html" });
+    const file = new File(['<html></html>'], 'demo.html', { type: 'text/html' })
     await uploadHtmlItem({
       file,
-      categoryId: "other",
-      title: "Demo",
-      description: "Desc",
-    });
+      categoryId: 'other',
+      title: 'Demo',
+      description: 'Desc',
+    })
 
-    const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
-    expect(url).toBe("/api/items");
-    expect(options?.method).toBe("POST");
-    expect(options?.body).toBeInstanceOf(FormData);
-  });
+    const [url, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?]
+    expect(url).toBe('/api/items')
+    expect(options?.method).toBe('POST')
+    expect(options?.body).toBeInstanceOf(FormData)
+  })
 
-  it("uploadHtmlItem can include risky-html confirmation flag", async () => {
-    sessionStorage.setItem("pa_admin_token", "token-1");
-    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, id: "u_2" }));
-    globalThis.fetch = fetchMock as typeof fetch;
+  it('uploadHtmlItem can include risky-html confirmation flag', async () => {
+    sessionStorage.setItem('pa_admin_token', 'token-1')
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true, id: 'u_2' }))
+    globalThis.fetch = fetchMock as typeof fetch
 
-    const file = new File(["<html></html>"], "risky.html", { type: "text/html" });
+    const file = new File(['<html></html>'], 'risky.html', { type: 'text/html' })
     await uploadHtmlItem({
       file,
-      categoryId: "other",
-      title: "Risky",
-      description: "Desc",
+      categoryId: 'other',
+      title: 'Risky',
+      description: 'Desc',
       allowRiskyHtml: true,
-    });
+    })
 
-    const [, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?];
-    const formData = options?.body as FormData;
-    expect(formData).toBeInstanceOf(FormData);
-    expect(formData.get("allowRiskyHtml")).toBe("true");
-  });
+    const [, options] = fetchMock.mock.calls[0] as unknown as [string, RequestInit?]
+    const formData = options?.body as FormData
+    expect(formData).toBeInstanceOf(FormData)
+    expect(formData.get('allowRiskyHtml')).toBe('true')
+  })
 
-  it("group/category CRUD methods use expected routes", async () => {
-    sessionStorage.setItem("pa_admin_token", "token-1");
-    const fetchMock = vi.fn(async () => jsonResponse({ ok: true }));
-    globalThis.fetch = fetchMock as typeof fetch;
+  it('group/category CRUD methods use expected routes', async () => {
+    sessionStorage.setItem('pa_admin_token', 'token-1')
+    const fetchMock = vi.fn(async () => jsonResponse({ ok: true }))
+    globalThis.fetch = fetchMock as typeof fetch
 
-    await createGroup({ id: "math", title: "数学", order: 1, hidden: false });
-    await updateGroup("math", { title: "数学2" });
-    await deleteGroup("math");
+    await createGroup({ id: 'math', title: '数学', order: 1, hidden: false })
+    await updateGroup('math', { title: '数学2' })
+    await deleteGroup('math')
 
-    await createCategory({ id: "algebra", groupId: "physics", title: "代数", order: 0, hidden: false });
-    await updateCategory("algebra", { title: "代数2" });
-    await deleteCategory("algebra");
+    await createCategory({
+      id: 'algebra',
+      groupId: 'physics',
+      title: '代数',
+      order: 0,
+      hidden: false,
+    })
+    await updateCategory('algebra', { title: '代数2' })
+    await deleteCategory('algebra')
 
-    const urls = fetchMock.mock.calls.map((call) => String((call as unknown as [RequestInfo | URL])[0]));
-    expect(urls).toContain("/api/groups");
-    expect(urls).toContain("/api/groups/math");
-    expect(urls).toContain("/api/categories");
-    expect(urls).toContain("/api/categories/algebra");
-  });
+    const urls = fetchMock.mock.calls.map(call =>
+      String((call as unknown as [RequestInfo | URL])[0])
+    )
+    expect(urls).toContain('/api/groups')
+    expect(urls).toContain('/api/groups/math')
+    expect(urls).toContain('/api/categories')
+    expect(urls).toContain('/api/categories/algebra')
+  })
 
-  it("system/account endpoints use expected routes and payload", async () => {
-    sessionStorage.setItem("pa_admin_token", "token-1");
+  it('system/account endpoints use expected routes and payload', async () => {
+    sessionStorage.setItem('pa_admin_token', 'token-1')
     const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/api/system")) {
-        return jsonResponse({ storage: { mode: "local", webdav: {} } });
+      const url = String(input)
+      if (url.includes('/api/system')) {
+        return jsonResponse({ storage: { mode: 'local', webdav: {} } })
       }
-      if (url.includes("/api/auth/account")) {
-        return jsonResponse({ token: "token-2", username: "admin2" });
+      if (url.includes('/api/auth/account')) {
+        return jsonResponse({ token: 'token-2', username: 'admin2' })
       }
-      return jsonResponse({ ok: true });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
+      return jsonResponse({ ok: true })
+    })
+    globalThis.fetch = fetchMock as typeof fetch
 
-    await getSystemInfo();
+    await getSystemInfo()
     await updateSystemStorage({
-      mode: "webdav",
-      webdav: { url: "https://dav.example.com", scanRemote: true },
+      mode: 'webdav',
+      webdav: { url: 'https://dav.example.com', scanRemote: true },
       sync: true,
-    });
+    })
     await validateSystemStorage({
-      webdav: { url: "https://dav.example.com", basePath: "physicsAnimations" },
-    });
+      webdav: { url: 'https://dav.example.com', basePath: 'physicsAnimations' },
+    })
     const account = await updateAccount({
-      currentPassword: "old",
-      newUsername: "admin2",
-      newPassword: "newpass",
-    });
+      currentPassword: 'old',
+      newUsername: 'admin2',
+      newPassword: 'newpass',
+    })
 
-    expect(account.username).toBe("admin2");
+    expect(account.username).toBe('admin2')
 
-    const urls = fetchMock.mock.calls.map((call) => String(call[0]));
-    expect(urls).toContain("/api/system");
-    expect(urls).toContain("/api/system/storage");
-    expect(urls).toContain("/api/system/storage/validate");
-    expect(urls).toContain("/api/auth/account");
-  });
+    const urls = fetchMock.mock.calls.map(call => String(call[0]))
+    expect(urls).toContain('/api/system')
+    expect(urls).toContain('/api/system/storage')
+    expect(urls).toContain('/api/system/storage/validate')
+    expect(urls).toContain('/api/auth/account')
+  })
 
-  it("clears token and emits auth-expired event on 401", async () => {
-    sessionStorage.setItem("pa_admin_token", "expired-token");
+  it('clears token and emits auth-expired event on 401', async () => {
+    sessionStorage.setItem('pa_admin_token', 'expired-token')
 
-    const fetchMock = vi.fn(async () =>
-      jsonResponse({ error: "unauthorized" }, 401),
-    );
-    globalThis.fetch = fetchMock as typeof fetch;
+    const fetchMock = vi.fn(async () => jsonResponse({ error: 'unauthorized' }, 401))
+    globalThis.fetch = fetchMock as typeof fetch
 
-    const eventHandler = vi.fn();
-    window.addEventListener("pa-auth-expired", eventHandler as EventListener);
+    const eventHandler = vi.fn()
+    window.addEventListener('pa-auth-expired', eventHandler as EventListener)
 
-    await expect(listTaxonomy()).rejects.toBeTruthy();
+    await expect(listTaxonomy()).rejects.toBeTruthy()
 
-    expect(sessionStorage.getItem("pa_admin_token")).toBeNull();
-    expect(eventHandler).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.getItem('pa_admin_token')).toBeNull()
+    expect(eventHandler).toHaveBeenCalledTimes(1)
 
-    window.removeEventListener("pa-auth-expired", eventHandler as EventListener);
-  });
-});
+    window.removeEventListener('pa-auth-expired', eventHandler as EventListener)
+  })
+})

@@ -9,21 +9,14 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     exclude: [
       'node_modules/',
-      'e2e/**',  // 排除 E2E 测试
+      'e2e/**', // 排除 E2E 测试
       'dist/',
     ],
     setupFiles: ['./test/setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'test/',
-        'e2e/',
-        '*.config.*',
-        '**/types.ts',
-        '**/index.ts',
-      ],
+      exclude: ['node_modules/', 'test/', 'e2e/', '*.config.*', '**/types.ts', '**/index.ts'],
     },
   },
 })

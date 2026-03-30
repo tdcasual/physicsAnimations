@@ -1,12 +1,12 @@
-import { clearToken, getToken } from "../auth/authApi";
-import { apiFetchJson } from "../shared/httpClient";
+import { clearToken, getToken } from '../auth/authApi'
+import { apiFetchJson } from '../shared/httpClient'
 import type {
   LibraryCatalogResponse,
   LibraryEmbedProfile,
   LibraryFolder,
   LibraryFolderAssetsResponse,
-} from "./types";
-import { toAsset, toEmbedProfile, toFolder } from "./libraryApiMappers";
+} from './types'
+import { toAsset, toEmbedProfile, toFolder } from './libraryApiMappers'
 import {
   buildCreateLibraryEmbedProfileBody,
   buildCreateLibraryFolderBody,
@@ -20,21 +20,21 @@ import {
   type UpdateLibraryEmbedProfilePatch,
   type UpdateLibraryFolderPatch,
   type UploadLibraryAssetPayload,
-} from "./libraryApiPayloads";
+} from './libraryApiPayloads'
 
 interface LibraryApiError extends Error {
-  status: number;
-  code: string;
-  data?: any;
+  status: number
+  code: string
+  data?: any
 }
 
 function toApiError(status: number, data: any): LibraryApiError {
-  const code = typeof data?.error === "string" ? data.error : "request_failed";
-  const err = new Error(code) as LibraryApiError;
-  err.status = status;
-  err.code = code;
-  err.data = data;
-  return err;
+  const code = typeof data?.error === 'string' ? data.error : 'request_failed'
+  const err = new Error(code) as LibraryApiError
+  err.status = status
+  err.code = code
+  err.data = data
+  return err
 }
 
 async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
@@ -43,157 +43,165 @@ async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promi
     options,
     token: getToken(),
     onUnauthorized: () => {
-      clearToken();
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("pa-auth-expired"));
+      clearToken()
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('pa-auth-expired'))
       }
     },
     toError: (status, data) => toApiError(status, data),
-  });
+  })
 }
 
 export async function listLibraryCatalog(): Promise<LibraryCatalogResponse> {
-  const data = await apiFetch<any>("/api/library/catalog", { method: "GET" });
-  const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : [];
-  return { folders };
+  const data = await apiFetch<any>('/api/library/catalog', { method: 'GET' })
+  const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : []
+  return { folders }
 }
 
 export async function listLibraryFolders(): Promise<LibraryFolder[]> {
-  const data = await apiFetch<any>("/api/library/folders", { method: "GET" });
-  const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : [];
-  return folders;
+  const data = await apiFetch<any>('/api/library/folders', { method: 'GET' })
+  const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : []
+  return folders
 }
 
 export async function listLibraryEmbedProfiles(): Promise<LibraryEmbedProfile[]> {
-  const data = await apiFetch<any>("/api/library/embed-profiles", { method: "GET" });
-  const profiles = Array.isArray(data?.profiles) ? data.profiles.map(toEmbedProfile) : [];
-  return profiles;
+  const data = await apiFetch<any>('/api/library/embed-profiles', { method: 'GET' })
+  const profiles = Array.isArray(data?.profiles) ? data.profiles.map(toEmbedProfile) : []
+  return profiles
 }
 
 export async function getLibraryFolder(folderId: string): Promise<LibraryFolder> {
-  const data = await apiFetch<any>(`/api/library/folders/${encodeURIComponent(folderId)}`, { method: "GET" });
-  return toFolder(data?.folder || {});
+  const data = await apiFetch<any>(`/api/library/folders/${encodeURIComponent(folderId)}`, {
+    method: 'GET',
+  })
+  return toFolder(data?.folder || {})
 }
 
-export async function listLibraryFolderAssets(folderId: string): Promise<LibraryFolderAssetsResponse> {
+export async function listLibraryFolderAssets(
+  folderId: string
+): Promise<LibraryFolderAssetsResponse> {
   const data = await apiFetch<any>(`/api/library/folders/${encodeURIComponent(folderId)}/assets`, {
-    method: "GET",
-  });
-  const assets = Array.isArray(data?.assets) ? data.assets.map(toAsset) : [];
-  return { assets };
+    method: 'GET',
+  })
+  const assets = Array.isArray(data?.assets) ? data.assets.map(toAsset) : []
+  return { assets }
 }
 
-export async function listLibraryDeletedAssets(folderId?: string): Promise<LibraryFolderAssetsResponse> {
-  const params = new URLSearchParams();
-  if (folderId) params.set("folderId", String(folderId || "").trim());
-  const query = params.toString();
-  const path = query ? `/api/library/deleted-assets?${query}` : "/api/library/deleted-assets";
-  const data = await apiFetch<any>(path, { method: "GET" });
-  const assets = Array.isArray(data?.assets) ? data.assets.map(toAsset) : [];
-  return { assets };
+export async function listLibraryDeletedAssets(
+  folderId?: string
+): Promise<LibraryFolderAssetsResponse> {
+  const params = new URLSearchParams()
+  if (folderId) params.set('folderId', String(folderId || '').trim())
+  const query = params.toString()
+  const path = query ? `/api/library/deleted-assets?${query}` : '/api/library/deleted-assets'
+  const data = await apiFetch<any>(path, { method: 'GET' })
+  const assets = Array.isArray(data?.assets) ? data.assets.map(toAsset) : []
+  return { assets }
 }
 
 export async function createLibraryFolder(payload: CreateLibraryFolderPayload): Promise<any> {
-  return apiFetch("/api/library/folders", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+  return apiFetch('/api/library/folders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildCreateLibraryFolderBody(payload)),
-  });
+  })
 }
 
 export async function updateLibraryFolder(
   folderId: string,
-  patch: UpdateLibraryFolderPatch,
+  patch: UpdateLibraryFolderPatch
 ): Promise<any> {
   return apiFetch(`/api/library/folders/${encodeURIComponent(folderId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildUpdateLibraryFolderBody(patch)),
-  });
+  })
 }
 
 export async function uploadLibraryFolderCover(payload: {
-  folderId: string;
-  file: File;
+  folderId: string
+  file: File
 }): Promise<any> {
-  const formData = new FormData();
-  formData.append("file", payload.file);
+  const formData = new FormData()
+  formData.append('file', payload.file)
 
   return apiFetch(`/api/library/folders/${encodeURIComponent(payload.folderId)}/cover`, {
-    method: "POST",
+    method: 'POST',
     body: formData,
-  });
+  })
 }
 
 export async function uploadLibraryAsset(payload: UploadLibraryAssetPayload): Promise<any> {
   return apiFetch(`/api/library/folders/${encodeURIComponent(payload.folderId)}/assets`, {
-    method: "POST",
+    method: 'POST',
     body: buildUploadLibraryAssetFormData(payload),
-  });
+  })
 }
 
-export async function createLibraryEmbedProfile(payload: CreateLibraryEmbedProfilePayload): Promise<any> {
-  return apiFetch("/api/library/embed-profiles", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+export async function createLibraryEmbedProfile(
+  payload: CreateLibraryEmbedProfilePayload
+): Promise<any> {
+  return apiFetch('/api/library/embed-profiles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildCreateLibraryEmbedProfileBody(payload)),
-  });
+  })
 }
 
 export async function updateLibraryEmbedProfile(
   profileId: string,
-  patch: UpdateLibraryEmbedProfilePatch,
+  patch: UpdateLibraryEmbedProfilePatch
 ): Promise<any> {
   return apiFetch(`/api/library/embed-profiles/${encodeURIComponent(profileId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildUpdateLibraryEmbedProfileBody(patch)),
-  });
+  })
 }
 
 export async function deleteLibraryEmbedProfile(profileId: string): Promise<any> {
   return apiFetch(`/api/library/embed-profiles/${encodeURIComponent(profileId)}`, {
-    method: "DELETE",
-  });
+    method: 'DELETE',
+  })
 }
 
 export async function syncLibraryEmbedProfile(profileId: string): Promise<any> {
   return apiFetch(`/api/library/embed-profiles/${encodeURIComponent(profileId)}/sync`, {
-    method: "POST",
-  });
+    method: 'POST',
+  })
 }
 
 export async function updateLibraryAsset(
   assetId: string,
-  patch: UpdateLibraryAssetPatch,
+  patch: UpdateLibraryAssetPatch
 ): Promise<any> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildUpdateLibraryAssetBody(patch)),
-  });
+  })
 }
 
 export async function deleteLibraryFolder(folderId: string): Promise<any> {
   return apiFetch(`/api/library/folders/${encodeURIComponent(folderId)}`, {
-    method: "DELETE",
-  });
+    method: 'DELETE',
+  })
 }
 
 export async function deleteLibraryAsset(assetId: string): Promise<any> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}`, {
-    method: "DELETE",
-  });
+    method: 'DELETE',
+  })
 }
 
 export async function deleteLibraryAssetPermanently(assetId: string): Promise<any> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}/permanent`, {
-    method: "DELETE",
-  });
+    method: 'DELETE',
+  })
 }
 
 export async function restoreLibraryAsset(assetId: string): Promise<any> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}/restore`, {
-    method: "POST",
-  });
+    method: 'POST',
+  })
 }

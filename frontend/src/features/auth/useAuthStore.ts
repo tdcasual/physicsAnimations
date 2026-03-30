@@ -1,63 +1,63 @@
-import { defineStore } from "pinia";
-import { clearToken, getToken, login, me } from "./authApi";
+import { defineStore } from 'pinia'
+import { clearToken, getToken, login, me } from './authApi'
 
 interface LoginInput {
-  username: string;
-  password: string;
+  username: string
+  password: string
 }
 
-export const useAuthStore = defineStore("auth", {
+export const useAuthStore = defineStore('auth', {
   state: () => ({
     loggedIn: false,
-    username: "",
+    username: '',
     loading: false,
   }),
 
   actions: {
     async bootstrap() {
-      const token = getToken();
+      const token = getToken()
       if (!token) {
-        this.loggedIn = false;
-        this.username = "";
-        return;
+        this.loggedIn = false
+        this.username = ''
+        return
       }
 
       try {
-        const data = await me();
-        this.loggedIn = true;
-        this.username = typeof data?.username === "string" ? data.username : "";
+        const data = await me()
+        this.loggedIn = true
+        this.username = typeof data?.username === 'string' ? data.username : ''
       } catch {
-        clearToken();
-        this.loggedIn = false;
-        this.username = "";
+        clearToken()
+        this.loggedIn = false
+        this.username = ''
       }
     },
 
     async loginWithPassword(input: LoginInput) {
-      this.loading = true;
+      this.loading = true
       try {
-        const data = await login(input);
-        const account = await me().catch(() => null);
-        this.loggedIn = true;
+        const data = await login(input)
+        const account = await me().catch(() => null)
+        this.loggedIn = true
         this.username =
-          typeof account?.username === "string"
+          typeof account?.username === 'string'
             ? account.username
-            : typeof data?.username === "string"
+            : typeof data?.username === 'string'
               ? data.username
-              : "";
+              : ''
       } catch (err) {
-        this.loggedIn = false;
-        this.username = "";
-        throw err;
+        this.loggedIn = false
+        this.username = ''
+        throw err
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
 
     logout() {
-      clearToken();
-      this.loggedIn = false;
-      this.username = "";
+      clearToken()
+      this.loggedIn = false
+      this.username = ''
     },
   },
-});
+})

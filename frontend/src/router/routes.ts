@@ -1,88 +1,88 @@
-import type { RouteRecordRaw } from "vue-router";
+import type { RouteRecordRaw } from 'vue-router'
 
-import AdminAccountView from "../views/admin/AdminAccountView.vue";
-import AdminContentView from "../views/admin/AdminContentView.vue";
-import AdminDashboardView from "../views/admin/AdminDashboardView.vue";
-import AdminLibraryView from "../views/admin/AdminLibraryView.vue";
-import AdminLayoutView from "../views/admin/AdminLayoutView.vue";
-import AdminSystemView from "../views/admin/AdminSystemView.vue";
-import AdminTaxonomyView from "../views/admin/AdminTaxonomyView.vue";
-import AdminUploadsView from "../views/admin/AdminUploadsView.vue";
-import CatalogView from "../views/CatalogView.vue";
-import LibraryFolderView from "../views/LibraryFolderView.vue";
-import LoginView from "../views/LoginView.vue";
-import ViewerView from "../views/ViewerView.vue";
+import AdminAccountView from '../views/admin/AdminAccountView.vue'
+import AdminContentView from '../views/admin/AdminContentView.vue'
+import AdminDashboardView from '../views/admin/AdminDashboardView.vue'
+import AdminLibraryView from '../views/admin/AdminLibraryView.vue'
+import AdminLayoutView from '../views/admin/AdminLayoutView.vue'
+import AdminSystemView from '../views/admin/AdminSystemView.vue'
+import AdminTaxonomyView from '../views/admin/AdminTaxonomyView.vue'
+import AdminUploadsView from '../views/admin/AdminUploadsView.vue'
+import CatalogView from '../views/CatalogView.vue'
+import LibraryFolderView from '../views/LibraryFolderView.vue'
+import LoginView from '../views/LoginView.vue'
+import ViewerView from '../views/ViewerView.vue'
 
 export const appRoutes: RouteRecordRaw[] = [
   {
-    path: "/",
-    name: "catalog",
+    path: '/',
+    name: 'catalog',
     component: CatalogView,
   },
   {
-    path: "/viewer/:id",
-    name: "viewer",
+    path: '/viewer/:id',
+    name: 'viewer',
     component: ViewerView,
     props: true,
   },
   {
-    path: "/library/folder/:id",
-    name: "library-folder",
+    path: '/library/folder/:id',
+    name: 'library-folder',
     component: LibraryFolderView,
     props: true,
   },
   {
-    path: "/login",
-    name: "login",
+    path: '/login',
+    name: 'login',
     component: LoginView,
   },
   {
-    path: "/admin",
+    path: '/admin',
     component: AdminLayoutView,
     children: [
       {
-        path: "",
-        redirect: { name: "admin-dashboard" },
+        path: '',
+        redirect: { name: 'admin-dashboard' },
       },
       {
-        path: "dashboard",
-        name: "admin-dashboard",
+        path: 'dashboard',
+        name: 'admin-dashboard',
         component: AdminDashboardView,
       },
       {
-        path: "content",
-        name: "admin-content",
+        path: 'content',
+        name: 'admin-content',
         component: AdminContentView,
       },
       {
-        path: "uploads",
-        name: "admin-uploads",
+        path: 'uploads',
+        name: 'admin-uploads',
         component: AdminUploadsView,
       },
       {
-        path: "library",
-        name: "admin-library",
+        path: 'library',
+        name: 'admin-library',
         component: AdminLibraryView,
       },
       {
-        path: "taxonomy",
-        name: "admin-taxonomy",
+        path: 'taxonomy',
+        name: 'admin-taxonomy',
         component: AdminTaxonomyView,
       },
       {
-        path: "system",
-        name: "admin-system",
+        path: 'system',
+        name: 'admin-system',
         component: AdminSystemView,
       },
       {
-        path: "account",
-        name: "admin-account",
+        path: 'account',
+        name: 'admin-account',
         component: AdminAccountView,
       },
     ],
   },
   {
-    path: "/:pathMatch(.*)*",
-    redirect: "/",
+    path: '/:pathMatch(.*)*',
+    redirect: '/',
   },
-];
+]

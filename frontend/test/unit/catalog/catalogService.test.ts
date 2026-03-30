@@ -26,9 +26,9 @@ describe('catalogService', () => {
           },
         },
       }
-      
+
       const result = normalizeCatalog(input)
-      
+
       expect(result.groups.physics.title).toBe('物理')
     })
 
@@ -43,9 +43,9 @@ describe('catalogService', () => {
           },
         },
       }
-      
+
       const result = normalizeCatalog(input)
-      
+
       expect(result.groups[DEFAULT_GROUP_ID]).toBeDefined()
       expect(result.groups[DEFAULT_GROUP_ID].categories.mechanics).toBeDefined()
     })
@@ -59,9 +59,9 @@ describe('catalogService', () => {
           },
         },
       }
-      
+
       const result = normalizeCatalog(input)
-      
+
       expect(result.groups[DEFAULT_GROUP_ID].categories.mechanics.id).toBe('mechanics')
     })
 
@@ -74,9 +74,9 @@ describe('catalogService', () => {
           },
         },
       }
-      
+
       const result = normalizeCatalog(input)
-      
+
       expect(result.groups[DEFAULT_GROUP_ID].categories.mechanics.groupId).toBe(DEFAULT_GROUP_ID)
     })
 
@@ -88,9 +88,9 @@ describe('catalogService', () => {
           },
         },
       }
-      
+
       const result = normalizeCatalog(input)
-      
+
       expect(result.groups[DEFAULT_GROUP_ID].categories.mechanics.title).toBe('mechanics')
     })
 
@@ -103,21 +103,21 @@ describe('catalogService', () => {
           },
         },
       }
-      
+
       const result = normalizeCatalog(input)
-      
+
       expect(result.groups[DEFAULT_GROUP_ID].categories.mechanics.items).toEqual([])
     })
 
     it('空对象应返回空groups', () => {
       const result = normalizeCatalog({})
-      
+
       expect(result.groups).toEqual({})
     })
 
     it('null应返回空groups', () => {
       const result = normalizeCatalog(null)
-      
+
       expect(result.groups).toEqual({})
     })
   })
@@ -129,15 +129,15 @@ describe('catalogService', () => {
           physics: { id: 'physics', title: '物理', categories: {} },
         },
       }
-      
+
       mockedFetch.mockResolvedValue({
         ok: true,
         status: 200,
         json: async () => mockCatalog,
       } as Response)
-      
+
       const result: CatalogLoadResult = await loadCatalogData()
-      
+
       expect(result.ok).toBe(true)
       expect(result.catalog.groups.physics).toBeDefined()
     })
@@ -147,9 +147,9 @@ describe('catalogService', () => {
         ok: true,
         json: async () => ({ groups: {} }),
       } as Response)
-      
+
       await loadCatalogData()
-      
+
       expect(mockedFetch).toHaveBeenCalledWith('/api/catalog', {
         method: 'GET',
         cache: 'no-store',
@@ -161,27 +161,27 @@ describe('catalogService', () => {
         ok: false,
         status: 500,
       } as Response)
-      
+
       const result: CatalogLoadResult = await loadCatalogData()
-      
+
       expect(result.ok).toBe(false)
       expect(result.error).toBe('request_failed')
     })
 
     it('网络错误时应返回ok: false', async () => {
       mockedFetch.mockRejectedValue(new Error('Network error'))
-      
+
       const result: CatalogLoadResult = await loadCatalogData()
-      
+
       expect(result.ok).toBe(false)
       expect(result.error).toBe('request_failed')
     })
 
     it('失败时应返回空catalog', async () => {
       mockedFetch.mockRejectedValue(new Error('Network error'))
-      
+
       const result: CatalogLoadResult = await loadCatalogData()
-      
+
       expect(result.catalog.groups).toEqual({})
     })
   })

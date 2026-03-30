@@ -1,11 +1,11 @@
 <script setup lang="ts">
-defineProps<{
-  summary: Array<{
-    label: string;
-    value: string;
-    note: string;
-  }>;
-}>();
+  defineProps<{
+    summary: Array<{
+      label: string
+      value: string
+      note: string
+    }>
+  }>()
 </script>
 
 <template>
@@ -19,48 +19,48 @@ defineProps<{
 </template>
 
 <style scoped>
-.catalog-workspace-strip {
-  display: grid;
-  gap: 8px;
-}
-
-.catalog-workspace-item {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.catalog-workspace-item + .catalog-workspace-item {
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-
-.catalog-workspace-label,
-.catalog-workspace-note {
-  color: var(--muted);
-}
-
-.catalog-workspace-value {
-  font-size: calc(15px * var(--ui-scale, 1));
-  line-height: 1.18;
-}
-
-.catalog-workspace-note {
-  font-size: calc(12px * var(--ui-scale, 1));
-  line-height: 1.45;
-}
-
-@media (min-width: 760px) {
   .catalog-workspace-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px 14px;
+    display: grid;
+    gap: 8px;
+  }
+
+  .catalog-workspace-item {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
   }
 
   .catalog-workspace-item + .catalog-workspace-item {
-    padding-top: 0;
-    padding-inline-start: 14px;
-    border-top: 0;
-    border-inline-start: 1px solid var(--border);
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
   }
-}
+
+  .catalog-workspace-label,
+  .catalog-workspace-note {
+    color: var(--muted);
+  }
+
+  .catalog-workspace-value {
+    font-size: calc(15px * var(--ui-scale, 1));
+    line-height: 1.18;
+  }
+
+  .catalog-workspace-note {
+    font-size: calc(12px * var(--ui-scale, 1));
+    line-height: 1.45;
+  }
+
+  @media (min-width: 760px) {
+    .catalog-workspace-strip {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+    }
+
+    .catalog-workspace-item + .catalog-workspace-item {
+      padding-top: 0;
+      padding-inline-start: 14px;
+      border-top: 0;
+      border-inline-start: 1px solid var(--border);
+    }
+  }
 </style>

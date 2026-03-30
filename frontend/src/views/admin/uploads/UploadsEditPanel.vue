@@ -1,47 +1,53 @@
 <script setup lang="ts">
-import type { AdminItemRow } from "../../../features/admin/adminApi";
+  import type { AdminItemRow } from '../../../features/admin/adminApi'
 
-interface OptionItem {
-  value: string;
-  label: string;
-}
+  interface OptionItem {
+    value: string
+    label: string
+  }
 
-const props = defineProps<{
-  selectedItem: AdminItemRow | null;
-  actionFeedback: string;
-  actionFeedbackError: boolean;
-  categoryOptions: OptionItem[];
-  editTitleError: string;
-  editTitle: string;
-  editDescription: string;
-  editCategoryId: string;
-  editOrder: number;
-  editPublished: boolean;
-  editHidden: boolean;
-  saving: boolean;
-  showSheetClose?: boolean;
-}>();
+  const props = defineProps<{
+    selectedItem: AdminItemRow | null
+    actionFeedback: string
+    actionFeedbackError: boolean
+    categoryOptions: OptionItem[]
+    editTitleError: string
+    editTitle: string
+    editDescription: string
+    editCategoryId: string
+    editOrder: number
+    editPublished: boolean
+    editHidden: boolean
+    saving: boolean
+    showSheetClose?: boolean
+  }>()
 
-const emit = defineEmits<{
-  "update:editTitle": [value: string];
-  "update:editDescription": [value: string];
-  "update:editCategoryId": [value: string];
-  "update:editOrder": [value: number];
-  "update:editPublished": [value: boolean];
-  "update:editHidden": [value: boolean];
-  "reset-edit": [];
-  "save-edit": [id: string];
-  "close-edit": [];
-}>();
+  const emit = defineEmits<{
+    'update:editTitle': [value: string]
+    'update:editDescription': [value: string]
+    'update:editCategoryId': [value: string]
+    'update:editOrder': [value: number]
+    'update:editPublished': [value: boolean]
+    'update:editHidden': [value: boolean]
+    'reset-edit': []
+    'save-edit': [id: string]
+    'close-edit': []
+  }>()
 </script>
 
 <template>
   <div class="editor-header">
     <div class="editor-header-copy">
       <h3>编辑面板</h3>
-      <div class="meta" v-if="props.selectedItem">{{ props.selectedItem.id }}</div>
+      <div v-if="props.selectedItem" class="meta">{{ props.selectedItem.id }}</div>
     </div>
-    <button v-if="props.showSheetClose" type="button" class="btn btn-ghost editor-close" :disabled="props.saving" @click="emit('close-edit')">
+    <button
+      v-if="props.showSheetClose"
+      type="button"
+      class="btn btn-ghost editor-close"
+      :disabled="props.saving"
+      @click="emit('close-edit')"
+    >
       收起
     </button>
   </div>
@@ -130,8 +136,19 @@ const emit = defineEmits<{
 
     <div class="editor-footer">
       <div class="actions admin-actions">
-        <button type="button" class="btn btn-ghost" :disabled="props.saving" @click="emit('reset-edit')">取消</button>
-        <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('save-edit', props.selectedItem.id)">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          :disabled="props.saving"
+          @click="emit('reset-edit')"
+          >取消</button
+        >
+        <button
+          type="button"
+          class="btn btn-primary"
+          :disabled="props.saving"
+          @click="emit('save-edit', props.selectedItem.id)"
+        >
           保存
         </button>
       </div>
@@ -140,34 +157,38 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.editor-header-copy {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.editor-close {
-  display: none;
-}
-
-@media (max-width: 640px) {
-  .editor-header {
-    align-items: flex-start;
+  .editor-header-copy {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
   }
 
   .editor-close {
-    display: inline-flex;
-    min-height: 38px;
-    padding-inline: 12px;
-    white-space: nowrap;
+    display: none;
   }
 
-  .editor-footer {
-    position: sticky;
-    bottom: 0;
-    margin-inline: -2px;
-    padding-top: 12px;
-    background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 10%, transparent), var(--surface) 28%);
+  @media (max-width: 640px) {
+    .editor-header {
+      align-items: flex-start;
+    }
+
+    .editor-close {
+      display: inline-flex;
+      min-height: 38px;
+      padding-inline: 12px;
+      white-space: nowrap;
+    }
+
+    .editor-footer {
+      position: sticky;
+      bottom: 0;
+      margin-inline: -2px;
+      padding-top: 12px;
+      background: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--surface) 10%, transparent),
+        var(--surface) 28%
+      );
+    }
   }
-}
 </style>

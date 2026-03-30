@@ -1,27 +1,27 @@
 <script setup lang="ts">
-interface OptionItem {
-  value: string;
-  label: string;
-}
+  interface OptionItem {
+    value: string
+    label: string
+  }
 
-const props = defineProps<{
-  groupedCategoryOptions: OptionItem[];
-  linkCategoryId: string;
-  linkUrl: string;
-  linkTitle: string;
-  linkDescription: string;
-  saving: boolean;
-  createLinkUrlError: string;
-}>();
+  const props = defineProps<{
+    groupedCategoryOptions: OptionItem[]
+    linkCategoryId: string
+    linkUrl: string
+    linkTitle: string
+    linkDescription: string
+    saving: boolean
+    createLinkUrlError: string
+  }>()
 
-const emit = defineEmits<{
-  "update:linkCategoryId": [value: string];
-  "update:linkUrl": [value: string];
-  "update:linkTitle": [value: string];
-  "update:linkDescription": [value: string];
-  "clear-link-url-error": [];
-  submit: [];
-}>();
+  const emit = defineEmits<{
+    'update:linkCategoryId': [value: string]
+    'update:linkUrl': [value: string]
+    'update:linkTitle': [value: string]
+    'update:linkDescription': [value: string]
+    'clear-link-url-error': []
+    submit: []
+  }>()
 </script>
 
 <template>
@@ -35,7 +35,11 @@ const emit = defineEmits<{
         :disabled="props.saving"
         @change="emit('update:linkCategoryId', ($event.target as HTMLSelectElement).value)"
       >
-        <option v-for="option in props.groupedCategoryOptions" :key="option.value" :value="option.value">
+        <option
+          v-for="option in props.groupedCategoryOptions"
+          :key="option.value"
+          :value="option.value"
+        >
           {{ option.label }}
         </option>
       </select>
@@ -54,11 +58,13 @@ const emit = defineEmits<{
       placeholder="https://example.com"
       :disabled="props.saving"
       @input="
-        emit('update:linkUrl', ($event.target as HTMLInputElement).value);
-        emit('clear-link-url-error');
+        emit('update:linkUrl', ($event.target as HTMLInputElement).value)
+        emit('clear-link-url-error')
       "
     />
-    <div v-if="props.createLinkUrlError" class="field-error-text">{{ props.createLinkUrlError }}</div>
+    <div v-if="props.createLinkUrlError" class="field-error-text">{{
+      props.createLinkUrlError
+    }}</div>
   </label>
 
   <label class="field">
@@ -88,6 +94,8 @@ const emit = defineEmits<{
   </details>
 
   <div class="actions admin-actions">
-    <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('submit')">添加</button>
+    <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('submit')"
+      >添加</button
+    >
   </div>
 </template>

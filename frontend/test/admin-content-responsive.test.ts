@@ -1,30 +1,38 @@
-import fs from "node:fs";
-import path from "node:path";
-import { describe, expect, it } from "vitest";
+import fs from 'node:fs'
+import path from 'node:path'
+import { describe, expect, it } from 'vitest'
 
-describe("admin content responsive layout", () => {
-  it("wraps item head and action row on narrow screens", () => {
+describe('admin content responsive layout', () => {
+  it('wraps item head and action row on narrow screens', () => {
     const source = fs.readFileSync(
-      path.resolve(process.cwd(), "src/views/admin/AdminContentView.vue"),
-      "utf8",
-    );
-    expect(source).toMatch(/:deep\(\.item-head\)\s*\{[\s\S]*flex-wrap:\s*wrap/);
-    expect(source).toMatch(/:deep\(\.item-actions\)\s*\{[\s\S]*flex-wrap:\s*wrap/);
-    expect(source).toMatch(/:deep\(\.list-header\)\s*\{[\s\S]*flex-wrap:\s*wrap/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-header\)\s*\{[\s\S]*gap:\s*6px/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-heading\)\s*\{[\s\S]*display:\s*none/);
-    expect(source).toMatch(/:deep\(\.item-title\)\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(source).toMatch(/:deep\(\.item-meta\)\s*\{[\s\S]*word-break:\s*break-word/);
-  });
+      path.resolve(process.cwd(), 'src/views/admin/AdminContentView.vue'),
+      'utf8'
+    )
+    expect(source).toMatch(/:deep\(\.item-head\)\s*\{[\s\S]*flex-wrap:\s*wrap/)
+    expect(source).toMatch(/:deep\(\.item-actions\)\s*\{[\s\S]*flex-wrap:\s*wrap/)
+    expect(source).toMatch(/:deep\(\.list-header\)\s*\{[\s\S]*flex-wrap:\s*wrap/)
+    expect(source).toMatch(
+      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-header\)\s*\{[\s\S]*gap:\s*6px/
+    )
+    expect(source).toMatch(
+      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-heading\)\s*\{[\s\S]*display:\s*none/
+    )
+    expect(source).toMatch(/:deep\(\.item-title\)\s*\{[\s\S]*overflow-wrap:\s*anywhere/)
+    expect(source).toMatch(/:deep\(\.item-meta\)\s*\{[\s\S]*word-break:\s*break-word/)
+  })
 
-  it("prevents long upload titles and metadata from overflowing on mobile", () => {
+  it('prevents long upload titles and metadata from overflowing on mobile', () => {
     const source = fs.readFileSync(
-      path.resolve(process.cwd(), "src/views/admin/AdminUploadsView.vue"),
-      "utf8",
-    );
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-header\)\s*\{[\s\S]*gap:\s*6px/);
-    expect(source).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-heading\)\s*\{[\s\S]*display:\s*none/);
-    expect(source).toMatch(/:deep\(\.item-title\)\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(source).toMatch(/:deep\(\.item-meta\)\s*\{[\s\S]*word-break:\s*break-word/);
-  });
-});
+      path.resolve(process.cwd(), 'src/views/admin/AdminUploadsView.vue'),
+      'utf8'
+    )
+    expect(source).toMatch(
+      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-header\)\s*\{[\s\S]*gap:\s*6px/
+    )
+    expect(source).toMatch(
+      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*:deep\(\.list-heading\)\s*\{[\s\S]*display:\s*none/
+    )
+    expect(source).toMatch(/:deep\(\.item-title\)\s*\{[\s\S]*overflow-wrap:\s*anywhere/)
+    expect(source).toMatch(/:deep\(\.item-meta\)\s*\{[\s\S]*word-break:\s*break-word/)
+  })
+})

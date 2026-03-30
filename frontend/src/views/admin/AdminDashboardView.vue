@@ -1,42 +1,42 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
-import { RouterLink } from "vue-router";
-import { fetchDashboardStats, type DashboardStats } from "../../features/admin/adminApi";
+  import { onMounted, ref } from 'vue'
+  import { RouterLink } from 'vue-router'
+  import { fetchDashboardStats, type DashboardStats } from '../../features/admin/adminApi'
 
-const loading = ref(false);
-const errorText = ref("");
-const reloadSeq = ref(0);
-const stats = ref<DashboardStats>({
-  dynamicTotal: 0,
-  uploadTotal: 0,
-  linkTotal: 0,
-  categoryTotal: 0,
-  total: 0,
-});
+  const loading = ref(false)
+  const errorText = ref('')
+  const reloadSeq = ref(0)
+  const stats = ref<DashboardStats>({
+    dynamicTotal: 0,
+    uploadTotal: 0,
+    linkTotal: 0,
+    categoryTotal: 0,
+    total: 0,
+  })
 
-async function reload() {
-  const requestSeq = reloadSeq.value + 1;
-  reloadSeq.value = requestSeq;
-  loading.value = true;
-  errorText.value = "";
-  try {
-    const nextStats = await fetchDashboardStats();
-    if (requestSeq !== reloadSeq.value) return;
-    stats.value = nextStats;
-  } catch (err) {
-    if (requestSeq !== reloadSeq.value) return;
-    const e = err as { status?: number };
-    errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "加载统计失败。";
-  } finally {
-    if (requestSeq === reloadSeq.value) {
-      loading.value = false;
+  async function reload() {
+    const requestSeq = reloadSeq.value + 1
+    reloadSeq.value = requestSeq
+    loading.value = true
+    errorText.value = ''
+    try {
+      const nextStats = await fetchDashboardStats()
+      if (requestSeq !== reloadSeq.value) return
+      stats.value = nextStats
+    } catch (err) {
+      if (requestSeq !== reloadSeq.value) return
+      const e = err as { status?: number }
+      errorText.value = e?.status === 401 ? '请先登录管理员账号。' : '加载统计失败。'
+    } finally {
+      if (requestSeq === reloadSeq.value) {
+        loading.value = false
+      }
     }
   }
-}
 
-onMounted(async () => {
-  await reload();
-});
+  onMounted(async () => {
+    await reload()
+  })
 </script>
 
 <template>
@@ -48,9 +48,11 @@ onMounted(async () => {
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前节奏</span>
-        <strong>{{ loading ? "刷新中" : "就绪" }}</strong>
+        <strong>{{ loading ? '刷新中' : '就绪' }}</strong>
         <div class="admin-actions">
-          <button type="button" class="btn btn-ghost" :disabled="loading" @click="reload">刷新</button>
+          <button type="button" class="btn btn-ghost" :disabled="loading" @click="reload"
+            >刷新</button
+          >
         </div>
       </div>
     </header>
@@ -60,7 +62,9 @@ onMounted(async () => {
 
     <template v-else>
       <section class="admin-task-grid admin-task-grid--dense" aria-label="今日工作台">
-        <article class="admin-task-card admin-task-card--primary admin-task-card--queue admin-task-card--focus admin-card">
+        <article
+          class="admin-task-card admin-task-card--primary admin-task-card--queue admin-task-card--focus admin-card"
+        >
           <div class="admin-task-meta">
             <span class="admin-task-badge">优先级 高</span>
             <span>先做</span>
@@ -73,7 +77,9 @@ onMounted(async () => {
           </div>
         </article>
 
-        <article class="admin-task-card admin-task-card--queue admin-task-card--secondary admin-card">
+        <article
+          class="admin-task-card admin-task-card--queue admin-task-card--secondary admin-card"
+        >
           <div class="admin-task-meta">
             <span class="admin-task-badge">优先级 中</span>
             <span>归档整理</span>
@@ -85,7 +91,9 @@ onMounted(async () => {
           </div>
         </article>
 
-        <article class="admin-task-card admin-task-card--queue admin-task-card--secondary admin-card">
+        <article
+          class="admin-task-card admin-task-card--queue admin-task-card--secondary admin-card"
+        >
           <div class="admin-task-meta">
             <span class="admin-task-badge">优先级 中</span>
             <span>发布前巡检</span>
@@ -132,186 +140,198 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.admin-dashboard-view {
-  display: grid;
-  gap: 16px;
-}
-
-.dashboard-copy,
-.signal-heading {
-  display: grid;
-  gap: 6px;
-}
-
-.dashboard-kicker,
-.admin-task-kicker {
-  margin: 0;
-  color: color-mix(in oklab, var(--accent-9) 70%, var(--text-primary));
-  font-size: calc(12px * var(--ui-scale));
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-h2,
-h3 {
-  margin: 0;
-}
-
-.dashboard-intro,
-.signal-copy,
-.admin-task-card p:last-of-type {
-  margin: 0;
-  color: var(--text-tertiary);
-}
-
-.admin-task-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-}
-
-.admin-task-grid--dense {
-  gap: 10px;
-}
-
-.admin-task-card,
-.admin-signal-card {
-  padding: 16px;
-}
-
-.admin-task-card {
-  display: grid;
-  gap: 10px;
-}
-
-.admin-task-card--focus {
-  border-color: color-mix(in oklab, var(--accent-8) 28%, var(--border-default));
-  box-shadow: 0 24px 46px -32px color-mix(in oklab, var(--accent-8) 28%, transparent);
-}
-
-.admin-task-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: var(--text-tertiary);
-  font-size: calc(12px * var(--ui-scale));
-  letter-spacing: 0.04em;
-}
-
-.admin-task-badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--accent-8) 16%, var(--surface-bg));
-  color: color-mix(in oklab, var(--accent-9) 76%, var(--text-primary));
-  font-weight: 700;
-}
-
-.admin-task-card--queue {
-  position: relative;
-  padding-top: 18px;
-}
-
-.admin-task-card--queue::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--accent-8) 62%, transparent), transparent 72%);
-}
-
-.admin-task-card--primary {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent-8) 10%, var(--surface-bg)), color-mix(in oklab, var(--surface-bg) 92%, var(--surface-page))),
-    var(--surface-bg);
-}
-
-.admin-task-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.admin-signal-section {
-  display: grid;
-  gap: 12px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-
-.admin-signal-card {
-  display: grid;
-  gap: 8px;
-}
-
-.admin-signal-card--metric {
-  position: relative;
-  padding-top: 18px;
-}
-
-.admin-signal-card--metric::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 2px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--accent-8) 52%, transparent), transparent 78%);
-}
-
-.label {
-  color: var(--text-tertiary);
-  font-size: calc(12px * var(--ui-scale));
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.value {
-  font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
-  font-size: calc(34px * var(--ui-scale));
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.empty {
-  border: 1px dashed color-mix(in oklab, var(--border-strong) 20%, var(--border-default));
-  border-radius: 12px;
-  padding: 14px;
-  color: var(--text-tertiary);
-  background: color-mix(in oklab, var(--surface-bg) 86%, var(--surface-page));
-}
-
-.error-text {
-  color: var(--danger-9);
-  font-size: calc(13px * var(--ui-scale));
-}
-
-@media (max-width: 640px) {
-  .header-row {
-    align-items: stretch;
-    flex-direction: column;
+  .admin-dashboard-view {
+    display: grid;
+    gap: 16px;
   }
 
-  .header-row :where(.btn) {
-    width: 100%;
+  .dashboard-copy,
+  .signal-heading {
+    display: grid;
+    gap: 6px;
   }
 
-  .admin-task-actions :where(.btn) {
-    flex: 1 1 calc(50% - 4px);
+  .dashboard-kicker,
+  .admin-task-kicker {
+    margin: 0;
+    color: color-mix(in oklab, var(--accent-9) 70%, var(--text-primary));
+    font-size: calc(12px * var(--ui-scale));
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
-  .admin-task-card--secondary {
+  h2,
+  h3 {
+    margin: 0;
+  }
+
+  .dashboard-intro,
+  .signal-copy,
+  .admin-task-card p:last-of-type {
+    margin: 0;
+    color: var(--text-tertiary);
+  }
+
+  .admin-task-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .admin-task-grid--dense {
+    gap: 10px;
+  }
+
+  .admin-task-card,
+  .admin-signal-card {
+    padding: 16px;
+  }
+
+  .admin-task-card {
+    display: grid;
+    gap: 10px;
+  }
+
+  .admin-task-card--focus {
+    border-color: color-mix(in oklab, var(--accent-8) 28%, var(--border-default));
+    box-shadow: 0 24px 46px -32px color-mix(in oklab, var(--accent-8) 28%, transparent);
+  }
+
+  .admin-task-meta {
+    display: flex;
+    align-items: center;
     gap: 8px;
-    padding: 14px;
+    flex-wrap: wrap;
+    color: var(--text-tertiary);
+    font-size: calc(12px * var(--ui-scale));
+    letter-spacing: 0.04em;
   }
 
-  .admin-task-copy--secondary {
-    display: none;
+  .admin-task-badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: color-mix(in oklab, var(--accent-8) 16%, var(--surface-bg));
+    color: color-mix(in oklab, var(--accent-9) 76%, var(--text-primary));
+    font-weight: 700;
   }
-}
+
+  .admin-task-card--queue {
+    position: relative;
+    padding-top: 18px;
+  }
+
+  .admin-task-card--queue::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--accent-8) 62%, transparent),
+      transparent 72%
+    );
+  }
+
+  .admin-task-card--primary {
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--accent-8) 10%, var(--surface-bg)),
+        color-mix(in oklab, var(--surface-bg) 92%, var(--surface-page))
+      ),
+      var(--surface-bg);
+  }
+
+  .admin-task-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .admin-signal-section {
+    display: grid;
+    gap: 12px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .admin-signal-card {
+    display: grid;
+    gap: 8px;
+  }
+
+  .admin-signal-card--metric {
+    position: relative;
+    padding-top: 18px;
+  }
+
+  .admin-signal-card--metric::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--accent-8) 52%, transparent),
+      transparent 78%
+    );
+  }
+
+  .label {
+    color: var(--text-tertiary);
+    font-size: calc(12px * var(--ui-scale));
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .value {
+    font-family: 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif SC', 'Songti SC', serif;
+    font-size: calc(34px * var(--ui-scale));
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .empty {
+    border: 1px dashed color-mix(in oklab, var(--border-strong) 20%, var(--border-default));
+    border-radius: 12px;
+    padding: 14px;
+    color: var(--text-tertiary);
+    background: color-mix(in oklab, var(--surface-bg) 86%, var(--surface-page));
+  }
+
+  .error-text {
+    color: var(--danger-9);
+    font-size: calc(13px * var(--ui-scale));
+  }
+
+  @media (max-width: 640px) {
+    .header-row {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .header-row :where(.btn) {
+      width: 100%;
+    }
+
+    .admin-task-actions :where(.btn) {
+      flex: 1 1 calc(50% - 4px);
+    }
+
+    .admin-task-card--secondary {
+      gap: 8px;
+      padding: 14px;
+    }
+
+    .admin-task-copy--secondary {
+      display: none;
+    }
+  }
 </style>
