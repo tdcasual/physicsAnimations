@@ -3,6 +3,7 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import { router } from './router'
 import { vLazy } from './directives'
+import { i18n } from './i18n'
 
 // 设计系统（顺序很重要）
 import './styles/design-system.css'
@@ -15,6 +16,7 @@ import { setupFocusVisible } from './utils/a11y'
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
+app.use(i18n)
 
 // 注册全局指令
 app.directive('lazy', vLazy)

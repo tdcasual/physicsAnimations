@@ -1,0 +1,103 @@
+{
+  "app": {
+    "name": "物理动画演示系统",
+    "shortName": "物理演示",
+    "description": "初高中物理演示动画互动教学平台"
+  },
+  "nav": {
+    "home": "首页",
+    "catalog": "目录",
+    "admin": "管理后台",
+    "login": "登录",
+    "logout": "退出",
+    "back": "返回"
+  },
+  "catalog": {
+    "title": "物理演示目录",
+    "search": "搜索演示...",
+    "searchPlaceholder": "查找力学、电磁学...",
+    "allCategories": "全部",
+    "favorites": "收藏",
+    "recent": "最近查看",
+    "noResults": "暂无符合条件的演示",
+    "clearFilter": "清除筛选",
+    "loadMore": "加载更多",
+    "itemsCount": "共 {count} 项"
+  },
+  "viewer": {
+    "title": "演示播放",
+    "loading": "加载中...",
+    "error": "加载失败",
+    "fullscreen": "全屏",
+    "exitFullscreen": "退出全屏",
+    "backToCatalog": "返回目录"
+  },
+  "admin": {
+    "dashboard": "概览",
+    "content": "内容管理",
+    "uploads": "上传管理",
+    "library": "资源库",
+    "taxonomy": "分类管理",
+    "system": "系统设置",
+    "account": "账号设置",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "create": "新建",
+    "search": "搜索...",
+    "loading": "加载中...",
+    "saving": "保存中...",
+    "noData": "暂无数据",
+    "confirmDelete": "确定删除吗？",
+    "success": "操作成功",
+    "error": "操作失败"
+  },
+  "login": {
+    "title": "管理员登录",
+    "username": "用户名",
+    "password": "密码",
+    "submit": "登录",
+    "error": {
+      "invalid": "用户名或密码错误",
+      "rateLimit": "尝试过于频繁，请稍后再试",
+      "network": "无法连接服务端"
+    }
+  },
+  "common": {
+    "loading": "加载中...",
+    "error": "出错了",
+    "retry": "重试",
+    "close": "关闭",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "search": "搜索",
+    "filter": "筛选",
+    "sort": "排序",
+    "more": "更多",
+    "less": "收起"
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统",
+    "toggle": "切换主题",
+    "classroom": "课堂模式"
+  },
+  "pwa": {
+    "install": "安装应用",
+    "installPrompt": "添加到主屏幕，离线也能使用",
+    "offline": "当前处于离线状态",
+    "updateAvailable": "有新版本可用"
+  },
+  "a11y": {
+    "skipToMain": "跳转到主内容",
+    "navLabel": "主导航",
+    "searchLabel": "搜索",
+    "closeModal": "关闭弹窗"
+  }
+}
