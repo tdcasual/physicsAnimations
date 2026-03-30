@@ -9,6 +9,11 @@ const LOCALSTORAGE_SHIM = fileURLToPath(
 export default defineConfig({
   base: '/',
   plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
   test: {
     environment: 'jsdom',
     execArgv: ['--import', LOCALSTORAGE_SHIM],
@@ -17,5 +22,13 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Admin 模块分包
+          'admin-core': ['./src/views/admin/AdminLayoutView.vue'],
+        },
+      },
+    },
   },
 })

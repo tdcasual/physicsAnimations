@@ -7,7 +7,7 @@
   /* ----------------------------------------
      1. 色彩系统 (OKLCH 色彩空间)
      ---------------------------------------- */
-  
+
   /* 中性灰阶 - 12级 */
   --gray-1: oklch(99% 0.002 250);
   --gray-2: oklch(97% 0.003 250);
@@ -17,30 +17,30 @@
   --gray-6: oklch(78% 0.007 250);
   --gray-7: oklch(68% 0.008 250);
   --gray-8: oklch(55% 0.009 250);
-  --gray-9: oklch(45% 0.010 250);
+  --gray-9: oklch(45% 0.01 250);
   --gray-10: oklch(35% 0.011 250);
   --gray-11: oklch(25% 0.012 250);
   --gray-12: oklch(15% 0.013 250);
-  
+
   /* 主题色 - 柔和靛蓝 */
   --primary-1: oklch(97% 0.02 270);
   --primary-2: oklch(93% 0.04 270);
   --primary-3: oklch(88% 0.06 270);
   --primary-4: oklch(82% 0.08 270);
-  --primary-5: oklch(75% 0.10 270);
+  --primary-5: oklch(75% 0.1 270);
   --primary-6: oklch(68% 0.12 270);
   --primary-7: oklch(60% 0.14 270);
   --primary-8: oklch(55% 0.15 270);
   --primary-9: oklch(52% 0.14 270);
   --primary-10: oklch(48% 0.13 270);
   --primary-11: oklch(42% 0.12 270);
-  --primary-12: oklch(35% 0.10 270);
-  
+  --primary-12: oklch(35% 0.1 270);
+
   /* 强调色 - 青绿 */
   --accent-1: oklch(97% 0.02 170);
   --accent-2: oklch(93% 0.04 170);
   --accent-3: oklch(88% 0.07 170);
-  --accent-4: oklch(82% 0.10 170);
+  --accent-4: oklch(82% 0.1 170);
   --accent-5: oklch(75% 0.13 170);
   --accent-6: oklch(68% 0.15 170);
   --accent-7: oklch(60% 0.16 170);
@@ -49,39 +49,39 @@
   --accent-10: oklch(48% 0.14 170);
   --accent-11: oklch(42% 0.13 170);
   --accent-12: oklch(35% 0.11 170);
-  
+
   /* 语义色彩 */
   --success-9: oklch(55% 0.14 150);
   --warning-9: oklch(70% 0.12 80);
   --danger-9: oklch(55% 0.18 25);
-  
+
   /* ----------------------------------------
      2. 语义映射
      ---------------------------------------- */
   --surface-bg: var(--gray-1);
   --surface-page: var(--gray-2);
   --surface-panel: var(--gray-3);
-  --surface-card: #FFFFFF;
-  --surface-elevated: #FFFFFF;
-  
+  --surface-card: #ffffff;
+  --surface-elevated: #ffffff;
+
   --text-primary: var(--gray-12);
   --text-secondary: var(--gray-10);
   --text-tertiary: var(--gray-8);
   --text-quaternary: var(--gray-7);
-  --text-white: #FFFFFF;
-  
+  --text-white: #ffffff;
+
   --border-default: var(--gray-4);
   --border-subtle: var(--gray-3);
   --border-strong: var(--gray-6);
-  
+
   --primary-default: var(--primary-9);
   --primary-hover: var(--primary-10);
   --primary-active: var(--primary-11);
   --primary-subtle: var(--primary-3);
-  
+
   --focus-ring: var(--primary-7);
   --selection-bg: var(--primary-4);
-  
+
   /* ----------------------------------------
      3. 尺寸系统
      ---------------------------------------- */
@@ -97,7 +97,7 @@
   --space-10: 64px;
   --space-11: 80px;
   --space-12: 96px;
-  
+
   /* ----------------------------------------
      4. 圆角系统
      ---------------------------------------- */
@@ -106,7 +106,7 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
-  
+
   /* ----------------------------------------
      5. 阴影系统
      ---------------------------------------- */
@@ -115,17 +115,17 @@
   --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.05);
   --shadow-lg: 0 8px 24px oklch(0% 0 0 / 0.06);
   --shadow-xl: 0 16px 48px oklch(0% 0 0 / 0.08);
-  
+
   --shadow-primary: 0 4px 20px oklch(52% 0.14 270 / 0.25);
   --shadow-accent: 0 4px 20px oklch(52% 0.15 170 / 0.25);
-  
+
   /* ----------------------------------------
      6. 字体系统
      ---------------------------------------- */
-  --font-sans: "Inter", "MiSans", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-serif: "Source Han Serif CN", "Noto Serif SC", Georgia, serif;
-  --font-mono: "JetBrains Mono", "Fira Code", monospace;
-  
+  --font-sans: 'Inter', 'MiSans', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-serif: 'Source Han Serif CN', 'Noto Serif SC', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
   --text-xs: 12px;
   --text-sm: 13px;
   --text-base: 14px;
@@ -135,17 +135,17 @@
   --text-2xl: 20px;
   --text-3xl: 24px;
   --text-4xl: 30px;
-  
+
   --leading-tight: 1.25;
   --leading-snug: 1.4;
   --leading-normal: 1.5;
   --leading-relaxed: 1.65;
-  
+
   --font-normal: 400;
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
-  
+
   /* ----------------------------------------
      7. 动效系统
      ---------------------------------------- */
@@ -154,11 +154,11 @@
   --duration-normal: 150ms;
   --duration-slow: 250ms;
   --duration-slower: 350ms;
-  
+
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  
+
   /* ----------------------------------------
      8. Z-Index 层级
      ---------------------------------------- */
@@ -170,7 +170,7 @@
   --z-modal: 500;
   --z-popover: 600;
   --z-tooltip: 700;
-  
+
   /* 向后兼容的旧变量映射 */
   --surface: var(--surface-bg);
   --paper: var(--surface-page);
@@ -189,7 +189,7 @@
 }
 
 /* 深色模式 */
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   --gray-1: oklch(17% 0.015 250);
   --gray-2: oklch(21% 0.018 250);
   --gray-3: oklch(25% 0.02 250);
@@ -202,28 +202,28 @@
   --gray-10: oklch(82% 0.034 250);
   --gray-11: oklch(90% 0.036 250);
   --gray-12: oklch(97% 0.038 250);
-  
+
   --surface-bg: var(--gray-1);
   --surface-page: var(--gray-2);
   --surface-panel: var(--gray-3);
   --surface-card: var(--gray-3);
   --surface-elevated: var(--gray-4);
-  
+
   --text-primary: var(--gray-12);
   --text-secondary: var(--gray-10);
   --text-tertiary: var(--gray-8);
   --text-quaternary: var(--gray-6);
-  
+
   --border-default: var(--gray-4);
   --border-subtle: var(--gray-3);
   --border-strong: var(--gray-5);
-  
-  --shadow-xs: 0 1px 2px oklch(0% 0 0 / 0.20);
+
+  --shadow-xs: 0 1px 2px oklch(0% 0 0 / 0.2);
   --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.25);
-  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.30);
+  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.3);
   --shadow-lg: 0 8px 24px oklch(0% 0 0 / 0.35);
-  --shadow-xl: 0 16px 48px oklch(0% 0 0 / 0.40);
-  
+  --shadow-xl: 0 16px 48px oklch(0% 0 0 / 0.4);
+
   /* 向后兼容的旧变量映射（深色模式） */
   --surface: var(--surface-bg);
   --paper: var(--surface-page);
@@ -242,7 +242,7 @@
 }
 
 /* 课堂模式 */
-:root[data-classroom="on"] {
+:root[data-classroom='on'] {
   --ui-scale: 1.15;
   --content-max-width: 1400px;
   --radius-md: 12px;
@@ -286,10 +286,10 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--gray-7);
 }
-:root[data-theme="dark"] ::-webkit-scrollbar-thumb {
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb {
   background: var(--gray-6);
 }
-:root[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+:root[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
   background: var(--gray-5);
 }
 
@@ -308,4 +308,28 @@ body {
 /* 平滑滚动 */
 html {
   scroll-behavior: smooth;
+}
+
+/* ==========================================
+   性能优化: 图片懒加载
+   ========================================== */
+
+.lazy-image {
+  opacity: 0.8;
+  transition: opacity 300ms ease;
+  background: var(--gray-3);
+}
+
+.lazy-image.lazy-loaded {
+  opacity: 1;
+  background: transparent;
+}
+
+.lazy-image.lazy-loading {
+  opacity: 0.5;
+}
+
+.lazy-image.lazy-error {
+  opacity: 1;
+  background: var(--danger-bg, oklch(90% 0.05 25));
 }
