@@ -7,9 +7,18 @@ function read(relPath: string): string {
 }
 
 describe("catalog library cards", () => {
-  it("renders dedicated folder card markup in catalog view", () => {
+  it("renders folder cards in catalog view", () => {
     const source = read("src/views/CatalogView.vue");
-    expect(source).toMatch(/catalog-folder-card/);
-    expect(source).toMatch(/library\/folder\//);
+
+    expect(source).toMatch(/libraryHighlights/);
+    expect(source).toMatch(/folder-card/);
+    expect(source).toMatch(/\/library\/folder\//);
+  });
+
+  it("has folder icon placeholder", () => {
+    const css = read("src/views/CatalogView.vue");
+
+    expect(css).toMatch(/folder-icon/);
+    expect(css).toMatch(/folder-card/);
   });
 });

@@ -100,10 +100,10 @@ function isFavorited(itemId: string): boolean {
   flex: 0 0 auto;
   min-height: 24px;
   padding: 2px 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   background: transparent;
-  color: var(--accent);
+  color: var(--accent-8);
   font-size: calc(11px * var(--ui-scale, 1));
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -121,13 +121,13 @@ function isFavorited(itemId: string): boolean {
   gap: 8px;
   align-items: center;
   padding: 8px 4px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border-default);
   border-radius: var(--radius-s);
   transition: background-color 140ms ease;
 }
 
 .catalog-teacher-row:hover {
-  background: var(--surface-ink);
+  background: var(--surface-panel);
 }
 
 .catalog-teacher-row:first-child {
@@ -148,7 +148,7 @@ function isFavorited(itemId: string): boolean {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: var(--radius-m);
-  background: var(--surface);
+  background: var(--surface-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -175,7 +175,7 @@ function isFavorited(itemId: string): boolean {
 }
 
 .catalog-teacher-desc {
-  color: var(--muted);
+  color: var(--text-tertiary);
   font-size: calc(12px * var(--ui-scale, 1));
   line-height: 1.45;
   display: -webkit-box;
@@ -187,10 +187,10 @@ function isFavorited(itemId: string): boolean {
 .catalog-teacher-action {
   min-height: 34px;
   width: fit-content;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   padding: 6px 10px;
-  background: var(--surface);
+  background: var(--surface-bg);
   color: inherit;
   cursor: pointer;
   font-size: calc(12px * var(--ui-scale, 1));
@@ -198,9 +198,9 @@ function isFavorited(itemId: string): boolean {
 }
 
 .catalog-teacher-action--active {
-  border-color: var(--accent);
+  border-color: var(--accent-8);
   background: oklch(58% 0.18 30 / 0.08);
-  color: var(--accent-strong);
+  color: var(--accent-9);
   font-weight: 600;
 }
 

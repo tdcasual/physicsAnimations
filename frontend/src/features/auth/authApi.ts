@@ -14,16 +14,41 @@ function toApiError(message: string, status?: number, data?: unknown): ApiError 
   return err;
 }
 
+// 安全的 sessionStorage 操作
+function safeGetItem(key: string): string | null {
+  try {
+    return sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    sessionStorage.setItem(key, value);
+  } catch {
+    // 忽略存储错误（隐私模式等）
+  }
+}
+
+function safeRemoveItem(key: string): void {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // 忽略存储错误
+  }
+}
+
 export function getToken(): string {
-  return sessionStorage.getItem(TOKEN_KEY) || "";
+  return safeGetItem(TOKEN_KEY) || "";
 }
 
 export function setToken(token: string): void {
-  sessionStorage.setItem(TOKEN_KEY, token);
+  safeSetItem(TOKEN_KEY, token);
 }
 
 export function clearToken(): void {
-  sessionStorage.removeItem(TOKEN_KEY);
+  safeRemoveItem(TOKEN_KEY);
 }
 
 async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {

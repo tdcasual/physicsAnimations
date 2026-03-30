@@ -56,7 +56,7 @@ const emit = defineEmits<{
 
 .catalog-quick-access-label {
   margin: 0;
-  color: var(--accent);
+  color: var(--accent-8);
   font-size: calc(13px * var(--ui-scale, 1));
   font-weight: 600;
 }
@@ -73,11 +73,11 @@ const emit = defineEmits<{
 }
 
 .catalog-quick-chip {
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-m);
   min-height: 40px;
   padding: 7px 12px;
-  background: var(--surface-raised);
+  background: var(--surface-elevated);
   color: inherit;
   text-decoration: none;
   display: inline-flex;
@@ -90,13 +90,13 @@ const emit = defineEmits<{
 
 .catalog-quick-chip:hover {
   transform: translateY(-1px);
-  border-color: var(--accent);
-  box-shadow: var(--shadow-s);
+  border-color: var(--accent-8);
+  box-shadow: var(--shadow-sm);
 }
 
 .catalog-quick-chip:focus-visible {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--accent-8);
   box-shadow: 0 0 0 3px oklch(0% 0 0 / 0.08);
 }
 

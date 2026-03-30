@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import { RouterLink, RouterView, useRoute } from "vue-router";
 import AdminShellHeader from "../../components/admin/AdminShellHeader.vue";
 import { adminNavGroups, adminNavItems } from "../../features/admin/adminNavConfig";
-import { useRoute } from "vue-router";
 
 const route = useRoute();
 const adminNavRef = ref<HTMLElement | null>(null);

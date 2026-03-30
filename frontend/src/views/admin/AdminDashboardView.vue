@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
+import { RouterLink } from "vue-router";
 import { fetchDashboardStats, type DashboardStats } from "../../features/admin/adminApi";
 
 const loading = ref(false);
@@ -145,7 +146,7 @@ onMounted(async () => {
 .dashboard-kicker,
 .admin-task-kicker {
   margin: 0;
-  color: color-mix(in oklab, var(--accent-copper-strong) 70%, var(--text));
+  color: color-mix(in oklab, var(--accent-9) 70%, var(--text-primary));
   font-size: calc(12px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -161,7 +162,7 @@ h3 {
 .signal-copy,
 .admin-task-card p:last-of-type {
   margin: 0;
-  color: var(--muted);
+  color: var(--text-tertiary);
 }
 
 .admin-task-grid {
@@ -185,8 +186,8 @@ h3 {
 }
 
 .admin-task-card--focus {
-  border-color: color-mix(in oklab, var(--accent) 28%, var(--border));
-  box-shadow: 0 24px 46px -32px color-mix(in oklab, var(--accent) 28%, transparent);
+  border-color: color-mix(in oklab, var(--accent-8) 28%, var(--border-default));
+  box-shadow: 0 24px 46px -32px color-mix(in oklab, var(--accent-8) 28%, transparent);
 }
 
 .admin-task-meta {
@@ -194,7 +195,7 @@ h3 {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  color: var(--muted);
+  color: var(--text-tertiary);
   font-size: calc(12px * var(--ui-scale));
   letter-spacing: 0.04em;
 }
@@ -202,8 +203,8 @@ h3 {
 .admin-task-badge {
   padding: 4px 8px;
   border-radius: 999px;
-  background: color-mix(in oklab, var(--accent-copper) 16%, var(--surface));
-  color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
+  background: color-mix(in oklab, var(--accent-8) 16%, var(--surface-bg));
+  color: color-mix(in oklab, var(--accent-9) 76%, var(--text-primary));
   font-weight: 700;
 }
 
@@ -217,13 +218,13 @@ h3 {
   position: absolute;
   inset: 0 0 auto;
   height: 3px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--accent-copper) 62%, transparent), transparent 72%);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent-8) 62%, transparent), transparent 72%);
 }
 
 .admin-task-card--primary {
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
-    var(--surface);
+    linear-gradient(180deg, color-mix(in oklab, var(--accent-8) 10%, var(--surface-bg)), color-mix(in oklab, var(--surface-bg) 92%, var(--surface-page))),
+    var(--surface-bg);
 }
 
 .admin-task-actions {
@@ -258,11 +259,11 @@ h3 {
   position: absolute;
   inset: 0 0 auto;
   height: 2px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 52%, transparent), transparent 78%);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent-8) 52%, transparent), transparent 78%);
 }
 
 .label {
-  color: var(--muted);
+  color: var(--text-tertiary);
   font-size: calc(12px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -278,15 +279,15 @@ h3 {
 }
 
 .empty {
-  border: 1px dashed color-mix(in oklab, var(--line-strong) 20%, var(--border));
+  border: 1px dashed color-mix(in oklab, var(--border-strong) 20%, var(--border-default));
   border-radius: 12px;
   padding: 14px;
-  color: var(--muted);
-  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
+  color: var(--text-tertiary);
+  background: color-mix(in oklab, var(--surface-bg) 86%, var(--surface-page));
 }
 
 .error-text {
-  color: var(--danger);
+  color: var(--danger-9);
   font-size: calc(13px * var(--ui-scale));
 }
 

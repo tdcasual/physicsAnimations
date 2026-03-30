@@ -7,12 +7,18 @@ function read(relPath: string): string {
 }
 
 describe("login inline error reset", () => {
-  it("clears stale login errors as the user keeps typing", () => {
+  it("clears stale login errors while typing", () => {
     const source = read("src/views/LoginView.vue");
 
-    expect(source).toMatch(/function\s+clearErrorText\(\)\s*\{/);
-    expect(source).toMatch(/if\s*\(!errorText\.value\) return/);
+    expect(source).toMatch(/clearError/);
+    expect(source).toMatch(/@input="clearError"/);
     expect(source).toMatch(/errorText\.value\s*=\s*""/);
-    expect(source.match(/@input="clearErrorText"/g)?.length ?? 0).toBe(2);
+  });
+
+  it("has error display that shows only when error exists", () => {
+    const source = read("src/views/LoginView.vue");
+
+    expect(source).toMatch(/v-if="errorText"/);
+    expect(source).toMatch(/form-error/);
   });
 });

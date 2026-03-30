@@ -2,6 +2,9 @@ import { createPinia } from "pinia";
 import { createApp } from "vue";
 import App from "./App.vue";
 import { router } from "./router";
+
+// 设计系统（顺序很重要）
+import "./styles/design-system.css";
 import "./styles.css";
 
 const app = createApp(App);

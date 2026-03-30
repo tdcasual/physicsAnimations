@@ -61,7 +61,7 @@ const emit = defineEmits<{
 .viewer-stage-frame {
   position: relative;
   overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-xl);
   padding: clamp(14px, 2vw, 20px);
   background: oklch(14% 0.02 250);
@@ -114,7 +114,7 @@ const emit = defineEmits<{
   min-height: calc(var(--viewer-min-height, 72vh) - clamp(28px, 4vw, 40px));
   border: 0;
   display: block;
-  background: var(--surface);
+  background: var(--surface-bg);
 }
 
 @keyframes viewer-shift {

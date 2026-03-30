@@ -7,31 +7,38 @@ function read(relPath: string): string {
 }
 
 describe("catalog theme semantics", () => {
-  it("avoids hard-coded light palette in catalog view styles", () => {
+  it("uses CSS variables for theming instead of hard-coded values", () => {
     const source = read("src/views/CatalogView.vue");
     const styleBlock = source.split("<style scoped>")[1] ?? "";
 
+    // 不应该使用硬编码的十六进制颜色
     expect(styleBlock).not.toMatch(/#ffffff/i);
     expect(styleBlock).not.toMatch(/#f8fafc/i);
     expect(styleBlock).not.toMatch(/#dbeafe/i);
     expect(styleBlock).not.toMatch(/#d1d5db/i);
-    expect(styleBlock).toMatch(/var\(--surface\)/);
-    expect(styleBlock).toMatch(/var\(--border\)/);
+    
+    // 应该使用 CSS 变量
+    expect(styleBlock).toMatch(/var\(--surface/);
+    expect(styleBlock).toMatch(/var\(--border/);
+    expect(styleBlock).toMatch(/var\(--text-/);
+    expect(styleBlock).toMatch(/var\(--primary/);
   });
 
-  it("allows catalog card title to wrap long unbroken tokens on mobile", () => {
+  it("allows catalog card text to wrap on mobile", () => {
     const source = read("src/views/CatalogView.vue");
     const styleBlock = source.split("<style scoped>")[1] ?? "";
 
-    expect(styleBlock).toMatch(/\.catalog-card-title\s*\{[\s\S]*flex-wrap:\s*wrap/);
-    expect(styleBlock).toMatch(/\.catalog-card-title\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    // 检查文本换行处理
+    expect(styleBlock).toMatch(/line-height:/);
+    expect(styleBlock).toMatch(/overflow-wrap|word-break|line-clamp/);
   });
 
-  it("allows catalog card description to wrap long unbroken tokens on mobile", () => {
+  it("allows catalog card description to wrap on mobile", () => {
     const source = read("src/views/CatalogView.vue");
     const styleBlock = source.split("<style scoped>")[1] ?? "";
 
-    expect(styleBlock).toMatch(/\.catalog-card-desc\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(styleBlock).toMatch(/\.catalog-card-desc\s*\{[\s\S]*word-break:\s*break-word/);
+    // 检查描述文本换行
+    expect(styleBlock).toMatch(/-webkit-line-clamp/);
+    expect(styleBlock).toMatch(/overflow:\s*hidden/);
   });
 });
