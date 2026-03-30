@@ -12,6 +12,8 @@
   import { resolveTopbarModeClass, resolveTopbarSearchState } from './features/app/appShellTopbar'
   import { resolveAdminRedirect } from './router/redirect'
   import { useCatalogSearch } from './features/catalog/catalogSearch'
+  import OfflineIndicator from './components/OfflineIndicator.vue'
+  import PwaInstallPrompt from './components/PwaInstallPrompt.vue'
 
   const router = useRouter()
   const route = useRoute()
@@ -253,6 +255,8 @@
 </script>
 
 <template>
+  <OfflineIndicator />
+  <PwaInstallPrompt />
   <div class="app-shell">
     <header ref="topbarRef" :class="['topbar', topbarModeClass]">
       <div class="topbar-inner">
