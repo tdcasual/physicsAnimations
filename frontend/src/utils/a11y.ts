@@ -158,18 +158,28 @@ export const ariaRoles = {
 /**
  * 焦点可见性检测
  * 只在键盘导航时显示焦点环
+ * @returns 清理函数，用于移除事件监听器
  */
-export function setupFocusVisible(): void {
+export function setupFocusVisible(): () => void {
   // 检测是否是键盘导航
-  document.body.addEventListener('mousedown', () => {
+  const mousedownHandler = () => {
     document.body.classList.add('using-mouse')
     document.body.classList.remove('using-keyboard')
-  })
-
-  document.body.addEventListener('keydown', e => {
+  }
+  
+  const keydownHandler = (e: KeyboardEvent) => {
     if (e.key === 'Tab') {
       document.body.classList.add('using-keyboard')
       document.body.classList.remove('using-mouse')
     }
-  })
+  }
+  
+  document.body.addEventListener('mousedown', mousedownHandler)
+  document.body.addEventListener('keydown', keydownHandler)
+  
+  // 返回清理函数
+  return () => {
+    document.body.removeEventListener('mousedown', mousedownHandler)
+    document.body.removeEventListener('keydown', keydownHandler)
+  }
 }

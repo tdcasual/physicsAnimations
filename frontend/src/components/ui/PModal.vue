@@ -1,8 +1,8 @@
 <script setup lang="ts">
-  import { onMounted, onUnmounted, watch } from 'vue'
+  import { onUnmounted, watch, ref, nextTick } from 'vue'
 
   interface Props {
-    modelValue: boolean
+    modelValue?: boolean
     title?: string
     size?: 'sm' | 'md' | 'lg' | 'xl'
     closable?: boolean
@@ -10,6 +10,7 @@
   }
 
   const props = withDefaults(defineProps<Props>(), {
+    modelValue: false,
     size: 'md',
     closable: true,
     maskClosable: true,
@@ -32,25 +33,93 @@
   function onKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape' && props.modelValue) {
       close()
+      return
+    }
+    
+    // Tab键焦点陷阱
+    if (e.key === 'Tab' && props.modelValue && wrapperRef.value) {
+      const focusableElements = wrapperRef.value.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      )
+      
+      if (focusableElements.length === 0) return
+      
+      const firstElement = focusableElements[0] as HTMLElement
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+      
+      if (e.shiftKey) {
+        // Shift+Tab: 向后循环
+        if (document.activeElement === firstElement) {
+          lastElement.focus()
+          e.preventDefault()
+        }
+      } else {
+        // Tab: 向前循环
+        if (document.activeElement === lastElement) {
+          firstElement.focus()
+          e.preventDefault()
+        }
+      }
     }
   }
 
+  const maskRef = ref<HTMLElement | null>(null)
+  const wrapperRef = ref<HTMLElement | null>(null)
+  let previouslyFocusedElement: HTMLElement | null = null
+  
+  function onTouchMove(e: TouchEvent) {
+    // 阻止滚动穿透
+    if (e.target === maskRef.value) {
+      e.preventDefault()
+    }
+  }
+  
+  // 焦点管理：将焦点移到模态框内
+  function focusModal() {
+    nextTick(() => {
+      // 保存之前聚焦的元素
+      previouslyFocusedElement = document.activeElement as HTMLElement
+      
+      // 尝试聚焦到关闭按钮或模态框内容
+      const focusableElement = wrapperRef.value?.querySelector(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      ) as HTMLElement
+      
+      if (focusableElement) {
+        focusableElement.focus()
+      } else {
+        wrapperRef.value?.focus()
+      }
+    })
+  }
+  
+  // 恢复焦点
+  function restoreFocus() {
+    if (previouslyFocusedElement && typeof previouslyFocusedElement.focus === 'function') {
+      previouslyFocusedElement.focus()
+    }
+  }
+
+  // 监听modelValue变化，动态添加/移除事件监听
   watch(
     () => props.modelValue,
-    val => {
-      if (val) {
+    (isOpen, wasOpen) => {
+      if (isOpen && !wasOpen) {
+        // 打开时添加监听器、阻止滚动、管理焦点
+        document.addEventListener('keydown', onKeydown)
         document.body.style.overflow = 'hidden'
-      } else {
+        focusModal()
+      } else if (!isOpen && wasOpen) {
+        // 关闭时移除监听器、恢复滚动、恢复焦点
+        document.removeEventListener('keydown', onKeydown)
         document.body.style.overflow = ''
+        restoreFocus()
       }
     }
   )
 
-  onMounted(() => {
-    document.addEventListener('keydown', onKeydown)
-  })
-
   onUnmounted(() => {
+    // 确保清理
     document.removeEventListener('keydown', onKeydown)
     document.body.style.overflow = ''
   })
@@ -59,13 +128,31 @@
 <template>
   <Teleport to="body">
     <Transition name="p-modal">
-      <div v-show="modelValue" class="p-modal">
-        <div class="p-modal__mask" @click="onMaskClick" />
-        <div class="p-modal__wrapper">
+      <div 
+        v-show="modelValue" 
+        class="p-modal" 
+        role="dialog"
+        aria-modal="true"
+        :aria-label="title || '对话框'"
+        @touchmove="onTouchMove"
+      >
+        <div 
+          ref="maskRef"
+          class="p-modal__mask" 
+          @click="onMaskClick" 
+          @touchstart.passive="onMaskClick"
+        />
+        <div class="p-modal__wrapper" ref="wrapperRef">
           <div class="p-modal__content" :class="`p-modal__content--${size}`">
             <div v-if="title || closable" class="p-modal__header">
-              <h3 v-if="title" class="p-modal__title">{{ title }}</h3>
-              <button v-if="closable" type="button" class="p-modal__close" @click="close">
+              <h3 v-if="title" class="p-modal__title" id="modal-title">{{ title }}</h3>
+              <button 
+                v-if="closable" 
+                type="button" 
+                class="p-modal__close" 
+                aria-label="关闭对话框"
+                @click="close"
+              >
                 ×
               </button>
             </div>
@@ -108,9 +195,22 @@
   .p-modal__wrapper {
     position: relative;
     z-index: 1;
-    max-height: 90vh;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 32px);
+    max-height: calc(100vh - 32px); /* fallback */
     overflow: auto;
     padding: var(--space-4);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .p-modal__mask {
+    touch-action: manipulation;
+  }
+
+  .p-modal__close {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .p-modal__content {
@@ -131,6 +231,30 @@
   }
   .p-modal__content--xl {
     width: 920px;
+  }
+  
+  /* 平板适配 */
+  @media (max-width: 1024px) {
+    .p-modal__content--lg,
+    .p-modal__content--xl {
+      width: 90vw;
+      max-width: 680px;
+    }
+    
+    .p-modal__content--md {
+      width: 85vw;
+      max-width: 520px;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .p-modal__content--lg,
+    .p-modal__content--xl,
+    .p-modal__content--md,
+    .p-modal__content--sm {
+      width: calc(100vw - 32px);
+      max-width: none;
+    }
   }
 
   .p-modal__header {

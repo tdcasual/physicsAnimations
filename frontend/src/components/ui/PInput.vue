@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref } from 'vue'
+  import { ref, computed } from 'vue'
 
   interface Props {
     modelValue?: string
@@ -8,6 +8,9 @@
     size?: 'sm' | 'md' | 'lg'
     error?: string
     disabled?: boolean
+    id?: string
+    ariaLabel?: string
+    ariaDescribedby?: string
   }
 
   const props = withDefaults(defineProps<Props>(), {
@@ -22,6 +25,14 @@
   }>()
 
   const isFocused = ref(false)
+  const inputId = computed(() => props.id || `p-input-${Math.random().toString(36).slice(2, 9)}`)
+  const errorId = computed(() => (props.error ? `${inputId.value}-error` : undefined))
+  const describedBy = computed(() => {
+    const ids: string[] = []
+    if (props.error && errorId.value) ids.push(errorId.value)
+    if (props.ariaDescribedby) ids.push(props.ariaDescribedby)
+    return ids.length > 0 ? ids.join(' ') : undefined
+  })
 
   function onInput(e: Event) {
     emit('update:modelValue', (e.target as HTMLInputElement).value)
@@ -42,23 +53,26 @@
       ]"
     >
       <input
+        :id="inputId"
         :type="type"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
+        :aria-label="ariaLabel"
+        :aria-describedby="describedBy"
+        :aria-invalid="!!error"
         class="p-input"
         @input="onInput"
-        @focus="
-          isFocused = true
-          $emit('focus', $event)
-        "
-        @blur="
-          isFocused = false
-          $emit('blur', $event)
-        "
+        @focus="($event: FocusEvent) => { isFocused = true; emit('focus', $event) }"
+        @blur="($event: FocusEvent) => { isFocused = false; emit('blur', $event) }"
       />
     </div>
-    <span v-if="error" class="p-input__error">{{ error }}</span>
+    <span
+      v-if="error"
+      :id="errorId"
+      class="p-input__error"
+      role="alert"
+    >{{ error }}</span>
   </div>
 </template>
 

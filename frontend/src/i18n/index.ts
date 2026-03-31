@@ -94,7 +94,7 @@ export const i18n = createI18n<[MessageSchema], Locale>({
 
 // 切换语言
 export function setLocale(locale: Locale): void {
-  i18n.global.locale.value = locale
+  ;(i18n.global.locale as unknown as { value: Locale }).value = locale
   try {
     localStorage.setItem('app-locale', locale)
   } catch {
@@ -106,7 +106,7 @@ export function setLocale(locale: Locale): void {
 
 // 获取当前语言
 export function getLocale(): Locale {
-  return i18n.global.locale.value as Locale
+  return (i18n.global.locale as unknown as { value: Locale }).value
 }
 
 // 获取支持的语言列表

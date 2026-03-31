@@ -1,14 +1,25 @@
 <script setup lang="ts">
-  const props = defineProps<{
-    screenshotVisible: boolean
-    interactiveStarted: boolean
-    stageStatusLabel: string
-    screenshotUrl: string
-    normalizedScreenshotSrc: string
-    frameSrc: string
-    frameSandbox: string
-    stageTransitionState: 'steady' | 'mode-shift'
-  }>()
+  interface Props {
+    screenshotVisible?: boolean
+    interactiveStarted?: boolean
+    stageStatusLabel?: string
+    screenshotUrl?: string
+    normalizedScreenshotSrc?: string
+    frameSrc?: string
+    frameSandbox?: string
+    stageTransitionState?: 'steady' | 'mode-shift'
+  }
+
+  const props = withDefaults(defineProps<Props>(), {
+    screenshotVisible: false,
+    interactiveStarted: false,
+    stageStatusLabel: '',
+    screenshotUrl: '',
+    normalizedScreenshotSrc: '',
+    frameSrc: '',
+    frameSandbox: 'allow-scripts',
+    stageTransitionState: 'steady',
+  })
 
   const emit = defineEmits<{
     (event: 'frame-load'): void

@@ -8,6 +8,7 @@
 export { default as PButton } from './PButton.vue'
 export { default as PCard } from './PCard.vue'
 export { default as PEmpty } from './PEmpty.vue'
+export { default as PErrorState } from './PErrorState.vue'
 export { default as PInput } from './PInput.vue'
 export { default as PModal } from './PModal.vue'
 

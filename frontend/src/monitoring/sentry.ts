@@ -67,7 +67,41 @@ export function initSentry(app: App): void {
     ],
     // 在发送到 Sentry 前修改事件
     beforeSend(event) {
-      // 可以在这里过滤敏感信息
+      // 过滤敏感信息
+      if (event.request) {
+        // 删除 cookies
+        delete (event.request as Record<string, unknown>).cookies
+        // 删除敏感 headers
+        if (event.request.headers) {
+          delete event.request.headers['Authorization']
+          delete event.request.headers['authorization']
+          delete event.request.headers['X-Auth-Token']
+          delete event.request.headers['x-auth-token']
+          delete event.request.headers['Cookie']
+          delete event.request.headers['cookie']
+        }
+        // 过滤 URL 中的敏感参数
+        if (event.request.url) {
+          try {
+            const url = new URL(event.request.url)
+            // 删除敏感查询参数
+            const sensitiveParams = ['token', 'password', 'secret', 'key', 'auth']
+            sensitiveParams.forEach(param => {
+              if (url.searchParams.has(param)) {
+                url.searchParams.set(param, '[FILTERED]')
+              }
+            })
+            event.request.url = url.toString()
+          } catch {
+            // URL 解析失败，保持原样
+          }
+        }
+      }
+      // 过滤用户敏感数据
+      if (event.user) {
+        delete event.user.email
+        delete (event.user as Record<string, unknown>).ip_address
+      }
       return event
     },
   })

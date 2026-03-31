@@ -1,11 +1,15 @@
 <script setup lang="ts">
-  defineProps<{
-    summary: Array<{
+  interface Props {
+    summary?: Array<{
       label: string
       value: string
       note: string
     }>
-  }>()
+  }
+
+  withDefaults(defineProps<Props>(), {
+    summary: () => [],
+  })
 </script>
 
 <template>
@@ -50,7 +54,7 @@
     line-height: 1.45;
   }
 
-  @media (min-width: 760px) {
+  @media (min-width: 768px) {
     .catalog-workspace-strip {
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px 14px;

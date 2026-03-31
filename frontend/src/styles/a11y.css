@@ -6,10 +6,11 @@
    1. 焦点管理
    ---------------------------------------- */
 
-/* 基础焦点样式 */
+/* 基础焦点样式 - 使用设计系统变量 */
 :focus-visible {
-  outline: 2px solid var(--primary-8, #4f46e5);
+  outline: 2px solid var(--focus-ring, var(--primary-7));
   outline-offset: 2px;
+  border-radius: var(--radius-sm, 4px);
 }
 
 /* 鼠标点击时不显示焦点环 */
@@ -20,14 +21,21 @@
 /* 键盘导航时的焦点样式 */
 .using-keyboard :focus,
 .using-keyboard :focus-visible {
-  outline: 2px solid var(--primary-8, #4f46e5);
+  outline: 2px solid var(--focus-ring, var(--primary-7));
   outline-offset: 2px;
+  border-radius: var(--radius-sm, 4px);
 }
 
 /* 强制焦点可见的元素 */
 .force-focus:focus {
-  outline: 2px solid var(--primary-8, #4f46e5) !important;
+  outline: 2px solid var(--focus-ring, var(--primary-7)) !important;
   outline-offset: 2px !important;
+}
+
+/* 禁用状态的焦点样式 */
+:disabled:focus-visible,
+[aria-disabled="true"]:focus-visible {
+  outline-color: var(--text-quaternary, var(--gray-6));
 }
 
 /* ----------------------------------------
@@ -79,26 +87,59 @@
 
 @media (prefers-contrast: high) {
   :root {
-    --border-default: #000000;
-    --text-primary: #000000;
-    --text-secondary: #000000;
-    --primary-8: #0000ff;
+    /* 高对比度模式使用最高对比度的颜色 */
+    --border-default: oklch(0% 0 0);
+    --text-primary: oklch(0% 0 0);
+    --text-secondary: oklch(20% 0 0);
+    --primary-8: oklch(50% 0.2 260);
+    --surface-bg: oklch(100% 0 0);
+    --surface-card: oklch(100% 0 0);
   }
 
   :root[data-theme='dark'] {
-    --border-default: #ffffff;
-    --text-primary: #ffffff;
-    --text-secondary: #ffffff;
-    --primary-8: #00ffff;
+    --border-default: oklch(100% 0 0);
+    --text-primary: oklch(100% 0 0);
+    --text-secondary: oklch(90% 0 0);
+    --primary-8: oklch(70% 0.15 200);
+    --surface-bg: oklch(0% 0 0);
+    --surface-card: oklch(10% 0 0);
   }
 
   * {
-    border-width: max(1px, 0.0625rem) !important;
+    border-width: max(2px, 0.125rem) !important;
+    outline-width: max(2px, 0.125rem) !important;
+  }
+  
+  /* 增强焦点指示器 */
+  :focus-visible {
+    outline: 3px solid var(--primary-8) !important;
+    outline-offset: 2px !important;
   }
 }
 
 /* ----------------------------------------
-   5. 打印样式
+   5. 减少动效偏好支持
+   ---------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  /* 保留必要的系统动画 */
+  .spinner,
+  .loading-indicator {
+    animation-duration: inherit !important;
+  }
+}
+
+/* ----------------------------------------
+   6. 打印样式
    ---------------------------------------- */
 
 @media print {

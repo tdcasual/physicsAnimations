@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import { ref, onMounted, onUnmounted } from 'vue'
 
   /**
    * PWA 安装提示组件
@@ -16,6 +16,10 @@
   const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null)
   const isInstalled = ref(false)
 
+  // 保存事件处理器引用以便清理
+  let beforeInstallHandler: ((e: Event) => void) | null = null
+  let appInstalledHandler: (() => void) | null = null
+
   onMounted(() => {
     // 检测是否已安装
     if (window.matchMedia('(display-mode: standalone)').matches) {
@@ -23,19 +27,34 @@
       return
     }
 
-    // 监听安装提示事件
-    window.addEventListener('beforeinstallprompt', e => {
+    // 定义事件处理器
+    beforeInstallHandler = (e: Event) => {
       e.preventDefault()
       deferredPrompt.value = e as BeforeInstallPromptEvent
       showPrompt.value = true
-    })
+    }
 
-    // 监听已安装事件
-    window.addEventListener('appinstalled', () => {
+    appInstalledHandler = () => {
       isInstalled.value = true
       showPrompt.value = false
       deferredPrompt.value = null
-    })
+    }
+
+    // 监听安装提示事件
+    window.addEventListener('beforeinstallprompt', beforeInstallHandler)
+
+    // 监听已安装事件
+    window.addEventListener('appinstalled', appInstalledHandler)
+  })
+
+  onUnmounted(() => {
+    // 清理事件监听器，防止内存泄漏
+    if (beforeInstallHandler) {
+      window.removeEventListener('beforeinstallprompt', beforeInstallHandler)
+    }
+    if (appInstalledHandler) {
+      window.removeEventListener('appinstalled', appInstalledHandler)
+    }
   })
 
   async function installPwa() {
@@ -45,7 +64,7 @@
     const { outcome } = await deferredPrompt.value.userChoice
 
     if (outcome === 'accepted') {
-      console.log('PWA 安装成功')
+      // PWA 安装成功，无需 console.log
     }
 
     deferredPrompt.value = null
@@ -98,7 +117,7 @@
 <style scoped>
   .pwa-install-prompt {
     position: fixed;
-    bottom: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
     left: 16px;
     right: 16px;
     max-width: 480px;
@@ -107,6 +126,7 @@
     border: 1px solid var(--border-default, #e5e7eb);
     border-radius: 16px;
     padding: 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
     box-shadow:
       0 20px 25px -5px rgba(0, 0, 0, 0.1),
       0 8px 10px -6px rgba(0, 0, 0, 0.1);

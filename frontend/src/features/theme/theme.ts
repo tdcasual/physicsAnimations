@@ -5,6 +5,11 @@ export type ClassroomMode = 'on' | 'off'
 const THEME_KEY = 'pa_theme'
 const CLASSROOM_KEY = 'pa_classroom'
 
+// 保存主题变化监听器引用，用于清理
+let themeChangeHandler: ((e: MediaQueryListEvent) => void) | null = null
+let mediaQueryList: MediaQueryList | null = null
+let initThemeCallCount = 0
+
 // 安全的 localStorage 操作
 function safeGetItem(key: string): string | null {
   try {
@@ -59,6 +64,17 @@ export function applyClassroomMode(mode: ClassroomMode): void {
   safeSetItem(CLASSROOM_KEY, mode)
 }
 
+// 清理主题监听器（用于防止内存泄漏）
+export function cleanupThemeListener(): void {
+  if (themeChangeHandler && mediaQueryList) {
+    mediaQueryList.removeEventListener('change', themeChangeHandler)
+    themeChangeHandler = null
+    mediaQueryList = null
+  }
+  // 重置引用计数，避免状态不一致
+  initThemeCallCount = 0
+}
+
 // 初始化（启动时调用）
 export function initTheme(): { theme: Theme; classroom: ClassroomMode } {
   const savedTheme = safeGetItem(THEME_KEY) as Theme | null
@@ -70,15 +86,30 @@ export function initTheme(): { theme: Theme; classroom: ClassroomMode } {
   applyTheme(theme)
   applyClassroomMode(classroom)
 
-  if (theme === 'system' && typeof window !== 'undefined') {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  // 引用计数，防止多实例互相干扰
+  initThemeCallCount++
+
+  // 只在第一次调用时设置监听器
+  if (initThemeCallCount === 1 && theme === 'system' && typeof window !== 'undefined') {
+    mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
+    themeChangeHandler = (e: MediaQueryListEvent) => {
       if (document.documentElement) {
         document.documentElement.dataset.theme = e.matches ? 'dark' : 'light'
       }
-    })
+    }
+    mediaQueryList.addEventListener('change', themeChangeHandler)
   }
 
   return { theme, classroom }
+}
+
+// 清理主题（与 initTheme 成对调用）
+export function cleanupTheme(): void {
+  initThemeCallCount = Math.max(0, initThemeCallCount - 1)
+  // 只有最后一个调用者才实际清理监听器
+  if (initThemeCallCount === 0) {
+    cleanupThemeListener()
+  }
 }
 
 // 切换主题

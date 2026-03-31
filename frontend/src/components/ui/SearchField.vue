@@ -12,7 +12,7 @@
 
   interface Props {
     /** 输入值 */
-    modelValue: string
+    modelValue?: string
     /** 占位符文本 */
     placeholder?: string
     /** 是否禁用 */
@@ -24,6 +24,7 @@
   }
 
   const props = withDefaults(defineProps<Props>(), {
+    modelValue: '',
     placeholder: '搜索...',
     disabled: false,
     inputId: undefined,
@@ -118,6 +119,7 @@
     color: var(--text, #374151);
     font-size: calc(14px * var(--ui-scale, 1));
     line-height: 1.5;
+    touch-action: manipulation;
     transition:
       border-color 150ms ease,
       box-shadow 150ms ease;
@@ -177,5 +179,12 @@
   /* 搜索框清除按钮样式 */
   .search-field-input::-webkit-search-cancel-button {
     display: none;
+  }
+
+  /* 移动端字体优化 - 防止iOS缩放 */
+  @media (max-width: 640px) {
+    .search-field-input {
+      font-size: max(16px, calc(14px * var(--ui-scale, 1)));
+    }
   }
 </style>

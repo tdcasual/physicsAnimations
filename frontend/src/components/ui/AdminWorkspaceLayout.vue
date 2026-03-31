@@ -188,7 +188,7 @@
       z-index: calc(var(--z-modal, 1000) - 2);
       border: 0;
       padding: 0;
-      background: oklch(16% 0.025 250 / 0.32);
+      background: oklch(15% 0.013 250 / 0.32);
     }
 
     .admin-workspace-editor {

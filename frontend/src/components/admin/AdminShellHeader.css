@@ -104,7 +104,9 @@
 }
 
 .admin-shell-description,
-.admin-shell-note { margin: 0; }
+.admin-shell-note {
+  margin: 0;
+}
 
 .admin-shell-note {
   max-width: 50ch;
@@ -182,7 +184,7 @@
   min-height: 40px;
 }
 
-@media (min-width: 960px) {
+@media (min-width: 1024px) {
   .admin-shell-header {
     align-items: center;
     gap: 18px;
@@ -243,11 +245,32 @@
   }
 }
 
-@media (max-width: 900px) {
-  .admin-shell-header--dense { flex-direction: column; }
-  .admin-shell-ops { width: 100%; justify-items: stretch; }
-  .admin-shell-toolbar { justify-content: flex-start; }
-  .admin-shell-actions { justify-content: flex-start; }
+/* 平板横屏优化 (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .admin-shell-header--dense {
+    flex-direction: row;
+  }
+  .admin-shell-ops {
+    width: auto;
+    justify-items: end;
+  }
+}
+
+/* 平板竖屏和手机 */
+@media (max-width: 767px) {
+  .admin-shell-header--dense {
+    flex-direction: column;
+  }
+  .admin-shell-ops {
+    width: 100%;
+    justify-items: stretch;
+  }
+  .admin-shell-toolbar {
+    justify-content: flex-start;
+  }
+  .admin-shell-actions {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 640px) {
@@ -286,12 +309,18 @@
     flex: initial;
     gap: 4px;
   }
-  .admin-shell-kicker { display: none; }
-  .admin-shell-summary-row { display: none; }
+  .admin-shell-kicker {
+    display: none;
+  }
+  .admin-shell-summary-row {
+    display: none;
+  }
 
   .admin-shell-description,
   .admin-shell-note,
-  .admin-shell-summary-copy { display: none; }
+  .admin-shell-summary-copy {
+    display: none;
+  }
 
   .admin-shell-ops {
     display: flex;
@@ -335,7 +364,9 @@
   }
 
   .admin-shell-actions .admin-link-home,
-  .admin-shell-actions .admin-mobile-nav-trigger { min-height: 38px; }
+  .admin-shell-actions .admin-mobile-nav-trigger {
+    min-height: 38px;
+  }
 
   .admin-shell-status-copy {
     display: block;
@@ -343,4 +374,3 @@
     line-height: 1.35;
   }
 }
-

@@ -8,11 +8,13 @@ import { i18n } from './i18n'
 // 设计系统（顺序很重要）
 import './styles/design-system.css'
 import './styles/a11y.css'
+import './styles/breakpoints.css'
+import './styles/mobile-optimizations.css'
 import './styles.css'
 
 // 工具
 import { setupFocusVisible } from './utils/a11y'
-import { initSentry, initWebVitals } from './monitoring'
+import { initSentry, initWebVitals, captureException } from './monitoring'
 
 const app = createApp(App)
 
@@ -33,6 +35,27 @@ initWebVitals()
 
 // 初始化焦点可见性检测
 setupFocusVisible()
+
+// 注册全局错误处理器
+window.addEventListener('error', (event) => {
+  // eslint-disable-next-line no-console
+  console.error('Global error:', event.error)
+  captureException(event.error instanceof Error ? event.error : new Error(String(event.error)), {
+    type: 'window.onerror',
+    filename: event.filename,
+    lineno: event.lineno,
+    colno: event.colno,
+  })
+})
+
+window.addEventListener('unhandledrejection', (event) => {
+  // eslint-disable-next-line no-console
+  console.error('Unhandled promise rejection:', event.reason)
+  const error = event.reason instanceof Error
+    ? event.reason
+    : new Error(String(event.reason))
+  captureException(error, { type: 'unhandledrejection' })
+})
 
 // 注册 PWA Service Worker
 if ('serviceWorker' in navigator) {

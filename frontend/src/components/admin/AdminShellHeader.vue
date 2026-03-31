@@ -1,17 +1,22 @@
 <script setup lang="ts">
   import { RouterLink } from 'vue-router'
 
-  const props = defineProps<{
-    currentAdminSection: {
+  interface Props {
+    currentAdminSection?: {
       label: string
       description: string
     }
-    currentAdminGroup: {
+    currentAdminGroup?: {
       id: string
       title: string
       summary: string
     }
-  }>()
+  }
+
+  const props = withDefaults(defineProps<Props>(), {
+    currentAdminSection: () => ({ label: '', description: '' }),
+    currentAdminGroup: () => ({ id: '', title: '', summary: '' }),
+  })
 </script>
 
 <template>

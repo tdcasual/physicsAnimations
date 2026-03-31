@@ -50,6 +50,8 @@
       transform var(--duration-fast) var(--ease-smooth);
     white-space: nowrap;
     user-select: none;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* 尺寸 */

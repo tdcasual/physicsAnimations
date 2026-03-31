@@ -176,7 +176,7 @@
     padding-top: 10px;
   }
 
-  @media (min-width: 960px) {
+  @media (min-width: 1024px) {
     .catalog-teacher-quick-access {
       gap: 8px;
       padding: 14px;

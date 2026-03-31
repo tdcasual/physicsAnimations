@@ -4,9 +4,13 @@
     title: string
   }
 
-  const props = defineProps<{
-    quickCategories: QuickCategory[]
-  }>()
+  interface Props {
+    quickCategories?: QuickCategory[]
+  }
+
+  const props = withDefaults(defineProps<Props>(), {
+    quickCategories: () => [],
+  })
 
   const emit = defineEmits<{
     (event: 'select-category', categoryId: string): void

@@ -170,6 +170,14 @@
     }
   )
 
+  // 处理键盘事件
+  function handleItemKeyDown(event: KeyboardEvent, item: T) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      emit('select', item)
+    }
+  }
+
   // 暴露方法
   defineExpose({
     scrollToItem: (id: string, behavior: ScrollBehavior = 'smooth') => {
@@ -199,6 +207,8 @@
     ref="containerRef"
     class="virtual-list"
     :style="{ height: height ? `${height}px` : '100%' }"
+    role="listbox"
+    :aria-activedescendant="selectedId ?? undefined"
     @scroll="handleScroll"
   >
     <div class="virtual-list-content" :style="{ height: `${totalHeight}px` }">
@@ -208,7 +218,11 @@
         class="virtual-list-item"
         :class="{ selected: item.id === selectedId }"
         :style="style"
+        role="option"
+        :aria-selected="item.id === selectedId"
+        tabindex="0"
         @click="emit('select', item)"
+        @keydown="handleItemKeyDown($event, item)"
       >
         <slot :item="item" :index="index" :selected="item.id === selectedId">
           <!-- 默认内容 -->

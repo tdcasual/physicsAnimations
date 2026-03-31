@@ -35,12 +35,20 @@ export async function apiFetchJson<T = any>(params: {
   token?: string
   onUnauthorized?: () => void
   toError?: (status: number, data: any) => Error
+  timeoutMs?: number
 }): Promise<T> {
-  const { path, options = {}, token = '', onUnauthorized, toError } = params
-  const response = await fetch(path, {
-    ...options,
-    headers: buildHeaders(options.headers, token),
-  })
+  const { path, options = {}, token = '', onUnauthorized, toError, timeoutMs = 30000 } = params
+
+  // 创建 AbortController 用于超时控制
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(path, {
+      ...options,
+      headers: buildHeaders(options.headers, token),
+      signal: controller.signal,
+    })
 
   const contentType = response.headers.get('content-type') || ''
   const data = contentType.includes('application/json')
@@ -51,19 +59,30 @@ export async function apiFetchJson<T = any>(params: {
     onUnauthorized?.()
   }
 
-  if (response.ok) return data as T
+    if (response.ok) return data as T
 
-  if (typeof toError === 'function') {
-    throw toError(response.status, data)
-  }
+    if (typeof toError === 'function') {
+      throw toError(response.status, data)
+    }
 
-  const fallback = new Error(
-    typeof data?.error === 'string' ? data.error : 'request_failed'
-  ) as Error & {
-    status?: number
-    data?: any
+    const fallback = new Error(
+      typeof data?.error === 'string' ? data.error : 'request_failed'
+    ) as Error & {
+      status?: number
+      data?: any
+    }
+    fallback.status = response.status
+    fallback.data = data
+    throw fallback
+  } catch (err) {
+    // 如果是超时导致的 AbortError，转换为更友好的错误
+    if (err instanceof Error && err.name === 'AbortError') {
+      const timeoutError = new Error('request_timeout') as Error & { status?: number }
+      timeoutError.status = 0
+      throw timeoutError
+    }
+    throw err
+  } finally {
+    clearTimeout(timeoutId)
   }
-  fallback.status = response.status
-  fallback.data = data
-  throw fallback
 }

@@ -167,8 +167,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     padding: 0;
     border: none;
     border-radius: 8px;
@@ -179,6 +179,8 @@
       background-color 150ms ease,
       color 150ms ease;
     flex-shrink: 0;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .editor-panel-close:hover {
@@ -219,7 +221,8 @@
   }
 
   .editor-panel-btn {
-    padding: 8px 16px;
+    padding: 10px 18px;
+    min-height: 44px;
     border-radius: 8px;
     font-size: calc(14px * var(--ui-scale, 1));
     font-weight: 500;
@@ -227,6 +230,8 @@
     transition:
       background-color 150ms ease,
       opacity 150ms ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .editor-panel-btn:disabled {
@@ -264,5 +269,36 @@
   .editor-panel-btn--danger:hover:not(:disabled) {
     background: color-mix(in srgb, var(--danger, #dc2626) 90%, black);
     border-color: color-mix(in srgb, var(--danger, #dc2626) 90%, black);
+  }
+
+  /* 平板响应式优化 */
+  @media (max-width: 1024px) {
+    .editor-panel {
+      padding: 20px;
+    }
+    
+    .editor-panel-footer {
+      position: sticky;
+      bottom: 0;
+      background: var(--surface, #fff);
+      padding: 16px 0;
+      margin: 0 -4px;
+      z-index: 10;
+    }
+  }
+  
+  @media (max-width: 640px) {
+    .editor-panel {
+      padding: 16px;
+    }
+    
+    .editor-panel-actions {
+      flex-direction: column;
+    }
+    
+    .editor-panel-btn {
+      width: 100%;
+      justify-content: center;
+    }
   }
 </style>

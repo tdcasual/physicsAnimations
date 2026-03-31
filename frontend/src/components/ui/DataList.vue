@@ -114,7 +114,12 @@
           v-for="item in items"
           :key="item.id"
           :class="['data-list-item', { selected: item.id === selectedId }]"
+          tabindex="0"
+          role="button"
+          :aria-pressed="item.id === selectedId"
           @click="emit('select', item)"
+          @keydown.enter.prevent="emit('select', item)"
+          @keydown.space.prevent="emit('select', item)"
         >
           <slot name="item" :item="item" :selected="item.id === selectedId">
             <!-- 默认显示 ID -->
@@ -159,6 +164,13 @@
   .data-list-search {
     width: min(360px, 100%);
   }
+  
+  /* 平板搜索框宽度优化 */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .data-list-search {
+      width: min(480px, 100%);
+    }
+  }
 
   .data-list-error {
     color: var(--danger, #dc2626);
@@ -199,6 +211,8 @@
     gap: 10px;
     background: color-mix(in srgb, var(--surface, #fff) 90%, var(--bg, #f9fafb));
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
     transition:
       border-color 150ms ease,
       background-color 150ms ease;
@@ -236,6 +250,10 @@
     color: var(--text, #374151);
     font-size: calc(14px * var(--ui-scale, 1));
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 44px;
+    min-width: 44px;
     transition: background-color 150ms ease;
   }
 
@@ -246,6 +264,22 @@
   .data-list-load-more:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  /* 平板响应式 */
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .data-list-header {
+      gap: 12px;
+    }
+    
+    .data-list-items {
+      gap: 10px;
+    }
+    
+    .data-list-item {
+      padding: 14px;
+      min-height: 64px;
+    }
   }
 
   @media (max-width: 640px) {
