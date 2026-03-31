@@ -79,6 +79,9 @@
       },
     }))
   })
+  const selectedOptionDomId = computed(() =>
+    props.selectedId ? getOptionDomId(props.selectedId) : undefined
+  )
 
   // 判断是否接近底部
   const isNearBottom = computed(() => {
@@ -178,6 +181,10 @@
     }
   }
 
+  function getOptionDomId(itemId: string): string {
+    return `virtual-list-option-${itemId}`
+  }
+
   // 暴露方法
   defineExpose({
     scrollToItem: (id: string, behavior: ScrollBehavior = 'smooth') => {
@@ -208,12 +215,13 @@
     class="virtual-list"
     :style="{ height: height ? `${height}px` : '100%' }"
     role="listbox"
-    :aria-activedescendant="selectedId ?? undefined"
+    :aria-activedescendant="selectedOptionDomId"
     @scroll="handleScroll"
   >
     <div class="virtual-list-content" :style="{ height: `${totalHeight}px` }">
       <div
         v-for="{ item, index, style } in visibleItems"
+        :id="getOptionDomId(item.id)"
         :key="item.id"
         class="virtual-list-item"
         :class="{ selected: item.id === selectedId }"

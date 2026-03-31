@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted, watch, type Ref } from 'vue'
+import { ref, onMounted, onUnmounted, type Ref } from 'vue'
 
 /**
  * 网络在线状态

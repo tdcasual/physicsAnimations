@@ -120,6 +120,7 @@ export default [
   }, // src 目录下的 TS 文件启用类型检查
   {
     files: ['src/**/*.ts'],
+    ignores: ['src/**/*.stories.ts'],
     languageOptions: {
       parserOptions: {
         project: './tsconfig.json',
@@ -131,6 +132,15 @@ export default [
   // Storybook 文件配置
   {
     files: ['**/*.stories.ts', '**/*.stories.js', '.storybook/**/*'],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
     rules: {
       'storybook/no-renderer-packages': 'off',
       '@typescript-eslint/no-unused-vars': [
