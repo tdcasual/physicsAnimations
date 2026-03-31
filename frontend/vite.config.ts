@@ -55,6 +55,8 @@ export default defineConfig({
         dir: 'ltr',
       },
       workbox: {
+        // Work around a workbox-build/rollup warning path in vite-plugin-pwa 1.2.0.
+        inlineWorkboxRuntime: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
         runtimeCaching: [
           {

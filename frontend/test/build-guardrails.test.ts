@@ -17,4 +17,9 @@ describe('build guardrails', () => {
     const withoutLeadingComment = source.replace(/^\/\*[\s\S]*?\*\/\s*/, '')
     expect(withoutLeadingComment.startsWith("@import './styles/foundation.css';")).toBe(true)
   })
+
+  it('inlines the Workbox runtime to avoid rollup manualChunks warnings', () => {
+    const source = read('vite.config.ts')
+    expect(source).toMatch(/inlineWorkboxRuntime:\s*true/)
+  })
 })
