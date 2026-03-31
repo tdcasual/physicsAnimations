@@ -138,18 +138,18 @@
 
   h3 {
     margin: 0;
-    font-size: calc(16px * var(--ui-scale));
+    font-size: var(--text-admin-base);
     overflow-wrap: anywhere;
     word-break: break-word;
   }
 
   .meta-line {
     color: var(--muted);
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
   }
 
   .action-feedback {
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
     color: var(--muted);
   }
 
@@ -171,7 +171,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
     color: var(--muted);
   }
 
@@ -186,7 +186,7 @@
     min-height: 44px;
     padding: 10px 0;
     color: var(--muted);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   .subaccordion-body {
@@ -204,7 +204,7 @@
     border-radius: 8px;
     padding: 12px;
     color: var(--muted);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   @media (max-width: 640px) {

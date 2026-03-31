@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('admin upload validation guards', () => {
@@ -11,14 +11,14 @@ describe('admin upload validation guards', () => {
     const source = read('src/features/admin/uploads/useUploadAdminActions.ts')
     expect(source).toMatch(/const\s+title\s*=\s*ctx\.editTitle\.value\.trim\(\)/)
     expect(source).toMatch(/if\s*\(!title\)/)
-    expect(source).toMatch(/setFieldError\("editTitle",\s*"标题不能为空。"\)/)
-    expect(source).toMatch(/setActionFeedback\("标题不能为空。",\s*true\)/)
+    expect(source).toMatch(/setFieldError\(['"]editTitle['"],\s*['"]标题不能为空。['"]\)/)
+    expect(source).toMatch(/setActionFeedback\(['"]标题不能为空。['"],\s*true\)/)
   })
 
   it('maps backend invalid_title to field-level editTitle feedback', () => {
     const source = read('src/features/admin/uploads/useUploadAdminActions.ts')
-    expect(source).toMatch(/e\?\.data\?\.error\s*===\s*"invalid_title"/)
-    expect(source).toMatch(/setFieldError\("editTitle",\s*"标题不能为空。"\)/)
+    expect(source).toMatch(/e\?\.data\?\.error\s*===\s*['"]invalid_title['"]/)
+    expect(source).toMatch(/setFieldError\(['"]editTitle['"],\s*['"]标题不能为空。['"]\)/)
   })
 
   it('renders edit title error inline in uploads edit panel', () => {
@@ -33,7 +33,7 @@ describe('admin upload validation guards', () => {
     const source = read('src/views/admin/AdminUploadsView.vue')
     expect(source).toMatch(/:edit-title-error="vm\.getFieldError\('editTitle'\)"/)
     expect(source).toMatch(
-      /@update:edit-title="[\s\S]*vm\.editTitle = \$event;[\s\S]*vm\.clearFieldErrors\('editTitle'\)/
+      /@update:edit-title="[\s\S]*vm\.editTitle = \$event[\s\S]*vm\.clearFieldErrors\(['"]editTitle['"]\)/
     )
   })
 })

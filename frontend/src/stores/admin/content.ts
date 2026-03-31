@@ -12,6 +12,7 @@ import { normalizePublicUrl } from '@/features/catalog/catalogLink'
 import { usePagedAdminList } from '@/features/admin/composables/usePagedAdminList'
 import { useActionFeedback } from '@/features/admin/composables/useActionFeedback'
 import { useFieldErrors } from '@/features/admin/composables/useFieldErrors'
+import { resolveAuthError } from '@/features/admin/utils/errorUtils'
 
 interface CategoryRow {
   id: string
@@ -182,7 +183,7 @@ export const useContentAdminStore = defineStore('admin/content', () => {
       const result = await listItems({
         page: options.reset ? 1 : page.value,
         pageSize: pageSize,
-        query: query.value,
+        q: query.value,
       })
       if (isLatestRequest(seq)) {
         applyPageResult(result, { reset: options.reset ?? false })
@@ -219,7 +220,7 @@ export const useContentAdminStore = defineStore('admin/content', () => {
       return true
     } catch (err) {
       const e = err as { status?: number }
-      setActionFeedback(e?.status === 401 ? '请先登录管理员账号。' : '保存失败', true)
+      setActionFeedback(resolveAuthError(e?.status, '保存失败'), true)
       return false
     } finally {
       saving.value = false
@@ -238,7 +239,7 @@ export const useContentAdminStore = defineStore('admin/content', () => {
       return true
     } catch (err) {
       const e = err as { status?: number }
-      setActionFeedback(e?.status === 401 ? '请先登录管理员账号。' : '删除失败', true)
+      setActionFeedback(resolveAuthError(e?.status, '删除失败'), true)
       return false
     } finally {
       saving.value = false
@@ -271,7 +272,7 @@ export const useContentAdminStore = defineStore('admin/content', () => {
       return true
     } catch (err) {
       const e = err as { status?: number }
-      setActionFeedback(e?.status === 401 ? '请先登录管理员账号。' : '新增链接失败。', true)
+      setActionFeedback(resolveAuthError(e?.status, '新增链接失败'), true)
       return false
     } finally {
       saving.value = false

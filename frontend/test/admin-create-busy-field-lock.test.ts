@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('admin create form busy field locking', () => {
@@ -20,7 +20,7 @@ describe('admin create form busy field locking', () => {
       /<textarea[\s\S]*:value="props\.linkDescription"[\s\S]*:disabled="props\.saving"[\s\S]*@input=/
     )
     expect(source).toMatch(
-      /<button type="button" class="btn btn-primary" :disabled="props\.saving" @click="emit\('submit'\)">添加<\/button>/
+      /<button type=["']button["'] class=["']btn btn-primary["'] :disabled=["']props\.saving["'] @click=["']emit\(['"]submit['"]\)["'][\s\S]*>添加/
     )
   })
 
@@ -39,7 +39,7 @@ describe('admin create form busy field locking', () => {
       /<textarea[\s\S]*:value="props\.description"[\s\S]*:disabled="props\.saving"[\s\S]*@input=/
     )
     expect(source).toMatch(
-      /<button type="button" class="btn btn-primary" :disabled="props\.saving" @click="emit\('submit'\)">上传<\/button>/
+      /<button type=["']button["'] class=["']btn btn-primary["'] :disabled=["']props\.saving["'] @click=["']emit\(['"]submit['"]\)["'][\s\S]*>上传/
     )
   })
 })

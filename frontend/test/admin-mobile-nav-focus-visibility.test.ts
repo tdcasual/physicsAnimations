@@ -8,7 +8,9 @@ function read(relPath: string): string {
 describe('admin mobile nav keyboard visibility', () => {
   it('scrolls focused nav links into view on focusin', () => {
     const source = read('src/views/admin/AdminLayoutView.vue')
-    expect(source).toMatch(/@focusin=\"onAdminNavFocusIn\"/)
-    expect(source).toMatch(/scrollIntoView\(\{\s*block:\s*\"nearest\",\s*inline:\s*\"nearest\"/)
+    expect(source).toMatch(/@focusin=['"]onAdminNavFocusIn['"]/)
+    expect(source).toMatch(
+      /scrollIntoView\(\s*\{\s*block:\s*['"]nearest['"][\s\S]*?inline:\s*['"]nearest['"]\s*\}\s*\)/
+    )
   })
 })

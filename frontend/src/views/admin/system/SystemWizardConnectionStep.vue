@@ -178,7 +178,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   @media (max-width: 640px) {

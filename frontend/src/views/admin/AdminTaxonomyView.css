@@ -22,7 +22,7 @@
 
 .taxonomy-mobile-summary span {
   color: var(--muted);
-  font-size: calc(13px * var(--ui-scale));
+  font-size: var(--text-admin-sm);
 }
 
 .taxonomy-editor-slot {
@@ -46,15 +46,15 @@
 .empty {
   border: 1px dashed var(--border);
   color: var(--muted);
-  font-size: calc(13px * var(--ui-scale));
+  font-size: var(--text-admin-sm);
 }
 
 .error-text {
   color: var(--danger);
-  font-size: calc(13px * var(--ui-scale));
+  font-size: var(--text-admin-sm);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1024px) {
   .taxonomy-editor-slot {
     position: static;
     max-height: none;
@@ -62,6 +62,34 @@
   }
 }
 
+/* 平板Sheet优化 - 使用居中模态框 */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .taxonomy-editor-sheet {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    width: 90vw;
+    max-width: 640px;
+    max-height: 80vh;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 35;
+  }
+  
+  .taxonomy-editor-sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 34;
+    background: color-mix(in oklab, var(--text) 22%, transparent);
+    backdrop-filter: blur(4px);
+  }
+}
+
+/* 手机底部Sheet */
 @media (max-width: 640px) {
   .taxonomy-mobile-actions {
     display: grid;
@@ -88,17 +116,22 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: env(safe-area-inset-bottom, 0px);
     z-index: 35;
     max-height: min(84dvh, 760px);
     padding: 14px 14px 18px;
+    padding-bottom: max(18px, env(safe-area-inset-bottom, 0px) + 18px);
     border-radius: 24px 24px 0 0;
     overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     transform: translateY(104%);
     opacity: 0;
     pointer-events: none;
     box-shadow: 0 -24px 56px -36px color-mix(in oklab, var(--text) 28%, transparent);
-    transition: transform 220ms ease, opacity 220ms ease;
+    transition:
+      transform 220ms ease,
+      opacity 220ms ease;
   }
 
   .taxonomy-editor-sheet.is-open {
@@ -119,8 +152,11 @@
     padding: 14px;
     border-bottom: 1px solid color-mix(in oklab, var(--accent) 16%, var(--border));
     background:
-      linear-gradient(180deg, color-mix(in oklab, var(--surface) 97%, var(--paper)), color-mix(in oklab, var(--accent) 5%, var(--surface))),
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--surface) 97%, var(--paper)),
+        color-mix(in oklab, var(--accent) 5%, var(--surface))
+      ),
       var(--surface);
   }
 }
-

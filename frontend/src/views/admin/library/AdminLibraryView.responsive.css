@@ -1,195 +1,237 @@
-@media (min-width: 1100px) {
-  .library-page-shell {
-    grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
-  }
-}
+/* Admin Library View - Responsive Layout */
 
-@media (max-width: 1200px) {
-  .library-main-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .library-inspector-area {
-    position: static;
-    max-height: none;
-    overflow: visible;
-  }
-}
-
-@media (max-width: 900px) {
-  .library-metric-grid {
-    grid-template-columns: 1fr;
-  }
-
+/* Desktop large (>= 1280px) */
+@media (min-width: 1280px) {
   .library-workbench {
+    grid-template-columns: 280px 1fr 340px;
+  }
+  
+  .library-main-grid:has(.library-inspector-area:not([hidden])) {
+    grid-template-columns: 1fr 340px;
+  }
+}
+
+/* Desktop (>= 1024px) */
+@media (min-width: 1024px) {
+  .library-workbench {
+    grid-template-columns: 260px 1fr 300px;
+  }
+}
+
+/* Tablet landscape (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .library-workbench {
+    grid-template-columns: 240px 1fr;
+    gap: 12px;
+  }
+  
+  .library-inspector-area {
+    position: fixed;
+    top: 64px;
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    z-index: 300;
+    box-shadow: var(--shadow-xl);
+    border-radius: 0;
+    border-left: 1px solid var(--border);
+  }
+  
+  .library-main-grid:has(.library-inspector-area:not([hidden])) {
     grid-template-columns: 1fr;
   }
-
-  .library-sidebar {
-    position: static;
-    max-height: none;
-    overflow: visible;
-  }
-
+  
   .asset-filter-row {
     grid-template-columns: 1fr;
   }
-
-  .asset-list-head {
-    display: none;
+  
+  .asset-actions-inline {
+    flex-direction: column;
+    gap: 4px;
   }
 }
 
-@media (max-width: 640px) {
-  .library-focus-panel {
-    display: none;
-  }
-
-  .library-page-shell,
-  .library-workbench,
-  .library-main-grid {
+/* Tablet portrait and mobile (< 768px) */
+@media (max-width: 767px) {
+  .library-workbench {
+    grid-template-columns: 1fr;
     gap: 12px;
   }
+  
+  .library-sidebar {
+    max-height: none;
+    order: 2;
+  }
+  
+  .library-main-grid {
+    order: 1;
+  }
+  
+  .library-inspector-area {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    border-radius: 0;
+    max-height: none;
+  }
+  
+  .asset-filter-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .asset-list-head {
+    display: none;
+  }
+  
+  .asset-item {
+    grid-template-columns: 44px 1fr;
+    gap: 12px;
+  }
+  
+  .asset-actions-inline {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+}
 
+/* Mobile (<= 640px) */
+@media (max-width: 640px) {
+  .admin-library-view {
+    gap: 12px;
+  }
+  
+  /* Show mobile taskbar */
   .library-mobile-taskbar {
     display: grid;
     gap: 12px;
+    order: 0;
   }
-
+  
   .library-mobile-primary-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
   }
-
+  
   .library-mobile-primary-actions .btn:last-child {
     grid-column: 1 / -1;
   }
-
+  
+  /* Hide sidebar on mobile, show in sheet */
+  .library-sidebar {
+    display: none;
+  }
+  
+  .library-sidebar.is-open {
+    display: grid;
+    position: fixed;
+    inset: 0;
+    z-index: 400;
+  }
+  
+  /* Mobile tools */
   .library-mobile-tools {
     display: grid;
   }
-
+  
   .library-mobile-tools-toggle,
   .library-mobile-deleted-toggle {
     display: flex;
   }
-
-  .library-mobile-tools-body {
-    display: none;
-  }
-
-  .library-mobile-tools-body.is-open {
-    display: grid;
-  }
-
+  
+  .library-mobile-tools-body,
   .library-mobile-deleted-body {
     display: none;
   }
-
+  
+  .library-mobile-tools-body.is-open,
   .library-mobile-deleted-body.is-open {
     display: grid;
+    gap: 12px;
+    padding-top: 12px;
   }
-
-  .library-metric-grid {
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(108px, 1fr);
-    overflow-x: auto;
-    padding-bottom: 2px;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .folder-item {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    align-items: start;
-  }
-
-  .library-sidebar-create {
-    display: none;
-  }
-
-  .folder-item .btn {
-    min-height: 40px;
-    padding-inline: 10px;
-  }
-
-  .asset-batch-toolbar {
-    padding: 12px;
-  }
-
-  .deleted-assets-list {
-    gap: 10px;
-  }
-
-  .batch-more-menu {
-    width: 100%;
-  }
-
-  .batch-more-menu > summary {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .batch-more-menu-body {
-    left: 0;
-    right: 0;
-    min-width: 0;
-  }
-
-  .library-mobile-sheet-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 34;
-    border: 0;
-    padding: 0;
-    background: color-mix(in oklab, var(--text) 22%, transparent);
-  }
-
+  
+  /* Sheet styles */
   .library-mobile-sheet {
-    display: none;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 35;
-    max-height: min(84dvh, 760px);
-    padding: 14px 14px 18px;
-    border-radius: 24px 24px 0 0;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    transform: translateY(104%);
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 -24px 56px -36px color-mix(in oklab, var(--text) 28%, transparent);
-    transition: transform 220ms ease, opacity 220ms ease;
+    max-height: 85dvh;
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.3s var(--ease-out-expo);
   }
-
+  
   .library-mobile-sheet.is-open {
-    display: grid;
     transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
   }
-
+  
   .library-mobile-sheet-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 10px;
-    position: sticky;
-    top: -14px;
-    margin: -14px -14px 10px;
-    padding: 14px;
-    border-bottom: 1px solid color-mix(in oklab, var(--accent) 16%, var(--border));
-    background:
-      linear-gradient(180deg, color-mix(in oklab, var(--surface) 97%, var(--paper)), color-mix(in oklab, var(--accent) 5%, var(--surface))),
-      var(--surface);
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
   }
-
-  .library-panel-tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  
+  .library-mobile-sheet-close {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    cursor: pointer;
+  }
+  
+  .library-mobile-sheet-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: oklch(15% 0.013 250 / 0.5);
+    z-index: 399;
+  }
+  
+  /* Batch toolbar */
+  .asset-batch-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .batch-move-folder {
+    width: 100%;
+  }
+  
+  /* Feedback */
+  .library-admin-feedback {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
   }
 }
 
+/* Small mobile (<= 390px) */
+@media (max-width: 390px) {
+  .folder-item {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .folder-item .btn {
+    justify-self: start;
+  }
+  
+  .asset-item {
+    padding: 10px;
+  }
+  
+  .batch-more-menu-body,
+  .asset-more-menu-body {
+    right: auto;
+    left: 0;
+    min-width: 140px;
+  }
+}

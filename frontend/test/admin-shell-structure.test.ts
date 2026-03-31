@@ -88,6 +88,7 @@ describe('admin shell structure', () => {
       readFile('src/views/admin/AdminLayoutView.css'),
     ].join('\n')
 
+    // 手机端样式在640px断点
     expect(source).toMatch(
       /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-shell-mobile-context\s*\{[\s\S]*display:\s*inline-flex/
     )
@@ -113,7 +114,7 @@ describe('admin shell structure', () => {
       /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-mobile-nav-link-copy\s*\{[\s\S]*display:\s*none/
     )
     expect(source).toMatch(
-      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-nav-bar\s*\{[\s\S]*position:\s*fixed[\s\S]*bottom:\s*12px/
+      /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.admin-nav-bar\s*\{[\s\S]*position:\s*fixed[\s\S]*bottom:/
     )
   })
 

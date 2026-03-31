@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('admin pending changes route guard', () => {
@@ -13,8 +13,10 @@ describe('admin pending changes route guard', () => {
     expect(source).toMatch(/export\s+function\s+usePendingChangesGuard\(/)
     expect(source).toMatch(/onBeforeRouteLeave\(\(\)\s*=>\s*\{/)
     expect(source).toMatch(/window\.confirm\(message\)/)
-    expect(source).toMatch(/window\.addEventListener\("beforeunload",\s*handleBeforeUnload\)/)
-    expect(source).toMatch(/window\.removeEventListener\("beforeunload",\s*handleBeforeUnload\)/)
+    expect(source).toMatch(/window\.addEventListener\(['"]beforeunload['"],\s*handleBeforeUnload\)/)
+    expect(source).toMatch(
+      /window\.removeEventListener\(['"]beforeunload['"],\s*handleBeforeUnload\)/
+    )
   })
 
   it('wires the shared guard into mutable admin views with page-specific messages', () => {
@@ -25,19 +27,19 @@ describe('admin pending changes route guard', () => {
     const library = read('src/features/library/useLibraryAdminActionWiring.ts')
 
     expect(content).toMatch(
-      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges:\s*hasPendingEditChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*"当前编辑内容有未保存更改，确定离开当前页面吗？"/
+      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges:\s*hasPendingEditChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*['"]当前编辑内容有未保存更改，确定离开当前页面吗？['"]/
     )
     expect(uploads).toMatch(
-      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges:\s*hasPendingEditChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*"当前编辑内容有未保存更改，确定离开当前页面吗？"/
+      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges:\s*hasPendingEditChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*['"]当前编辑内容有未保存更改，确定离开当前页面吗？['"]/
     )
     expect(taxonomy).toMatch(
-      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*"分类内容有未保存更改，确定离开当前页面吗？"/
+      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*['"]分类内容有未保存更改，确定离开当前页面吗？['"]/
     )
     expect(account).toMatch(
-      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*"账号信息有未保存更改，确定离开当前页面吗？"/
+      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges[\s\S]*isBlocked:\s*saving[\s\S]*message:\s*['"]账号信息有未保存更改，确定离开当前页面吗？['"]/
     )
     expect(library).toMatch(
-      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges[\s\S]*message:\s*"资源库内容有未保存更改，确定离开当前页面吗？"/
+      /usePendingChangesGuard\(\{[\s\S]*hasPendingChanges[\s\S]*message:\s*['"]资源库内容有未保存更改，确定离开当前页面吗？['"]/
     )
   })
 

@@ -250,3 +250,8 @@ export async function fetchDashboardStats(): Promise<DashboardStats> {
     total: dynamicTotal,
   }
 }
+
+// 别名导出用于向后兼容 stores/admin/*
+export { listAdminItems as listItems }
+export { updateAdminItem as updateItem }
+export { deleteAdminItem as deleteItem }

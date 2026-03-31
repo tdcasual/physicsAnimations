@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 describe('taxonomy admin maintainability budget', () => {
   it('keeps useTaxonomyAdmin below 330 lines and delegates state/actions/lifecycle', () => {
-    const filePath = path.resolve(process.cwd(), 'src/features/admin/taxonomy/useTaxonomyAdmin.ts')
+    const filePath = path.resolve(__dirname, '../src/features/admin/taxonomy/useTaxonomyAdmin.ts')
     const source = fs.readFileSync(filePath, 'utf8')
     const lines = source.split('\n').length
 

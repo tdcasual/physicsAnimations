@@ -1,7 +1,8 @@
 <script setup lang="ts">
-  import { computed, onBeforeUnmount, ref, watch } from 'vue'
+  import { computed, onBeforeUnmount, ref, watchEffect } from 'vue'
   import { useTaxonomyAdmin } from '../../features/admin/taxonomy/useTaxonomyAdmin'
   import { createAdminTaxonomyMobileEditorFocus } from './taxonomy/useAdminTaxonomyMobileEditorFocus'
+  import { useResponsiveViewport } from '../../composables/useResponsiveViewport'
   import CategoryEditorPanel from './taxonomy/CategoryEditorPanel.vue'
   import GroupEditorPanel from './taxonomy/GroupEditorPanel.vue'
   import TaxonomyTreePanel from './taxonomy/TaxonomyTreePanel.vue'
@@ -18,6 +19,34 @@
     editorTopRef,
     groupEditorRef,
     categoryEditorRef,
+  })
+
+  // 滚动锁状态管理（单一状态源）
+  const scrollLock = {
+    savedOverflow: '',
+    isLocked: false,
+    lock() {
+      if (this.isLocked) return
+      this.savedOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      this.isLocked = true
+    },
+    unlock() {
+      if (!this.isLocked) return
+      document.body.style.overflow = this.savedOverflow
+      this.savedOverflow = ''
+      this.isLocked = false
+    },
+  }
+
+  // 使用响应式 viewport composable
+  const { isMobileViewport } = useResponsiveViewport({
+    breakpoint: mobileEditorSheetMaxWidth,
+    onLeaveMobile: () => {
+      // 从移动端变为桌面端时，关闭移动端面板并清理滚动锁
+      scrollLock.unlock()
+      closeMobileEditorSheet()
+    },
   })
 
   const {
@@ -83,7 +112,6 @@
     if (selection.value) return '编辑当前节点'
     return '等待选择'
   })
-  let bodyOverflowBeforeTaxonomySheet = ''
 
   function isMobileEditorSheetViewport() {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
@@ -139,19 +167,20 @@
     await focusEditorTarget('category')
   }
 
-  watch(isMobileEditorSheetOpen, open => {
-    if (open && isMobileEditorSheetViewport()) {
-      bodyOverflowBeforeTaxonomySheet = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      return
+  // 使用 watchEffect 响应 viewport 变化，统一通过 scrollLock 管理
+  watchEffect(() => {
+    const open = isMobileEditorSheetOpen.value
+    const isMobile = isMobileViewport.value
+    
+    if (open && isMobile) {
+      scrollLock.lock()
+    } else {
+      scrollLock.unlock()
     }
-
-    document.body.style.overflow = bodyOverflowBeforeTaxonomySheet
-    bodyOverflowBeforeTaxonomySheet = ''
   })
 
   onBeforeUnmount(() => {
-    document.body.style.overflow = bodyOverflowBeforeTaxonomySheet
+    scrollLock.unlock()
   })
 </script>
 

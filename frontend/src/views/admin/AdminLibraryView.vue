@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+  import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import type { LibraryAsset } from '../../features/library/types'
   import { useLibraryAdminState } from '../../features/library/useLibraryAdminState'
   import { createAdminLibraryMobileInspectorFocus } from './library/useAdminLibraryMobileInspectorFocus'
@@ -10,7 +10,7 @@
   import FolderPanel from './library/panels/FolderPanel.vue'
   import OperationLogPanel from './library/panels/OperationLogPanel.vue'
 
-  const vm = reactive(useLibraryAdminState())
+  const vm = useLibraryAdminState()
   type MobileLibrarySheet = 'folder-create' | 'folder' | 'asset' | 'embed' | null
 
   const librarySidebarTopRef = ref<HTMLElement | null>(null)

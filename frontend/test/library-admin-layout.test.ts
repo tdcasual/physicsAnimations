@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { readExpandedSource } from './helpers/sourceReader'
-
 function read(relPath: string): string {
   return readExpandedSource(relPath)
 }
-
 function readLibrarySources() {
   const view = read('src/views/admin/AdminLibraryView.vue')
   const template = read('src/views/admin/library/AdminLibraryView.template.html')
@@ -74,11 +72,9 @@ function readLibrarySources() {
     ].join('\n'),
   }
 }
-
 describe('admin library layout', () => {
   it('adopts the shared admin page header and workspace semantics', () => {
     const { template, style, combined } = readLibrarySources()
-
     expect(template).toMatch(/admin-page-header/)
     expect(template).toMatch(/admin-page-header--library/)
     expect(template).toMatch(/admin-page-kicker/)
@@ -88,21 +84,18 @@ describe('admin library layout', () => {
     expect(combined).toMatch(/admin-page-stack/)
     expect(style).not.toMatch(/^\s*\.library-header\s*\{/m)
   })
-
   it('adds a desktop support row that pairs scale metrics with workflow guidance while keeping mobile quieter', () => {
     const { template, style } = readLibrarySources()
-
     expect(template).toMatch(/library-page-shell/)
     expect(template).toMatch(/library-workspace-summary/)
     expect(template).toMatch(/library-focus-panel/)
     expect(style).toMatch(
-      /@media\s*\(min-width:\s*1100px\)\s*\{[\s\S]*\.library-page-shell\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*0\.9fr\)\s*minmax\(280px,\s*1\.1fr\)/
+      /@media\s*\(min-width:\s*1024px\)\s*\{[\s\S]*\.library-page-shell\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*0\.9fr\)\s*minmax\(280px,\s*1\.1fr\)/
     )
     expect(style).toMatch(
       /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.library-focus-panel\s*\{[\s\S]*display:\s*none/
     )
   })
-
   it('uses a sidebar-plus-main workbench with panel tabs and scoped search', () => {
     const { template, style } = readLibrarySources()
     expect(template).toMatch(/library-workbench/)
@@ -123,10 +116,8 @@ describe('admin library layout', () => {
     expect(template).toMatch(/asset-search-input/)
     expect(template).toMatch(/profile-search-input/)
   })
-
   it('uses a two-level grid with sticky sidebar and adaptive main area', () => {
     const { style } = readLibrarySources()
-
     expect(style).toMatch(
       /\.library-workbench\s*\{[\s\S]*grid-template-columns:\s*260px\s+minmax\(0,\s*1fr\)/
     )
@@ -139,16 +130,15 @@ describe('admin library layout', () => {
       /\.library-panel-tabs\s*\{[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(150px,\s*1fr\)\)/
     )
     expect(style).toMatch(
-      /@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*1fr/
+      /@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*\.library-main-grid\s*\{[\s\S]*grid-template-columns:\s*1fr/
     )
     expect(style).toMatch(
-      /@media\s*\(max-width:\s*1200px\)\s*\{[\s\S]*\.library-inspector-area\s*\{[\s\S]*position:\s*static/
+      /@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*\.library-inspector-area\s*\{[\s\S]*position:\s*static/
     )
     expect(style).toMatch(
-      /@media\s*\(max-width:\s*900px\)\s*\{[\s\S]*\.library-sidebar\s*\{[\s\S]*position:\s*static/
+      /@media\s*\(max-width:\s*768px\)\s*\{[\s\S]*\.library-sidebar\s*\{[\s\S]*position:\s*static/
     )
   })
-
   it('composes workbench areas with inline semantic elements and panel components', () => {
     const {
       view,
@@ -160,7 +150,6 @@ describe('admin library layout', () => {
       embedProfileEditPanel,
       operationLogPanel,
     } = readLibrarySources()
-
     expect(view).not.toMatch(/import LibraryFolderColumn/)
     expect(view).not.toMatch(/import LibraryAssetColumn/)
     expect(view).not.toMatch(/import LibraryInspectorColumn/)
@@ -184,7 +173,6 @@ describe('admin library layout', () => {
     expect(template).toMatch(/<OperationLogPanel>/)
     expect(template).not.toMatch(/v-model="vm\.drafts\.embedScriptUrl"/)
     expect(template).not.toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"/)
-
     expect(folderPanel).toMatch(/panel-content/)
     expect(assetPanel).toMatch(/panel-content/)
     expect(embedPanel).toMatch(/panel-content/)
@@ -194,16 +182,14 @@ describe('admin library layout', () => {
     expect(embedProfileEditPanel).toMatch(/saveEmbedProfileEdit/)
     expect(operationLogPanel).toMatch(/recent-action-log/)
   })
-
   it('consumes library admin state via a single vm object in the view shell', () => {
     const { view, template } = readLibrarySources()
-    expect(view).toMatch(/const vm = reactive\(useLibraryAdminState\(\)\);/)
+    expect(view).toMatch(/const vm = useLibraryAdminState\(\)/)
     expect(view).not.toMatch(/const\s*\{[\s\S]*\}\s*=\s*useLibraryAdminState\(\);/)
     expect(template).toMatch(/vm\./)
     expect(view).toMatch(/mobileLibraryToolsOpen/)
     expect(view).toMatch(/mobileDeletedAssetsOpen/)
   })
-
   it('binds template state through grouped vm buckets instead of flat fields', () => {
     const { template } = readLibrarySources()
     expect(template).toMatch(/vm\.ui\./)
@@ -214,7 +200,6 @@ describe('admin library layout', () => {
     expect(template).toMatch(/vm\.panels\./)
     expect(template).toMatch(/vm\.logs\./)
     expect(template).toMatch(/vm\.actions\./)
-
     expect(template).not.toMatch(/\bvm\.savingAsset\b/)
     expect(template).not.toMatch(/\bvm\.folderName\b/)
     expect(template).not.toMatch(/\bvm\.filteredFolders\b/)
@@ -225,7 +210,6 @@ describe('admin library layout', () => {
     expect(template).not.toMatch(/\bvm\.getFieldError\b/)
     expect(template).not.toMatch(/\bvm\.clearOperationLogs\b/)
   })
-
   it('provides batch actions and advanced filters for asset management', () => {
     const { template, combined } = readLibrarySources()
     expect(template).toMatch(/asset-mode-filter/)
@@ -252,7 +236,6 @@ describe('admin library layout', () => {
     expect(combined).toMatch(/runAssetBatchDelete/)
     expect(combined).toMatch(/runAssetBatchMove/)
   })
-
   it('moves batch action implementations into the asset selection composable', () => {
     const { state, assetSelection } = readLibrarySources()
     expect(state).not.toMatch(/async function runAssetBatchDelete/)
@@ -260,12 +243,10 @@ describe('admin library layout', () => {
     expect(assetSelection).toMatch(/async function runAssetBatchDelete/)
     expect(assetSelection).toMatch(/async function runAssetBatchMove/)
   })
-
   it('does not keep unused batch result setter bindings in the view layer', () => {
     const { view } = readLibrarySources()
     expect(view).not.toMatch(/\bsetAssetBatchResult\b/)
   })
-
   it('moves query/filter/sort logic into the asset filters composable', () => {
     const { state, assetFilters } = readLibrarySources()
     expect(state).not.toMatch(/const folderSearchQuery = ref/)
@@ -274,7 +255,6 @@ describe('admin library layout', () => {
     expect(assetFilters).toMatch(/const filteredFolderAssets = computed/)
     expect(assetFilters).toMatch(/const sortedFilteredFolderAssets = computed/)
   })
-
   it('moves folder lifecycle actions into the folder actions composable', () => {
     const { state, folderActions } = readLibrarySources()
     expect(state).not.toMatch(/async function createFolderEntry/)
@@ -286,7 +266,6 @@ describe('admin library layout', () => {
     expect(folderActions).toMatch(/async function uploadCover/)
     expect(folderActions).toMatch(/async function removeFolder/)
   })
-
   it('routes panel switching through setActivePanelTab to keep sections expanded', () => {
     const { state, panelSections } = readLibrarySources()
     expect(state).toMatch(/useLibraryPanelSections/)
@@ -295,7 +274,6 @@ describe('admin library layout', () => {
     const directAssignments = panelSections.match(/activePanelTab\.value\s*=/g) ?? []
     expect(directAssignments.length).toBe(1)
   })
-
   it('guards folder asset reload against race conditions and unhandled errors', () => {
     const { state, actionWiring, dataActions } = readLibrarySources()
     expect(state).toMatch(/useLibraryAdminActionWiring/)
@@ -308,7 +286,6 @@ describe('admin library layout', () => {
     expect(actionWiring).toMatch(/void reloadFolderAssets\(\)\.catch\(\(\) => \{\}\)/)
     expect(dataActions).toMatch(/加载文件夹资源失败/)
   })
-
   it('guards folder list reload against stale responses under weak networks', () => {
     const { dataActions } = readLibrarySources()
     expect(dataActions).toMatch(/folderListLoadSeq/)
@@ -316,7 +293,6 @@ describe('admin library layout', () => {
     expect(dataActions).toMatch(/deps\.folderListLoadSeq\.value = requestId/)
     expect(dataActions).toMatch(/if \(requestId !== deps\.folderListLoadSeq\.value\) return/)
   })
-
   it('splits saving state by domain to avoid full-page lock', () => {
     const { state } = readLibrarySources()
     expect(state).toMatch(/const savingFolder = ref\(false\)/)
@@ -327,7 +303,6 @@ describe('admin library layout', () => {
     )
     expect(state).not.toMatch(/saving\.value\s*=/)
   })
-
   it('renders inline field validation for key library admin forms', () => {
     const { template, state, feedback, combined } = readLibrarySources()
     expect(state).toMatch(/useLibraryAdminFeedback/)
@@ -340,10 +315,9 @@ describe('admin library layout', () => {
     expect(template).toMatch(/getFieldError\("createFolderName"\)/)
     expect(template).toMatch(/getFieldError\("uploadAssetFile"\)/)
     expect(template).toMatch(/getFieldError\("uploadAssetEmbedProfile"\)/)
-    expect(combined).toMatch(/getFieldError\("createEmbedProfileName"\)/)
-    expect(combined).toMatch(/getFieldError\("createEmbedScriptUrl"\)/)
+    expect(combined).toMatch(/getFieldError\(['"]createEmbedProfileName['"]\)/)
+    expect(combined).toMatch(/getFieldError\(['"]createEmbedScriptUrl['"]\)/)
   })
-
   it('prevents long names from breaking mobile row layout', () => {
     const { style } = readLibrarySources()
     expect(style).toMatch(/\.folder-pick\s*\{[\s\S]*min-width:\s*0;/)
@@ -354,7 +328,6 @@ describe('admin library layout', () => {
       /\.folder-meta,\s*\.asset-meta,\s*\.selected-folder\s*\{[\s\S]*overflow-wrap:\s*anywhere;/
     )
   })
-
   it('disables mobile auto-correct and auto-capitalization for embed URL fields', () => {
     const { combined } = readLibrarySources()
     expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocapitalize="none"/)

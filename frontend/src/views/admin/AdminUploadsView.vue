@@ -1,13 +1,14 @@
 <script setup lang="ts">
-  import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+  import { computed, onBeforeUnmount, ref, watchEffect } from 'vue'
   import type { AdminItemRow } from '../../features/admin/adminApi'
   import { useUploadAdmin } from '../../features/admin/uploads/useUploadAdmin'
   import { createAdminMobileEditPanelFocus } from './useAdminMobileEditPanelFocus'
+  import { useResponsiveViewport } from '../../composables/useResponsiveViewport'
   import UploadsCreateForm from './uploads/UploadsCreateForm.vue'
   import UploadsEditPanel from './uploads/UploadsEditPanel.vue'
   import UploadsListPanel from './uploads/UploadsListPanel.vue'
 
-  const vm = reactive(useUploadAdmin())
+  const vm = useUploadAdmin()
   const uploadEditorPanelRef = ref<HTMLElement | null>(null)
   const mobileEditorSheetMaxWidth = 640
   const isEditorSheetOpen = computed(() => Boolean(vm.selectedItem))
@@ -15,11 +16,26 @@
     panelRef: uploadEditorPanelRef,
     maxWidth: 1024,
   })
+
+  // 跟踪 body 滚动锁状态
   let bodyOverflowBeforeEditorSheet = ''
+  let isScrollLocked = false
+
+  // 使用响应式 viewport composable
+  const { isMobileViewport } = useResponsiveViewport({
+    breakpoint: mobileEditorSheetMaxWidth,
+    onLeaveMobile: () => {
+      // 从移动端变为桌面端时，清理滚动锁
+      if (isScrollLocked) {
+        document.body.style.overflow = bodyOverflowBeforeEditorSheet
+        bodyOverflowBeforeEditorSheet = ''
+        isScrollLocked = false
+      }
+    },
+  })
 
   function isMobileEditorSheetViewport() {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
-    return window.matchMedia(`(max-width: ${mobileEditorSheetMaxWidth}px)`).matches
+    return isMobileViewport.value
   }
 
   async function openUploadEditor(item: AdminItemRow) {
@@ -29,19 +45,34 @@
     await focusUploadEditPanel()
   }
 
-  watch(isEditorSheetOpen, open => {
-    if (open && isMobileEditorSheetViewport()) {
+  // 滚动锁控制
+  function lockBodyScroll() {
+    if (!isScrollLocked && isMobileViewport.value) {
       bodyOverflowBeforeEditorSheet = document.body.style.overflow
       document.body.style.overflow = 'hidden'
-      return
+      isScrollLocked = true
     }
+  }
 
-    document.body.style.overflow = bodyOverflowBeforeEditorSheet
-    bodyOverflowBeforeEditorSheet = ''
+  function unlockBodyScroll() {
+    if (isScrollLocked) {
+      document.body.style.overflow = bodyOverflowBeforeEditorSheet
+      bodyOverflowBeforeEditorSheet = ''
+      isScrollLocked = false
+    }
+  }
+
+  // 监听编辑器状态变化
+  watchEffect(() => {
+    if (isEditorSheetOpen.value && isMobileViewport.value) {
+      lockBodyScroll()
+    } else {
+      unlockBodyScroll()
+    }
   })
 
   onBeforeUnmount(() => {
-    document.body.style.overflow = bodyOverflowBeforeEditorSheet
+    unlockBodyScroll()
   })
 </script>
 
@@ -123,10 +154,7 @@
           :edit-hidden="vm.editHidden"
           :saving="vm.saving"
           :show-sheet-close="Boolean(vm.selectedItem)"
-          @update:edit-title="
-            vm.editTitle = $event
-            vm.clearFieldErrors('editTitle')
-          "
+          @update:edit-title="($event: string) => { vm.editTitle = $event; vm.clearFieldErrors('editTitle') }"
           @update:edit-description="vm.editDescription = $event"
           @update:edit-category-id="vm.editCategoryId = $event"
           @update:edit-order="vm.editOrder = $event"
@@ -171,7 +199,7 @@
 
   h3 {
     margin: 0;
-    font-size: calc(16px * var(--ui-scale));
+    font-size: var(--text-admin-base);
   }
 
   .field-textarea {
@@ -237,7 +265,7 @@
 
   :deep(.item-meta) {
     color: var(--muted);
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     overflow-wrap: anywhere;
     word-break: break-word;
   }
@@ -267,7 +295,7 @@
   }
 
   .action-feedback {
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
     color: var(--muted);
   }
 
@@ -283,12 +311,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   .error-text {
     color: var(--danger);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   :deep(.empty) {
@@ -308,7 +336,7 @@
 
   :deep(.meta) {
     color: var(--muted);
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     overflow-wrap: anywhere;
   }
 
@@ -329,7 +357,7 @@
       z-index: calc(var(--z-modal) - 2);
       border: 0;
       padding: 0;
-      background: oklch(16% 0.025 250 / 0.32);
+      background: oklch(15% 0.013 250 / 0.32);
     }
 
     .editor-panel--sheet {

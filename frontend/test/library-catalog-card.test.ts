@@ -1,9 +1,8 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { readExpandedSource } from './helpers/sourceReader'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return readExpandedSource(relPath)
 }
 
 describe('catalog library cards', () => {
@@ -16,7 +15,7 @@ describe('catalog library cards', () => {
   })
 
   it('has folder icon placeholder', () => {
-    const css = read('src/views/CatalogView.vue')
+    const css = read('src/views/CatalogView.css')
 
     expect(css).toMatch(/folder-icon/)
     expect(css).toMatch(/folder-card/)

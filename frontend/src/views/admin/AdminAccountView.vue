@@ -1,7 +1,7 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
   import { setToken } from '../../features/auth/authApi'
-  import { useAuthStore } from '../../features/auth/useAuthStore'
+  import { useAuthStore } from '../../stores/auth'
   import { updateAccount } from '../../features/admin/adminApi'
   import { usePendingChangesGuard } from '../../features/admin/composables/usePendingChangesGuard'
 
@@ -111,22 +111,16 @@
       const e = err as { status?: number; data?: any }
       if (e?.status === 401 && e?.data?.error === 'invalid_credentials') {
         setFieldError('currentPassword', '当前密码错误。')
-        return
-      }
-      if (e?.data?.error === 'invalid_username') {
+      } else if (e?.data?.error === 'invalid_username') {
         setFieldError('newUsername', '新用户名不能只包含空白字符。')
-        return
-      }
-      if (e?.data?.error === 'invalid_password') {
+      } else if (e?.data?.error === 'invalid_password') {
         setFieldError('newPassword', '新密码不能只包含空白字符。')
-        return
-      }
-      if (e?.data?.error === 'no_changes') {
+      } else if (e?.data?.error === 'no_changes') {
         setFieldError('newUsername', '请填写新用户名或新密码。')
         setFieldError('newPassword', '请填写新用户名或新密码。')
-        return
+      } else {
+        errorText.value = e?.status === 401 ? '请先登录管理员账号。' : '更新账号失败。'
       }
-      errorText.value = e?.status === 401 ? '请先登录管理员账号。' : '更新账号失败。'
     } finally {
       saving.value = false
     }
@@ -248,6 +242,6 @@
 
   .current-user {
     color: var(--muted);
-    font-size: calc(14px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 </style>

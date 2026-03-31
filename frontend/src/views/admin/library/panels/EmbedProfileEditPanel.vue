@@ -144,7 +144,7 @@
           >
         </div>
       </div>
-      <div v-else class="”empty”">选择平台以编辑</div>
+      <div v-else class="empty">选择平台以编辑</div>
     </div>
   </div>
 </template>

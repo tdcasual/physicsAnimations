@@ -12,6 +12,8 @@ import { normalizePublicUrl } from '@/features/catalog/catalogLink'
 import { usePagedAdminList } from '@/features/admin/composables/usePagedAdminList'
 import { useActionFeedback } from '@/features/admin/composables/useActionFeedback'
 import { useFieldErrors } from '@/features/admin/composables/useFieldErrors'
+import { resolveAuthError } from '@/features/admin/utils/errorUtils'
+import { buildRiskConfirmMessage } from '@/features/admin/uploads/uploadRiskHelpers'
 
 interface CategoryRow {
   id: string
@@ -124,22 +126,11 @@ export const useUploadAdminStore = defineStore('admin/uploads', () => {
   }
 
   // Actions
-  function setFieldError(key: string, message: string) {
-    fieldErrorState.setFieldError(key, message)
-  }
+  const setFieldError = (key: string, message: string) => fieldErrorState.setFieldError(key, message)
+  const clearFieldErrors = (key?: string) => fieldErrorState.clearFieldErrors(key)
+  const getFieldError = (key: string): string => fieldErrorState.getFieldError(key)
 
-  function clearFieldErrors(key?: string) {
-    fieldErrorState.clearFieldErrors(key)
-  }
-
-  function getFieldError(key: string): string {
-    return fieldErrorState.getFieldError(key)
-  }
-
-  function onSelectFile(nextFile: File | null) {
-    file.value = nextFile
-    if (file.value) clearFieldErrors('uploadFile')
-  }
+  function onSelectFile(nextFile: File | null) { file.value = nextFile; if (file.value) clearFieldErrors('uploadFile') }
 
   function beginEdit(item: AdminItem) {
     editState.value = {
@@ -187,7 +178,7 @@ export const useUploadAdminStore = defineStore('admin/uploads', () => {
       const result = await listItems({
         page: options.reset ? 1 : page.value,
         pageSize: pageSize,
-        query: query.value,
+        q: query.value,
         type: 'upload',
       })
       if (isLatestRequest(seq)) {
@@ -225,7 +216,7 @@ export const useUploadAdminStore = defineStore('admin/uploads', () => {
       return true
     } catch (err) {
       const e = err as { status?: number }
-      setActionFeedback(e?.status === 401 ? '请先登录管理员账号。' : '保存失败', true)
+      setActionFeedback(resolveAuthError(e?.status, '保存失败'), true)
       return false
     } finally {
       saving.value = false
@@ -244,29 +235,14 @@ export const useUploadAdminStore = defineStore('admin/uploads', () => {
       return true
     } catch (err) {
       const e = err as { status?: number }
-      setActionFeedback(e?.status === 401 ? '请先登录管理员账号。' : '删除失败', true)
+      setActionFeedback(resolveAuthError(e?.status, '删除失败'), true)
       return false
     } finally {
       saving.value = false
     }
   }
 
-  function buildRiskConfirmMessage(details: any): string {
-    const findings = Array.isArray(details?.findings) ? details.findings : []
-    if (findings.length === 0) return '检测到潜在风险内容，确认后继续上传。是否继续？'
-    const lines = findings.slice(0, 6).map((item: any, index: number) => {
-      const severity = String(item?.severity || 'unknown')
-      const message = String(item?.message || '潜在风险')
-      const source = item?.source ? ` (${String(item.source)})` : ''
-      return `${index + 1}. [${severity}] ${message}${source}`
-    })
-    const truncated = details?.truncated ? '\n...（仅展示部分风险项）' : ''
-    const summary =
-      typeof details?.summary === 'string' && details.summary
-        ? details.summary
-        : `检测到 ${findings.length} 项潜在风险特征。`
-    return `${summary}\n\n${lines.join('\n')}${truncated}\n\n是否仍继续上传？`
-  }
+
 
   async function submitUpload(): Promise<boolean> {
     if (!file.value) {

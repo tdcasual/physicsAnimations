@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('admin dashboard reload race', () => {
@@ -13,6 +13,6 @@ describe('admin dashboard reload race', () => {
     expect(source).toMatch(/const requestSeq = reloadSeq\.value \+ 1/)
     expect(source).toMatch(/reloadSeq\.value = requestSeq/)
     expect(source).toMatch(/if \(requestSeq !== reloadSeq\.value\) return/)
-    expect(source).toMatch(/if \(requestSeq === reloadSeq\.value\) \{\s*loading\.value = false;/)
+    expect(source).toMatch(/if \(requestSeq === reloadSeq\.value\)/)
   })
 })

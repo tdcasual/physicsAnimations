@@ -96,33 +96,18 @@ export function useSystemWizard() {
     if (readOnlyMode.value) return '当前为只读模式，无法执行同步。'
     if (!remoteMode.value) return 'local 模式不执行 WebDAV 同步。'
     if (!String(url.value || '').trim()) return '请先填写 WebDAV URL。'
-    if (hasStorageUnsavedChanges.value) return '存在未保存改动，请先保存配置。'
-    return ''
+    return hasStorageUnsavedChanges.value ? '存在未保存改动，请先保存配置。' : ''
   })
 
   const saveDisabledHint = computed(() => {
     if (wizardStep.value !== 3) return ''
-    if (saving.value) return '正在保存配置，请稍候。'
-    if (readOnlyMode.value) return '当前为只读模式，无法保存配置。'
-    return ''
+    return saving.value ? '正在保存配置，请稍候。' : readOnlyMode.value ? '当前为只读模式，无法保存配置。' : ''
   })
-  const continueDisabledHint = computed(() => {
-    if (wizardStep.value !== 3) return ''
-    if (hasStorageUnsavedChanges.value) return '请先保存配置后再继续下一步。'
-    return ''
-  })
+  const continueDisabledHint = computed(() => wizardStep.value !== 3 ? '' : hasStorageUnsavedChanges.value ? '请先保存配置后再继续下一步。' : '')
   const embedUpdaterSaveHint = computed(() => {
     if (savingEmbedUpdater.value) return '正在保存自动更新设置，请稍候。'
-    const intervalDays = Number(embedUpdaterIntervalDays.value)
-    if (
-      !Number.isFinite(intervalDays) ||
-      !Number.isInteger(intervalDays) ||
-      intervalDays < 1 ||
-      intervalDays > 365
-    ) {
-      return '更新周期需为 1-365 天的整数。'
-    }
-    return ''
+    const days = Number(embedUpdaterIntervalDays.value)
+    return !Number.isFinite(days) || !Number.isInteger(days) || days < 1 || days > 365 ? '更新周期需为 1-365 天的整数。' : ''
   })
 
   function onModeChanged() {

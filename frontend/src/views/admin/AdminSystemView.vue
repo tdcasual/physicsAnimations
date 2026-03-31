@@ -151,11 +151,11 @@
 
   .error-text {
     color: var(--danger);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   .success-text {
     color: var(--success);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 </style>

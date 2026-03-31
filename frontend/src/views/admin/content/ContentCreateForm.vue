@@ -57,10 +57,7 @@
       spellcheck="false"
       placeholder="https://example.com"
       :disabled="props.saving"
-      @input="
-        emit('update:linkUrl', ($event.target as HTMLInputElement).value)
-        emit('clear-link-url-error')
-      "
+      @input="($event: Event) => { emit('update:linkUrl', ($event.target as HTMLInputElement).value); emit('clear-link-url-error') }"
     />
     <div v-if="props.createLinkUrlError" class="field-error-text">{{
       props.createLinkUrlError

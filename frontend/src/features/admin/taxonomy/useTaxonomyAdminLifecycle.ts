@@ -30,8 +30,11 @@ export function useTaxonomyAdminLifecycle(params: UseTaxonomyAdminLifecycleParam
     reloadTaxonomy,
   } = params
 
+  const UI_STATE_VERSION = 1
+
   function persistUiState() {
     const payload = {
+      version: UI_STATE_VERSION,
       search: searchQuery.value,
       showHidden: showHidden.value,
       openGroups: openGroupIds.value,
@@ -46,11 +49,20 @@ export function useTaxonomyAdminLifecycle(params: UseTaxonomyAdminLifecycleParam
 
     try {
       const saved = JSON.parse(raw) as {
+        version?: unknown
         search?: unknown
         showHidden?: unknown
         openGroups?: unknown
         selection?: unknown
       }
+
+      // 版本检查
+      if (saved.version !== UI_STATE_VERSION) {
+        // 版本不匹配，清除旧数据
+        localStorage.removeItem(uiStateKey)
+        return
+      }
+
       if (typeof saved.search === 'string') searchQuery.value = saved.search
       if (typeof saved.showHidden === 'boolean') showHidden.value = saved.showHidden
       if (Array.isArray(saved.openGroups))
@@ -82,13 +94,9 @@ export function useTaxonomyAdminLifecycle(params: UseTaxonomyAdminLifecycleParam
     }
   })
 
-  watch(
-    [searchQuery, showHidden, openGroupIds, selection],
-    () => {
-      persistUiState()
-    },
-    { deep: true }
-  )
+  // 分离简单类型和复杂类型的监听，避免不必要的 deep watch
+  watch([searchQuery, showHidden, openGroupIds], persistUiState)
+  watch(selection, persistUiState, { deep: true })
 
   onMounted(async () => {
     hydrateUiState()

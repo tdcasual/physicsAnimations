@@ -155,7 +155,7 @@
   .admin-task-kicker {
     margin: 0;
     color: color-mix(in oklab, var(--accent-9) 70%, var(--text-primary));
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -204,7 +204,7 @@
     gap: 8px;
     flex-wrap: wrap;
     color: var(--text-tertiary);
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     letter-spacing: 0.04em;
   }
 
@@ -284,7 +284,7 @@
 
   .label {
     color: var(--text-tertiary);
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -292,7 +292,7 @@
 
   .value {
     font-family: 'Iowan Old Style', 'Palatino Linotype', 'Noto Serif SC', 'Songti SC', serif;
-    font-size: calc(34px * var(--ui-scale));
+    font-size: calc(var(--text-3xl) * var(--ui-scale));
     font-weight: 700;
     letter-spacing: -0.04em;
     line-height: 1;
@@ -308,7 +308,7 @@
 
   .error-text {
     color: var(--danger-9);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   @media (max-width: 640px) {

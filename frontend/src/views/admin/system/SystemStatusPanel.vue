@@ -12,7 +12,7 @@
   <div class="panel admin-card">
     <h3>当前状态</h3>
     <div v-if="loading" class="empty">加载中...</div>
-    <div v-else-if="storage" class="status-grid">
+    <div v-else-if="storage" class="status-grid admin-actions">
       <div><span>配置模式：</span>{{ storage.mode }}</div>
       <div><span>实际模式：</span>{{ storage.effectiveMode }}</div>
       <div><span>本地路径：</span>{{ storage.localPath || '-' }}</div>

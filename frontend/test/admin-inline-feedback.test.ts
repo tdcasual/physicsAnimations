@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('admin inline feedback', () => {
@@ -37,11 +37,11 @@ describe('admin inline feedback', () => {
       expect(source).toMatch(/has-error/)
     }
 
-    expect(contentPage).toMatch(/getFieldError\('createLinkUrl'\)/)
-    expect(uploadsPage).toMatch(/getFieldError\('uploadFile'\)/)
-    expect(account).toMatch(/getFieldError\("currentPassword"\)/)
-    expect(account).toMatch(/getFieldError\("confirmPassword"\)/)
+    expect(contentPage).toMatch(/getFieldError\(['"]createLinkUrl['"]\)/)
+    expect(uploadsPage).toMatch(/getFieldError\(['"]uploadFile['"]\)/)
+    expect(account).toMatch(/getFieldError\(['"]currentPassword['"]\)/)
+    expect(account).toMatch(/getFieldError\(['"]confirmPassword['"]\)/)
     expect(systemView).toMatch(/getFieldError/)
-    expect(systemWizardCombined).toMatch(/getFieldError\("webdavUrl"\)/)
+    expect(systemWizardCombined).toMatch(/getFieldError\(['"]webdavUrl['"]\)/)
   })
 })

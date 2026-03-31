@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('admin taxonomy action feedback', () => {
@@ -22,8 +22,8 @@ describe('admin taxonomy action feedback', () => {
     expect(view).toMatch(/import\s+CategoryEditorPanel/)
     expect(view).toMatch(/const\s+taxonomy\s*=\s*useTaxonomyAdmin\(/)
 
-    expect(combinedState).toMatch(/const\s+actionFeedback\s*=\s*ref\(""\)/)
-    expect(combinedState).toMatch(/const\s+actionFeedbackError\s*=\s*ref\(false\)/)
+    expect(combinedState).toMatch(/const\s+actionFeedback\s*=\s*ref\s*\(\s*['""]\s*['""]\s*\)/)
+    expect(combinedState).toMatch(/const\s+actionFeedbackError\s*=\s*ref\s*\(\s*false\s*\)/)
 
     expect(treePanel).toMatch(/class="[^"]*tree-list/)
     expect(groupPanel).toMatch(/class="[^"]*action-feedback/)

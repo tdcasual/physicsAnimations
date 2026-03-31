@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 function countLocks(source: string, expr: string): number {
@@ -20,13 +20,13 @@ describe('admin busy field locking', () => {
     const viewSource = read('src/views/admin/AdminSystemView.vue')
     const panelSource = read('src/views/admin/system/SystemEmbedUpdaterPanel.vue')
     expect(viewSource).toMatch(/<SystemEmbedUpdaterPanel[\s\S]*:loading="loading"/)
-    expect(panelSource).toMatch(/loading: boolean;/)
+    expect(panelSource).toMatch(/loading:\s*boolean/)
     expect(panelSource).toMatch(
-      /<input type="checkbox" :checked="enabled" :disabled="loading \|\| saving" @change="onEnabledChange" \/>/
+      /<input[\s\S]*type="checkbox"[\s\S]*:checked="enabled"[\s\S]*:disabled="loading \|\| saving"[\s\S]*@change="onEnabledChange"[\s\S]*\/>/
     )
     expect(panelSource).toMatch(/:disabled="loading \|\| saving"[\s\S]*@input="onIntervalInput"/)
     expect(panelSource).toMatch(
-      /<button type="button" class="btn btn-primary" :disabled="loading \|\| saving \|\| Boolean\(saveHint\)" @click="emit\('save'\)">/
+      /<button[\s\S]*type="button"[\s\S]*class="btn btn-primary"[\s\S]*:disabled="loading \|\| saving \|\| Boolean\(saveHint\)"[\s\S]*@click="emit\('save'\)/
     )
   })
 

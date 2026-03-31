@@ -9,7 +9,7 @@ describe('library api maintainability budget', () => {
     const lines = source.split('\n').length
 
     expect(lines).toBeLessThan(340)
-    expect(source).toMatch(/from\s+"\.\/libraryApiMappers"/)
-    expect(source).toMatch(/from\s+"\.\/libraryApiPayloads"/)
+    expect(source).toMatch(/from\s+['"]\.\/libraryApiMappers['"]/)
+    expect(source).toMatch(/from\s+['"]\.\/libraryApiPayloads['"]/)
   })
 })

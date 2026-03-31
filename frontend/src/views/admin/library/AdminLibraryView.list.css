@@ -29,7 +29,7 @@
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  font-size: calc(13px * var(--ui-scale));
+  font-size: var(--text-admin-sm);
   color: var(--muted);
 }
 
@@ -114,7 +114,7 @@
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 8px;
   padding: 0 8px;
-  font-size: calc(12px * var(--ui-scale));
+  font-size: var(--text-admin-xs);
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -156,8 +156,8 @@
 .asset-list > .asset-item {
   grid-template-columns: 40px minmax(0, 1fr);
   grid-template-areas:
-    "select main"
-    "select actions";
+    'select main'
+    'select actions';
   align-items: start;
 }
 
@@ -245,7 +245,7 @@
 .folder-meta,
 .asset-meta,
 .selected-folder {
-  font-size: calc(13px * var(--ui-scale));
+  font-size: var(--text-admin-sm);
   color: var(--muted);
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -256,10 +256,9 @@
   border-radius: 14px;
   padding: 12px;
   color: var(--muted);
-  font-size: calc(13px * var(--ui-scale));
+  font-size: var(--text-admin-sm);
 }
 
 .library-admin-feedback {
   padding: 0 2px;
 }
-

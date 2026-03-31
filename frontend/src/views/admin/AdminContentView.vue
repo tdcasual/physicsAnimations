@@ -1,13 +1,14 @@
 <script setup lang="ts">
-  import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
+  import { computed, onBeforeUnmount, ref } from 'vue'
   import type { AdminItemRow } from '../../features/admin/adminApi'
   import { useContentAdmin } from '../../features/admin/content/useContentAdmin'
   import { createAdminMobileEditPanelFocus } from './useAdminMobileEditPanelFocus'
+  import { useResponsiveViewport } from '../../composables/useResponsiveViewport'
   import ContentCreateForm from './content/ContentCreateForm.vue'
   import ContentEditPanel from './content/ContentEditPanel.vue'
   import ContentListPanel from './content/ContentListPanel.vue'
 
-  const vm = reactive(useContentAdmin())
+  const vm = useContentAdmin()
   const contentEditorPanelRef = ref<HTMLElement | null>(null)
   const mobileEditorSheetMaxWidth = 640
   const isEditorSheetOpen = computed(() => Boolean(vm.selectedItem))
@@ -15,11 +16,27 @@
     panelRef: contentEditorPanelRef,
     maxWidth: 1024,
   })
+
+  // 跟踪 body 滚动锁状态
   let bodyOverflowBeforeEditorSheet = ''
+  let isScrollLocked = false
+
+  // 使用响应式 viewport composable
+  const { isMobileViewport } = useResponsiveViewport({
+    breakpoint: mobileEditorSheetMaxWidth,
+    onLeaveMobile: () => {
+      // 从移动端变为桌面端时，清理滚动锁
+      if (isScrollLocked) {
+        document.body.style.overflow = bodyOverflowBeforeEditorSheet
+        bodyOverflowBeforeEditorSheet = ''
+        isScrollLocked = false
+      }
+    },
+  })
 
   function isMobileEditorSheetViewport() {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
-    return window.matchMedia(`(max-width: ${mobileEditorSheetMaxWidth}px)`).matches
+    // 优先使用 composable 的状态
+    return isMobileViewport.value
   }
 
   async function openContentEditor(item: AdminItemRow) {
@@ -29,19 +46,40 @@
     await focusContentEditPanel()
   }
 
-  watch(isEditorSheetOpen, open => {
-    if (open && isMobileEditorSheetViewport()) {
+  // 手动处理滚动锁，确保在 viewport 变化时能正确清理
+  function lockBodyScroll() {
+    if (!isScrollLocked && isMobileViewport.value) {
       bodyOverflowBeforeEditorSheet = document.body.style.overflow
       document.body.style.overflow = 'hidden'
-      return
+      isScrollLocked = true
     }
+  }
 
-    document.body.style.overflow = bodyOverflowBeforeEditorSheet
-    bodyOverflowBeforeEditorSheet = ''
+  function unlockBodyScroll() {
+    if (isScrollLocked) {
+      document.body.style.overflow = bodyOverflowBeforeEditorSheet
+      bodyOverflowBeforeEditorSheet = ''
+      isScrollLocked = false
+    }
+  }
+
+  // 监听编辑器打开/关闭状态
+  function handleEditorStateChange(open: boolean) {
+    if (open && isMobileViewport.value) {
+      lockBodyScroll()
+    } else {
+      unlockBodyScroll()
+    }
+  }
+
+  // 使用 watchEffect 确保响应式
+  import { watchEffect } from 'vue'
+  watchEffect(() => {
+    handleEditorStateChange(isEditorSheetOpen.value)
   })
 
   onBeforeUnmount(() => {
-    document.body.style.overflow = bodyOverflowBeforeEditorSheet
+    unlockBodyScroll()
   })
 </script>
 
@@ -125,10 +163,7 @@
           :edit-hidden="vm.editHidden"
           :saving="vm.saving"
           :show-sheet-close="Boolean(vm.selectedItem)"
-          @update:edit-title="
-            vm.editTitle = $event
-            vm.clearFieldErrors('editTitle')
-          "
+          @update:edit-title="($event: string) => { vm.editTitle = $event; vm.clearFieldErrors('editTitle') }"
           @update:edit-description="vm.editDescription = $event"
           @update:edit-category-id="vm.editCategoryId = $event"
           @update:edit-order="vm.editOrder = $event"
@@ -173,7 +208,7 @@
 
   h3 {
     margin: 0;
-    font-size: calc(16px * var(--ui-scale));
+    font-size: var(--text-admin-base);
   }
 
   .field-textarea {
@@ -224,32 +259,10 @@
     background: color-mix(in srgb, var(--primary) 9%, var(--surface));
   }
 
-  :deep(.item-head) {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-
-  :deep(.item-title) {
-    font-weight: 600;
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-
-  :deep(.item-meta) {
-    color: var(--muted);
-    font-size: calc(12px * var(--ui-scale));
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-
-  :deep(.item-actions) {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-  }
+  :deep(.item-head) { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  :deep(.item-title) { font-weight: 600; overflow-wrap: anywhere; word-break: break-word; }
+  :deep(.item-meta) { color: var(--muted); font-size: var(--text-admin-xs); overflow-wrap: anywhere; word-break: break-word; }
+  :deep(.item-actions) { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
   .editor-header {
     display: flex;
@@ -269,7 +282,7 @@
   }
 
   .action-feedback {
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
     color: var(--muted);
   }
 
@@ -285,12 +298,12 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   .error-text {
     color: var(--danger);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   :deep(.empty) {
@@ -310,7 +323,7 @@
 
   :deep(.meta) {
     color: var(--muted);
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     overflow-wrap: anywhere;
   }
 
@@ -331,7 +344,7 @@
       z-index: calc(var(--z-modal) - 2);
       border: 0;
       padding: 0;
-      background: oklch(16% 0.025 250 / 0.32);
+      background: oklch(15% 0.013 250 / 0.32);
     }
 
     .editor-panel--sheet {

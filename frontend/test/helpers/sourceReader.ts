@@ -24,9 +24,10 @@ function resolveVueStyleSrc(source: string, filePath: string, seen: Set<string>)
 }
 
 export function readExpandedSource(relativePath: string, seen = new Set<string>()): string {
+  const baseDir = path.resolve(__dirname, '../..')
   const absolutePath = path.isAbsolute(relativePath)
     ? relativePath
-    : path.resolve(process.cwd(), relativePath)
+    : path.resolve(baseDir, relativePath)
   if (seen.has(absolutePath)) return ''
   seen.add(absolutePath)
 

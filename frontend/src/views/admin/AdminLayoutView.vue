@@ -1,8 +1,9 @@
 <script setup lang="ts">
-  import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+  import { computed, nextTick, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
   import { RouterLink, RouterView, useRoute } from 'vue-router'
   import AdminShellHeader from '../../components/admin/AdminShellHeader.vue'
   import { adminNavGroups, adminNavItems } from '../../features/admin/adminNavConfig'
+  import { useResponsiveViewport } from '../../composables/useResponsiveViewport'
 
   const route = useRoute()
   const adminNavRef = ref<HTMLElement | null>(null)
@@ -10,6 +11,22 @@
   const adminNavShellRef = ref<HTMLElement | null>(null)
   const adminNavTriggerRef = ref<HTMLElement | null>(null)
   const mobileNavOpen = ref(false)
+  const isMobileNavScrollLocked = ref(false)
+  
+  const mobileNavBreakpoint = 640
+  
+  const { isMobileViewport } = useResponsiveViewport({
+    breakpoint: mobileNavBreakpoint,
+    onLeaveMobile: () => {
+      // 从移动端变为桌面端时，关闭导航并清理滚动锁
+      closeMobileNav()
+      if (isMobileNavScrollLocked.value) {
+        document.body.style.overflow = bodyOverflowBeforeMobileNav
+        bodyOverflowBeforeMobileNav = ''
+        isMobileNavScrollLocked.value = false
+      }
+    },
+  })
   const currentAdminGroup = computed(
     () =>
       adminNavGroups.find(group => group.items.some(item => route.path.startsWith(item.to))) ??
@@ -115,24 +132,34 @@
     }
   }
 
-  watch(mobileNavOpen, async open => {
-    if (open) {
+  // 响应式处理移动端导航的打开/关闭和 scroll lock
+  watchEffect(async () => {
+    const open = mobileNavOpen.value
+    const isMobile = isMobileViewport.value
+    
+    if (open && isMobile && !isMobileNavScrollLocked.value) {
       bodyOverflowBeforeMobileNav = document.body.style.overflow
       document.body.style.overflow = 'hidden'
+      isMobileNavScrollLocked.value = true
       await nextTick()
       adminNavShellRef.value?.querySelector<HTMLElement>('.admin-link')?.focus()
       return
     }
-
-    document.body.style.overflow = bodyOverflowBeforeMobileNav
-    bodyOverflowBeforeMobileNav = ''
-    const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value
-    lastFocusedBeforeMobileNav = null
-    restoreTarget?.focus()
+    
+    if ((!open || !isMobile) && isMobileNavScrollLocked.value) {
+      document.body.style.overflow = bodyOverflowBeforeMobileNav
+      bodyOverflowBeforeMobileNav = ''
+      isMobileNavScrollLocked.value = false
+      const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value
+      lastFocusedBeforeMobileNav = null
+      restoreTarget?.focus()
+    }
   })
 
   onBeforeUnmount(() => {
-    document.body.style.overflow = bodyOverflowBeforeMobileNav
+    if (isMobileNavScrollLocked.value) {
+      document.body.style.overflow = bodyOverflowBeforeMobileNav
+    }
   })
 </script>
 

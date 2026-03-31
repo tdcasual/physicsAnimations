@@ -141,7 +141,7 @@
   .panel-hint {
     margin: 6px 0 0;
     color: var(--muted);
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
   }
 
   .status-chip {
@@ -149,7 +149,7 @@
     padding: 4px 10px;
     background: var(--info-bg);
     color: var(--info);
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     line-height: 1.2;
     white-space: nowrap;
   }
@@ -191,7 +191,7 @@
   }
 
   .field-label {
-    font-size: calc(13px * var(--ui-scale));
+    font-size: var(--text-admin-sm);
     color: var(--muted);
   }
 
@@ -204,7 +204,7 @@
   }
 
   .status-item span {
-    font-size: calc(12px * var(--ui-scale));
+    font-size: var(--text-admin-xs);
     color: var(--muted);
   }
 

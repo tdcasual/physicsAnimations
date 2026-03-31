@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 
 describe('system wizard maintainability budget', () => {
   it('keeps useSystemWizard below 290 lines and delegates async actions', () => {
-    const filePath = path.resolve(process.cwd(), 'src/features/admin/system/useSystemWizard.ts')
+    const filePath = path.resolve(__dirname, '../src/features/admin/system/useSystemWizard.ts')
     const source = fs.readFileSync(filePath, 'utf8')
     const lines = source.split('\n').length
 

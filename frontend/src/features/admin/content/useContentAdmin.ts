@@ -118,6 +118,9 @@ export function useContentAdmin() {
   })
 
   async function submitLink() {
+    // 防重复提交保护
+    if (saving.value) return
+    
     const normalizedUrl = linkUrl.value.trim()
     if (!normalizedUrl) {
       setFieldError('createLinkUrl', '请先填写链接地址。')

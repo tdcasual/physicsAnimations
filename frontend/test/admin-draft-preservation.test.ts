@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('admin draft preservation', () => {
@@ -16,16 +16,16 @@ describe('admin draft preservation', () => {
     expect(uploads).toMatch(/createAdminItemEditorState/)
     expect(editorHelper).toMatch(/const\s+editingSnapshot\s*=\s*ref<T \| null>\(null\)/)
     expect(editorHelper).toMatch(
-      /items\.value\.find\(\(item\) => item\.id === editingId\.value\) \|\| editingSnapshot\.value \|\| null/
+      /params\.items\.value\.find\(item => item\.id === editingId\.value\) \|\| editingSnapshot\.value \|\| null/
     )
     expect(editorHelper).toMatch(
-      /function\s+resetEdit\(\)\s*\{[\s\S]*editingSnapshot\.value = null;/
+      /function\s+resetEdit\(\)\s*\{[\s\S]*?editingSnapshot\.value\s*=\s*null/s
     )
     expect(editorHelper).toMatch(
-      /function\s+syncEditStateWithItems\(\)\s*\{[\s\S]*if \(currentItem\)\s*\{[\s\S]*editingSnapshot\.value = currentItem;/
+      /function\s+syncEditStateWithItems\(\)\s*\{[\s\S]*?if\s*\(\s*currentItem\s*\)[\s\S]*?\{[\s\S]*?editingSnapshot\.value\s*=\s*currentItem/s
     )
     expect(editorHelper).not.toMatch(
-      /function\s+syncEditStateWithItems\(\)\s*\{[\s\S]*resetEdit\(\)/
+      /function\s+syncEditStateWithItems\(\)\s*\{[\s\S]*?resetEdit\(\)/s
     )
   })
 
@@ -36,7 +36,7 @@ describe('admin draft preservation', () => {
       /const\s+previousSelection\s*=\s*selection\.value\s*\?\s*\{\s*\.\.\.selection\.value\s*\}\s*:\s*null/
     )
     expect(lifecycle).toMatch(
-      /if\s*\([\s\S]*selection\.value\?\.kind !== previousSelection\?\.kind[\s\S]*\|\|[\s\S]*selection\.value\?\.id !== previousSelection\?\.id[\s\S]*\)\s*\{[\s\S]*syncFormsFromSelection\(\);/
+      /if\s*\(\s*selection\.value\?\.kind\s*!==\s*previousSelection\?\.kind[\s\S]*?\|\|[\s\S]*?selection\.value\?\.id\s*!==\s*previousSelection\?\.id[\s\S]*?\)\s*\{[\s\S]*?syncFormsFromSelection\(\)/
     )
   })
 
@@ -48,7 +48,9 @@ describe('admin draft preservation', () => {
     expect(content).toMatch(/createAdminItemEditorState/)
     expect(uploads).toMatch(/createAdminItemEditorState/)
     expect(editorHelper).toMatch(/const\s+hasPendingEditChanges\s*=\s*computed\(/)
-    expect(editorHelper).toMatch(/window\.confirm\("当前编辑内容有未保存更改，确定切换吗？"\)/)
+    expect(editorHelper).toMatch(
+      /window\.confirm\(['"]当前编辑内容有未保存更改，确定切换吗？['"]\)/
+    )
     expect(editorHelper).toMatch(
       /function\s+beginEdit\(item:\s*T,\s*options:\s*\{\s*force\?:\s*boolean\s*\}\s*=\s*\{\}\)/
     )

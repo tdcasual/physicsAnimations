@@ -12,12 +12,12 @@ describe('admin mobile nav focus trap', () => {
     expect(source).toMatch(/const adminNavShellRef = ref<HTMLElement \| null>\(null\)/)
     expect(source).toMatch(/const adminNavTriggerRef = ref<HTMLElement \| null>\(null\)/)
     expect(source).toMatch(/function handleMobileNavKeydown\(event: KeyboardEvent\)/)
-    expect(source).toMatch(/event\.key !== "Tab"/)
+    expect(source).toMatch(/event\.key !== ['"]Tab['"]/)
     expect(source).toMatch(/querySelectorAll<HTMLElement>\(/)
     expect(source).toMatch(/adminNavShellRef\.value\?\.contains\(active\)/)
-    expect(source).toMatch(/watch\(mobileNavOpen, async \(open\) => \{/)
+    expect(source).toMatch(/watchEffect\(async\s*\(\)\s*=>/)
     expect(source).toMatch(
-      /adminNavShellRef\.value\?\.querySelector<HTMLElement>\("\.admin-link"\)\?\.focus\(\)/
+      /adminNavShellRef\.value\?\.querySelector<HTMLElement>\(['"]\.admin-link['"]\)\?\.focus\(\)/
     )
     expect(source).toMatch(
       /const restoreTarget = lastFocusedBeforeMobileNav \|\| adminNavTriggerRef\.value/

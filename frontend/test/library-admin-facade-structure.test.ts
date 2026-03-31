@@ -4,9 +4,9 @@ import { readStateFacade } from './library-admin-facade-test-utils'
 describe('library admin facade structure', () => {
   it('builds grouped facade buckets for ui and action domains', () => {
     const stateFacade = readStateFacade()
-    expect(stateFacade).toMatch(/\bui:\s*T\["ui"\]/)
-    expect(stateFacade).toMatch(/\bactions:\s*T\["actions"\]/)
-    expect(stateFacade).toMatch(/\bfilters:\s*T\["filters"\]/)
+    expect(stateFacade).toMatch(/\bui:\s*T\[["']ui["']\]/)
+    expect(stateFacade).toMatch(/\bactions:\s*T\[["']actions["']\]/)
+    expect(stateFacade).toMatch(/\bfilters:\s*T\[["']filters["']\]/)
   })
 
   it('exposes grouped-only facade surface without flat passthrough', () => {
@@ -26,7 +26,7 @@ describe('library admin facade structure', () => {
     const stateFacade = readStateFacade()
     expect(stateFacade).toMatch(/\btype FacadeBuckets<T extends LibraryAdminStateInput> = \{/)
     expect(stateFacade).toMatch(
-      /createLibraryAdminStateFacade<T extends LibraryAdminStateInput>\(state: T\): FacadeBuckets<T>/
+      /createLibraryAdminStateFacade<T extends LibraryAdminStateInput>\([\s\S]*?state:\s*T[\s\S]*?\):\s*FacadeBuckets<T>/
     )
     expect(stateFacade).not.toMatch(
       /createLibraryAdminStateFacade\(state: LibraryAdminStateInput\): FacadeBuckets/

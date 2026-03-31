@@ -64,7 +64,7 @@ describe('admin library upload', () => {
 
   it('defaults upload mode to embed demo mode', () => {
     const { template, combined } = readLibrarySources()
-    expect(combined).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/)
+    expect(combined).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\(['"]embed['"]\)/)
     expect(template).toMatch(/<option value="embed">演示（默认）<\/option>/)
     expect(template).toMatch(/<option value="download">仅下载原文件<\/option>/)
   })
@@ -105,8 +105,8 @@ describe('admin library upload', () => {
     expect(combined).toMatch(/assetEmbedProfileId/)
     expect(combined).toMatch(/assetEmbedOptionsJson/)
     expect(combined).toMatch(/Embed 参数 JSON/)
-    expect(combined).toMatch(/embedProfileId:\s*(?:deps\.)?assetParserMode\.value === "profile"/)
-    expect(combined).toMatch(/embedOptionsJson:\s*(?:deps\.)?assetParserMode\.value === "profile"/)
+    expect(combined).toMatch(/embedProfileId:\s*(?:deps\.)?assetParserMode\.value === ['"]profile['"]/)
+    expect(combined).toMatch(/embedOptionsJson:\s*(?:deps\.)?assetParserMode\.value === ['"]profile['"]/)
   })
 
   it('supports embed profile management inputs and actions', () => {
