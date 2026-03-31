@@ -4,6 +4,7 @@ import { useCatalogSearch } from './catalogSearch'
 import { loadCatalogData } from './catalogService'
 import { computeCatalogView, filterFoldersByCatalogContext } from './catalogState'
 import type { CatalogData, CatalogItem } from './types'
+import { DEFAULT_GROUP_ID } from '../shared/constants'
 import { readFavoriteDemos, type FavoriteDemoEntry, writeFavoriteDemos } from './favorites'
 import { readRecentActivity, type RecentActivityEntry, writeRecentActivity } from './recentActivity'
 import { listLibraryCatalog } from '../library/libraryApi'
@@ -134,7 +135,7 @@ export function useCatalogViewState() {
   const loading = ref(false)
   const loadError = ref('')
   const query = useCatalogSearch()
-  const selectedGroupId = ref('physics')
+  const selectedGroupId = ref(DEFAULT_GROUP_ID)
   const selectedCategoryId = ref('all')
   const catalog = ref<CatalogData>({ groups: {} })
   const libraryFolders = ref<LibraryFolder[]>([])
@@ -231,6 +232,22 @@ export function useCatalogViewState() {
     favoriteEntries.value = readFavoriteDemos()
   }
 
+  function pruneInvalidEntries(items: CatalogItem[]) {
+    const itemIds = new Set(items.map(item => item.id))
+
+    const validRecent = recentEntries.value.filter(entry => itemIds.has(entry.id))
+    if (validRecent.length !== recentEntries.value.length) {
+      recentEntries.value = validRecent
+      writeRecentActivity(validRecent)
+    }
+
+    const validFavorites = favoriteEntries.value.filter(entry => itemIds.has(entry.id))
+    if (validFavorites.length !== favoriteEntries.value.length) {
+      favoriteEntries.value = validFavorites
+      writeFavoriteDemos(validFavorites)
+    }
+  }
+
   function selectGroup(groupId: string) {
     if (!groupId) return
     selectedGroupId.value = groupId
@@ -280,24 +297,22 @@ export function useCatalogViewState() {
       libraryFolders.value = Array.isArray(libraryCatalog.folders) ? libraryCatalog.folders : []
       refreshTeacherQuickAccess()
 
-      if (teacherQuickAccess.value.prunedRecentEntries.length !== recentEntries.value.length) {
-        recentEntries.value = teacherQuickAccess.value.prunedRecentEntries
-        writeRecentActivity(recentEntries.value)
-      }
-      if (teacherQuickAccess.value.prunedFavoriteEntries.length !== favoriteEntries.value.length) {
-        favoriteEntries.value = teacherQuickAccess.value.prunedFavoriteEntries
-        writeFavoriteDemos(favoriteEntries.value)
-      }
+      pruneInvalidEntries(next.items)
     } finally {
       loading.value = false
     }
   })
+
+  const groups = computed(() => view.value.groups)
+  const categories = computed(() => view.value.categories)
 
   return {
     loading,
     loadError,
     query,
     view,
+    groups,
+    categories,
     directGroups,
     overflowGroups,
     directCategories,

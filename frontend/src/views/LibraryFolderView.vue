@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { computed, onMounted, ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
+  import { PErrorState } from '../components/ui'
   import { normalizePublicUrl } from '../features/catalog/catalogLink'
   import { getLibraryFolder, listLibraryFolderAssets } from '../features/library/libraryApi'
   import type { LibraryAsset, LibraryFolder } from '../features/library/types'
@@ -26,8 +27,14 @@
     return normalizePublicUrl(folder.value.coverPath)
   })
 
-  function routeFolderId(): string {
-    return String(route.params.id || '').trim()
+  function routeFolderId(): string | null {
+    const id = String(route.params.id || '').trim()
+    // 验证ID格式：只允许字母、数字、下划线和连字符
+    const validIdPattern = /^[a-zA-Z0-9_-]+$/
+    if (!validIdPattern.test(id) || id.length === 0 || id.length > 64) {
+      return null
+    }
+    return id
   }
 
   function openAssetHref(asset: LibraryAsset): string {
@@ -131,8 +138,18 @@
       </div>
     </header>
 
-    <div v-if="loading" class="library-state">正在加载文件夹...</div>
-    <div v-else-if="errorText" class="library-state">{{ errorText }}</div>
+    <div v-if="loading" class="library-state">
+      <div class="spinner" />
+      <span>正在加载文件夹...</span>
+    </div>
+    <PErrorState 
+      v-else-if="errorText"
+      type="network"
+      title="加载失败"
+      :description="errorText"
+      show-retry
+      @retry="reload"
+    />
 
     <div v-else class="library-assets">
       <article

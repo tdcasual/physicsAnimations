@@ -1,7 +1,8 @@
 /* App Shell Styles */
 
 .app-shell {
-  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   background: var(--surface-bg);
 }
 
@@ -15,10 +16,20 @@
   backdrop-filter: blur(12px);
 }
 
-.topbar--catalog { --topbar-accent: var(--primary-default); }
-.topbar--admin { --topbar-accent: var(--accent-8); }
-.topbar--viewer { --topbar-accent: var(--primary-default); background: transparent; border-bottom-color: transparent; }
-.topbar--library { --topbar-accent: var(--accent-8); }
+.topbar--catalog {
+  --topbar-accent: var(--primary-default);
+}
+.topbar--admin {
+  --topbar-accent: var(--accent-copper);
+}
+.topbar--viewer {
+  --topbar-accent: var(--primary-default);
+  background: transparent;
+  border-bottom-color: transparent;
+}
+.topbar--library {
+  --topbar-accent: var(--accent-copper);
+}
 
 .topbar-inner {
   max-width: 1440px;
@@ -196,17 +207,31 @@
   padding: var(--space-6) var(--space-5);
 }
 
-.app-main--catalog { max-width: 1280px; padding: var(--space-4); }
-.app-main--admin { max-width: 1400px; padding: var(--space-5); }
-.app-main--login { max-width: 560px; }
-.app-main--viewer { max-width: 100%; padding: 0; }
-.app-main--library { max-width: 1280px; }
+.app-main--catalog {
+  max-width: 1280px;
+  padding: var(--space-4);
+}
+.app-main--admin {
+  max-width: 1400px;
+  padding: var(--space-5);
+}
+.app-main--login {
+  max-width: 560px;
+}
+.app-main--viewer {
+  max-width: 100%;
+  padding: 0;
+}
+.app-main--library {
+  max-width: 1280px;
+}
 
 /* Modal */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: oklch(0% 0 0 / 0.5);
+  background: var(--gray-12);
+  background: oklch(15% 0.013 250 / 0.5);
   backdrop-filter: blur(4px);
   z-index: var(--z-modal-backdrop);
   display: flex;
@@ -309,8 +334,12 @@
   font-weight: var(--font-medium);
   color: var(--text-primary);
   cursor: pointer;
-  transition: all var(--duration-fast) var(--ease-smooth);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--duration-fast) var(--ease-smooth), border-color var(--duration-fast) var(--ease-smooth), box-shadow var(--duration-fast) var(--ease-smooth);
   text-decoration: none;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .btn:hover {
@@ -352,25 +381,99 @@
   border: 0;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive - 大平板优化 (768px - 1024px) */
+@media (max-width: 1024px) and (min-width: 768px) {
   .topbar-inline-actions {
     display: none;
   }
-  
+
   .topbar-more-trigger {
     display: inline-flex;
   }
-  
+
   .topbar-search-field {
-    display: none;
+    max-width: 280px;
   }
-  
+
+  .topbar-search {
+    font-size: var(--text-sm);
+  }
+
   .topbar-shell-panel {
     padding: 0;
   }
-  
+
   .app-main {
     padding: var(--space-4);
+  }
+}
+
+/* Responsive - 小平板和手机 (< 768px) */
+@media (max-width: 767px) {
+  .topbar-inline-actions {
+    display: none;
+  }
+
+  .topbar-more-trigger {
+    display: inline-flex;
+  }
+
+  .topbar-search-field {
+    display: none;
+  }
+
+  .topbar-shell-panel {
+    padding: 0;
+    gap: var(--space-2);
+  }
+
+  .topbar-lead {
+    gap: var(--space-2);
+  }
+
+  .brand-mark {
+    font-size: var(--text-base);
+  }
+
+  .btn-nav-home {
+    padding: var(--space-1_5) var(--space-2);
+  }
+
+  .app-main {
+    padding: var(--space-4);
+  }
+}
+
+/* 手机额外优化 (< 640px) */
+@media (max-width: 640px) {
+  .topbar-inner {
+    padding: 0 var(--space-3);
+  }
+
+  .topbar-shell-panel {
+    height: 56px;
+  }
+
+  .app-main {
+    padding: var(--space-3);
+  }
+
+  .topbar-home-label {
+    font-size: var(--text-sm);
+  }
+}
+
+/* 小手机优化 (< 380px) */
+@media (max-width: 380px) {
+  .brand-mark {
+    font-size: var(--text-sm);
+  }
+
+  .topbar-home-label {
+    display: none;
+  }
+
+  .btn-nav-home {
+    padding: var(--space-1_5);
   }
 }

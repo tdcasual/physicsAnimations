@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('subject-neutral visible copy', () => {
@@ -18,8 +18,8 @@ describe('subject-neutral visible copy', () => {
     expect(app).not.toMatch(/我的物理动画集/)
     expect(app).not.toMatch(/我的学科演示集/)
     expect(chrome).toMatch(/我的科学演示集/)
-    expect(state).toMatch(/"学科"/)
-    expect(service).toMatch(/title:\s*"学科"/)
+    expect(state).toMatch(/['"]学科['"]/)
+    expect(service).toMatch(/title:\s*['"]学科['"]/)
   })
 
   it('keeps admin and library fallback labels subject-neutral', () => {

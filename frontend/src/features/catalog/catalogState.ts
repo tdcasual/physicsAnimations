@@ -5,10 +5,15 @@ function safeText(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }
 
+function toValidNumber(value: unknown, fallback = 0): number {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : fallback
+}
+
 function sortByOrderAndTitle<T extends { order?: number; title?: string }>(list: T[]): T[] {
   const out = [...(list || [])]
   out.sort((a, b) => {
-    const orderDiff = Number(b?.order || 0) - Number(a?.order || 0)
+    const orderDiff = toValidNumber(b?.order, 0) - toValidNumber(a?.order, 0)
     if (orderDiff) return orderDiff
     return safeText(a?.title).localeCompare(safeText(b?.title), 'zh-CN')
   })

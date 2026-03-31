@@ -14,7 +14,8 @@ describe('classroom mode ui', () => {
 
   it('defines classroom mode style hooks in global stylesheet', () => {
     const css = read('src/styles.css')
-    expect(css).toMatch(/:root\[data-classroom="on"\]/)
+    // 支持单引号和双引号
+    expect(css).toMatch(/:root\[data-classroom=["']on["']\]/)
     expect(css).toMatch(/--content-max-width/)
   })
 })

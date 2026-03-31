@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { clearToken, getToken, login, me } from '@/features/auth/authApi'
 
-interface LoginInput {
+export interface LoginInput {
   username: string
   password: string
 }

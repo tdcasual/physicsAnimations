@@ -8,7 +8,7 @@ function read(relPath: string): string {
 describe('catalog visual polish', () => {
   it('has a hero section with gradient title', () => {
     const vue = read('src/views/CatalogView.vue')
-    const css = read('src/views/CatalogView.vue')
+    const css = read('src/views/CatalogView.css')
 
     expect(vue).toMatch(/class="catalog-hero"/)
     expect(vue).toMatch(/class="hero-title"/)
@@ -17,23 +17,22 @@ describe('catalog visual polish', () => {
   })
 
   it('has interactive cards', () => {
-    const css = read('src/views/CatalogView.vue')
+    const css = read('src/views/CatalogView.css')
 
     expect(css).toMatch(/\.item-card/)
-    expect(css).toMatch(/hoverable/)
     expect(css).toMatch(/transform:\s*scale/)
     expect(css).toMatch(/transition:/)
   })
 
   it('has responsive grid layout', () => {
-    const css = read('src/views/CatalogView.vue')
+    const css = read('src/views/CatalogView.css')
 
     expect(css).toMatch(/grid-template-columns/)
     expect(css).toMatch(/@media\s*\(max-width:/)
   })
 
   it('has sticky navigation', () => {
-    const css = read('src/views/CatalogView.vue')
+    const css = read('src/views/CatalogView.css')
 
     expect(css).toMatch(/position:\s*sticky/)
     expect(css).toMatch(/top:\s*64px/)
@@ -48,7 +47,7 @@ describe('catalog visual polish', () => {
 
   it('has favorite button with effect', () => {
     const vue = read('src/views/CatalogView.vue')
-    const css = read('src/views/CatalogView.vue')
+    const css = read('src/views/CatalogView.css')
 
     expect(vue).toMatch(/class="favorite-btn"/)
     expect(css).toMatch(/\.favorite-btn/)

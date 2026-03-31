@@ -32,3 +32,9 @@ export interface CatalogGroup {
 export interface CatalogData {
   groups: Record<string, CatalogGroup>
 }
+
+export interface CatalogViewStateSnapshot {
+  groupId: string
+  categoryId: string
+  query: string
+}

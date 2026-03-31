@@ -2,7 +2,7 @@
   import { onMounted, ref } from 'vue'
   import { RouterLink, useRoute, useRouter } from 'vue-router'
   import { PButton, PInput, PCard } from '../components/ui'
-  import { useAuthStore } from '../features/auth/useAuthStore'
+  import { useAuthStore } from '../stores/auth'
   import { resolveAdminRedirect } from '../router/redirect'
 
   const router = useRouter()
@@ -23,6 +23,9 @@
   }
 
   async function submit() {
+    // 幂等保护：防止重复提交
+    if (loading.value) return
+    
     if (!username.value || !password.value) {
       errorText.value = '请输入用户名和密码'
       return
@@ -38,12 +41,14 @@
       })
       const redirect = resolveAdminRedirect(route.query.redirect)
       await router.replace(redirect)
-    } catch (err: any) {
-      const status = err?.status
+    } catch (err: unknown) {
+      const status = (err as { status?: number })?.status
       if (status === 401) {
         errorText.value = '用户名或密码错误'
       } else if (status === 429) {
-        const retry = Number(err?.data?.retryAfterSeconds || 0)
+        const retry = Number(
+          (err as { data?: { retryAfterSeconds?: number } })?.data?.retryAfterSeconds || 0
+        )
         errorText.value =
           retry > 0 ? `尝试过于频繁，请 ${retry} 秒后再试` : '尝试过于频繁，请稍后再试'
       } else {
@@ -70,29 +75,33 @@
 
         <form class="login-form" @submit.prevent="submit">
           <div class="form-field">
-            <label class="form-label">用户名</label>
+            <label for="login-username" class="form-label">用户名</label>
             <PInput
+              id="login-username"
               v-model="username"
               placeholder="请输入用户名"
               size="lg"
               autocomplete="username"
+              aria-label="用户名"
               @input="clearError"
             />
           </div>
 
           <div class="form-field">
-            <label class="form-label">密码</label>
+            <label for="login-password" class="form-label">密码</label>
             <PInput
+              id="login-password"
               v-model="password"
               type="password"
               placeholder="请输入密码"
               size="lg"
               autocomplete="current-password"
+              aria-label="密码"
               @input="clearError"
             />
           </div>
 
-          <div v-if="errorText" class="form-error">
+          <div v-if="errorText" class="form-error" role="alert" aria-live="polite">
             <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor">
               <path
                 fill-rule="evenodd"
@@ -120,7 +129,6 @@
               :loading="loading"
               class="submit-btn"
               type="submit"
-              @click="submit"
             >
               登录
             </PButton>
@@ -129,21 +137,30 @@
       </PCard>
 
       <div class="login-info">
-        <div class="info-item">
-          <span class="info-icon">📚</span>
-          <span>内容管理</span>
+        <div class="info-item" title="内容管理">
+          <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="info-text">内容管理</span>
         </div>
-        <div class="info-item">
-          <span class="info-icon">📁</span>
-          <span>资源库</span>
+        <div class="info-item" title="资源库">
+          <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="info-text">资源库</span>
         </div>
-        <div class="info-item">
-          <span class="info-icon">🏷️</span>
-          <span>分类配置</span>
+        <div class="info-item" title="分类配置">
+          <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="info-text">分类配置</span>
         </div>
-        <div class="info-item">
-          <span class="info-icon">⚙️</span>
-          <span>系统设置</span>
+        <div class="info-item" title="系统设置">
+          <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="info-text">系统设置</span>
         </div>
       </div>
     </div>
@@ -156,12 +173,14 @@
 
 <style scoped>
   .login-page {
-    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: var(--space-6);
+    padding-bottom: max(var(--space-6), env(safe-area-inset-bottom, 0px));
     background: linear-gradient(135deg, var(--surface-bg) 0%, var(--surface-page) 100%);
   }
 
@@ -192,7 +211,7 @@
   }
 
   .brand-icon {
-    font-size: 28px;
+    font-size: var(--text-2xl);
   }
 
   .brand-text {
@@ -243,7 +262,7 @@
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-3) var(--space-4);
-    background: oklch(55% 0.18 25 / 0.08);
+    background: var(--danger-bg);
     border-radius: var(--radius-sm);
     font-size: var(--text-sm);
     color: var(--danger-9);
@@ -260,6 +279,7 @@
     align-items: center;
     justify-content: space-between;
     margin-top: var(--space-2);
+    gap: var(--space-4);
   }
 
   .back-link {
@@ -284,6 +304,7 @@
 
   .submit-btn {
     min-width: 120px;
+    flex-shrink: 0;
   }
 
   /* Info */
@@ -300,10 +321,18 @@
     gap: var(--space-2);
     font-size: var(--text-sm);
     color: var(--text-tertiary);
+    transition: color var(--duration-fast) var(--ease-smooth);
+  }
+
+  .info-item:hover {
+    color: var(--text-secondary);
   }
 
   .info-icon {
-    font-size: 16px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    opacity: 0.7;
   }
 
   /* Footer */
@@ -319,34 +348,83 @@
   }
 
   /* Responsive */
-  @media (max-width: 480px) {
+  @media (max-width: 640px) {
     .login-page {
       padding: var(--space-4);
+      justify-content: flex-start;
+      padding-top: var(--space-8);
     }
 
     .login-card :deep(.p-card) {
       padding: var(--space-6);
     }
 
+    .login-header {
+      margin-bottom: var(--space-6);
+    }
+
     .login-title {
       font-size: var(--text-2xl);
     }
 
+    .login-subtitle {
+      font-size: var(--text-sm);
+    }
+
     .form-actions {
       flex-direction: column;
-      gap: var(--space-3);
+      gap: var(--space-4);
+      margin-top: var(--space-4);
     }
 
     .back-link {
-      order: 1;
+      align-self: flex-start;
+      font-size: var(--text-sm);
     }
 
     .submit-btn {
       width: 100%;
+      order: -1;
     }
 
     .login-info {
-      gap: var(--space-4);
+      gap: var(--space-3);
+      padding: 0 var(--space-2);
+    }
+
+    .info-item {
+      flex-direction: column;
+      gap: var(--space-1);
+      text-align: center;
+      min-width: 64px;
+    }
+
+    .info-icon {
+      width: 24px;
+      height: 24px;
+    }
+
+    .info-text {
+      font-size: var(--text-xs);
+    }
+
+    .login-footer {
+      margin-top: auto;
+      padding-top: var(--space-6);
+    }
+  }
+
+  @media (max-width: 380px) {
+    .login-info {
+      gap: var(--space-2);
+    }
+
+    .info-item {
+      min-width: 56px;
+    }
+
+    .info-text {
+      font-size: 11px;
     }
   }
 </style>

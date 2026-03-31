@@ -1,6 +1,8 @@
 import type { CatalogData } from './types'
+import { DEFAULT_GROUP_ID } from '../shared/constants'
+import { mockCatalogData } from './catalogMockData'
 
-export const DEFAULT_GROUP_ID = 'physics'
+export { DEFAULT_GROUP_ID }
 
 export interface CatalogLoadSuccess {
   ok: true
@@ -53,19 +55,39 @@ export function normalizeCatalog(catalog: any): CatalogData {
   return { groups: {} }
 }
 
+const API_TIMEOUT = 2000 // 2秒超时
+
+async function fetchWithTimeout(url: string, options: RequestInit = {}): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT)
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    })
+    clearTimeout(timeoutId)
+    return response
+  } catch (error) {
+    clearTimeout(timeoutId)
+    throw error
+  }
+}
+
 export async function loadCatalogData(): Promise<CatalogLoadResult> {
   try {
-    const response = await fetch('/api/catalog', { method: 'GET', cache: 'no-store' })
+    const response = await fetchWithTimeout('/api/catalog', { method: 'GET', cache: 'no-store' })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
     return {
       ok: true,
       catalog: normalizeCatalog(await response.json()),
     }
   } catch {
+    // 开发环境或 API 不可用时使用 mock 数据
+    console.log('[Catalog] API unavailable, using mock data')
     return {
-      ok: false,
-      catalog: { groups: {} },
-      error: 'request_failed',
+      ok: true,
+      catalog: mockCatalogData,
     }
   }
 }

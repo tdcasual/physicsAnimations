@@ -32,8 +32,10 @@ function isHttpUrl(url: unknown): boolean {
   return typeof url === 'string' && /^https?:\/\//i.test(url)
 }
 
+const MAX_URL_LENGTH = 2048
+
 function isSafeViewerTarget(raw: unknown): boolean {
-  const target = typeof raw === 'string' ? raw.trim() : ''
+  const target = typeof raw === 'string' ? raw.trim().slice(0, MAX_URL_LENGTH) : ''
   if (!target) return false
   if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
     return /^https?:/i.test(target)
@@ -60,7 +62,10 @@ function toIsolatedUploadTarget(target: string): string {
   return `/content/isolated${target.slice('/content'.length)}`
 }
 
-async function tryFetchItemMeta(id: string): Promise<{
+async function tryFetchItemMeta(
+  id: string,
+  signal?: AbortSignal
+): Promise<{
   item: any | null
   status: number
   networkError: boolean
@@ -70,13 +75,17 @@ async function tryFetchItemMeta(id: string): Promise<{
       const response = await fetch(`/api/items/${encodeURIComponent(id)}`, {
         cache: 'no-store',
         headers,
+        signal,
       })
       if (!response.ok) {
         return { item: null, status: response.status, networkError: false }
       }
       const data = await response.json().catch(() => null)
       return { item: data?.item || null, status: response.status, networkError: false }
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        return { item: null, status: 0, networkError: false }
+      }
       return { item: null, status: 0, networkError: true }
     }
   }
@@ -91,7 +100,16 @@ async function tryFetchItemMeta(id: string): Promise<{
   return firstAttempt
 }
 
-export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel> {
+export interface LoadViewerModelOptions {
+  signal?: AbortSignal
+}
+
+export async function loadViewerModel(
+  params: ViewerParams,
+  options: LoadViewerModelOptions = {}
+): Promise<ViewerModel> {
+  const { signal } = options
+
   const id = String(params.id || '').trim()
 
   let item: any = null
@@ -99,7 +117,7 @@ export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel
   let title = '作品预览'
 
   if (id) {
-    const fetched = await tryFetchItemMeta(id)
+    const fetched = await tryFetchItemMeta(id, signal)
     item = fetched.item
   }
 

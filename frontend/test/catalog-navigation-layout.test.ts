@@ -1,9 +1,8 @@
-import fs from 'node:fs'
-import path from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { readExpandedSource } from './helpers/sourceReader'
 
 function readFile(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return readExpandedSource(relPath)
 }
 
 describe('catalog navigation homepage layout', () => {
@@ -26,9 +25,9 @@ describe('catalog navigation homepage layout', () => {
   it('has navigation tabs for groups and categories', () => {
     const source = readFile('src/views/CatalogView.vue')
 
-    expect(source).toMatch(/class="nav-groups"/)
-    expect(source).toMatch(/class="nav-categories"/)
-    expect(source).toMatch(/class="nav-tab"/)
+    expect(source).toMatch(/class="nav-groups/)
+    expect(source).toMatch(/class="nav-categories/)
+    expect(source).toMatch(/class="nav-tab/)
   })
 
   it('displays content in a responsive grid', () => {

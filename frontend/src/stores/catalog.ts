@@ -1,63 +1,24 @@
 import { computed, ref, watch, type ComputedRef } from 'vue'
 import { defineStore } from 'pinia'
 import { loadCatalogData } from '@/features/catalog/catalogService'
-import type {
-  CatalogData,
-  CatalogItem,
-  CatalogGroup,
-  CatalogCategory,
-} from '@/features/catalog/types'
+import type { CatalogData, CatalogItem, CatalogGroup, CatalogCategory } from '@/features/catalog/types'
 import { listLibraryCatalog } from '@/features/library/libraryApi'
 import type { LibraryFolder } from '@/features/library/types'
-import {
-  readFavoriteDemos,
-  writeFavoriteDemos,
-  type FavoriteDemoEntry,
-} from '@/features/catalog/favorites'
-import {
-  readRecentActivity,
-  writeRecentActivity,
-  type RecentActivityEntry,
-} from '@/features/catalog/recentActivity'
+import { readFavoriteDemos, writeFavoriteDemos, type FavoriteDemoEntry } from '@/features/catalog/favorites'
+import { readRecentActivity, writeRecentActivity, type RecentActivityEntry } from '@/features/catalog/recentActivity'
 import { useCatalogSearch } from '@/features/catalog/catalogSearch'
 import { computeCatalogView, filterFoldersByCatalogContext } from '@/features/catalog/catalogState'
 import { getCatalogItemHref } from '@/features/catalog/catalogLink'
+import { DEFAULT_GROUP_ID } from '@/features/shared/constants'
+import { parseViewState, serializeViewState, resolveEntries, pruneEntries } from '@/features/catalog/catalogStoreHelpers'
 
-const VIEW_STATE_KEY = 'pa_view_state'
+const VIEW_STATE_KEY = 'pa_view_state_v2'
 const MAX_GROUP_TABS = 8
 const MAX_CATEGORY_TABS = 10
 const MAX_QUICK_CATEGORIES = 4
 const MAX_FEATURED_ITEMS = 4
 const MAX_LIBRARY_HIGHLIGHTS = 3
 const MAX_TEACHER_QUICK_ACCESS_ITEMS = 4
-
-export interface CatalogViewStateSnapshot {
-  groupId: string
-  categoryId: string
-  query: string
-}
-
-function parseViewState(raw: string | null | undefined): CatalogViewStateSnapshot | null {
-  try {
-    if (!raw) return null
-    const data = JSON.parse(raw) as Record<string, unknown>
-    const groupId = typeof data.groupId === 'string' ? data.groupId : ''
-    const categoryId = typeof data.categoryId === 'string' ? data.categoryId : ''
-    const query = typeof data.query === 'string' ? data.query : ''
-    if (!groupId) return null
-    return { groupId, categoryId: categoryId || 'all', query }
-  } catch {
-    return null
-  }
-}
-
-function serializeViewState(snapshot: CatalogViewStateSnapshot): string {
-  return JSON.stringify({
-    groupId: String(snapshot.groupId || '').trim(),
-    categoryId: String(snapshot.categoryId || 'all').trim() || 'all',
-    query: String(snapshot.query || ''),
-  })
-}
 
 export interface CatalogStoreState {
   loading: boolean
@@ -70,67 +31,44 @@ export interface CatalogStoreState {
   favoriteEntries: FavoriteDemoEntry[]
 }
 
-/**
- * 目录状态管理 Store
- *
- * 管理目录数据、视图状态、搜索、最近查看和收藏
- */
 export const useCatalogStore = defineStore('catalog', () => {
-  // State
   const loading = ref(false)
   const loadError = ref('')
   const query = useCatalogSearch()
-  const selectedGroupId = ref('physics')
+  const selectedGroupId = ref(DEFAULT_GROUP_ID)
   const selectedCategoryId = ref('all')
   const catalog = ref<CatalogData>({ groups: {} })
   const libraryFolders = ref<LibraryFolder[]>([])
   const recentEntries = ref<RecentActivityEntry[]>([])
   const favoriteEntries = ref<FavoriteDemoEntry[]>([])
 
-  // Private functions
   function persistViewState() {
     try {
-      localStorage.setItem(
-        VIEW_STATE_KEY,
-        serializeViewState({
-          groupId: selectedGroupId.value,
-          categoryId: selectedCategoryId.value,
-          query: query.value,
-        })
-      )
-    } catch {
-      // ignore storage errors
-    }
+      localStorage.setItem(VIEW_STATE_KEY, serializeViewState({
+        groupId: selectedGroupId.value,
+        categoryId: selectedCategoryId.value,
+        query: query.value,
+      }))
+    } catch { /* ignore */ }
   }
 
-  function readViewState(): CatalogViewStateSnapshot | null {
-    try {
-      return parseViewState(localStorage.getItem(VIEW_STATE_KEY))
-    } catch {
-      return null
-    }
+  function readViewState() {
+    try { return parseViewState(localStorage.getItem(VIEW_STATE_KEY)) } catch { return null }
   }
 
-  // Getters (computed)
-  const view = computed(() =>
-    computeCatalogView({
-      catalog: catalog.value,
-      selectedGroupId: selectedGroupId.value,
-      selectedCategoryId: selectedCategoryId.value,
-      query: query.value,
-    })
+  const view = computed(() => computeCatalogView({
+    catalog: catalog.value,
+    selectedGroupId: selectedGroupId.value,
+    selectedCategoryId: selectedCategoryId.value,
+    query: query.value,
+  }))
+
+  const activeGroup: ComputedRef<CatalogGroup | null> = computed(() =>
+    view.value.groups.find(g => g.id === view.value.activeGroupId) ?? view.value.groups[0] ?? null
   )
 
-  const activeGroup: ComputedRef<CatalogGroup | null> = computed(
-    () =>
-      view.value.groups.find(group => group.id === view.value.activeGroupId) ??
-      view.value.groups[0] ??
-      null
-  )
-
-  const activeCategory: ComputedRef<CatalogCategory | null> = computed(
-    () =>
-      view.value.categories.find(category => category.id === view.value.activeCategoryId) ?? null
+  const activeCategory: ComputedRef<CatalogCategory | null> = computed(() =>
+    view.value.categories.find(c => c.id === view.value.activeCategoryId) ?? null
   )
 
   const groups: ComputedRef<CatalogGroup[]> = computed(() => view.value.groups)
@@ -145,7 +83,7 @@ export const useCatalogStore = defineStore('catalog', () => {
   const hasCatalogGroups = computed(() => view.value.groups.length > 0)
 
   const filteredLibraryFolders = computed(() => {
-    const activeGroupCategoryIds = new Set(view.value.categories.map(category => category.id))
+    const activeGroupCategoryIds = new Set(view.value.categories.map(c => c.id))
     return filterFoldersByCatalogContext({
       folders: libraryFolders.value,
       activeCategoryId: view.value.activeCategoryId,
@@ -155,38 +93,13 @@ export const useCatalogStore = defineStore('catalog', () => {
   })
 
   const currentItems = computed(() => view.value.items.slice(0, MAX_FEATURED_ITEMS))
-  const recommendedItems = computed(() =>
-    view.value.items.slice(MAX_FEATURED_ITEMS, MAX_FEATURED_ITEMS * 2)
-  )
-  const libraryHighlights = computed(() =>
-    filteredLibraryFolders.value.slice(0, MAX_LIBRARY_HIGHLIGHTS)
-  )
+  const recommendedItems = computed(() => view.value.items.slice(MAX_FEATURED_ITEMS, MAX_FEATURED_ITEMS * 2))
+  const libraryHighlights = computed(() => filteredLibraryFolders.value.slice(0, MAX_LIBRARY_HIGHLIGHTS))
 
   const teacherQuickAccess = computed(() => {
     const itemById = new Map((view.value.items || []).map(item => [item.id, item]))
-    const resolveEntries = <T extends { id: string }>(
-      entries: T[] | undefined,
-      timestampKey: keyof T
-    ): { validEntries: T[]; resolvedItems: CatalogItem[] } => {
-      const seen = new Set<string>()
-      const sortedEntries = [...(entries || [])].sort(
-        (left, right) => Number(right[timestampKey]) - Number(left[timestampKey])
-      )
-      const validEntries: T[] = []
-      const resolvedItems: CatalogItem[] = []
-      for (const entry of sortedEntries) {
-        const id = String(entry.id || '').trim()
-        if (!id || seen.has(id)) continue
-        seen.add(id)
-        const item = itemById.get(id)
-        if (!item) continue
-        validEntries.push(entry)
-        resolvedItems.push(item)
-      }
-      return { validEntries, resolvedItems }
-    }
-    const recent = resolveEntries(recentEntries.value, 'lastViewedAt')
-    const favorites = resolveEntries(favoriteEntries.value, 'favoritedAt')
+    const recent = resolveEntries(recentEntries.value, itemById, 'lastViewedAt')
+    const favorites = resolveEntries(favoriteEntries.value, itemById, 'favoritedAt')
     return {
       recentItems: recent.resolvedItems.slice(0, MAX_TEACHER_QUICK_ACCESS_ITEMS),
       favoriteItems: favorites.resolvedItems.slice(0, MAX_TEACHER_QUICK_ACCESS_ITEMS),
@@ -197,19 +110,10 @@ export const useCatalogStore = defineStore('catalog', () => {
 
   const recentItems = computed(() => teacherQuickAccess.value.recentItems)
   const favoriteItems = computed(() => teacherQuickAccess.value.favoriteItems)
-  const favoriteIds = computed(
-    () => new Set(teacherQuickAccess.value.prunedFavoriteEntries.map(entry => entry.id))
-  )
+  const favoriteIds = computed(() => new Set(teacherQuickAccess.value.prunedFavoriteEntries.map(e => e.id)))
+  const heroTitle = computed(() => activeCategory.value?.title || activeGroup.value?.title || '学科')
 
-  const heroTitle = computed(() => {
-    if (activeCategory.value) return activeCategory.value.title
-    return activeGroup.value?.title || '学科'
-  })
-
-  // Actions
-  function getItemHref(item: CatalogItem): string {
-    return getCatalogItemHref(item)
-  }
+  function getItemHref(item: CatalogItem) { return getCatalogItemHref(item) }
 
   function selectGroup(groupId: string) {
     if (!groupId) return
@@ -234,30 +138,35 @@ export const useCatalogStore = defineStore('catalog', () => {
     favoriteEntries.value = readFavoriteDemos()
   }
 
+  function pruneInvalidEntries(items: CatalogItem[]) {
+    const itemIds = new Set(items.map(item => item.id))
+    recentEntries.value = pruneEntries(recentEntries.value, itemIds, writeRecentActivity)
+    favoriteEntries.value = pruneEntries(favoriteEntries.value, itemIds, writeFavoriteDemos)
+  }
+
   function addRecentItem(itemId: string) {
     const now = Date.now()
-    const existingIndex = recentEntries.value.findIndex(entry => entry.id === itemId)
-    if (existingIndex >= 0) {
-      recentEntries.value[existingIndex].lastViewedAt = now
+    const idx = recentEntries.value.findIndex(e => e.id === itemId)
+    if (idx >= 0) {
+      const updated = { ...recentEntries.value[idx], lastViewedAt: now }
+      recentEntries.value = [...recentEntries.value.slice(0, idx), updated, ...recentEntries.value.slice(idx + 1)]
     } else {
-      recentEntries.value.push({ id: itemId, lastViewedAt: now })
+      recentEntries.value = [{ id: itemId, lastViewedAt: now }, ...recentEntries.value]
     }
     writeRecentActivity(recentEntries.value)
   }
 
   function toggleFavorite(itemId: string) {
-    const index = favoriteEntries.value.findIndex(entry => entry.id === itemId)
-    if (index >= 0) {
-      favoriteEntries.value.splice(index, 1)
+    const idx = favoriteEntries.value.findIndex(e => e.id === itemId)
+    if (idx >= 0) {
+      favoriteEntries.value = [...favoriteEntries.value.slice(0, idx), ...favoriteEntries.value.slice(idx + 1)]
     } else {
-      favoriteEntries.value.push({ id: itemId, favoritedAt: Date.now() })
+      favoriteEntries.value = [{ id: itemId, favoritedAt: Date.now() }, ...favoriteEntries.value]
     }
     writeFavoriteDemos(favoriteEntries.value)
   }
 
-  function isFavorite(itemId: string): boolean {
-    return favoriteIds.value.has(itemId)
-  }
+  function isFavorite(itemId: string) { return favoriteIds.value.has(itemId) }
 
   async function loadCatalog() {
     loading.value = true
@@ -265,11 +174,7 @@ export const useCatalogStore = defineStore('catalog', () => {
     try {
       const result = await loadCatalogData()
       catalog.value = result.catalog
-      if (!result.ok) {
-        loadError.value = '加载目录失败，请稍后重试。'
-        return false
-      }
-
+      if (!result.ok) { loadError.value = '加载目录失败，请稍后重试。'; return false }
       const nextView = computeCatalogView({
         catalog: catalog.value,
         selectedGroupId: selectedGroupId.value,
@@ -283,38 +188,29 @@ export const useCatalogStore = defineStore('catalog', () => {
     } catch {
       loadError.value = '加载目录失败，请稍后重试。'
       return false
-    } finally {
-      loading.value = false
-    }
+    } finally { loading.value = false }
   }
 
   async function loadLibraryFolders() {
     try {
-      const libraryCatalog = await listLibraryCatalog().catch(() => ({ folders: [] }))
-      libraryFolders.value = Array.isArray(libraryCatalog.folders) ? libraryCatalog.folders : []
-    } catch {
-      libraryFolders.value = []
-    }
+      const catalog = await listLibraryCatalog().catch(() => ({ folders: [] }))
+      libraryFolders.value = Array.isArray(catalog.folders) ? catalog.folders : []
+    } catch { libraryFolders.value = [] }
   }
 
   async function initialize() {
-    const savedView = readViewState()
-    if (savedView) {
-      selectedGroupId.value = savedView.groupId
-      selectedCategoryId.value = savedView.categoryId
-      query.value = savedView.query
+    const saved = readViewState()
+    if (saved) {
+      selectedGroupId.value = saved.groupId
+      selectedCategoryId.value = saved.categoryId
+      query.value = saved.query
     }
-
     loading.value = true
     loadError.value = ''
     try {
       const result = await loadCatalogData()
       catalog.value = result.catalog
-      if (!result.ok) {
-        loadError.value = '加载目录失败，请稍后重试。'
-        return
-      }
-
+      if (!result.ok) { loadError.value = '加载目录失败，请稍后重试。'; return }
       const nextView = computeCatalogView({
         catalog: catalog.value,
         selectedGroupId: selectedGroupId.value,
@@ -324,73 +220,24 @@ export const useCatalogStore = defineStore('catalog', () => {
       selectedGroupId.value = nextView.activeGroupId
       selectedCategoryId.value = nextView.activeCategoryId
       persistViewState()
-
       await loadLibraryFolders()
       refreshTeacherQuickAccess()
-
-      // Prune stale entries
-      if (teacherQuickAccess.value.prunedRecentEntries.length !== recentEntries.value.length) {
-        recentEntries.value = teacherQuickAccess.value.prunedRecentEntries
-        writeRecentActivity(recentEntries.value)
-      }
-      if (teacherQuickAccess.value.prunedFavoriteEntries.length !== favoriteEntries.value.length) {
-        favoriteEntries.value = teacherQuickAccess.value.prunedFavoriteEntries
-        writeFavoriteDemos(favoriteEntries.value)
-      }
-    } finally {
-      loading.value = false
-    }
+      pruneInvalidEntries(nextView.items)
+    } catch {
+      loadError.value = '初始化目录失败，请刷新页面重试。'
+    } finally { loading.value = false }
   }
 
-  // Watch for query changes
   watch(query, persistViewState)
 
   return {
-    // State
-    loading,
-    loadError,
-    query,
-    selectedGroupId,
-    selectedCategoryId,
-    catalog,
-    libraryFolders,
-    recentEntries,
-    favoriteEntries,
-
-    // Getters
-    view,
-    groups,
-    categories,
-    items,
-    activeGroup,
-    activeCategory,
-    directGroups,
-    overflowGroups,
-    directCategories,
-    overflowCategories,
-    quickCategories,
-    hasCatalogGroups,
-    filteredLibraryFolders,
-    currentItems,
-    recommendedItems,
-    libraryHighlights,
-    teacherQuickAccess,
-    recentItems,
-    favoriteItems,
-    favoriteIds,
-    heroTitle,
-
-    // Actions
-    getItemHref,
-    selectGroup,
-    selectCategory,
-    setQuery,
-    refreshTeacherQuickAccess,
-    addRecentItem,
-    toggleFavorite,
-    isFavorite,
-    loadCatalog,
-    loadLibraryFolders,
-    initialize,
+    loading, loadError, query, selectedGroupId, selectedCategoryId,
+    catalog, libraryFolders, recentEntries, favoriteEntries,
+    view, groups, categories, items, activeGroup, activeCategory,
+    directGroups, overflowGroups, directCategories, overflowCategories, quickCategories, hasCatalogGroups,
+    filteredLibraryFolders, currentItems, recommendedItems, libraryHighlights,
+    teacherQuickAccess, recentItems, favoriteItems, favoriteIds, heroTitle,
+    getItemHref, selectGroup, selectCategory, setQuery, refreshTeacherQuickAccess,
+    addRecentItem, toggleFavorite, isFavorite, loadCatalog, loadLibraryFolders, initialize,
   }
 })

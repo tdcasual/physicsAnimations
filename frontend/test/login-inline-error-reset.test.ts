@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('login inline error reset', () => {
@@ -12,7 +12,7 @@ describe('login inline error reset', () => {
 
     expect(source).toMatch(/clearError/)
     expect(source).toMatch(/@input="clearError"/)
-    expect(source).toMatch(/errorText\.value\s*=\s*""/)
+    expect(source).toMatch(/errorText\.value\s*=\s*['"]['"]/)
   })
 
   it('has error display that shows only when error exists', () => {

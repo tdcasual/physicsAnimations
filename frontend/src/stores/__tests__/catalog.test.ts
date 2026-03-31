@@ -52,7 +52,7 @@ describe('useCatalogStore', () => {
 
     vi.mocked(catalogService.loadCatalogData).mockResolvedValue({
       ok: true,
-      catalog: mockCatalogData,
+      catalog: mockCatalogData as any,
     })
     vi.mocked(libraryApi.listLibraryCatalog).mockResolvedValue({ folders: [] })
     vi.mocked(favorites.readFavoriteDemos).mockReturnValue([])

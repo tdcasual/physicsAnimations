@@ -10,7 +10,9 @@ describe('viewer sticky offset', () => {
     const source = readFile('src/App.vue')
     expect(source).toMatch(/ref="topbarRef"/)
     expect(source).toMatch(/ResizeObserver/)
-    expect(source).toMatch(/document\.documentElement\.style\.setProperty\("--app-topbar-height"/)
+    expect(source).toMatch(
+      /document\.documentElement\.style\.setProperty\s*\(\s*['"]--app-topbar-height['"]\s*,/
+    )
   })
 
   it('defines a shared topbar height variable for nested sticky layouts', () => {

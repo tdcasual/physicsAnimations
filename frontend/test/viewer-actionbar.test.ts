@@ -73,7 +73,7 @@ describe('viewer action bar', () => {
       read('src/views/ViewerView.vue'),
       read('src/components/viewer/ViewerStageShell.vue'),
     ].join('\n')
-    expect(source).toMatch(/document\.title = "正在加载作品\.\.\."/)
+    expect(source).toMatch(/document\.title = ['"]正在加载作品\.\.\.['"]/)
     expect(source).toMatch(
       /v-if="!loading && model\?\.status === 'ready' && model\.showModeToggle"/
     )

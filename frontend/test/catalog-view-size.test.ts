@@ -3,7 +3,7 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('catalog view maintainability budget', () => {

@@ -65,15 +65,15 @@ describe('library folder view', () => {
 
   it('updates the page title for direct-entry error states instead of leaving the default app title', () => {
     const source = read('src/views/LibraryFolderView.vue')
-    expect(source).toMatch(/document\.title = "缺少文件夹参数 - 资源库"/)
-    expect(source).toMatch(/document\.title = "加载文件夹失败 - 资源库"/)
+    expect(source).toMatch(/document\.title\s*=\s*['"]缺少文件夹参数 - 资源库['"]/)
+    expect(source).toMatch(/document\.title\s*=\s*['"]加载文件夹失败 - 资源库['"]/)
   })
 
   it('keeps the visible page heading in sync with missing-parameter and load-failure states', () => {
     const source = read('src/views/LibraryFolderView.vue')
-    expect(source).toMatch(/const pageHeading = ref\("文件夹"\)/)
-    expect(source).toMatch(/pageHeading\.value = "缺少文件夹参数"/)
-    expect(source).toMatch(/pageHeading\.value = "加载文件夹失败"/)
+    expect(source).toMatch(/const pageHeading = ref\s*\(\s*['"]文件夹['"]\s*\)/)
+    expect(source).toMatch(/pageHeading\.value\s*=\s*['"]缺少文件夹参数['"]/)
+    expect(source).toMatch(/pageHeading\.value\s*=\s*['"]加载文件夹失败['"]/)
     expect(source).toMatch(/<h2>\{\{ pageHeading \}\}<\/h2>/)
   })
 
@@ -98,9 +98,9 @@ describe('library folder view', () => {
     const source = read('src/views/LibraryFolderView.vue')
 
     expect(source).toMatch(
-      /void router\.replace\(\{\s*path:\s*"\/",\s*hash:\s*"#catalog-library"\s*\}\)/
+      /void router\.replace\(\{\s*path:\s*['"]\/['"],\s*hash:\s*['"]#catalog-library['"]\s*\}\)/
     )
-    expect(source).not.toMatch(/void router\.replace\("\/"\)/)
+    expect(source).not.toMatch(/void router\.replace\(['"]\/['"]\)/)
   })
 
   it('no longer includes quick shortcut links in the folder view', () => {

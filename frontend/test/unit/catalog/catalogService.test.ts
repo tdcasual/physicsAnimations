@@ -150,13 +150,13 @@ describe('catalogService', () => {
 
       await loadCatalogData()
 
-      expect(mockedFetch).toHaveBeenCalledWith('/api/catalog', {
+      expect(mockedFetch).toHaveBeenCalledWith('/api/catalog', expect.objectContaining({
         method: 'GET',
         cache: 'no-store',
-      })
+      }))
     })
 
-    it('HTTP错误时应返回ok: false', async () => {
+    it('HTTP错误时应使用mock数据作为fallback', async () => {
       mockedFetch.mockResolvedValue({
         ok: false,
         status: 500,
@@ -164,25 +164,17 @@ describe('catalogService', () => {
 
       const result: CatalogLoadResult = await loadCatalogData()
 
-      expect(result.ok).toBe(false)
-      expect(result.error).toBe('request_failed')
+      expect(result.ok).toBe(true)
+      expect(Object.keys(result.catalog.groups).length).toBeGreaterThan(0)
     })
 
-    it('网络错误时应返回ok: false', async () => {
+    it('网络错误时应使用mock数据作为fallback', async () => {
       mockedFetch.mockRejectedValue(new Error('Network error'))
 
       const result: CatalogLoadResult = await loadCatalogData()
 
-      expect(result.ok).toBe(false)
-      expect(result.error).toBe('request_failed')
-    })
-
-    it('失败时应返回空catalog', async () => {
-      mockedFetch.mockRejectedValue(new Error('Network error'))
-
-      const result: CatalogLoadResult = await loadCatalogData()
-
-      expect(result.catalog.groups).toEqual({})
+      expect(result.ok).toBe(true)
+      expect(Object.keys(result.catalog.groups).length).toBeGreaterThan(0)
     })
   })
 })

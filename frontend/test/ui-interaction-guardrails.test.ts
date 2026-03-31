@@ -7,12 +7,12 @@ function readFile(relPath: string): string {
 
 describe('ui interaction guardrails', () => {
   it('clears login credentials on modal close and supports keyboard dismissal', () => {
-    const source = readFile('src/App.vue')
+    const source = readFile('src/features/auth/useLoginModal.ts')
     expect(source).toMatch(
-      /function closeLogin\(\)\s*\{[\s\S]*loginUsername\.value\s*=\s*""[\s\S]*loginPassword\.value\s*=\s*""/
+      /function closeLogin\(\)\s*\{[\s\S]*loginUsername\.value\s*=\s*['"]['"][\s\S]*loginPassword\.value\s*=\s*['"]['"]/
     )
-    expect(source).toMatch(/key\s*===\s*"Escape"/)
-    expect(source).toMatch(/key\s*!==\s*"Tab"/)
+    expect(source).toMatch(/key\s*===\s*['"]Escape['"]/)
+    expect(source).toMatch(/key\s*!==\s*['"]Tab['"]/)
   })
 
   it('prevents stale list request results from overriding newer queries', () => {
@@ -29,7 +29,7 @@ describe('ui interaction guardrails', () => {
       expect(source).not.toMatch(/if\s*\(loading\.value\)\s*return;/)
       expect(source).toMatch(/nextRequestSeq/)
       expect(source).toMatch(/isLatestRequest/)
-      expect(source).toMatch(/if\s*\(!(?:ctx\.)?isLatestRequest\(requestSeq\)\)\s*return;/)
+      expect(source).toMatch(/if\s*\(!(?:ctx\.)?isLatestRequest\(requestSeq\)\)\s*return;?/)
     }
   })
 

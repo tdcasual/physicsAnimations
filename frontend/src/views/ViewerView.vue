@@ -26,6 +26,14 @@
   let hideScreenshotTimer = 0
   const stageTransitionState = ref<'steady' | 'mode-shift'>('steady')
   let stageTransitionTimer = 0
+  let currentRequestController: AbortController | null = null
+
+  function cancelCurrentRequest() {
+    if (currentRequestController) {
+      currentRequestController.abort()
+      currentRequestController = null
+    }
+  }
 
   const frameSrc = computed(() => {
     if (model.value?.status !== 'ready') return ''
@@ -63,25 +71,34 @@
     )
   })
 
-  function getRouteParams() {
+  function getRouteParams(): { id: string; valid: boolean } {
     const idParam = String(route.params.id || '').trim()
+    // 验证ID格式：只允许字母、数字、下划线和连字符
+    const validIdPattern = /^[a-zA-Z0-9_-]+$/
+    const valid = validIdPattern.test(idParam) && idParam.length > 0 && idParam.length <= 64
 
     return {
       id: idParam,
+      valid,
     }
   }
 
   async function refresh() {
     clearHideScreenshotTimer()
     clearStageTransitionTimer()
+    cancelCurrentRequest()
     stageTransitionState.value = 'steady'
     const requestSeq = refreshSeq.value + 1
     refreshSeq.value = requestSeq
     loading.value = true
     document.title = '正在加载作品...'
     screenshotVisible.value = false
+
+    currentRequestController = new AbortController()
     try {
-      const next = await loadViewerModel(getRouteParams())
+      const next = await loadViewerModel(getRouteParams(), {
+        signal: currentRequestController.signal,
+      })
       if (requestSeq !== refreshSeq.value) return
       model.value = next
       if (next.status === 'ready') {
@@ -107,6 +124,7 @@
       if (requestSeq === refreshSeq.value) {
         loading.value = false
       }
+      currentRequestController = null
     }
   }
 
@@ -211,6 +229,7 @@
   onBeforeUnmount(() => {
     clearHideScreenshotTimer()
     clearStageTransitionTimer()
+    cancelCurrentRequest()
   })
 </script>
 

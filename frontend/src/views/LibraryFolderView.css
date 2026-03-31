@@ -191,7 +191,8 @@
   flex-wrap: wrap;
 }
 
-@media (max-width: 720px) {
+/* 平板和手机 (< 768px) */
+@media (max-width: 767px) {
   .library-folder-hero {
     padding: 14px;
   }

@@ -38,7 +38,9 @@
   scroll-margin-top: calc(var(--app-topbar-height, 0px) + env(safe-area-inset-top, 0px) + 20px);
 }
 
-.catalog-stage-band { padding-top: 8px; }
+.catalog-stage-band {
+  padding-top: 8px;
+}
 
 .catalog-stage-rail {
   padding-top: 16px;
@@ -119,7 +121,11 @@
 .catalog-quick-chip,
 .catalog-tab,
 .catalog-card {
-  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease, transform 160ms ease;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background-color 140ms ease,
+    transform 160ms ease;
 }
 
 /* ── Mobile filter ── */
@@ -150,7 +156,10 @@
   max-height: 0;
   overflow: hidden;
   transform: translateY(-6px);
-  transition: opacity 160ms ease, transform 160ms ease, max-height 160ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    max-height 160ms ease;
 }
 
 .catalog-mobile-filter-panel.is-open {
@@ -159,7 +168,7 @@
   max-height: 600px;
   overflow: visible;
   transform: translateY(0);
-  animation: catalog-panel-in 160ms ease;
+  animation: catalog-panel-in 160ms var(--ease-out-expo);
 }
 
 .catalog-mobile-filter-block {
@@ -188,10 +197,18 @@
   gap: 14px;
 }
 
-.catalog-section--map { padding-top: 4px; }
-.catalog-section--current { padding-top: 0; }
-.catalog-section--recommended { padding-top: 0; }
-.catalog-section--library { padding-top: 0; }
+.catalog-section--map {
+  padding-top: 4px;
+}
+.catalog-section--current {
+  padding-top: 0;
+}
+.catalog-section--recommended {
+  padding-top: 0;
+}
+.catalog-section--library {
+  padding-top: 0;
+}
 
 .catalog-section--archive {
   padding: 0;
@@ -202,7 +219,9 @@
   overflow: visible;
 }
 
-.catalog-section--archive .catalog-grid { gap: 14px; }
+.catalog-section--archive .catalog-grid {
+  gap: 14px;
+}
 
 /* ── Tabs ── */
 .catalog-section-nav {
@@ -244,7 +263,9 @@
   font-weight: 600;
 }
 
-.catalog-select { appearance: none; }
+.catalog-select {
+  appearance: none;
+}
 
 /* ── Empty / loading states ── */
 .catalog-state,
@@ -362,4 +383,3 @@
     transform: translateY(0);
   }
 }
-

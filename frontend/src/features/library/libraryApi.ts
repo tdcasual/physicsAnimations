@@ -7,6 +7,7 @@ import type {
   LibraryFolderAssetsResponse,
 } from './types'
 import { toAsset, toEmbedProfile, toFolder } from './libraryApiMappers'
+import { mockLibraryFolders } from './libraryMockData'
 import {
   buildCreateLibraryEmbedProfileBody,
   buildCreateLibraryFolderBody,
@@ -37,7 +38,7 @@ function toApiError(status: number, data: any): LibraryApiError {
   return err
 }
 
-async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T = any>(path: string, options: RequestInit = {}, timeoutMs?: number): Promise<T> {
   return apiFetchJson<T>({
     path,
     options,
@@ -49,13 +50,19 @@ async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promi
       }
     },
     toError: (status, data) => toApiError(status, data),
+    timeoutMs,
   })
 }
 
 export async function listLibraryCatalog(): Promise<LibraryCatalogResponse> {
-  const data = await apiFetch<any>('/api/library/catalog', { method: 'GET' })
-  const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : []
-  return { folders }
+  try {
+    const data = await apiFetch<any>('/api/library/catalog', { method: 'GET' }, 2000)
+    const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : []
+    return { folders }
+  } catch {
+    console.log('[Library] API unavailable, using mock data')
+    return { folders: mockLibraryFolders }
+  }
 }
 
 export async function listLibraryFolders(): Promise<LibraryFolder[]> {

@@ -3,13 +3,12 @@ import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), 'utf8')
+  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
 }
 
 describe('catalog theme semantics', () => {
   it('uses CSS variables for theming instead of hard-coded values', () => {
-    const source = read('src/views/CatalogView.vue')
-    const styleBlock = source.split('<style scoped>')[1] ?? ''
+    const styleBlock = read('src/views/CatalogView.css')
 
     // 不应该使用硬编码的十六进制颜色
     expect(styleBlock).not.toMatch(/#ffffff/i)
@@ -25,8 +24,7 @@ describe('catalog theme semantics', () => {
   })
 
   it('allows catalog card text to wrap on mobile', () => {
-    const source = read('src/views/CatalogView.vue')
-    const styleBlock = source.split('<style scoped>')[1] ?? ''
+    const styleBlock = read('src/views/CatalogView.css')
 
     // 检查文本换行处理
     expect(styleBlock).toMatch(/line-height:/)
@@ -34,8 +32,7 @@ describe('catalog theme semantics', () => {
   })
 
   it('allows catalog card description to wrap on mobile', () => {
-    const source = read('src/views/CatalogView.vue')
-    const styleBlock = source.split('<style scoped>')[1] ?? ''
+    const styleBlock = read('src/views/CatalogView.css')
 
     // 检查描述文本换行
     expect(styleBlock).toMatch(/-webkit-line-clamp/)
