@@ -1,38 +1,38 @@
 <script setup lang="ts">
-  import { computed } from 'vue'
-  import type { SystemEmbedUpdater } from '../../../features/admin/system/useSystemWizard'
+import { computed } from "vue";
+import type { SystemEmbedUpdater } from "../../../features/admin/system/useSystemWizard";
 
-  const props = defineProps<{
-    embedUpdater: SystemEmbedUpdater | null
-    loading: boolean
-    enabled: boolean
-    intervalDays: number
-    saving: boolean
-    errorText: string
-    successText: string
-    hasUnsavedChanges: boolean
-    saveHint: string
-    formatDate: (raw: string) => string
-  }>()
+const props = defineProps<{
+  embedUpdater: SystemEmbedUpdater | null;
+  loading: boolean;
+  enabled: boolean;
+  intervalDays: number;
+  saving: boolean;
+  errorText: string;
+  successText: string;
+  hasUnsavedChanges: boolean;
+  saveHint: string;
+  formatDate: (raw: string) => string;
+}>();
 
-  const emit = defineEmits<{
-    (event: 'update:enabled', value: boolean): void
-    (event: 'update:intervalDays', value: number): void
-    (event: 'save'): void
-  }>()
+const emit = defineEmits<{
+  (event: "update:enabled", value: boolean): void;
+  (event: "update:intervalDays", value: number): void;
+  (event: "save"): void;
+}>();
 
-  const statusLabel = computed(() => props.embedUpdater?.lastSummary?.status || 'idle')
+const statusLabel = computed(() => props.embedUpdater?.lastSummary?.status || "idle");
 
-  function onEnabledChange(event: Event) {
-    const input = event.target as HTMLInputElement | null
-    emit('update:enabled', input?.checked === true)
-  }
+function onEnabledChange(event: Event) {
+  const input = event.target as HTMLInputElement | null;
+  emit("update:enabled", input?.checked === true);
+}
 
-  function onIntervalInput(event: Event) {
-    const input = event.target as HTMLInputElement | null
-    const parsed = Number(input?.value || '')
-    emit('update:intervalDays', Number.isFinite(parsed) ? Math.trunc(parsed) : Number.NaN)
-  }
+function onIntervalInput(event: Event) {
+  const input = event.target as HTMLInputElement | null;
+  const parsed = Number(input?.value || "");
+  emit("update:intervalDays", Number.isFinite(parsed) ? Math.trunc(parsed) : Number.NaN);
+}
 </script>
 
 <template>
@@ -49,13 +49,8 @@
       <label class="admin-field toggle-field">
         <span class="field-label">启用自动更新</span>
         <span class="toggle-control">
-          <input
-            type="checkbox"
-            :checked="enabled"
-            :disabled="loading || saving"
-            @change="onEnabledChange"
-          />
-          <span>{{ enabled ? '已启用' : '已暂停' }}</span>
+          <input type="checkbox" :checked="enabled" :disabled="loading || saving" @change="onEnabledChange" />
+          <span>{{ enabled ? "已启用" : "已暂停" }}</span>
         </span>
       </label>
 
@@ -99,31 +94,20 @@
       <div class="status-item">
         <span>同步结果</span>
         <strong>
-          {{ embedUpdater?.lastSummary?.syncedProfiles ?? 0 }}/{{
-            embedUpdater?.lastSummary?.totalProfiles ?? 0
-          }}
+          {{ embedUpdater?.lastSummary?.syncedProfiles ?? 0 }}/{{ embedUpdater?.lastSummary?.totalProfiles ?? 0 }}
           成功
         </strong>
       </div>
     </div>
 
-    <div v-if="embedUpdater?.lastError" class="admin-feedback error-text"
-      >最近错误：{{ embedUpdater.lastError }}</div
-    >
+    <div v-if="embedUpdater?.lastError" class="admin-feedback error-text">最近错误：{{ embedUpdater.lastError }}</div>
     <div v-if="errorText" class="admin-feedback error-text">{{ errorText }}</div>
     <div v-if="successText" class="admin-feedback success-text">{{ successText }}</div>
-    <div v-if="hasUnsavedChanges" class="admin-feedback pending-text"
-      >存在未保存的自动更新配置。</div
-    >
+    <div v-if="hasUnsavedChanges" class="admin-feedback pending-text">存在未保存的自动更新配置。</div>
     <div v-if="saveHint" class="admin-feedback save-hint">{{ saveHint }}</div>
 
     <div class="admin-actions">
-      <button
-        type="button"
-        class="btn btn-primary"
-        :disabled="loading || saving || Boolean(saveHint)"
-        @click="emit('save')"
-      >
+      <button type="button" class="btn btn-primary" :disabled="loading || saving || Boolean(saveHint)" @click="emit('save')">
         保存自动更新设置
       </button>
     </div>
@@ -131,104 +115,104 @@
 </template>
 
 <style scoped>
+.panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-hint {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.status-chip {
+  border-radius: 999px;
+  padding: 4px 10px;
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: calc(12px * var(--ui-scale));
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.status-chip[data-status="ok"] {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.status-chip[data-status="partial_failure"],
+.status-chip[data-status="failed"] {
+  background: color-mix(in oklab, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.settings-grid,
+.status-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.status-grid {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.toggle-field {
+  justify-content: center;
+}
+
+.toggle-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.field-label {
+  font-size: calc(13px * var(--ui-scale));
+  color: var(--muted);
+}
+
+.status-item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--ink) 4%, transparent);
+}
+
+.status-item span {
+  font-size: calc(12px * var(--ui-scale));
+  color: var(--muted);
+}
+
+.status-item strong {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.error-text {
+  color: var(--danger);
+}
+
+.success-text {
+  color: var(--success);
+}
+
+.pending-text,
+.save-hint {
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
   .panel-heading {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
+    flex-direction: column;
   }
-
-  .panel-hint {
-    margin: 6px 0 0;
-    color: var(--muted);
-    font-size: var(--text-admin-sm);
-  }
-
-  .status-chip {
-    border-radius: 999px;
-    padding: 4px 10px;
-    background: var(--info-bg);
-    color: var(--info);
-    font-size: var(--text-admin-xs);
-    line-height: 1.2;
-    white-space: nowrap;
-  }
-
-  .status-chip[data-status='ok'] {
-    background: var(--success-bg);
-    color: var(--success);
-  }
-
-  .status-chip[data-status='partial_failure'],
-  .status-chip[data-status='failed'] {
-    background: color-mix(in oklab, var(--danger) 12%, transparent);
-    color: var(--danger);
-  }
-
-  .settings-grid,
-  .status-grid {
-    display: grid;
-    gap: 12px;
-  }
-
-  .settings-grid {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-
-  .status-grid {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  }
-
-  .toggle-field {
-    justify-content: center;
-  }
-
-  .toggle-control {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--muted);
-  }
-
-  .field-label {
-    font-size: var(--text-admin-sm);
-    color: var(--muted);
-  }
-
-  .status-item {
-    display: grid;
-    gap: 4px;
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: color-mix(in oklab, var(--ink) 4%, transparent);
-  }
-
-  .status-item span {
-    font-size: var(--text-admin-xs);
-    color: var(--muted);
-  }
-
-  .status-item strong {
-    overflow-wrap: anywhere;
-    word-break: break-word;
-  }
-
-  .error-text {
-    color: var(--danger);
-  }
-
-  .success-text {
-    color: var(--success);
-  }
-
-  .pending-text,
-  .save-hint {
-    color: var(--muted);
-  }
-
-  @media (max-width: 640px) {
-    .panel-heading {
-      flex-direction: column;
-    }
-  }
+}
 </style>

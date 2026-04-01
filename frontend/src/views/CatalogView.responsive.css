@@ -1,27 +1,12 @@
-/* ── Responsive: tablet + desktop ── */
-@media (min-width: 1024px) {
-  /* 平板横屏和桌面双列布局 */
+/* ── Responsive: mobile ── */
+@media (min-width: 960px) {
+  .catalog-stage {
+    padding: 24px 24px 22px;
+  }
+
   .catalog-stage-layout {
     grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.85fr);
     align-items: start;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  /* 平板竖屏单列布局，但保持较大间距 */
-  .catalog-stage-layout {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .catalog-stage {
-    padding: 20px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .catalog-stage {
-    padding: 24px 24px 22px;
   }
 
   .catalog-stage-primary {
@@ -34,67 +19,44 @@
 }
 
 @media (max-width: 640px) {
-  .catalog-stage {
-    padding: 16px;
-  }
+  .catalog-stage { padding: 16px; }
   .catalog-stage-rail,
   .catalog-section--archive,
-  .catalog-section--flat {
-    padding-top: 10px;
-  }
-  .catalog-section--archive {
-    padding-inline: 0;
-  }
+  .catalog-section--flat { padding-top: 10px; }
+  .catalog-section--archive { padding-inline: 0; }
 
   .catalog-quick-access-band {
     grid-template-columns: 1fr;
     gap: 10px;
   }
 
-  .catalog-chip-list--quick {
-    display: grid;
-  }
+  .catalog-chip-list--quick { display: grid; }
 
   .catalog-quick-chip {
     width: 100%;
     justify-content: center;
   }
 
-  .catalog-mobile-filter-trigger {
-    display: inline-flex;
-  }
-  .catalog-mobile-filter-panel {
-    display: grid;
-  }
-  .catalog-mobile-filter-actions {
-    display: grid;
-  }
+  .catalog-mobile-filter-trigger { display: inline-flex; }
+  .catalog-mobile-filter-panel { display: grid; }
+  .catalog-mobile-filter-actions { display: grid; }
   .catalog-mobile-filter-actions .catalog-tab,
   .catalog-mobile-filter-actions .catalog-select {
     width: 100%;
     justify-content: center;
   }
-  .catalog-section-nav .catalog-tabs {
-    display: none;
-  }
-  .catalog-tabs {
-    scrollbar-width: thin;
-  }
+  .catalog-section-nav .catalog-tabs { display: none; }
+  .catalog-tabs { scrollbar-width: thin; }
 }
 
 /* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .catalog-quick-chip,
   .catalog-tab,
-  .catalog-card {
-    transition: none;
-  }
+  .catalog-card { transition: none; }
 
-  .catalog-mobile-filter-panel.is-open {
-    animation: none;
-  }
+  .catalog-mobile-filter-panel.is-open { animation: none; }
 
-  .catalog-mobile-filter-panel {
-    transition: none;
-  }
+  .catalog-mobile-filter-panel { transition: none; }
 }
+

@@ -3,8 +3,7 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-modal);
-  background: var(--gray-12);
-  background: oklch(15% 0.013 250 / 0.5);
+  background: oklch(16% 0.025 250 / 0.5);
   display: grid;
   place-items: center;
   padding: 16px;
@@ -17,9 +16,7 @@
   background: var(--surface);
   box-shadow: var(--shadow-xl);
   padding: 24px;
-  max-height: calc(
-    100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 28px
-  );
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 28px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   display: grid;
@@ -28,7 +25,7 @@
 
 .modal-title {
   margin: 0;
-  font-size: var(--text-admin-xl);
+  font-size: calc(20px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
@@ -42,7 +39,7 @@
 .field {
   display: grid;
   gap: 6px;
-  font-size: var(--text-admin-sm);
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
@@ -51,12 +48,12 @@
   align-items: center;
   gap: 8px;
   min-height: 44px;
-  font-size: var(--text-admin-sm);
+  font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
 }
 
-input[type='checkbox'],
-input[type='radio'] {
+input[type="checkbox"],
+input[type="radio"] {
   inline-size: 18px;
   block-size: 18px;
   margin: 0;
@@ -75,7 +72,7 @@ input[type='radio'] {
   max-width: 100%;
   min-height: 44px;
   padding: 10px 12px;
-  transition: border-color 140ms var(--ease-smooth);
+  transition: border-color 140ms ease;
 }
 
 .field-input:focus-visible {
@@ -90,12 +87,12 @@ input[type='radio'] {
 
 .field-error-text {
   color: var(--danger);
-  font-size: var(--text-admin-xs);
+  font-size: calc(12px * var(--ui-scale));
 }
 
 .error {
   color: var(--danger);
-  font-size: var(--text-admin-sm);
+  font-size: calc(13px * var(--ui-scale));
 }
 
 .modal-actions {

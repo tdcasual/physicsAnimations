@@ -32,10 +32,8 @@
   }
 }
 
-@media (max-width: 640px) {
-  .topbar-inner {
-    width: calc(100% - 24px);
-  }
+@media (max-width: 480px) {
+  .topbar-inner { width: calc(100% - 24px); }
 
   .topbar-shell-panel {
     padding: 4px 4px 3px;
@@ -51,25 +49,15 @@
     gap: 6px 10px;
   }
 
-  .brand-link {
-    gap: 8px;
-    min-height: 34px;
-  }
-  .brand-mark {
-    font-size: clamp(0.9rem, 0.84rem + 0.4vw, 0.98rem);
-  }
+  .brand-link { gap: 8px; min-height: 34px; }
+  .brand-mark { font-size: clamp(0.9rem, 0.84rem + 0.4vw, 0.98rem); }
 
-  .btn-nav-home {
-    padding-inline: 12px;
-  }
+  .btn-nav-home { padding-inline: 12px; }
 
   .topbar .btn {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 40px;
     padding: 7px 12px;
-    font-size: var(--text-admin-xs);
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+    font-size: calc(12px * var(--ui-scale));
   }
 
   .topbar-home-link {
@@ -85,20 +73,13 @@
     max-width: none;
     grid-column: 1 / -1;
   }
-  .topbar-search {
-    min-height: 34px;
-    font-size: var(--text-admin-xs);
-  }
+  .topbar-search { min-height: 34px; font-size: calc(12px * var(--ui-scale)); }
   .topbar-search-launch {
     min-height: 36px;
     padding: 8px 12px;
   }
-  .topbar-search-launch-kicker {
-    display: none;
-  }
-  .topbar-search-launch-label {
-    font-size: var(--text-admin-xs);
-  }
+  .topbar-search-launch-kicker { display: none; }
+  .topbar-search-launch-label { font-size: calc(12px * var(--ui-scale)); }
 
   .topbar-actions {
     width: 100%;
@@ -118,9 +99,7 @@
   }
 
   .topbar-utility-actions,
-  .actions .btn {
-    flex: 0 0 auto;
-  }
+  .actions .btn { flex: 0 0 auto; }
 
   .topbar-more-panel .btn {
     width: 100%;
@@ -130,9 +109,7 @@
   }
 
   /* 手机端：隐藏平铺按钮，显示\"更多\"触发器和面板 */
-  .topbar-inline-actions {
-    display: none;
-  }
+  .topbar-inline-actions { display: none; }
 
   .topbar-more-trigger.btn {
     display: inline-flex;
@@ -149,11 +126,8 @@
     overflow: hidden;
     opacity: 0;
     transform: translateY(-4px);
-    transition:
-      max-height 160ms ease,
-      padding-top 160ms ease,
-      opacity 140ms ease,
-      transform 140ms ease;
+    transition: max-height 160ms ease, padding-top 160ms ease,
+                opacity 140ms ease, transform 140ms ease;
   }
 
   .topbar-more-panel.is-open {
@@ -183,9 +157,7 @@
     min-width: auto;
   }
 
-  .topbar--viewer .topbar-home-link {
-    display: none;
-  }
+  .topbar--viewer .topbar-home-link { display: none; }
 
   .topbar--admin .topbar-shell-panel {
     flex-wrap: nowrap;
@@ -223,11 +195,8 @@
 
   .topbar--admin .topbar-more-trigger.btn {
     min-width: auto;
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 36px;
     padding: 0 28px 0 12px;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
     align-items: center;
     justify-content: center;
     gap: 0;
@@ -270,12 +239,9 @@
   }
 
   .topbar--admin .topbar-more-panel .btn {
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 38px;
     justify-content: flex-start;
     text-align: left;
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
   }
 
   .app-main {
@@ -283,3 +249,4 @@
     margin-top: 14px;
   }
 }
+

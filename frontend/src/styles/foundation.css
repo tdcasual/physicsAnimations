@@ -1,78 +1,119 @@
-/* ── Design System Foundation ────────────────────────────────────
- *
- * 注意：此文件现在作为 design-system.css 的兼容层存在
- * 主要样式已迁移至 design-system.css
- * 此文件保留部分组件特定样式以向后兼容
- */
+/* ── Design System: "Apparatus" ──────────────────────────────────── */
 
-/* 导入主设计系统 */
-@import url('./design-system.css');
-
-/* 向后兼容的额外变量 */
 :root {
-  /* Apparatus 命名兼容 */
-  --paper: var(--surface-bg);
-  --paper-soft: var(--surface-page);
-  --paper-strong: var(--surface-card);
-  --ink: var(--text-primary);
-  --ink-soft: var(--text-secondary);
-  --line: var(--border-default);
-  --accent: var(--accent-8);
-  --accent-strong: var(--accent-9);
-  
-  /* 布局变量 */
+  /* ── Neutrals ── */
+  --paper:        oklch(97.8% 0.003 80);
+  --paper-soft:   oklch(95.2% 0.005 80);
+  --paper-strong: oklch(99.2% 0.002 250);
+
+  /* ── Ink ── */
+  --ink:          oklch(16% 0.025 250);
+  --ink-soft:     oklch(50% 0.012 250);
+
+  /* ── Borders ── */
+  --line:         oklch(90% 0.005 250);
+  --line-strong:  oklch(82% 0.01 250);
+
+  /* ── Accent: terracotta ── */
+  --accent:            oklch(58% 0.18 30);
+  --accent-strong:     oklch(50% 0.19 28);
+  --accent-copper:     oklch(62% 0.14 55);
+  --accent-copper-strong: oklch(52% 0.15 50);
+
+  /* ── Semantic ── */
+  --danger: oklch(58% 0.22 25);
+  --success: oklch(45% 0.14 155);
+  --success-bg: oklch(45% 0.14 155 / 0.10);
+  --info: oklch(42% 0.15 270);
+  --info-bg: oklch(42% 0.15 270 / 0.10);
+  --focus-ring: oklch(58% 0.18 30 / 0.12);
+
+  /* ── Surface mapping ── */
+  --bg:            var(--paper);
+  --surface:       var(--paper-strong);
+  --surface-raised: oklch(98.8% 0.003 250);
+  --surface-ink:   oklch(95% 0.004 250);
+  --text:          var(--ink);
+  --muted:         var(--ink-soft);
+  --border:        var(--line);
+  --primary:       var(--accent);
+  --primary-2:     var(--accent-strong);
+
+  /* ── Scale ── */
+  --ui-scale: 1;
   --content-max-width: 1120px;
-  --app-topbar-height: 64px;
-  --viewer-min-height: 72dvh;
+  --app-topbar-height: 0px;
+  --viewer-min-height: 72vh;
   --library-card-min-width: 240px;
   --catalog-card-min-width: 220px;
-  
-  /* Z-index */
+  --radius-s: 4px;
+  --radius-m: 6px;
+  --radius-l: 10px;
+  --radius-xl: 14px;
+
+  /* ── Elevation ── */
+  --shadow-s: 0 1px 3px oklch(0% 0 0 / 0.06);
+  --shadow-m: 0 2px 8px -4px oklch(0% 0 0 / 0.08);
+  --shadow-l: 0 4px 16px -6px oklch(0% 0 0 / 0.1);
+  --shadow-xl: 0 8px 32px -12px oklch(0% 0 0 / 0.14);
+
+  /* ── Z-index ── */
   --z-content: 1;
   --z-raised: 2;
   --z-nav: 5;
   --z-topbar: 10;
   --z-modal: 20;
-}
 
-/* 深色模式兼容 */
-:root[data-theme='dark'] {
-  --paper: var(--surface-bg);
-  --paper-soft: var(--surface-page);
-  --paper-strong: var(--surface-card);
-  --ink: var(--text-primary);
-  --ink-soft: var(--text-secondary);
-  --line: var(--border-default);
-  --accent: var(--accent-8);
-  --accent-strong: var(--accent-9);
-}
-
-/* 基础重置（保持与 design-system 一致） */
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#app {
-  min-height: 100%;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
+  /* ── Type ── */
+  font-family: "Sora", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
   color: var(--text);
-  font-size: var(--text-base);
-  line-height: var(--leading-normal);
+  font-size: calc(15px * var(--ui-scale));
+  line-height: 1.6;
 }
 
-a {
-  color: var(--primary);
-  text-underline-offset: 0.18em;
-  text-decoration-thickness: 1px;
+/* ── Dark theme ── */
+:root[data-theme="dark"] {
+  --paper:        oklch(11% 0.018 250);
+  --paper-soft:   oklch(15% 0.02 250);
+  --paper-strong: oklch(18% 0.015 250);
+  --ink:          oklch(94% 0.006 80);
+  --ink-soft:     oklch(62% 0.008 80);
+  --line:         oklch(26% 0.012 250);
+  --line-strong:  oklch(36% 0.015 250);
+  --accent:            oklch(72% 0.16 30);
+  --accent-strong:     oklch(64% 0.17 28);
+  --accent-copper:     oklch(72% 0.11 55);
+  --accent-copper-strong: oklch(62% 0.12 50);
+  --danger: oklch(70% 0.16 25);
+  --success: oklch(68% 0.14 155);
+  --success-bg: oklch(68% 0.14 155 / 0.10);
+  --info: oklch(68% 0.12 270);
+  --info-bg: oklch(68% 0.12 270 / 0.10);
+  --focus-ring: oklch(72% 0.16 30 / 0.18);
+  --bg:            var(--paper);
+  --surface:       var(--paper-strong);
+  --surface-raised: oklch(22% 0.012 250);
+  --surface-ink:   oklch(24% 0.01 250);
+  --text:          var(--ink);
+  --muted:         var(--ink-soft);
+  --border:        var(--line);
+  --primary:       var(--accent);
+  --primary-2:     var(--accent-strong);
 }
 
-/* 辅助类 */
+/* ── Classroom mode ── */
+:root[data-classroom="on"] {
+  --ui-scale: 1.2;
+  --content-max-width: 1520px;
+  --viewer-min-height: 84vh;
+  --library-card-min-width: 300px;
+  --catalog-card-min-width: 260px;
+}
+
+/* ── Reset ── */
+* { box-sizing: border-box; }
+html, body, #app { min-height: 100%; }
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -85,27 +126,38 @@ a {
   border: 0;
 }
 
-/* App Shell */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-size: calc(15px * var(--ui-scale));
+  line-height: 1.6;
+}
+
+a {
+  color: var(--primary);
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+/* ── App shell ── */
 .app-shell {
   min-height: 100vh;
   min-height: 100dvh;
 }
 
-/* 按钮基础样式 */
+/* ── Buttons ── */
 .btn {
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
   padding: 8px 16px;
   min-height: 44px;
-  min-width: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   font-family: inherit;
-  font-size: var(--text-sm);
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+  font-size: calc(13px * var(--ui-scale));
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: 0.01em;
@@ -113,10 +165,7 @@ a {
   cursor: pointer;
   color: var(--text);
   background: var(--surface);
-  transition:
-    border-color 140ms ease,
-    background-color 140ms ease,
-    box-shadow 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }
 
 .btn:hover {
@@ -161,12 +210,12 @@ a {
   color: var(--danger);
 }
 
-:root[data-theme='dark'] .btn-danger {
+:root[data-theme="dark"] .btn-danger {
   background: oklch(22% 0.04 25);
   border-color: oklch(35% 0.06 25);
 }
 
-/* 主内容区 */
+/* ── Main content ── */
 .app-main {
   width: min(var(--content-max-width), calc(100% - 48px));
   margin: 20px auto 40px;

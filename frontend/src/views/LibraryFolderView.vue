@@ -1,123 +1,119 @@
 <script setup lang="ts">
-  import { computed, onMounted, ref, watch } from 'vue'
-  import { useRoute, useRouter } from 'vue-router'
-  import { PErrorState } from '../components/ui'
-  import { normalizePublicUrl } from '../features/catalog/catalogLink'
-  import { getLibraryFolder, listLibraryFolderAssets } from '../features/library/libraryApi'
-  import type { LibraryAsset, LibraryFolder } from '../features/library/types'
-  import { resolveBackNavigationTarget } from '../features/navigation/backNavigation'
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { normalizePublicUrl } from "../features/catalog/catalogLink";
+import {
+  getLibraryFolder,
+  listLibraryFolderAssets,
+} from "../features/library/libraryApi";
+import type { LibraryAsset, LibraryFolder } from "../features/library/types";
+import { resolveBackNavigationTarget } from "../features/navigation/backNavigation";
 
-  const route = useRoute()
-  const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
-  const loading = ref(false)
-  const errorText = ref('')
-  const folder = ref<LibraryFolder | null>(null)
-  const assets = ref<LibraryAsset[]>([])
-  const pageHeading = ref('文件夹')
-  const reloadSeq = ref(0)
+const loading = ref(false);
+const errorText = ref("");
+const folder = ref<LibraryFolder | null>(null);
+const assets = ref<LibraryAsset[]>([]);
+const pageHeading = ref("文件夹");
+const reloadSeq = ref(0);
 
-  const folderSummary = computed(() => {
-    if (!folder.value) return '浏览文件夹内的资源与下载。'
-    return `${folder.value.categoryId || '未分类'} · ${folder.value.assetCount || assets.value.length || 0} 项资源归档`
-  })
+const folderSummary = computed(() => {
+  if (!folder.value) return "浏览文件夹内的资源与下载。";
+  return `${folder.value.categoryId || "未分类"} · ${folder.value.assetCount || assets.value.length || 0} 项资源归档`;
+});
 
-  const folderCoverUrl = computed(() => {
-    if (!folder.value?.coverPath) return ''
-    return normalizePublicUrl(folder.value.coverPath)
-  })
+const folderCoverUrl = computed(() => {
+  if (!folder.value?.coverPath) return "";
+  return normalizePublicUrl(folder.value.coverPath);
+});
 
-  function routeFolderId(): string | null {
-    const id = String(route.params.id || '').trim()
-    // 验证ID格式：只允许字母、数字、下划线和连字符
-    const validIdPattern = /^[a-zA-Z0-9_-]+$/
-    if (!validIdPattern.test(id) || id.length === 0 || id.length > 64) {
-      return null
-    }
-    return id
+function routeFolderId(): string {
+  return String(route.params.id || "").trim();
+}
+
+function openAssetHref(asset: LibraryAsset): string {
+  if (asset.openMode === "embed" && asset.generatedEntryPath) {
+    return normalizePublicUrl(asset.generatedEntryPath);
+  }
+  return normalizePublicUrl(asset.filePath);
+}
+
+function downloadAssetHref(asset: LibraryAsset): string {
+  return normalizePublicUrl(asset.filePath);
+}
+
+function assetModeLabel(asset: LibraryAsset): string {
+  return asset.openMode === "embed" ? "可直接演示" : "仅下载";
+}
+
+function goBack() {
+  const target = resolveBackNavigationTarget({
+    historyState: window.history.state,
+    fallbackHash: "#catalog-library",
+  });
+
+  if (target.mode === "history-back") {
+    router.back();
+    return;
+  }
+  if (target.hash === "#catalog-library") {
+    void router.replace({ path: "/", hash: "#catalog-library" });
+    return;
+  }
+  void router.replace({ path: target.path, hash: target.hash });
+}
+
+async function reload() {
+  const requestSeq = reloadSeq.value + 1;
+  reloadSeq.value = requestSeq;
+  const folderId = routeFolderId();
+  if (!folderId) {
+    document.title = "缺少文件夹参数 - 资源库";
+    pageHeading.value = "缺少文件夹参数";
+    errorText.value = "缺少文件夹参数。";
+    folder.value = null;
+    assets.value = [];
+    loading.value = false;
+    return;
   }
 
-  function openAssetHref(asset: LibraryAsset): string {
-    if (asset.openMode === 'embed' && asset.generatedEntryPath) {
-      return normalizePublicUrl(asset.generatedEntryPath)
-    }
-    return normalizePublicUrl(asset.filePath)
-  }
-
-  function downloadAssetHref(asset: LibraryAsset): string {
-    return normalizePublicUrl(asset.filePath)
-  }
-
-  function assetModeLabel(asset: LibraryAsset): string {
-    return asset.openMode === 'embed' ? '可直接演示' : '仅下载'
-  }
-
-  function goBack() {
-    const target = resolveBackNavigationTarget({
-      historyState: window.history.state,
-      fallbackHash: '#catalog-library',
-    })
-
-    if (target.mode === 'history-back') {
-      router.back()
-      return
-    }
-    if (target.hash === '#catalog-library') {
-      void router.replace({ path: '/', hash: '#catalog-library' })
-      return
-    }
-    void router.replace({ path: target.path, hash: target.hash })
-  }
-
-  async function reload() {
-    const requestSeq = reloadSeq.value + 1
-    reloadSeq.value = requestSeq
-    const folderId = routeFolderId()
-    if (!folderId) {
-      document.title = '缺少文件夹参数 - 资源库'
-      pageHeading.value = '缺少文件夹参数'
-      errorText.value = '缺少文件夹参数。'
-      folder.value = null
-      assets.value = []
-      loading.value = false
-      return
-    }
-
-    loading.value = true
-    errorText.value = ''
-    pageHeading.value = '文件夹'
-    try {
-      const nextFolder = await getLibraryFolder(folderId)
-      const nextAssets = await listLibraryFolderAssets(folderId)
-      if (requestSeq !== reloadSeq.value || routeFolderId() !== folderId) return
-      folder.value = nextFolder
-      assets.value = nextAssets.assets
-      pageHeading.value = nextFolder.name || '文件夹'
-      document.title = nextFolder.name ? `${nextFolder.name} - 资源库` : '资源库文件夹'
-    } catch {
-      if (requestSeq !== reloadSeq.value || routeFolderId() !== folderId) return
-      document.title = '加载文件夹失败 - 资源库'
-      pageHeading.value = '加载文件夹失败'
-      errorText.value = '加载文件夹失败。'
-      folder.value = null
-      assets.value = []
-    } finally {
-      if (requestSeq === reloadSeq.value) {
-        loading.value = false
-      }
+  loading.value = true;
+  errorText.value = "";
+  pageHeading.value = "文件夹";
+  try {
+    const nextFolder = await getLibraryFolder(folderId);
+    const nextAssets = await listLibraryFolderAssets(folderId);
+    if (requestSeq !== reloadSeq.value || routeFolderId() !== folderId) return;
+    folder.value = nextFolder;
+    assets.value = nextAssets.assets;
+    pageHeading.value = nextFolder.name || "文件夹";
+    document.title = nextFolder.name ? `${nextFolder.name} - 资源库` : "资源库文件夹";
+  } catch {
+    if (requestSeq !== reloadSeq.value || routeFolderId() !== folderId) return;
+    document.title = "加载文件夹失败 - 资源库";
+    pageHeading.value = "加载文件夹失败";
+    errorText.value = "加载文件夹失败。";
+    folder.value = null;
+    assets.value = [];
+  } finally {
+    if (requestSeq === reloadSeq.value) {
+      loading.value = false;
     }
   }
+}
 
-  onMounted(() => {
-    void reload()
-  })
+onMounted(() => {
+  void reload();
+});
 
-  watch(
-    () => route.fullPath,
-    () => {
-      void reload()
-    }
-  )
+watch(
+  () => route.fullPath,
+  () => {
+    void reload();
+  },
+);
 </script>
 
 <template>
@@ -138,18 +134,8 @@
       </div>
     </header>
 
-    <div v-if="loading" class="library-state">
-      <div class="spinner" />
-      <span>正在加载文件夹...</span>
-    </div>
-    <PErrorState 
-      v-else-if="errorText"
-      type="network"
-      title="加载失败"
-      :description="errorText"
-      show-retry
-      @retry="reload"
-    />
+    <div v-if="loading" class="library-state">正在加载文件夹...</div>
+    <div v-else-if="errorText" class="library-state">{{ errorText }}</div>
 
     <div v-else class="library-assets">
       <article
@@ -160,10 +146,7 @@
       >
         <div class="asset-headline">
           <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
-          <div
-            class="asset-state-badge"
-            :class="asset.openMode === 'embed' ? 'is-embed' : 'is-download'"
-          >
+          <div class="asset-state-badge" :class="asset.openMode === 'embed' ? 'is-embed' : 'is-download'">
             {{ assetModeLabel(asset) }}
           </div>
         </div>

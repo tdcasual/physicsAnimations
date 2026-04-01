@@ -1,54 +1,29 @@
-import { apiFetchJson } from '../shared/httpClient'
+import { apiFetchJson } from "../shared/httpClient";
 
-const TOKEN_KEY = 'pa_admin_token'
+const TOKEN_KEY = "pa_admin_token";
 
 export interface ApiError extends Error {
-  status?: number
-  data?: any
+  status?: number;
+  data?: any;
 }
 
 function toApiError(message: string, status?: number, data?: unknown): ApiError {
-  const err = new Error(message) as ApiError
-  err.status = status
-  err.data = data
-  return err
-}
-
-// 安全的 sessionStorage 操作
-function safeGetItem(key: string): string | null {
-  try {
-    return sessionStorage.getItem(key)
-  } catch {
-    return null
-  }
-}
-
-function safeSetItem(key: string, value: string): void {
-  try {
-    sessionStorage.setItem(key, value)
-  } catch {
-    // 忽略存储错误（隐私模式等）
-  }
-}
-
-function safeRemoveItem(key: string): void {
-  try {
-    sessionStorage.removeItem(key)
-  } catch {
-    // 忽略存储错误
-  }
+  const err = new Error(message) as ApiError;
+  err.status = status;
+  err.data = data;
+  return err;
 }
 
 export function getToken(): string {
-  return safeGetItem(TOKEN_KEY) || ''
+  return sessionStorage.getItem(TOKEN_KEY) || "";
 }
 
 export function setToken(token: string): void {
-  safeSetItem(TOKEN_KEY, token)
+  sessionStorage.setItem(TOKEN_KEY, token);
 }
 
 export function clearToken(): void {
-  safeRemoveItem(TOKEN_KEY)
+  sessionStorage.removeItem(TOKEN_KEY);
 }
 
 async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
@@ -56,25 +31,25 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
     path,
     options,
     token: getToken(),
-    toError: (status, data) => toApiError(data?.error || 'request_failed', status, data),
-  })
+    toError: (status, data) => toApiError(data?.error || "request_failed", status, data),
+  });
 }
 
 export async function login(params: { username: string; password: string }): Promise<any> {
-  const data = await apiFetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const data = await apiFetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       username: params.username,
       password: params.password,
     }),
-  })
+  });
 
-  if (!data?.token) throw toApiError('missing_token')
-  setToken(data.token)
-  return data
+  if (!data?.token) throw toApiError("missing_token");
+  setToken(data.token);
+  return data;
 }
 
 export async function me(): Promise<any> {
-  return apiFetch('/api/auth/me', { method: 'GET' })
+  return apiFetch("/api/auth/me", { method: "GET" });
 }

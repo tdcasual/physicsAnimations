@@ -103,7 +103,7 @@
 .topbar-more-group-label {
   margin: 0;
   color: var(--text-soft);
-  font-size: var(--text-admin-xs);
+  font-size: calc(11px * var(--ui-scale));
   letter-spacing: 0.08em;
 }
 
@@ -129,10 +129,8 @@
   background: var(--bg);
   color: var(--text);
   font-family: inherit;
-  font-size: var(--text-admin-sm);
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
+  font-size: calc(14px * var(--ui-scale));
+  transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
 .topbar-search:focus-visible {
@@ -155,10 +153,7 @@
   background: color-mix(in oklab, var(--surface) 82%, var(--paper) 18%);
   color: inherit;
   text-decoration: none;
-  transition:
-    border-color 140ms ease,
-    background-color 140ms ease,
-    box-shadow 140ms ease;
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }
 
 .topbar-search-launch:hover {
@@ -169,13 +164,13 @@
 
 .topbar-search-launch-kicker {
   color: var(--text-soft);
-  font-size: var(--text-admin-xs);
+  font-size: calc(10px * var(--ui-scale));
   letter-spacing: 0.08em;
 }
 
 .topbar-search-launch-label {
   min-width: 0;
-  font-size: var(--text-admin-sm);
+  font-size: calc(13px * var(--ui-scale));
   font-weight: 600;
   line-height: 1.2;
 }
@@ -192,3 +187,4 @@
   font-weight: 700;
   line-height: 1.05;
 }
+

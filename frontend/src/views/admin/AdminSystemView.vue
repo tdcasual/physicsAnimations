@@ -1,57 +1,57 @@
 <script setup lang="ts">
-  import { useSystemWizard } from '../../features/admin/system/useSystemWizard'
-  import SystemStatusPanel from './system/SystemStatusPanel.vue'
-  import SystemWizardSteps from './system/SystemWizardSteps.vue'
-  import SystemEmbedUpdaterPanel from './system/SystemEmbedUpdaterPanel.vue'
+import { useSystemWizard } from "../../features/admin/system/useSystemWizard";
+import SystemStatusPanel from "./system/SystemStatusPanel.vue";
+import SystemWizardSteps from "./system/SystemWizardSteps.vue";
+import SystemEmbedUpdaterPanel from "./system/SystemEmbedUpdaterPanel.vue";
 
-  const system = useSystemWizard()
+const system = useSystemWizard();
 
-  const {
-    steps,
-    loading,
-    saving,
-    validating,
-    syncing,
-    savingEmbedUpdater,
-    errorText,
-    successText,
-    validateText,
-    validateOk,
-    embedUpdaterErrorText,
-    embedUpdaterSuccessText,
-    getFieldError,
-    clearFieldErrors,
-    storage,
-    embedUpdater,
-    wizardStep,
-    mode,
-    url,
-    basePath,
-    username,
-    password,
-    timeoutMs,
-    scanRemote,
-    embedUpdaterEnabled,
-    embedUpdaterIntervalDays,
-    remoteMode,
-    readOnlyMode,
-    canSyncNow,
-    syncHint,
-    hasStorageUnsavedChanges,
-    hasEmbedUpdaterUnsavedChanges,
-    saveDisabledHint,
-    continueDisabledHint,
-    embedUpdaterSaveHint,
-    formatDate,
-    onModeChanged,
-    goStep,
-    nextFromMode,
-    nextFromConnection,
-    runValidation,
-    saveStorage,
-    saveEmbedUpdater,
-    syncNow,
-  } = system
+const {
+  steps,
+  loading,
+  saving,
+  validating,
+  syncing,
+  savingEmbedUpdater,
+  errorText,
+  successText,
+  validateText,
+  validateOk,
+  embedUpdaterErrorText,
+  embedUpdaterSuccessText,
+  getFieldError,
+  clearFieldErrors,
+  storage,
+  embedUpdater,
+  wizardStep,
+  mode,
+  url,
+  basePath,
+  username,
+  password,
+  timeoutMs,
+  scanRemote,
+  embedUpdaterEnabled,
+  embedUpdaterIntervalDays,
+  remoteMode,
+  readOnlyMode,
+  canSyncNow,
+  syncHint,
+  hasStorageUnsavedChanges,
+  hasEmbedUpdaterUnsavedChanges,
+  saveDisabledHint,
+  continueDisabledHint,
+  embedUpdaterSaveHint,
+  formatDate,
+  onModeChanged,
+  goStep,
+  nextFromMode,
+  nextFromConnection,
+  runValidation,
+  saveStorage,
+  saveEmbedUpdater,
+  syncNow,
+} = system;
 </script>
 
 <template>
@@ -63,7 +63,7 @@
       </div>
       <div class="admin-page-meta">
         <span class="admin-page-meta-label">当前节奏</span>
-        <strong>{{ canSyncNow ? '可执行同步' : '待校验' }}</strong>
+        <strong>{{ canSyncNow ? "可执行同步" : "待校验" }}</strong>
       </div>
     </header>
 
@@ -115,12 +115,7 @@
       />
 
       <aside class="admin-page-stack">
-        <SystemStatusPanel
-          class="admin-card"
-          :loading="loading"
-          :storage="storage"
-          :format-date="formatDate"
-        />
+        <SystemStatusPanel class="admin-card" :loading="loading" :storage="storage" :format-date="formatDate" />
 
         <SystemEmbedUpdaterPanel
           class="admin-card"
@@ -144,18 +139,18 @@
 </template>
 
 <style scoped>
-  .admin-system-view {
-    display: grid;
-    gap: 14px;
-  }
+.admin-system-view {
+  display: grid;
+  gap: 14px;
+}
 
-  .error-text {
-    color: var(--danger);
-    font-size: var(--text-admin-sm);
-  }
+.error-text {
+  color: var(--danger);
+  font-size: calc(13px * var(--ui-scale));
+}
 
-  .success-text {
-    color: var(--success);
-    font-size: var(--text-admin-sm);
-  }
+.success-text {
+  color: var(--success);
+  font-size: calc(13px * var(--ui-scale));
+}
 </style>

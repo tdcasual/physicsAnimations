@@ -1,58 +1,33 @@
-import { computed, onMounted, ref } from 'vue'
-import { normalizePublicUrl } from '../../catalog/catalogLink'
-import { type AdminItemRow, uploadHtmlItem } from '../adminApi'
-import { createAdminItemEditorState } from '../composables/useAdminItemEditorState'
-import { useActionFeedback } from '../composables/useActionFeedback'
-import { useFieldErrors } from '../composables/useFieldErrors'
-import { usePagedAdminList } from '../composables/usePagedAdminList'
-import { usePendingChangesGuard } from '../composables/usePendingChangesGuard'
-import { useAdminQueryReload } from '../composables/useAdminQueryReload'
-import { createUploadAdminActions } from './useUploadAdminActions'
+import { computed, onMounted, ref } from "vue";
+import { normalizePublicUrl } from "../../catalog/catalogLink";
+import { type AdminItemRow, uploadHtmlItem } from "../adminApi";
+import { createAdminItemEditorState } from "../composables/useAdminItemEditorState";
+import { useActionFeedback } from "../composables/useActionFeedback";
+import { useFieldErrors } from "../composables/useFieldErrors";
+import { usePagedAdminList } from "../composables/usePagedAdminList";
+import { usePendingChangesGuard } from "../composables/usePendingChangesGuard";
+import { useAdminQueryReload } from "../composables/useAdminQueryReload";
+import { createUploadAdminActions } from "./useUploadAdminActions";
 
-interface CategoryRow {
-  id: string
-  groupId: string
-  title: string
-}
-interface GroupRow {
-  id: string
-  title: string
-}
-type AdminItem = AdminItemRow
+interface CategoryRow { id: string; groupId: string; title: string; }
+interface GroupRow { id: string; title: string; }
+type AdminItem = AdminItemRow;
 
 export function useUploadAdmin() {
-  const loading = ref(false)
-  const saving = ref(false)
-  const errorText = ref('')
-  const { actionFeedback, actionFeedbackError, setActionFeedback } = useActionFeedback()
-  const fieldErrors = ref<Record<string, string>>({})
-  const fieldErrorState = useFieldErrors(fieldErrors)
-  const {
-    items,
-    total,
-    page,
-    pageSize,
-    hasMore,
-    nextRequestSeq,
-    isLatestRequest,
-    applyPageResult,
-  } = usePagedAdminList<AdminItem>({ pageSize: 24 })
-  const query = ref('')
-  const groups = ref<GroupRow[]>([]),
-    categories = ref<CategoryRow[]>([])
-  const categoryId = ref('other'),
-    file = ref<File | null>(null),
-    title = ref(''),
-    description = ref('')
-  function setFieldError(key: string, message: string) {
-    fieldErrorState.setFieldError(key, message)
-  }
-  function clearFieldErrors(key?: string) {
-    fieldErrorState.clearFieldErrors(key)
-  }
-  function getFieldError(key: string): string {
-    return fieldErrorState.getFieldError(key)
-  }
+  const loading = ref(false);
+  const saving = ref(false);
+  const errorText = ref("");
+  const { actionFeedback, actionFeedbackError, setActionFeedback } = useActionFeedback();
+  const fieldErrors = ref<Record<string, string>>({});
+  const fieldErrorState = useFieldErrors(fieldErrors);
+  const { items, total, page, pageSize, hasMore, nextRequestSeq, isLatestRequest, applyPageResult } =
+    usePagedAdminList<AdminItem>({ pageSize: 24 });
+  const query = ref("");
+  const groups = ref<GroupRow[]>([]), categories = ref<CategoryRow[]>([]);
+  const categoryId = ref("other"), file = ref<File | null>(null), title = ref(""), description = ref("");
+  function setFieldError(key: string, message: string) { fieldErrorState.setFieldError(key, message); }
+  function clearFieldErrors(key?: string) { fieldErrorState.clearFieldErrors(key); }
+  function getFieldError(key: string): string { return fieldErrorState.getFieldError(key); }
   const {
     editingId,
     editTitle,
@@ -68,46 +43,41 @@ export function useUploadAdmin() {
     syncEditStateWithItems,
   } = createAdminItemEditorState<AdminItem>({
     items,
-    defaultCategoryId: 'other',
+    defaultCategoryId: "other",
     clearFieldErrors,
     setActionFeedback,
-  })
+  });
   const categoryOptions = computed(() => {
-    const groupMap = new Map(groups.value.map(group => [group.id, group.title]))
-    return categories.value.map(category => ({
+    const groupMap = new Map(groups.value.map((group) => [group.id, group.title]));
+    return categories.value.map((category) => ({
       value: category.id,
       label: `${groupMap.get(category.groupId) || category.groupId} / ${category.title}`,
-    }))
-  })
+    }));
+  });
 
   function viewerHref(id: string): string {
-    const base = import.meta.env.BASE_URL || '/'
-    return `${base.replace(/\/+$/, '/')}viewer/${encodeURIComponent(id)}`
+    const base = import.meta.env.BASE_URL || "/";
+    return `${base.replace(/\/+$/, "/")}viewer/${encodeURIComponent(id)}`;
   }
-  function previewHref(item: AdminItem): string {
-    return normalizePublicUrl(item.src || viewerHref(item.id))
-  }
+  function previewHref(item: AdminItem): string { return normalizePublicUrl(item.src || viewerHref(item.id)); }
 
   function buildRiskConfirmMessage(details: any): string {
-    const findings = Array.isArray(details?.findings) ? details.findings : []
-    if (findings.length === 0) return '检测到潜在风险内容，确认后继续上传。是否继续？'
+    const findings = Array.isArray(details?.findings) ? details.findings : [];
+    if (findings.length === 0) return "检测到潜在风险内容，确认后继续上传。是否继续？";
     const lines = findings.slice(0, 6).map((item: any, index: number) => {
-      const severity = String(item?.severity || 'unknown')
-      const message = String(item?.message || '潜在风险')
-      const source = item?.source ? ` (${String(item.source)})` : ''
-      return `${index + 1}. [${severity}] ${message}${source}`
-    })
-    const truncated = details?.truncated ? '\n...（仅展示部分风险项）' : ''
-    const summary =
-      typeof details?.summary === 'string' && details.summary
-        ? details.summary
-        : `检测到 ${findings.length} 项潜在风险特征。`
-    return `${summary}\n\n${lines.join('\n')}${truncated}\n\n是否仍继续上传？`
+      const severity = String(item?.severity || "unknown");
+      const message = String(item?.message || "潜在风险");
+      const source = item?.source ? ` (${String(item.source)})` : "";
+      return `${index + 1}. [${severity}] ${message}${source}`;
+    });
+    const truncated = details?.truncated ? "\n...（仅展示部分风险项）" : "";
+    const summary = typeof details?.summary === "string" && details.summary ? details.summary : `检测到 ${findings.length} 项潜在风险特征。`;
+    return `${summary}\n\n${lines.join("\n")}${truncated}\n\n是否仍继续上传？`;
   }
 
   function onSelectFile(nextFile: File | null) {
-    file.value = nextFile
-    if (file.value) clearFieldErrors('uploadFile')
+    file.value = nextFile;
+    if (file.value) clearFieldErrors("uploadFile");
   }
 
   const { reloadTaxonomy, reloadUploads, saveEdit, removeItem } = createUploadAdminActions({
@@ -137,16 +107,16 @@ export function useUploadAdmin() {
     setActionFeedback,
     setFieldError,
     clearFieldErrors,
-  })
+  });
 
   async function submitUpload() {
     if (!file.value) {
-      setFieldError('uploadFile', '请选择 HTML 或 ZIP 文件。')
-      return
+      setFieldError("uploadFile", "请选择 HTML 或 ZIP 文件。");
+      return;
     }
-    clearFieldErrors('uploadFile')
-    saving.value = true
-    setActionFeedback('')
+    clearFieldErrors("uploadFile");
+    saving.value = true;
+    setActionFeedback("");
 
     try {
       const basePayload = {
@@ -154,57 +124,50 @@ export function useUploadAdmin() {
         categoryId: categoryId.value,
         title: title.value.trim(),
         description: description.value.trim(),
-      }
+      };
 
       try {
-        await uploadHtmlItem(basePayload)
+        await uploadHtmlItem(basePayload);
       } catch (err) {
-        const e = err as { status?: number; data?: any }
-        if (e?.data?.error !== 'risky_html_requires_confirmation') throw err
+        const e = err as { status?: number; data?: any };
+        if (e?.data?.error !== "risky_html_requires_confirmation") throw err;
 
-        const confirmed = window.confirm(buildRiskConfirmMessage(e?.data?.details))
+        const confirmed = window.confirm(buildRiskConfirmMessage(e?.data?.details));
         if (!confirmed) {
-          setActionFeedback('已取消风险上传。', true)
-          return
+          setActionFeedback("已取消风险上传。", true);
+          return;
         }
-        await uploadHtmlItem({ ...basePayload, allowRiskyHtml: true })
+        await uploadHtmlItem({ ...basePayload, allowRiskyHtml: true });
       }
 
-      file.value = null
-      title.value = ''
-      description.value = ''
-      clearFieldErrors('uploadFile')
-      await reloadUploads({ reset: true })
-      setActionFeedback('上传成功。', false)
+      file.value = null;
+      title.value = "";
+      description.value = "";
+      clearFieldErrors("uploadFile");
+      await reloadUploads({ reset: true });
+      setActionFeedback("上传成功。", false);
     } catch (err) {
-      const e = err as { status?: number; data?: any }
-      if (e?.status === 401) return void setActionFeedback('请先登录管理员账号。', true)
-      if (e?.data?.error === 'missing_file') {
-        setFieldError('uploadFile', '请选择 HTML 或 ZIP 文件。')
-        setActionFeedback('请选择 HTML 或 ZIP 文件。', true)
-        return
+      const e = err as { status?: number; data?: any };
+      if (e?.status === 401) return void setActionFeedback("请先登录管理员账号。", true);
+      if (e?.data?.error === "missing_file") {
+        setFieldError("uploadFile", "请选择 HTML 或 ZIP 文件。");
+        setActionFeedback("请选择 HTML 或 ZIP 文件。", true);
+        return;
       }
-      if (e?.data?.error === 'invalid_file_type') {
-        setFieldError('uploadFile', '仅支持上传 HTML 或 ZIP。')
-        setActionFeedback('仅支持上传 HTML 或 ZIP。', true)
-        return
+      if (e?.data?.error === "invalid_file_type") {
+        setFieldError("uploadFile", "仅支持上传 HTML 或 ZIP。");
+        setActionFeedback("仅支持上传 HTML 或 ZIP。", true);
+        return;
       }
-      setActionFeedback('上传失败。', true)
+      setActionFeedback("上传失败。", true);
     } finally {
-      saving.value = false
+      saving.value = false;
     }
   }
 
-  usePendingChangesGuard({
-    hasPendingChanges: hasPendingEditChanges,
-    isBlocked: saving,
-    message: '当前编辑内容有未保存更改，确定离开当前页面吗？',
-  })
-  useAdminQueryReload({ query, reload: reloadUploads })
-  onMounted(async () => {
-    await reloadTaxonomy().catch(() => {})
-    await reloadUploads({ reset: true })
-  })
+  usePendingChangesGuard({ hasPendingChanges: hasPendingEditChanges, isBlocked: saving, message: "当前编辑内容有未保存更改，确定离开当前页面吗？" });
+  useAdminQueryReload({ query, reload: reloadUploads });
+  onMounted(async () => { await reloadTaxonomy().catch(() => {}); await reloadUploads({ reset: true }); });
 
   return {
     loading,
@@ -241,5 +204,5 @@ export function useUploadAdmin() {
     submitUpload,
     saveEdit,
     removeItem,
-  }
+  };
 }

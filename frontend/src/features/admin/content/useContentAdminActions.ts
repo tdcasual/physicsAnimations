@@ -1,86 +1,80 @@
-import type { Ref } from 'vue'
-import {
-  deleteAdminItem,
-  listAdminItems,
-  listTaxonomy,
-  updateAdminItem,
-  type AdminItemRow,
-} from '../adminApi'
+import type { Ref } from "vue";
+import { deleteAdminItem, listAdminItems, listTaxonomy, updateAdminItem, type AdminItemRow } from "../adminApi";
 
 type GroupRow = {
-  id: string
-  title: string
-}
+  id: string;
+  title: string;
+};
 
 type CategoryRow = {
-  id: string
-  groupId: string
-  title: string
-}
+  id: string;
+  groupId: string;
+  title: string;
+};
 
 type ContentAdminActionParams = {
-  loading: Ref<boolean>
-  saving: Ref<boolean>
-  errorText: Ref<string>
-  groups: Ref<GroupRow[]>
-  categories: Ref<CategoryRow[]>
-  items: Ref<AdminItemRow[]>
-  query: Ref<string>
-  linkCategoryId: Ref<string>
-  editCategoryId: Ref<string>
-  editingId: Ref<string>
-  editTitle: Ref<string>
-  editDescription: Ref<string>
-  editOrder: Ref<number>
-  editPublished: Ref<boolean>
-  editHidden: Ref<boolean>
-  page: Ref<number>
-  pageSize: number
-  nextRequestSeq: () => number
-  isLatestRequest: (requestSeq: number) => boolean
+  loading: Ref<boolean>;
+  saving: Ref<boolean>;
+  errorText: Ref<string>;
+  groups: Ref<GroupRow[]>;
+  categories: Ref<CategoryRow[]>;
+  items: Ref<AdminItemRow[]>;
+  query: Ref<string>;
+  linkCategoryId: Ref<string>;
+  editCategoryId: Ref<string>;
+  editingId: Ref<string>;
+  editTitle: Ref<string>;
+  editDescription: Ref<string>;
+  editOrder: Ref<number>;
+  editPublished: Ref<boolean>;
+  editHidden: Ref<boolean>;
+  page: Ref<number>;
+  pageSize: number;
+  nextRequestSeq: () => number;
+  isLatestRequest: (requestSeq: number) => boolean;
   applyPageResult: (
     payload: { items: AdminItemRow[]; page: number; total: number },
-    options: { reset: boolean }
-  ) => void
-  syncEditStateWithItems: () => void
-  resetEdit: () => void
-  beginEdit: (item: AdminItemRow, options?: { force?: boolean }) => void
-  setFieldError: (key: string, message: string) => void
-  clearFieldErrors: (key?: string) => void
-  setActionFeedback: (text: string, isError?: boolean) => void
-}
+    options: { reset: boolean },
+  ) => void;
+  syncEditStateWithItems: () => void;
+  resetEdit: () => void;
+  beginEdit: (item: AdminItemRow, options?: { force?: boolean }) => void;
+  setFieldError: (key: string, message: string) => void;
+  clearFieldErrors: (key?: string) => void;
+  setActionFeedback: (text: string, isError?: boolean) => void;
+};
 
-function resolveAuthError(status?: number, fallbackText = '操作失败。'): string {
-  return status === 401 ? '请先登录管理员账号。' : fallbackText
+function resolveAuthError(status?: number, fallbackText = "操作失败。"): string {
+  return status === 401 ? "请先登录管理员账号。" : fallbackText;
 }
 
 export function createContentAdminActions(ctx: ContentAdminActionParams) {
   async function reloadTaxonomy() {
-    const data = await listTaxonomy()
-    ctx.groups.value = Array.isArray(data?.groups) ? data.groups : []
-    ctx.categories.value = Array.isArray(data?.categories) ? data.categories : []
-    if (!ctx.categories.value.some(category => category.id === ctx.linkCategoryId.value)) {
-      ctx.linkCategoryId.value = ctx.categories.value[0]?.id || 'other'
+    const data = await listTaxonomy();
+    ctx.groups.value = Array.isArray(data?.groups) ? data.groups : [];
+    ctx.categories.value = Array.isArray(data?.categories) ? data.categories : [];
+    if (!ctx.categories.value.some((category) => category.id === ctx.linkCategoryId.value)) {
+      ctx.linkCategoryId.value = ctx.categories.value[0]?.id || "other";
     }
-    if (!ctx.categories.value.some(category => category.id === ctx.editCategoryId.value)) {
-      ctx.editCategoryId.value = ctx.categories.value[0]?.id || 'other'
+    if (!ctx.categories.value.some((category) => category.id === ctx.editCategoryId.value)) {
+      ctx.editCategoryId.value = ctx.categories.value[0]?.id || "other";
     }
   }
 
   async function reloadItems(params: { reset: boolean } = { reset: true }) {
-    const requestSeq = ctx.nextRequestSeq()
-    ctx.loading.value = true
-    ctx.errorText.value = ''
+    const requestSeq = ctx.nextRequestSeq();
+    ctx.loading.value = true;
+    ctx.errorText.value = "";
 
     try {
-      const nextPage = params.reset ? 1 : ctx.page.value + 1
+      const nextPage = params.reset ? 1 : ctx.page.value + 1;
       const data = await listAdminItems({
         page: nextPage,
         pageSize: ctx.pageSize,
         q: ctx.query.value.trim(),
-      })
-      const received = Array.isArray(data?.items) ? data.items : []
-      if (!ctx.isLatestRequest(requestSeq)) return
+      });
+      const received = Array.isArray(data?.items) ? data.items : [];
+      if (!ctx.isLatestRequest(requestSeq)) return;
 
       ctx.applyPageResult(
         {
@@ -88,31 +82,31 @@ export function createContentAdminActions(ctx: ContentAdminActionParams) {
           page: Number(data?.page || nextPage),
           total: Number(data?.total || 0),
         },
-        { reset: params.reset }
-      )
-      ctx.syncEditStateWithItems()
+        { reset: params.reset },
+      );
+      ctx.syncEditStateWithItems();
     } catch (err) {
-      if (!ctx.isLatestRequest(requestSeq)) return
-      const e = err as { status?: number }
-      ctx.errorText.value = resolveAuthError(e?.status, '加载内容失败。')
+      if (!ctx.isLatestRequest(requestSeq)) return;
+      const e = err as { status?: number };
+      ctx.errorText.value = resolveAuthError(e?.status, "加载内容失败。");
     } finally {
       if (ctx.isLatestRequest(requestSeq)) {
-        ctx.loading.value = false
+        ctx.loading.value = false;
       }
     }
   }
 
   async function saveEdit(id: string) {
-    ctx.clearFieldErrors('editTitle')
-    const title = ctx.editTitle.value.trim()
+    ctx.clearFieldErrors("editTitle");
+    const title = ctx.editTitle.value.trim();
     if (!title) {
-      ctx.setFieldError('editTitle', '标题不能为空。')
-      ctx.setActionFeedback('标题不能为空。', true)
-      return
+      ctx.setFieldError("editTitle", "标题不能为空。");
+      ctx.setActionFeedback("标题不能为空。", true);
+      return;
     }
 
-    ctx.saving.value = true
-    ctx.setActionFeedback('')
+    ctx.saving.value = true;
+    ctx.setActionFeedback("");
 
     try {
       await updateAdminItem(id, {
@@ -122,39 +116,39 @@ export function createContentAdminActions(ctx: ContentAdminActionParams) {
         order: Number(ctx.editOrder.value || 0),
         published: ctx.editPublished.value,
         hidden: ctx.editHidden.value,
-      })
-      await reloadItems({ reset: true })
-      const updated = ctx.items.value.find(item => item.id === id)
-      if (updated) ctx.beginEdit(updated, { force: true })
-      ctx.setActionFeedback('保存成功。', false)
+      });
+      await reloadItems({ reset: true });
+      const updated = ctx.items.value.find((item) => item.id === id);
+      if (updated) ctx.beginEdit(updated, { force: true });
+      ctx.setActionFeedback("保存成功。", false);
     } catch (err) {
-      const e = err as { status?: number; data?: { error?: string } }
-      if (e?.data?.error === 'invalid_title') {
-        ctx.setFieldError('editTitle', '标题不能为空。')
-        ctx.setActionFeedback('标题不能为空。', true)
-        return
+      const e = err as { status?: number; data?: { error?: string } };
+      if (e?.data?.error === "invalid_title") {
+        ctx.setFieldError("editTitle", "标题不能为空。");
+        ctx.setActionFeedback("标题不能为空。", true);
+        return;
       }
-      ctx.setActionFeedback(resolveAuthError(e?.status, '保存失败。'), true)
+      ctx.setActionFeedback(resolveAuthError(e?.status, "保存失败。"), true);
     } finally {
-      ctx.saving.value = false
+      ctx.saving.value = false;
     }
   }
 
   async function removeItem(id: string) {
-    if (!window.confirm('确定删除这条内容吗？')) return
-    ctx.saving.value = true
-    ctx.setActionFeedback('')
+    if (!window.confirm("确定删除这条内容吗？")) return;
+    ctx.saving.value = true;
+    ctx.setActionFeedback("");
 
     try {
-      await deleteAdminItem(id)
-      if (ctx.editingId.value === id) ctx.resetEdit()
-      await reloadItems({ reset: true })
-      ctx.setActionFeedback('内容已删除。', false)
+      await deleteAdminItem(id);
+      if (ctx.editingId.value === id) ctx.resetEdit();
+      await reloadItems({ reset: true });
+      ctx.setActionFeedback("内容已删除。", false);
     } catch (err) {
-      const e = err as { status?: number }
-      ctx.setActionFeedback(resolveAuthError(e?.status, '删除失败。'), true)
+      const e = err as { status?: number };
+      ctx.setActionFeedback(resolveAuthError(e?.status, "删除失败。"), true);
     } finally {
-      ctx.saving.value = false
+      ctx.saving.value = false;
     }
   }
 
@@ -163,5 +157,5 @@ export function createContentAdminActions(ctx: ContentAdminActionParams) {
     reloadItems,
     saveEdit,
     removeItem,
-  }
+  };
 }

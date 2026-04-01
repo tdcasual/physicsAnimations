@@ -1,26 +1,25 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
-function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
+function readFile(relPath: string): string {
+  return readExpandedSource(relPath);
 }
 
-describe('catalog mobile filter behavior', () => {
-  it('has responsive navigation tabs', () => {
-    const source = read('src/views/CatalogView.vue')
-    const css = read('src/views/CatalogView.css')
+describe("catalog mobile filter behavior", () => {
+  it("adds an explicit mobile filter trigger and stateful panel", () => {
+    const source = readFile("src/views/CatalogView.vue");
 
-    expect(source).toMatch(/nav-groups/)
-    expect(source).toMatch(/nav-categories/)
-    expect(css).toMatch(/overflow-x:\s*auto/)
-    expect(css).toMatch(/@media\s*\(max-width:/)
-  })
+    expect(source).toMatch(/mobileFiltersOpen/);
+    expect(source).toMatch(/class="catalog-mobile-filter-trigger"/);
+    expect(source).toMatch(/class="catalog-mobile-filter-panel"/);
+    expect(source).toMatch(/筛选导航/);
+  });
 
-  it('has scrollable tabs on mobile', () => {
-    const css = read('src/views/CatalogView.css')
+  it("hides the mobile trigger on wide screens and shows a controlled panel on small screens", () => {
+    const css = readFile("src/views/CatalogView.css");
 
-    expect(css).toMatch(/scrollbar-width:\s*none/)
-    expect(css).toMatch(/::-webkit-scrollbar/)
-  })
-})
+    expect(css).toMatch(/\.catalog-mobile-filter-trigger\s*\{[\s\S]*display:\s*none/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-mobile-filter-trigger\s*\{[\s\S]*display:\s*inline-flex/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-mobile-filter-panel\s*\{[\s\S]*display:\s*grid/);
+  });
+});

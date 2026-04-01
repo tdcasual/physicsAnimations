@@ -1,55 +1,78 @@
-import fs from 'node:fs'
-import path from 'node:path'
-import { describe, expect, it } from 'vitest'
+import fs from "node:fs";
+import path from "node:path";
+import { describe, expect, it } from "vitest";
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(__dirname, '..', relPath), 'utf8')
+  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
 }
 
-describe('login flow consistency', () => {
-  it('uses form submit in login view', () => {
-    const source = read('src/views/LoginView.vue')
-    expect(source).toMatch(/<form[\s\S]*@submit\.prevent="submit"/)
-    expect(source).toMatch(/type="submit"/)
-  })
+describe("login flow consistency", () => {
+  it("uses form submit in login view instead of password-only keydown handler", () => {
+    const source = read("src/views/LoginView.vue");
+    expect(source).toMatch(/<form[\s\S]*@submit\.prevent=\"submit\"/);
+    expect(source).not.toMatch(/@keydown\.enter\.prevent=\"submit\"/);
+    expect(source).toMatch(/type=\"submit\"/);
+  });
 
-  it('hides topbar login button on /login and sanitizes modal redirects', () => {
-    const source = read('src/App.vue')
-    expect(source).toMatch(/isLoginRoute/)
-    expect(source).toMatch(/resolveAdminRedirect/)
-  })
+  it("hides topbar login button on /login and sanitizes modal redirects through the shared helper", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/isLoginRoute/);
+    expect(source).toMatch(/v-if=\"!auth\.loggedIn && !isLoginRoute\"/);
+    expect(source).toMatch(/resolveAdminRedirect/);
+    expect(source).toMatch(/const redirect = resolveAdminRedirect\(route\.query\.redirect\)/);
+    expect(source).not.toMatch(/await router\.replace\(\"\/admin\/dashboard\"\)/);
+  });
 
-  it('places auth actions inside the mobile more-panel and desktop inline-actions', () => {
-    const source = read('src/App.vue')
-    expect(source).toMatch(/topbar-more-panel/)
-    expect(source).toMatch(/topbar-more-group/)
-    expect(source).toMatch(/topbar-more-trigger/)
-    expect(source).toMatch(/topbar-inline-actions/)
-  })
+  it("places auth actions inside the mobile more-panel and desktop inline-actions", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/topbar-more-panel[\s\S]*topbar-more-group/);
+    expect(source).toMatch(/topbar-more-trigger/);
+    expect(source).toMatch(/topbar-inline-actions/);
+  });
 
-  it('has autocomplete attributes for credentials', () => {
-    const source = read('src/views/LoginView.vue')
-    expect(source).toMatch(/autocomplete="username"/)
-    expect(source).toMatch(/autocomplete="current-password"/)
-  })
+  it("disables auto-capitalization and auto-correct in app-shell login modal inputs", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/name="username"[\s\S]*autocapitalize="none"/);
+    expect(source).toMatch(/name="username"[\s\S]*autocorrect="off"/);
+    expect(source).toMatch(/name="password"[\s\S]*autocapitalize="none"/);
+    expect(source).toMatch(/name="password"[\s\S]*autocorrect="off"/);
+  });
 
-  it('has error handling and loading state', () => {
-    const source = read('src/views/LoginView.vue')
-    expect(source).toMatch(/errorText/)
-    expect(source).toMatch(/loading/)
-    expect(source).toMatch(/v-if="errorText"/)
-  })
+  it("clears stale login errors while typing in the app-shell login modal", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/function\s+clearLoginError\(\)\s*\{/);
+    expect(source).toMatch(/if\s*\(!loginError\.value\) return/);
+    expect(source).toMatch(/loginError\.value\s*=\s*""/);
+    expect(source.match(/@input="clearLoginError"/g)?.length ?? 0).toBe(2);
+  });
 
-  it('sanitizes login redirect query to admin paths before navigating', () => {
-    const source = read('src/views/LoginView.vue')
-    expect(source).toMatch(/resolveAdminRedirect/)
-    expect(source).toMatch(/const redirect = resolveAdminRedirect/)
-  })
+  it("locks body scroll while login modal is open and restores it after close", () => {
+    const source = read("src/App.vue");
+    expect(source).toMatch(/let bodyOverflowBeforeLogin = ""/);
+    expect(source).toMatch(/bodyOverflowBeforeLogin = document\.body\.style\.overflow/);
+    expect(source).toMatch(/document\.body\.style\.overflow = "hidden"/);
+    expect(source).toMatch(/document\.body\.style\.overflow = bodyOverflowBeforeLogin/);
+  });
 
-  it('uses modern UI components for form inputs', () => {
-    const source = read('src/views/LoginView.vue')
-    expect(source).toMatch(/PInput/)
-    expect(source).toMatch(/PButton/)
-    expect(source).toMatch(/PCard/)
-  })
-})
+  it("sanitizes login redirect query to admin paths before navigating", () => {
+    const source = read("src/views/LoginView.vue");
+    expect(source).toMatch(/resolveAdminRedirect/);
+    expect(source).toMatch(/const redirect = resolveAdminRedirect\(route\.query\.redirect\)/);
+    expect(source).not.toMatch(/const redirect = String\(route\.query\.redirect \|\| \"\"\)\.trim\(\)/);
+  });
+
+  it("disables mobile auto-capitalization and auto-correct for credentials", () => {
+    const source = read("src/views/LoginView.vue");
+    expect(source).toMatch(/autocomplete=\"username\"/);
+    expect(source).toMatch(/autocapitalize=\"none\"/);
+    expect(source).toMatch(/autocorrect=\"off\"/);
+    expect(source).toMatch(/spellcheck=\"false\"/);
+  });
+
+  it("reuses shared base form/button styles instead of redefining local duplicates", () => {
+    const source = read("src/views/LoginView.vue");
+    expect(source).not.toMatch(/\.field\s*\{/);
+    expect(source).not.toMatch(/\.field-input\s*\{/);
+    expect(source).not.toMatch(/\.btn\s*\{/);
+  });
+});

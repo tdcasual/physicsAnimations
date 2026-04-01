@@ -1,177 +1,135 @@
 <script setup lang="ts">
-  import { computed, nextTick, onBeforeUnmount, ref, watch, watchEffect } from 'vue'
-  import { RouterLink, RouterView, useRoute } from 'vue-router'
-  import AdminShellHeader from '../../components/admin/AdminShellHeader.vue'
-  import { adminNavGroups, adminNavItems } from '../../features/admin/adminNavConfig'
-  import { useResponsiveViewport } from '../../composables/useResponsiveViewport'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
+import AdminShellHeader from "../../components/admin/AdminShellHeader.vue";
+import { adminNavGroups, adminNavItems } from "../../features/admin/adminNavConfig";
+import { useRoute } from "vue-router";
 
-  const route = useRoute()
-  const adminNavRef = ref<HTMLElement | null>(null)
-  const adminMobileLinksRef = ref<HTMLElement | null>(null)
-  const adminNavShellRef = ref<HTMLElement | null>(null)
-  const adminNavTriggerRef = ref<HTMLElement | null>(null)
-  const mobileNavOpen = ref(false)
-  const isMobileNavScrollLocked = ref(false)
-  
-  const mobileNavBreakpoint = 640
-  
-  const { isMobileViewport } = useResponsiveViewport({
-    breakpoint: mobileNavBreakpoint,
-    onLeaveMobile: () => {
-      // 从移动端变为桌面端时，关闭导航并清理滚动锁
-      closeMobileNav()
-      if (isMobileNavScrollLocked.value) {
-        document.body.style.overflow = bodyOverflowBeforeMobileNav
-        bodyOverflowBeforeMobileNav = ''
-        isMobileNavScrollLocked.value = false
-      }
-    },
-  })
-  const currentAdminGroup = computed(
-    () =>
-      adminNavGroups.find(group => group.items.some(item => route.path.startsWith(item.to))) ??
-      adminNavGroups[0]
-  )
-  const currentAdminSection = computed(
-    () => adminNavItems.find(item => route.path.startsWith(item.to)) ?? adminNavItems[0]
-  )
+const route = useRoute();
+const adminNavRef = ref<HTMLElement | null>(null);
+const adminMobileLinksRef = ref<HTMLElement | null>(null);
+const adminNavShellRef = ref<HTMLElement | null>(null);
+const adminNavTriggerRef = ref<HTMLElement | null>(null);
+const mobileNavOpen = ref(false);
+const currentAdminGroup = computed(
+  () => adminNavGroups.find((group) => group.items.some((item) => route.path.startsWith(item.to))) ?? adminNavGroups[0],
+);
+const currentAdminSection = computed(() => adminNavItems.find((item) => route.path.startsWith(item.to)) ?? adminNavItems[0]);
 
-  let lastFocusedBeforeMobileNav: HTMLElement | null = null
-  let bodyOverflowBeforeMobileNav = ''
+let lastFocusedBeforeMobileNav: HTMLElement | null = null;
+let bodyOverflowBeforeMobileNav = "";
 
-  function openMobileNav() {
-    lastFocusedBeforeMobileNav =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null
-    mobileNavOpen.value = true
+function openMobileNav() {
+  lastFocusedBeforeMobileNav = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  mobileNavOpen.value = true;
+}
+
+function closeMobileNav() {
+  mobileNavOpen.value = false;
+}
+
+function toggleMobileNav() {
+  if (mobileNavOpen.value) {
+    closeMobileNav();
+    return;
   }
+  openMobileNav();
+}
 
-  function closeMobileNav() {
-    mobileNavOpen.value = false
-  }
+function applyAdminDocumentTitle() {
+  document.title = `${currentAdminSection.value.label} - 管理后台`;
+}
 
-  function toggleMobileNav() {
-    if (mobileNavOpen.value) {
-      closeMobileNav()
-      return
+function scrollAdminNavLinkIntoView(target: HTMLElement | null) {
+  if (!target) return;
+  target.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+function findActiveAdminLink(container: HTMLElement | null): HTMLElement | null {
+  if (!container) return null;
+  return container.querySelector<HTMLElement>(".admin-link.active, .admin-link.router-link-exact-active");
+}
+
+async function scrollActiveAdminLinkIntoView() {
+  await nextTick();
+  scrollAdminNavLinkIntoView(findActiveAdminLink(adminNavRef.value));
+  scrollAdminNavLinkIntoView(findActiveAdminLink(adminMobileLinksRef.value));
+}
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeMobileNav();
+    applyAdminDocumentTitle();
+    void scrollActiveAdminLinkIntoView();
+  },
+  { immediate: true },
+);
+
+function onAdminNavFocusIn(event: FocusEvent) {
+  const target = event.target;
+  if (!(target instanceof HTMLElement) || !target.classList.contains("admin-link")) return;
+  scrollAdminNavLinkIntoView(target);
+}
+
+function getMobileNavFocusables(): HTMLElement[] {
+  const shell = adminNavShellRef.value;
+  if (!shell) return [];
+  const focusable = shell.querySelectorAll<HTMLElement>(
+    'a[href],button:not([disabled]),textarea,input:not([disabled]),select,[tabindex]:not([tabindex="-1"])',
+  );
+  return Array.from(focusable).filter((node) => !node.hasAttribute("disabled") && node.tabIndex !== -1);
+}
+
+function handleMobileNavKeydown(event: KeyboardEvent) {
+  if (!mobileNavOpen.value) return;
+  if (event.key !== "Tab") return;
+
+  const focusables = getMobileNavFocusables();
+  if (focusables.length === 0) return;
+
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  const active = document.activeElement as HTMLElement | null;
+  const inShell = active ? adminNavShellRef.value?.contains(active) === true : false;
+
+  if (event.shiftKey) {
+    if (!inShell || active === first) {
+      event.preventDefault();
+      last.focus();
     }
-    openMobileNav()
+    return;
   }
 
-  function applyAdminDocumentTitle() {
-    document.title = `${currentAdminSection.value.label} - 管理后台`
+  if (!inShell || active === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
+watch(mobileNavOpen, async (open) => {
+  if (open) {
+    bodyOverflowBeforeMobileNav = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    await nextTick();
+    adminNavShellRef.value?.querySelector<HTMLElement>(".admin-link")?.focus();
+    return;
   }
 
-  function scrollAdminNavLinkIntoView(target: HTMLElement | null) {
-    if (!target) return
-    target.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-  }
+  document.body.style.overflow = bodyOverflowBeforeMobileNav;
+  bodyOverflowBeforeMobileNav = "";
+  const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value;
+  lastFocusedBeforeMobileNav = null;
+  restoreTarget?.focus();
+});
 
-  function findActiveAdminLink(container: HTMLElement | null): HTMLElement | null {
-    if (!container) return null
-    return container.querySelector<HTMLElement>(
-      '.admin-link.active, .admin-link.router-link-exact-active'
-    )
-  }
-
-  async function scrollActiveAdminLinkIntoView() {
-    await nextTick()
-    scrollAdminNavLinkIntoView(findActiveAdminLink(adminNavRef.value))
-    scrollAdminNavLinkIntoView(findActiveAdminLink(adminMobileLinksRef.value))
-  }
-
-  watch(
-    () => route.fullPath,
-    () => {
-      closeMobileNav()
-      applyAdminDocumentTitle()
-      void scrollActiveAdminLinkIntoView()
-    },
-    { immediate: true }
-  )
-
-  function onAdminNavFocusIn(event: FocusEvent) {
-    const target = event.target
-    if (!(target instanceof HTMLElement) || !target.classList.contains('admin-link')) return
-    scrollAdminNavLinkIntoView(target)
-  }
-
-  function getMobileNavFocusables(): HTMLElement[] {
-    const shell = adminNavShellRef.value
-    if (!shell) return []
-    const focusable = shell.querySelectorAll<HTMLElement>(
-      'a[href],button:not([disabled]),textarea,input:not([disabled]),select,[tabindex]:not([tabindex="-1"])'
-    )
-    return Array.from(focusable).filter(
-      node => !node.hasAttribute('disabled') && node.tabIndex !== -1
-    )
-  }
-
-  function handleMobileNavKeydown(event: KeyboardEvent) {
-    if (!mobileNavOpen.value) return
-    if (event.key !== 'Tab') return
-
-    const focusables = getMobileNavFocusables()
-    if (focusables.length === 0) return
-
-    const first = focusables[0]
-    const last = focusables[focusables.length - 1]
-    const active = document.activeElement as HTMLElement | null
-    const inShell = active ? adminNavShellRef.value?.contains(active) === true : false
-
-    if (event.shiftKey) {
-      if (!inShell || active === first) {
-        event.preventDefault()
-        last.focus()
-      }
-      return
-    }
-
-    if (!inShell || active === last) {
-      event.preventDefault()
-      first.focus()
-    }
-  }
-
-  // 响应式处理移动端导航的打开/关闭和 scroll lock
-  watchEffect(async () => {
-    const open = mobileNavOpen.value
-    const isMobile = isMobileViewport.value
-    
-    if (open && isMobile && !isMobileNavScrollLocked.value) {
-      bodyOverflowBeforeMobileNav = document.body.style.overflow
-      document.body.style.overflow = 'hidden'
-      isMobileNavScrollLocked.value = true
-      await nextTick()
-      adminNavShellRef.value?.querySelector<HTMLElement>('.admin-link')?.focus()
-      return
-    }
-    
-    if ((!open || !isMobile) && isMobileNavScrollLocked.value) {
-      document.body.style.overflow = bodyOverflowBeforeMobileNav
-      bodyOverflowBeforeMobileNav = ''
-      isMobileNavScrollLocked.value = false
-      const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value
-      lastFocusedBeforeMobileNav = null
-      restoreTarget?.focus()
-    }
-  })
-
-  onBeforeUnmount(() => {
-    if (isMobileNavScrollLocked.value) {
-      document.body.style.overflow = bodyOverflowBeforeMobileNav
-    }
-  })
+onBeforeUnmount(() => {
+  document.body.style.overflow = bodyOverflowBeforeMobileNav;
+});
 </script>
 
 <template>
-  <section
-    :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]"
-    @keydown.esc.window="closeMobileNav"
-  >
-    <AdminShellHeader
-      :current-admin-section="currentAdminSection"
-      :current-admin-group="currentAdminGroup"
-    />
+  <section :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]" @keydown.esc.window="closeMobileNav">
+    <AdminShellHeader :current-admin-section="currentAdminSection" :current-admin-group="currentAdminGroup" />
 
     <div class="admin-shell">
       <div class="admin-mobile-nav-strip">
@@ -235,13 +193,7 @@
               <div class="admin-nav-group-summary">{{ group.summary }}</div>
             </div>
             <div class="admin-nav-group-links">
-              <RouterLink
-                v-for="item in group.items"
-                :key="item.to"
-                class="admin-link"
-                active-class="active"
-                :to="item.to"
-              >
+              <RouterLink v-for="item in group.items" :key="item.to" class="admin-link" active-class="active" :to="item.to">
                 {{ item.label }}
               </RouterLink>
             </div>

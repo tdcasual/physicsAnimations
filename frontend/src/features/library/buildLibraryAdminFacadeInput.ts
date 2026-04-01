@@ -1,37 +1,35 @@
-import type { ComputedRef, Ref } from 'vue'
-import type { createJsonObjectInputParser } from './createJsonObjectInputParser'
-import type { useLibraryAdminActionWiring } from './useLibraryAdminActionWiring'
-import type { useLibraryAdminDraftState } from './useLibraryAdminDraftState'
-import type { useLibraryAdminFeedback } from './useLibraryAdminFeedback'
-import type { useLibraryAssetFilters } from './useLibraryAssetFilters'
-import type { useLibraryPanelSections } from './useLibraryPanelSections'
-import type { createLibraryAdminStateFacade } from './useLibraryAdminStateFacade'
+import type { ComputedRef, Ref } from "vue";
+import type { createJsonObjectInputParser } from "./createJsonObjectInputParser";
+import type { useLibraryAdminActionWiring } from "./useLibraryAdminActionWiring";
+import type { useLibraryAdminDraftState } from "./useLibraryAdminDraftState";
+import type { useLibraryAdminFeedback } from "./useLibraryAdminFeedback";
+import type { useLibraryAssetFilters } from "./useLibraryAssetFilters";
+import type { useLibraryPanelSections } from "./useLibraryPanelSections";
+import type { createLibraryAdminStateFacade } from "./useLibraryAdminStateFacade";
 
-type LibraryAdminFeedbackState = ReturnType<typeof useLibraryAdminFeedback>
-type LibraryAdminDraftState = ReturnType<typeof useLibraryAdminDraftState>
-type LibraryAssetFiltersState = ReturnType<typeof useLibraryAssetFilters>
-type LibraryPanelState = ReturnType<typeof useLibraryPanelSections>
-type LibraryActionWiringState = ReturnType<typeof useLibraryAdminActionWiring>
-type ParseJsonObjectInput = ReturnType<typeof createJsonObjectInputParser>
-type LibraryAdminFacadeInput = Parameters<typeof createLibraryAdminStateFacade>[0]
+type LibraryAdminFeedbackState = ReturnType<typeof useLibraryAdminFeedback>;
+type LibraryAdminDraftState = ReturnType<typeof useLibraryAdminDraftState>;
+type LibraryAssetFiltersState = ReturnType<typeof useLibraryAssetFilters>;
+type LibraryPanelState = ReturnType<typeof useLibraryPanelSections>;
+type LibraryActionWiringState = ReturnType<typeof useLibraryAdminActionWiring>;
+type ParseJsonObjectInput = ReturnType<typeof createJsonObjectInputParser>;
+type LibraryAdminFacadeInput = Parameters<typeof createLibraryAdminStateFacade>[0];
 
 type BuildLibraryAdminFacadeInputParams = {
-  loading: Ref<boolean>
-  saving: ComputedRef<boolean>
-  savingFolder: Ref<boolean>
-  savingAsset: Ref<boolean>
-  savingEmbed: Ref<boolean>
-  feedback: LibraryAdminFeedbackState
-  draft: LibraryAdminDraftState
-  filters: LibraryAssetFiltersState
-  panels: LibraryPanelState
-  actions: LibraryActionWiringState
-  parseJsonObjectInput: ParseJsonObjectInput
-}
+  loading: Ref<boolean>;
+  saving: ComputedRef<boolean>;
+  savingFolder: Ref<boolean>;
+  savingAsset: Ref<boolean>;
+  savingEmbed: Ref<boolean>;
+  feedback: LibraryAdminFeedbackState;
+  draft: LibraryAdminDraftState;
+  filters: LibraryAssetFiltersState;
+  panels: LibraryPanelState;
+  actions: LibraryActionWiringState;
+  parseJsonObjectInput: ParseJsonObjectInput;
+};
 
-export function buildLibraryAdminFacadeInput(
-  params: BuildLibraryAdminFacadeInputParams
-): LibraryAdminFacadeInput {
+export function buildLibraryAdminFacadeInput(params: BuildLibraryAdminFacadeInputParams): LibraryAdminFacadeInput {
   const {
     loading,
     saving,
@@ -44,7 +42,7 @@ export function buildLibraryAdminFacadeInput(
     panels,
     actions,
     parseJsonObjectInput,
-  } = params
+  } = params;
 
   return {
     ui: {
@@ -197,5 +195,5 @@ export function buildLibraryAdminFacadeInput(
       removeAsset: actions.removeAsset,
       removeFolder: actions.removeFolder,
     },
-  }
+  };
 }

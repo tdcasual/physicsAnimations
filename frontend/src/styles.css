@@ -1,15 +1,4 @@
-/* Imports must come first per CSS spec */
-@import './styles/foundation.css';
-@import './styles/topbar.css';
-@import './styles/admin-base.css';
-@import './styles/modal.css';
-
-/* ── Design System Foundation ──── */
-:root {
-  --app-topbar-height: 0px;
-}
-
-/* ── Classroom Mode ──── */
-:root[data-classroom='on'] {
-  --content-max-width: 1400px;
-}
+@import "./styles/foundation.css";
+@import "./styles/topbar.css";
+@import "./styles/admin-base.css";
+@import "./styles/modal.css";

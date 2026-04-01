@@ -1,30 +1,30 @@
 <script setup lang="ts">
-  interface OptionItem {
-    value: string
-    label: string
-  }
+interface OptionItem {
+  value: string;
+  label: string;
+}
 
-  const props = defineProps<{
-    categoryOptions: OptionItem[]
-    categoryId: string
-    title: string
-    description: string
-    saving: boolean
-    uploadFileError: string
-  }>()
+const props = defineProps<{
+  categoryOptions: OptionItem[];
+  categoryId: string;
+  title: string;
+  description: string;
+  saving: boolean;
+  uploadFileError: string;
+}>();
 
-  const emit = defineEmits<{
-    'update:categoryId': [value: string]
-    'file-change': [file: File | null]
-    'update:title': [value: string]
-    'update:description': [value: string]
-    submit: []
-  }>()
+const emit = defineEmits<{
+  "update:categoryId": [value: string];
+  "file-change": [file: File | null];
+  "update:title": [value: string];
+  "update:description": [value: string];
+  submit: [];
+}>();
 
-  function onInputFile(event: Event) {
-    const target = event.target as HTMLInputElement
-    emit('file-change', target.files?.[0] || null)
-  }
+function onInputFile(event: Event) {
+  const target = event.target as HTMLInputElement;
+  emit("file-change", target.files?.[0] || null);
+}
 </script>
 
 <template>
@@ -86,8 +86,6 @@
   </details>
 
   <div class="actions admin-actions">
-    <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('submit')"
-      >上传</button
-    >
+    <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('submit')">上传</button>
   </div>
 </template>

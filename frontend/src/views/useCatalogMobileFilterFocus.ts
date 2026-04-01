@@ -1,25 +1,25 @@
-import { nextTick, type Ref } from 'vue'
+import { nextTick, type Ref } from "vue";
 
 type CreateCatalogMobileFilterFocusParams = {
-  panelRef: Ref<HTMLElement | null>
-  triggerRef?: Ref<HTMLElement | null>
-  maxWidth?: number
-  isMobileViewport?: () => boolean
-  getViewportHeight?: () => number
-}
+  panelRef: Ref<HTMLElement | null>;
+  triggerRef?: Ref<HTMLElement | null>;
+  maxWidth?: number;
+  isMobileViewport?: () => boolean;
+  getViewportHeight?: () => number;
+};
 
 function createDefaultViewportMatcher(maxWidth: number) {
   return function isMobileViewport() {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
-    return window.matchMedia(`(max-width: ${maxWidth}px)`).matches
-  }
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+    return window.matchMedia(`(max-width: ${maxWidth}px)`).matches;
+  };
 }
 
 function createDefaultViewportHeightReader() {
   return function getViewportHeight() {
-    if (typeof window === 'undefined') return 0
-    return window.innerHeight || 0
-  }
+    if (typeof window === "undefined") return 0;
+    return window.innerHeight || 0;
+  };
 }
 
 export function createCatalogMobileFilterFocus(params: CreateCatalogMobileFilterFocusParams) {
@@ -29,29 +29,28 @@ export function createCatalogMobileFilterFocus(params: CreateCatalogMobileFilter
     maxWidth = 640,
     isMobileViewport = createDefaultViewportMatcher(maxWidth),
     getViewportHeight = createDefaultViewportHeightReader(),
-  } = params
+  } = params;
 
   async function focusFilterPanel() {
-    if (!isMobileViewport()) return false
+    if (!isMobileViewport()) return false;
 
-    await nextTick()
+    await nextTick();
 
-    if (!panelRef.value) return false
+    if (!panelRef.value) return false;
 
-    const viewportHeight = getViewportHeight()
-    if (viewportHeight <= 0) return false
+    const viewportHeight = getViewportHeight();
+    if (viewportHeight <= 0) return false;
 
-    const rect = panelRef.value.getBoundingClientRect()
-    const alreadyVisible =
-      rect.top < viewportHeight && rect.bottom > 0 && rect.bottom <= viewportHeight
-    if (alreadyVisible) return false
+    const rect = panelRef.value.getBoundingClientRect();
+    const alreadyVisible = rect.top < viewportHeight && rect.bottom > 0 && rect.bottom <= viewportHeight;
+    if (alreadyVisible) return false;
 
-    const anchor = triggerRef?.value ?? panelRef.value
-    anchor.scrollIntoView({ block: 'start', inline: 'nearest' })
-    return true
+    const anchor = triggerRef?.value ?? panelRef.value;
+    anchor.scrollIntoView({ block: "start", inline: "nearest" });
+    return true;
   }
 
   return {
     focusFilterPanel,
-  }
+  };
 }

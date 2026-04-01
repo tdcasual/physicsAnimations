@@ -1,33 +1,31 @@
-import { describe, expect, it } from 'vitest'
-import { readExpandedSource } from './helpers/sourceReader'
+import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function read(relPath: string): string {
-  return readExpandedSource(relPath)
+  return readExpandedSource(relPath);
 }
 
 function readLibrarySources() {
-  const view = read('src/views/admin/AdminLibraryView.vue')
-  const template = read('src/views/admin/library/AdminLibraryView.template.html')
-  const style = read('src/views/admin/library/AdminLibraryView.css')
-  const state = read('src/features/library/useLibraryAdminState.ts')
-  const draftState = read('src/features/library/useLibraryAdminDraftState.ts')
-  const feedback = read('src/features/library/useLibraryAdminFeedback.ts')
-  const embedActions = read('src/features/library/useLibraryEmbedProfileActions.ts')
-  const embedProfileDeps = read('src/features/library/embedProfile/embedProfileActionDeps.ts')
-  const embedCreateActions = read(
-    'src/features/library/embedProfile/useEmbedProfileCreateActions.ts'
-  )
-  const embedEditActions = read('src/features/library/embedProfile/useEmbedProfileEditActions.ts')
-  const embedSyncActions = read('src/features/library/embedProfile/useEmbedProfileSyncActions.ts')
-  const assetSelection = read('src/features/library/useLibraryAssetSelection.ts')
-  const assetFilters = read('src/features/library/useLibraryAssetFilters.ts')
-  const folderActions = read('src/features/library/useLibraryFolderActions.ts')
-  const assetCrudActions = read('src/features/library/useLibraryAssetCrudActions.ts')
-  const assetEditorActions = read('src/features/library/useLibraryAssetEditorActions.ts')
-  const panelSections = read('src/features/library/useLibraryPanelSections.ts')
-  const adminLifecycle = read('src/features/library/useLibraryAdminLifecycle.ts')
-  const embedProfileCreatePanel = read('src/views/admin/library/panels/EmbedProfileCreatePanel.vue')
-  const embedProfileEditPanel = read('src/views/admin/library/panels/EmbedProfileEditPanel.vue')
+  const view = read("src/views/admin/AdminLibraryView.vue");
+  const template = read("src/views/admin/library/AdminLibraryView.template.html");
+  const style = read("src/views/admin/library/AdminLibraryView.css");
+  const state = read("src/features/library/useLibraryAdminState.ts");
+  const draftState = read("src/features/library/useLibraryAdminDraftState.ts");
+  const feedback = read("src/features/library/useLibraryAdminFeedback.ts");
+  const embedActions = read("src/features/library/useLibraryEmbedProfileActions.ts");
+  const embedProfileDeps = read("src/features/library/embedProfile/embedProfileActionDeps.ts");
+  const embedCreateActions = read("src/features/library/embedProfile/useEmbedProfileCreateActions.ts");
+  const embedEditActions = read("src/features/library/embedProfile/useEmbedProfileEditActions.ts");
+  const embedSyncActions = read("src/features/library/embedProfile/useEmbedProfileSyncActions.ts");
+  const assetSelection = read("src/features/library/useLibraryAssetSelection.ts");
+  const assetFilters = read("src/features/library/useLibraryAssetFilters.ts");
+  const folderActions = read("src/features/library/useLibraryFolderActions.ts");
+  const assetCrudActions = read("src/features/library/useLibraryAssetCrudActions.ts");
+  const assetEditorActions = read("src/features/library/useLibraryAssetEditorActions.ts");
+  const panelSections = read("src/features/library/useLibraryPanelSections.ts");
+  const adminLifecycle = read("src/features/library/useLibraryAdminLifecycle.ts");
+  const embedProfileCreatePanel = read("src/views/admin/library/panels/EmbedProfileCreatePanel.vue");
+  const embedProfileEditPanel = read("src/views/admin/library/panels/EmbedProfileEditPanel.vue");
   return {
     view,
     template,
@@ -50,86 +48,84 @@ function readLibrarySources() {
     embedProfileCreatePanel,
     embedProfileEditPanel,
     combined: `${view}\n${template}\n${style}\n${state}\n${draftState}\n${feedback}\n${embedActions}\n${embedProfileDeps}\n${embedCreateActions}\n${embedEditActions}\n${embedSyncActions}\n${assetSelection}\n${assetFilters}\n${folderActions}\n${assetCrudActions}\n${assetEditorActions}\n${panelSections}\n${adminLifecycle}\n${embedProfileCreatePanel}\n${embedProfileEditPanel}`,
-  }
+  };
 }
 
-describe('admin library upload', () => {
-  it('accepts both ggb and PhET html files', () => {
-    const { template } = readLibrarySources()
-    expect(template).toMatch(
-      /accept="\.ggb,\.html,\.htm,\.json,\.zip,application\/vnd\.geogebra\.file,text\/html,application\/json,application\/zip"/
-    )
-    expect(template).toMatch(/自动识别（\.ggb \/ PhET HTML）/)
-  })
+describe("admin library upload", () => {
+  it("accepts both ggb and PhET html files", () => {
+    const { template } = readLibrarySources();
+    expect(template).toMatch(/accept="\.ggb,\.html,\.htm,\.json,\.zip,application\/vnd\.geogebra\.file,text\/html,application\/json,application\/zip"/);
+    expect(template).toMatch(/自动识别（\.ggb \/ PhET HTML）/);
+  });
 
-  it('defaults upload mode to embed demo mode', () => {
-    const { template, combined } = readLibrarySources()
-    expect(combined).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\(['"]embed['"]\)/)
-    expect(template).toMatch(/<option value="embed">演示（默认）<\/option>/)
-    expect(template).toMatch(/<option value="download">仅下载原文件<\/option>/)
-  })
+  it("defaults upload mode to embed demo mode", () => {
+    const { template, combined } = readLibrarySources();
+    expect(combined).toMatch(/openMode\s*=\s*ref<LibraryOpenMode>\("embed"\)/);
+    expect(template).toMatch(/<option value="embed">演示（默认）<\/option>/);
+    expect(template).toMatch(/<option value="download">仅下载原文件<\/option>/);
+  });
 
-  it('uses taxonomy dropdown for folder category selection', () => {
-    const { combined } = readLibrarySources()
-    expect(combined).toMatch(/listTaxonomy/)
-    expect(combined).toMatch(/groupedCategoryOptions/)
-  })
+  it("uses taxonomy dropdown for folder category selection", () => {
+    const { combined } = readLibrarySources();
+    expect(combined).toMatch(/listTaxonomy/);
+    expect(combined).toMatch(/groupedCategoryOptions/);
+  });
 
-  it('supports optional cover during folder creation and keeps post-create cover update', () => {
-    const { template, combined } = readLibrarySources()
-    expect(template).toMatch(/id="library-create-cover-file"/)
-    expect(combined).toMatch(/onCreateCoverFileChange/)
-    expect(combined).toMatch(/uploadLibraryFolderCover/)
-    expect(template).toMatch(/id="library-cover-file"/)
-  })
+  it("supports optional cover during folder creation and keeps post-create cover update", () => {
+    const { template, combined } = readLibrarySources();
+    expect(template).toMatch(/id="library-create-cover-file"/);
+    expect(combined).toMatch(/onCreateCoverFileChange/);
+    expect(combined).toMatch(/uploadLibraryFolderCover/);
+    expect(template).toMatch(/id="library-cover-file"/);
+  });
 
-  it('allows resource display name input and rename action', () => {
-    const { template, combined } = readLibrarySources()
-    expect(combined).toMatch(/assetDisplayName/)
-    expect(combined).toMatch(/displayName:\s*(?:deps\.)?assetDisplayName\.value/)
-    expect(combined).toMatch(/updateLibraryAsset/)
-    expect(template).toMatch(/重命名显示名/)
-  })
+  it("allows resource display name input and rename action", () => {
+    const { template, combined } = readLibrarySources();
+    expect(combined).toMatch(/assetDisplayName/);
+    expect(combined).toMatch(/displayName:\s*(?:deps\.)?assetDisplayName\.value/);
+    expect(combined).toMatch(/updateLibraryAsset/);
+    expect(template).toMatch(/重命名显示名/);
+  });
 
-  it('supports switching existing asset open mode', () => {
-    const { template, combined } = readLibrarySources()
-    expect(combined).toMatch(/switchAssetOpenMode/)
-    expect(combined).toMatch(/openMode:\s*mode/)
-    expect(template).toMatch(/设为演示/)
-    expect(template).toMatch(/设为仅下载/)
-  })
+  it("supports switching existing asset open mode", () => {
+    const { template, combined } = readLibrarySources();
+    expect(combined).toMatch(/switchAssetOpenMode/);
+    expect(combined).toMatch(/openMode:\s*mode/);
+    expect(template).toMatch(/设为演示/);
+    expect(template).toMatch(/设为仅下载/);
+  });
 
-  it('supports custom embed profile upload mode with json options', () => {
-    const { combined } = readLibrarySources()
-    expect(combined).toMatch(/assetParserMode/)
-    expect(combined).toMatch(/assetEmbedProfileId/)
-    expect(combined).toMatch(/assetEmbedOptionsJson/)
-    expect(combined).toMatch(/Embed 参数 JSON/)
-    expect(combined).toMatch(/embedProfileId:\s*(?:deps\.)?assetParserMode\.value === ['"]profile['"]/)
-    expect(combined).toMatch(/embedOptionsJson:\s*(?:deps\.)?assetParserMode\.value === ['"]profile['"]/)
-  })
+  it("supports custom embed profile upload mode with json options", () => {
+    const { combined } = readLibrarySources();
+    expect(combined).toMatch(/assetParserMode/);
+    expect(combined).toMatch(/assetEmbedProfileId/);
+    expect(combined).toMatch(/assetEmbedOptionsJson/);
+    expect(combined).toMatch(/Embed 参数 JSON/);
+    expect(combined).toMatch(/embedProfileId:\s*(?:deps\.)?assetParserMode\.value === "profile"/);
+    expect(combined).toMatch(/embedOptionsJson:\s*(?:deps\.)?assetParserMode\.value === "profile"/);
+  });
 
-  it('supports embed profile management inputs and actions', () => {
-    const { template, combined } = readLibrarySources()
-    expect(template).toMatch(/Embed 平台管理/)
-    expect(combined).toMatch(/createLibraryEmbedProfile/)
-    expect(combined).toMatch(/listLibraryEmbedProfiles/)
-    expect(combined).toMatch(/deleteLibraryEmbedProfile/)
-    expect(combined).toMatch(/syncLibraryEmbedProfile/)
-    expect(combined).toMatch(/createEmbedProfileEntry/)
-    expect(combined).toMatch(/removeEmbedProfile/)
-    expect(combined).toMatch(/syncEmbedProfileEntry/)
-    expect(template).toMatch(/手动更新/)
-  })
+  it("supports embed profile management inputs and actions", () => {
+    const { template, combined } = readLibrarySources();
+    expect(template).toMatch(/Embed 平台管理/);
+    expect(combined).toMatch(/createLibraryEmbedProfile/);
+    expect(combined).toMatch(/listLibraryEmbedProfiles/);
+    expect(combined).toMatch(/deleteLibraryEmbedProfile/);
+    expect(combined).toMatch(/syncLibraryEmbedProfile/);
+    expect(combined).toMatch(/createEmbedProfileEntry/);
+    expect(combined).toMatch(/removeEmbedProfile/);
+    expect(combined).toMatch(/syncEmbedProfileEntry/);
+    expect(template).toMatch(/手动更新/);
+  });
 
-  it('supports secondary edit flows for folder, asset, and embed profile', () => {
-    const { combined } = readLibrarySources()
-    expect(combined).toMatch(/updateLibraryFolder/)
-    expect(combined).toMatch(/updateLibraryEmbedProfile/)
-    expect(combined).toMatch(/saveFolderMeta/)
-    expect(combined).toMatch(/startEditAsset/)
-    expect(combined).toMatch(/saveAssetEdit/)
-    expect(combined).toMatch(/startEditEmbedProfile/)
-    expect(combined).toMatch(/saveEmbedProfileEdit/)
-  })
-})
+  it("supports secondary edit flows for folder, asset, and embed profile", () => {
+    const { combined } = readLibrarySources();
+    expect(combined).toMatch(/updateLibraryFolder/);
+    expect(combined).toMatch(/updateLibraryEmbedProfile/);
+    expect(combined).toMatch(/saveFolderMeta/);
+    expect(combined).toMatch(/startEditAsset/);
+    expect(combined).toMatch(/saveAssetEdit/);
+    expect(combined).toMatch(/startEditEmbedProfile/);
+    expect(combined).toMatch(/saveEmbedProfileEdit/);
+  });
+});
