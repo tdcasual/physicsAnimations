@@ -54,5 +54,8 @@
   "devDependencies": {
     "husky": "^9.1.7",
     "jszip": "^3.10.1"
+  },
+  "overrides": {
+    "path-to-regexp": "^8.4.2"
   }
 }
