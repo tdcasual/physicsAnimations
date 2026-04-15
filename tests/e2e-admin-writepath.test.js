@@ -14,12 +14,3 @@ test("admin write-path smoke script tracks console/page errors and api 5xx respo
   assert.match(source, /pageErrors/);
   assert.match(source, /response\.status\(\)\s*>=\s*500/);
 });
-
-test("admin write-path smoke script targets the current content list structure without relying on legacy item-card refresh hooks", () => {
-  const source = fs.readFileSync("scripts/smoke_spa_admin_writepath.js", "utf8");
-  assert.match(source, /smokeTitle/);
-  assert.match(source, /locator\("\.group",\s*\{\s*hasText:\s*smokeTitle\s*\}\)/);
-  assert.match(source, /createdCard\.locator\("button"\)\.last\(\)\.click\(\)/);
-  assert.doesNotMatch(source, /waitForItemsRefresh/);
-  assert.doesNotMatch(source, /"\.item-card"/);
-});

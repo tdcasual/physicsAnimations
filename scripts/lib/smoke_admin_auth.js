@@ -5,23 +5,6 @@ function resolveUrl(baseUrl, pathName) {
 
 async function revealTopbarAuthActions(page) {
   const banner = page.getByRole("banner");
-  const directLoginButton = banner.getByRole("button", { name: "登录", exact: true });
-  if (await directLoginButton.isVisible().catch(() => false)) {
-    return directLoginButton;
-  }
-
-  const mobilePanelLoginButton = banner.getByRole("button", { name: "管理员登录", exact: true });
-  if (await mobilePanelLoginButton.isVisible().catch(() => false)) {
-    return mobilePanelLoginButton;
-  }
-
-  const mobileMenuTrigger = banner.locator("button.md\\:hidden").first();
-  if (await mobileMenuTrigger.isVisible().catch(() => false)) {
-    await mobileMenuTrigger.click();
-    await mobilePanelLoginButton.waitFor({ state: "visible", timeout: 10000 });
-    return mobilePanelLoginButton;
-  }
-
   const inlineLoginButton = banner.locator(".topbar-inline-actions").getByRole("button", { name: "登录" });
   if (await inlineLoginButton.isVisible().catch(() => false)) {
     return inlineLoginButton;
@@ -45,8 +28,8 @@ async function loginFromCatalog(page, username, password, baseUrl = "") {
 
   const dialog = page.getByRole("dialog", { name: "管理员登录" });
   await dialog.waitFor({ state: "visible", timeout: 10000 });
-  await dialog.locator('input[autocomplete="username"]').fill(username);
-  await dialog.locator('input[autocomplete="current-password"], input[type="password"]').first().fill(password);
+  await dialog.getByRole("textbox", { name: "用户名" }).fill(username);
+  await dialog.getByRole("textbox", { name: "密码" }).fill(password);
   await dialog.getByRole("button", { name: "登录" }).click();
 
   await Promise.any([

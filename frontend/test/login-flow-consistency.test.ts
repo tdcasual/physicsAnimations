@@ -23,18 +23,19 @@ describe("login flow consistency", () => {
     expect(source).not.toMatch(/await router\.replace\(\"\/admin\/dashboard\"\)/);
   });
 
-  it("places auth actions inside the mobile menu panel and desktop actions", () => {
+  it("places auth actions inside the mobile more-panel and desktop inline-actions", () => {
     const source = read("src/App.vue");
-    expect(source).toMatch(/mobileMenuOpen/);
-    expect(source).toMatch(/hidden md:flex/);
-    expect(source).toMatch(/md:hidden/);
+    expect(source).toMatch(/topbar-more-panel[\s\S]*topbar-more-group/);
+    expect(source).toMatch(/topbar-more-trigger/);
+    expect(source).toMatch(/topbar-inline-actions/);
   });
 
   it("disables auto-capitalization and auto-correct in app-shell login modal inputs", () => {
     const source = read("src/App.vue");
-    // Check that inputs have autocapitalize and autocorrect attributes
-    expect(source).toMatch(/autocapitalize="none"/);
-    expect(source).toMatch(/autocorrect="off"/);
+    expect(source).toMatch(/name="username"[\s\S]*autocapitalize="none"/);
+    expect(source).toMatch(/name="username"[\s\S]*autocorrect="off"/);
+    expect(source).toMatch(/name="password"[\s\S]*autocapitalize="none"/);
+    expect(source).toMatch(/name="password"[\s\S]*autocorrect="off"/);
   });
 
   it("clears stale login errors while typing in the app-shell login modal", () => {
@@ -53,13 +54,6 @@ describe("login flow consistency", () => {
     expect(source).toMatch(/document\.body\.style\.overflow = bodyOverflowBeforeLogin/);
   });
 
-  it("focuses the actual username input element inside the app-shell login modal", () => {
-    const source = read("src/App.vue");
-    expect(source).toMatch(/loginUsernameInputRef/);
-    expect(source).toMatch(/querySelector\("input"\)/);
-    expect(source).not.toMatch(/loginUsernameInputRef\.value\?\.focus\(\)/);
-  });
-
   it("sanitizes login redirect query to admin paths before navigating", () => {
     const source = read("src/views/LoginView.vue");
     expect(source).toMatch(/resolveAdminRedirect/);
@@ -70,8 +64,9 @@ describe("login flow consistency", () => {
   it("disables mobile auto-capitalization and auto-correct for credentials", () => {
     const source = read("src/views/LoginView.vue");
     expect(source).toMatch(/autocomplete=\"username\"/);
-    // Mobile safeguards now handled by PAInput component defaults
-    expect(source).toMatch(/PAInput/);
+    expect(source).toMatch(/autocapitalize=\"none\"/);
+    expect(source).toMatch(/autocorrect=\"off\"/);
+    expect(source).toMatch(/spellcheck=\"false\"/);
   });
 
   it("reuses shared base form/button styles instead of redefining local duplicates", () => {

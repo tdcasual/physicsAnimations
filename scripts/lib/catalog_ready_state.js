@@ -1,10 +1,7 @@
 const CATALOG_READY_SELECTORS = [
-  'input[type="search"]',
-  ".cat-group-tabs",
-  ".cat-card",
-  'text="没有匹配的作品。"',
-  'text="未找到任何作品。"',
-  'text="加载目录失败"',
+  ".topbar-search",
+  ".catalog-empty",
+  ".catalog-state",
 ];
 
 async function waitForCatalogReadyState(page, timeoutMs = 10000) {

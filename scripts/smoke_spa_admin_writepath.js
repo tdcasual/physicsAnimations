@@ -30,6 +30,14 @@ async function cleanupCreatedItem({ baseUrl, token, id }) {
   }
 }
 
+function waitForItemsRefresh(page, timeoutMs = 10000) {
+  return page.waitForResponse(
+    (response) =>
+      response.request().method() === "GET" && response.url().includes("/api/items?"),
+    { timeout: timeoutMs },
+  );
+}
+
 async function waitUntilEnabled(locator, timeoutMs = 10000) {
   const startedAt = Date.now();
   while (Date.now() - startedAt < timeoutMs) {
@@ -134,9 +142,11 @@ async function run() {
       await waitUntilEnabled(addButton);
 
       const listSearch = page.getByPlaceholder("搜索内容...");
+      const searchResponsePromise = waitForItemsRefresh(page);
       await listSearch.fill(smokeTitle);
+      await searchResponsePromise;
 
-      const createdCard = page.locator(".group", { hasText: smokeTitle }).first();
+      const createdCard = page.locator(".item-card", { hasText: smokeTitle }).first();
       await createdCard.waitFor({ state: "visible", timeout: 10000 });
 
       const cardText = await createdCard.innerText();
@@ -153,15 +163,16 @@ async function run() {
         },
         { timeout: 10000 },
       );
-      await createdCard.locator("button").last().click();
+      const refreshAfterDeletePromise = waitForItemsRefresh(page);
+      await createdCard.getByRole("button", { name: "删除" }).click();
       const deleteResponse = await deleteResponsePromise;
+      await refreshAfterDeletePromise;
       if (!deleteResponse.ok()) {
         throw new Error(`delete item failed: ${deleteResponse.status()}`);
       }
       createdId = "";
-      await createdCard.waitFor({ state: "hidden", timeout: 10000 });
 
-      const remainingCount = await page.locator(".group", { hasText: smokeTitle }).count();
+      const remainingCount = await page.locator(".item-card", { hasText: smokeTitle }).count();
       if (remainingCount > 0) {
         throw new Error(`expected created item to be removed, but found ${remainingCount} matching card(s)`);
       }
