@@ -11,6 +11,8 @@ import {
   resolveBackNavigationTarget,
 } from "../features/navigation/backNavigation";
 import { loadViewerModel, type ViewerModel } from "../features/viewer/viewerService";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Heart, Maximize2, ExternalLink, MonitorPlay } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -63,10 +65,7 @@ const showDeferredFallback = computed(() => {
 
 function getRouteParams() {
   const idParam = String(route.params.id || "").trim();
-
-  return {
-    id: idParam,
-  };
+  return { id: idParam };
 }
 
 async function refresh() {
@@ -132,7 +131,6 @@ function triggerStageTransition() {
 function toggleMode() {
   if (model.value?.status !== "ready") return;
   if (!model.value.screenshotUrl) return;
-
   clearHideScreenshotTimer();
   if (screenshotMode.value) {
     interactiveStarted.value = true;
@@ -190,7 +188,6 @@ function goBack() {
     fallbackHash: readBackNavigationFallbackHash(),
   });
   clearBackNavigationFallbackHash();
-
   if (target.mode === "history-back") {
     router.back();
     return;
@@ -213,85 +210,111 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="viewer-page viewer-page--staged">
-    <header class="viewer-bar viewer-bar--compact">
-      <div class="viewer-bar-left">
-        <button type="button" class="viewer-back viewer-btn" @click="goBack">← 返回</button>
-        <div class="viewer-bar-copy">
-          <div class="viewer-title-block">
-            <div class="viewer-title">
-              {{
-                loading
-                  ? "正在加载..."
-                  : model?.status === "ready"
-                    ? model.title
-                    : (model?.title ?? "作品预览")
-              }}
-            </div>
+  <section class="flex min-h-screen flex-col bg-background">
+    <!-- Header -->
+    <header class="sticky top-16 z-30 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-10">
+      <div class="mx-auto flex max-w-[1600px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3">
+          <Button variant="ghost" size="icon" class="rounded-full" @click="goBack">
+            <ArrowLeft class="h-4 w-4" />
+          </Button>
+          <div class="min-w-0">
+            <h1 class="truncate text-base font-semibold text-foreground sm:text-lg">
+              {{ loading ? "正在加载..." : model?.status === "ready" ? model.title : (model?.title ?? "作品预览") }}
+            </h1>
+            <p v-if="model?.status === 'ready'" class="text-xs text-muted-foreground">
+              {{ stageStatusLabel }}
+            </p>
           </div>
         </div>
-      </div>
 
-      <div class="viewer-actions">
-        <button
-          v-if="!loading && model?.status === 'ready' && model.showModeToggle"
-          type="button"
-          class="viewer-btn"
-          @click="toggleMode"
-        >
-          {{ modeButtonText }}
-        </button>
-        <button
-          v-else-if="!loading && model?.status === 'ready' && model.deferInteractiveStart && !interactiveStarted"
-          type="button"
-          class="viewer-btn"
-          @click="startInteractive"
-        >
-          尝试交互
-        </button>
-        <button
-          v-else-if="!loading && model?.status === 'ready' && model.deferInteractiveStart && interactiveStarted"
-          type="button"
-          class="viewer-btn"
-          @click="stopInteractive"
-        >
-          关闭交互
-        </button>
-        <a
-          v-if="!loading && model?.status === 'ready'"
-          class="viewer-btn"
-          :href="openHref"
-          target="_blank"
-          rel="noreferrer"
-        >
-          打开原页面
-        </a>
-        <button v-if="!loading && model?.status === 'ready'" type="button" class="viewer-btn" @click="toggleFavorite">
-          {{ isFavorited ? '已收藏' : '收藏演示' }}
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+          <Button
+            v-if="!loading && model?.status === 'ready' && model.showModeToggle"
+            variant="outline"
+            size="sm"
+            class="gap-2 rounded-full"
+            @click="toggleMode"
+          >
+            <MonitorPlay class="h-4 w-4" />
+            {{ modeButtonText }}
+          </Button>
+          <Button
+            v-else-if="!loading && model?.status === 'ready' && model.deferInteractiveStart && !interactiveStarted"
+            variant="default"
+            size="sm"
+            class="gap-2 rounded-full"
+            @click="startInteractive"
+          >
+            <MonitorPlay class="h-4 w-4" />
+            尝试交互
+          </Button>
+          <Button
+            v-else-if="!loading && model?.status === 'ready' && model.deferInteractiveStart && interactiveStarted"
+            variant="outline"
+            size="sm"
+            class="gap-2 rounded-full"
+            @click="stopInteractive"
+          >
+            关闭交互
+          </Button>
+
+          <Button
+            v-if="!loading && model?.status === 'ready'"
+            variant="outline"
+            size="sm"
+            class="gap-2 rounded-full"
+            as-child
+          >
+            <a :href="openHref" target="_blank" rel="noreferrer">
+              <ExternalLink class="h-4 w-4" />
+              原页面
+            </a>
+          </Button>
+
+          <Button
+            v-if="!loading && model?.status === 'ready'"
+            variant="ghost"
+            size="sm"
+            class="gap-2 rounded-full"
+            :class="isFavorited ? 'text-destructive' : ''"
+            @click="toggleFavorite"
+          >
+            <Heart class="h-4 w-4" :fill="isFavorited ? 'currentColor' : 'none'" />
+            {{ isFavorited ? '已收藏' : '收藏' }}
+          </Button>
+        </div>
       </div>
     </header>
 
-    <div v-if="loading" class="viewer-empty">正在加载作品...</div>
-    <div v-else-if="model?.status === 'error'" class="viewer-empty">{{ model.message }}</div>
-
-    <div v-else-if="showDeferredFallback" class="viewer-empty viewer-empty--deferred">
-      无预览，可打开原页面查看。
+    <!-- Content -->
+    <div class="flex flex-1 flex-col items-center justify-center px-4 py-4 sm:px-6 lg:px-10">
+      <div class="w-full max-w-[1600px]">
+        <div v-if="loading" class="flex min-h-[60vh] items-center justify-center text-muted-foreground">
+          正在加载作品...
+        </div>
+        <div v-else-if="model?.status === 'error'" class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
+          <p class="text-muted-foreground">{{ model.message }}</p>
+        </div>
+        <div v-else-if="showDeferredFallback" class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
+          <p class="text-muted-foreground">无预览，可打开原页面查看。</p>
+          <Button as-child>
+            <a :href="openHref" target="_blank" rel="noreferrer">打开原页面</a>
+          </Button>
+        </div>
+        <ViewerStageShell
+          v-else-if="model?.status === 'ready'"
+          :screenshot-visible="screenshotVisible"
+          :interactive-started="interactiveStarted"
+          :stage-status-label="stageStatusLabel"
+          :screenshot-url="model.screenshotUrl || ''"
+          :normalized-screenshot-src="normalizedScreenshotSrc"
+          :frame-src="frameSrc"
+          :frame-sandbox="frameSandbox"
+          :stage-transition-state="stageTransitionState"
+          @frame-load="onFrameLoad"
+        />
+      </div>
     </div>
-
-    <ViewerStageShell
-      v-else-if="model?.status === 'ready'"
-      :screenshot-visible="screenshotVisible"
-      :interactive-started="interactiveStarted"
-      :stage-status-label="stageStatusLabel"
-      :screenshot-url="model.screenshotUrl || ''"
-      :normalized-screenshot-src="normalizedScreenshotSrc"
-      :frame-src="frameSrc"
-      :frame-sandbox="frameSandbox"
-      :stage-transition-state="stageTransitionState"
-      @frame-load="onFrameLoad"
-    />
   </section>
 </template>
-
-<style src="./ViewerView.css"></style>

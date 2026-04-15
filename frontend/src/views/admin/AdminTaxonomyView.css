@@ -50,7 +50,7 @@
 }
 
 .error-text {
-  color: var(--danger);
+  color: var(--destructive);
   font-size: calc(13px * var(--ui-scale));
 }
 
@@ -80,7 +80,7 @@
     z-index: 34;
     border: 0;
     padding: 0;
-    background: color-mix(in oklab, var(--text) 22%, transparent);
+    background: color-mix(in oklab, var(--foreground) 22%, transparent);
   }
 
   .taxonomy-editor-sheet {
@@ -97,7 +97,7 @@
     transform: translateY(104%);
     opacity: 0;
     pointer-events: none;
-    box-shadow: 0 -24px 56px -36px color-mix(in oklab, var(--text) 28%, transparent);
+    box-shadow: 0 -24px 56px -36px color-mix(in oklab, var(--foreground) 28%, transparent);
     transition: transform 220ms ease, opacity 220ms ease;
   }
 
@@ -117,10 +117,10 @@
     top: -14px;
     margin: -14px -14px 10px;
     padding: 14px;
-    border-bottom: 1px solid color-mix(in oklab, var(--accent) 16%, var(--border));
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 16%, var(--border));
     background:
-      linear-gradient(180deg, color-mix(in oklab, var(--surface) 97%, var(--paper)), color-mix(in oklab, var(--accent) 5%, var(--surface))),
-      var(--surface);
+      linear-gradient(180deg, color-mix(in oklab, var(--card) 97%, var(--background)), color-mix(in oklab, var(--primary) 5%, var(--card))),
+      var(--card);
   }
 }
 

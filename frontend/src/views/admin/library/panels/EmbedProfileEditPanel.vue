@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { useLibraryAdminState } from "../../../../features/library/useLibraryAdminState";
+import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 defineProps<{ vm: ReturnType<typeof useLibraryAdminState> }>();
 </script>
 
@@ -12,69 +13,44 @@ defineProps<{ vm: ReturnType<typeof useLibraryAdminState> }>();
     <div v-if="vm.actions.isPanelSectionOpen('embed:edit')" class="panel-section-body">
       <div v-if="vm.drafts.editingEmbedProfileId" class="editor-panel">
         <div class="asset-meta">平台 ID：{{ vm.drafts.editingEmbedProfileId }}</div>
-        <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editEmbedProfileName') }">
-          <span>平台名称</span>
-          <input v-model="vm.drafts.embedEditName" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
-          <div v-if="vm.actions.getFieldError('editEmbedProfileName')" class="field-error-text">{{ vm.actions.getFieldError("editEmbedProfileName") }}</div>
-        </label>
-        <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editEmbedScriptUrl') }">
-          <span>embed.js 地址</span>
-          <input
+        <PAField label="平台名称" :error="vm.actions.getFieldError('editEmbedProfileName')">
+          <PAInput v-model="vm.drafts.embedEditName" :disabled="vm.ui.savingEmbed" />
+        </PAField>
+        <PAField label="embed.js 地址" :error="vm.actions.getFieldError('editEmbedScriptUrl')">
+          <PAInput
             v-model="vm.drafts.embedEditScriptUrl"
-            class="field-input"
-            type="text"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
             :disabled="vm.ui.savingEmbed"
           />
-          <div v-if="vm.actions.getFieldError('editEmbedScriptUrl')" class="field-error-text">{{ vm.actions.getFieldError("editEmbedScriptUrl") }}</div>
-        </label>
-        <label class="field">
-          <span>备用脚本地址（可选）</span>
-          <input
+        </PAField>
+        <PAField label="备用脚本地址（可选）">
+          <PAInput
             v-model="vm.drafts.embedEditFallbackScriptUrl"
-            class="field-input"
-            type="text"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
             :disabled="vm.ui.savingEmbed"
           />
+        </PAField>
+        <PAField label="viewerPath">
+          <PAInput v-model="vm.drafts.embedEditViewerPath" :disabled="vm.ui.savingEmbed" />
+        </PAField>
+        <PAField label="构造器名称">
+          <PAInput v-model="vm.drafts.embedEditConstructorName" :disabled="vm.ui.savingEmbed" />
+        </PAField>
+        <PAField label="资源 URL 参数键">
+          <PAInput v-model="vm.drafts.embedEditAssetUrlOptionKey" :disabled="vm.ui.savingEmbed" />
+        </PAField>
+        <PAField label="允许扩展名（逗号分隔）">
+          <PAInput v-model="vm.drafts.embedEditExtensionsText" :disabled="vm.ui.savingEmbed" />
+        </PAField>
+        <PAField label="默认参数 JSON" :error="vm.actions.getFieldError('editEmbedDefaultOptionsJson')">
+          <PAInput v-model="vm.drafts.embedEditDefaultOptionsJson" type="textarea" :rows="4" :disabled="vm.ui.savingEmbed" />
+        </PAField>
+        <label class="checkbox">
+          <input v-model="vm.drafts.embedEditEnabled" type="checkbox" :disabled="vm.ui.savingEmbed" />
+          <span>启用该平台</span>
         </label>
-        <label class="field">
-          <span>viewerPath</span>
-          <input v-model="vm.drafts.embedEditViewerPath" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
-        </label>
-        <label class="field">
-          <span>构造器名称</span>
-          <input v-model="vm.drafts.embedEditConstructorName" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
-        </label>
-        <label class="field">
-          <span>资源 URL 参数键</span>
-          <input v-model="vm.drafts.embedEditAssetUrlOptionKey" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
-        </label>
-        <label class="field">
-          <span>允许扩展名（逗号分隔）</span>
-          <input v-model="vm.drafts.embedEditExtensionsText" class="field-input" type="text" :disabled="vm.ui.savingEmbed" />
-        </label>
-        <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editEmbedDefaultOptionsJson') }">
-          <span>默认参数 JSON</span>
-          <textarea v-model="vm.drafts.embedEditDefaultOptionsJson" class="field-input" rows="4" :disabled="vm.ui.savingEmbed" />
-          <div v-if="vm.actions.getFieldError('editEmbedDefaultOptionsJson')" class="field-error-text">
-            {{ vm.actions.getFieldError("editEmbedDefaultOptionsJson") }}
-          </div>
-        </label>
-        <label class="field">
-          <span>
-            <input v-model="vm.drafts.embedEditEnabled" type="checkbox" :disabled="vm.ui.savingEmbed" />
-            启用该平台
-          </span>
-        </label>
-        <div class="asset-actions-inline">
-          <button type="button" class="btn btn-primary" :disabled="vm.ui.savingEmbed" @click="vm.actions.saveEmbedProfileEdit">保存平台</button>
-          <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.cancelEmbedProfileEdit">取消</button>
-        </div>
+        <PAActions align="end">
+          <PAButton variant="ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.cancelEmbedProfileEdit">取消</PAButton>
+          <PAButton :disabled="vm.ui.savingEmbed" @click="vm.actions.saveEmbedProfileEdit">保存平台</PAButton>
+        </PAActions>
       </div>
       <div v-else class=”empty”>选择平台以编辑</div>
     </div>

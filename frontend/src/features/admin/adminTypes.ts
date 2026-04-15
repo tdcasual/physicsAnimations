@@ -1,8 +1,8 @@
 export interface AdminApiError extends Error {
   status: number;
   code: string;
-  data?: any;
-  details?: unknown;
+  data?: Record<string, unknown> | null;
+  details?: Record<string, unknown>;
 }
 
 export interface AdminItemRow {

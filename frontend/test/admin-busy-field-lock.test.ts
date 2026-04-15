@@ -24,8 +24,8 @@ describe("admin busy field locking", () => {
     expect(viewSource).toMatch(/<SystemEmbedUpdaterPanel[\s\S]*:loading="loading"/);
     expect(panelSource).toMatch(/loading: boolean;/);
     expect(panelSource).toMatch(/<input type="checkbox" :checked="enabled" :disabled="loading \|\| saving" @change="onEnabledChange" \/>/);
-    expect(panelSource).toMatch(/:disabled="loading \|\| saving"[\s\S]*@input="onIntervalInput"/);
-    expect(panelSource).toMatch(/<button type="button" class="btn btn-primary" :disabled="loading \|\| saving \|\| Boolean\(saveHint\)" @click="emit\('save'\)">/);
+    expect(panelSource).toMatch(/:disabled="loading \|\| saving"[\s\S]*@update:model-value="onIntervalInput"/);
+    expect(panelSource).toMatch(/<PAButton :disabled="loading \|\| saving \|\| Boolean\(saveHint\)" @click="emit\('save'\)">/);
   });
 
   it("locks embed updater fields while updater save is in flight", () => {

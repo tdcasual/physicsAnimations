@@ -25,17 +25,18 @@ function onInputFile(event: Event) {
   const target = event.target as HTMLInputElement;
   emit("file-change", target.files?.[0] || null);
 }
+import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 </script>
 
 <template>
   <h3>上传 HTML / ZIP</h3>
 
   <div class="form-grid">
-    <label class="field">
-      <span>分类</span>
+    <PAField>
+      <template #label>分类</template>
       <select
         :value="props.categoryId"
-        class="field-input"
+        class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10"
         :disabled="props.saving"
         @change="emit('update:categoryId', ($event.target as HTMLSelectElement).value)"
       >
@@ -43,49 +44,48 @@ function onInputFile(event: Event) {
           {{ option.label }}
         </option>
       </select>
-    </label>
+    </PAField>
   </div>
 
-  <label class="field" :class="{ 'has-error': props.uploadFileError }">
-    <span>文件（HTML / ZIP）</span>
+  <PAField :error="props.uploadFileError">
+    <template #label>文件（HTML / ZIP）</template>
     <input
       id="upload-file-input"
-      class="field-input"
+      class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium disabled:cursor-not-allowed disabled:opacity-50"
+      :class="props.uploadFileError ? 'border-destructive' : ''"
       type="file"
       accept=".html,.htm,.zip,text/html,application/zip"
       :disabled="props.saving"
       @change="onInputFile"
     />
-    <div v-if="props.uploadFileError" class="field-error-text">{{ props.uploadFileError }}</div>
-  </label>
+  </PAField>
 
-  <label class="field">
-    <span>标题（可选）</span>
-    <input
-      :value="props.title"
-      class="field-input"
-      type="text"
+  <PAField>
+    <template #label>标题（可选）</template>
+    <PAInput
+      :model-value="props.title"
       :disabled="props.saving"
-      @input="emit('update:title', ($event.target as HTMLInputElement).value)"
+      @update:model-value="emit('update:title', $event)"
     />
-  </label>
+  </PAField>
 
   <details class="admin-optional-disclosure">
     <summary class="admin-optional-summary">补充描述（可选）</summary>
     <div class="admin-optional-fields">
-      <label class="field">
-        <span>描述（可选）</span>
-        <textarea
-          :value="props.description"
-          class="field-input field-textarea"
+      <PAField>
+        <template #label>描述（可选）</template>
+        <PAInput
+          :model-value="props.description"
+          type="textarea"
+          size="textarea"
           :disabled="props.saving"
-          @input="emit('update:description', ($event.target as HTMLTextAreaElement).value)"
+          @update:model-value="emit('update:description', $event)"
         />
-      </label>
+      </PAField>
     </div>
   </details>
 
-  <div class="actions admin-actions">
-    <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('submit')">上传</button>
-  </div>
+  <PAActions align="end">
+    <PAButton :disabled="props.saving" @click="emit('submit')">上传</PAButton>
+  </PAActions>
 </template>

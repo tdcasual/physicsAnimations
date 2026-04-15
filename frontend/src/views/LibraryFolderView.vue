@@ -8,6 +8,7 @@ import {
 } from "../features/library/libraryApi";
 import type { LibraryAsset, LibraryFolder } from "../features/library/types";
 import { resolveBackNavigationTarget } from "../features/navigation/backNavigation";
+import { PAButton } from "@/components/ui/patterns";
 
 const route = useRoute();
 const router = useRouter();
@@ -120,7 +121,7 @@ watch(
   <section class="library-folder-view">
     <header class="library-folder-hero">
       <div class="library-head">
-        <button type="button" class="btn btn-ghost" @click="goBack">← 返回目录</button>
+        <PAButton variant="ghost" @click="goBack">← 返回目录</PAButton>
       </div>
       <div class="library-folder-hero-body">
         <div class="library-folder-copy">
@@ -151,24 +152,24 @@ watch(
           </div>
         </div>
         <div class="asset-actions">
-          <a
+          <PAButton
             v-if="asset.openMode === 'embed'"
-            class="btn btn-primary"
+            as="a"
             :href="openAssetHref(asset)"
             target="_blank"
             rel="noreferrer"
           >
             打开演示
-          </a>
-          <a
+          </PAButton>
+          <PAButton
             v-if="asset.openMode === 'embed'"
-            class="btn btn-ghost"
+            as="a"
+            variant="ghost"
             :href="downloadAssetHref(asset)"
-            download
           >
             下载源文件
-          </a>
-          <a v-else class="btn btn-primary" :href="downloadAssetHref(asset)" download>下载文件</a>
+          </PAButton>
+          <PAButton v-else as="a" :href="downloadAssetHref(asset)">下载文件</PAButton>
         </div>
       </article>
 

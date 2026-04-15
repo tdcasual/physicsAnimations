@@ -31,15 +31,16 @@ describe("admin inline feedback", () => {
     expect(systemState).toMatch(/const \{ fieldErrors, setFieldError, clearFieldErrors, getFieldError \} = useFieldErrors\(\)/);
 
     for (const source of [contentForm, uploadsForm, account, systemWizardCombined]) {
-      expect(source).toMatch(/field-error-text/);
-      expect(source).toMatch(/has-error/);
+      expect(source).toMatch(/PAField|field-error-text/);
+      // Error can be bound via getFieldError function or props error
+      expect(source).toMatch(/:error="(getFieldError|props\.[a-zA-Z]+Error)/);
     }
 
     expect(contentPage).toMatch(/getFieldError\('createLinkUrl'\)/);
     expect(uploadsPage).toMatch(/getFieldError\('uploadFile'\)/);
-    expect(account).toMatch(/getFieldError\("currentPassword"\)/);
-    expect(account).toMatch(/getFieldError\("confirmPassword"\)/);
+    expect(account).toMatch(/:error="getFieldError\('currentPassword'\)"|getFieldError\("currentPassword"\)/);
+    expect(account).toMatch(/:error="getFieldError\('confirmPassword'\)"|getFieldError\("confirmPassword"\)/);
     expect(systemView).toMatch(/getFieldError/);
-    expect(systemWizardCombined).toMatch(/getFieldError\("webdavUrl"\)/);
+    expect(systemWizardCombined).toMatch(/getFieldError\(['"]webdavUrl['"]\)/);
   });
 });

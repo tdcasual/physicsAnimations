@@ -1,4 +1,4 @@
-import type { CatalogData } from "./types";
+import type { CatalogData, CatalogCategory } from "./types";
 
 export const DEFAULT_GROUP_ID = "physics";
 
@@ -19,18 +19,30 @@ function safeText(text: unknown): string {
   return typeof text === "string" ? text : "";
 }
 
-export function normalizeCatalog(catalog: any): CatalogData {
+interface RawCatalogCategory {
+  id?: unknown;
+  groupId?: unknown;
+  title?: unknown;
+  items?: unknown;
+  [key: string]: unknown;
+}
+
+interface RawCatalogData {
+  groups?: Record<string, unknown>;
+  categories?: Record<string, RawCatalogCategory>;
+}
+
+export function normalizeCatalog(catalog: RawCatalogData | null | undefined): CatalogData {
   if (catalog?.groups && typeof catalog.groups === "object") {
     return catalog as CatalogData;
   }
 
   if (catalog?.categories && typeof catalog.categories === "object") {
-    const categories: Record<string, any> = {};
+    const categories: Record<string, CatalogCategory> = {};
     for (const [id, category] of Object.entries(catalog.categories)) {
       if (!category || typeof category !== "object") continue;
       const row = category as Record<string, unknown>;
       categories[id] = {
-        ...row,
         id: safeText(row.id || id) || id,
         groupId: safeText(row.groupId || DEFAULT_GROUP_ID) || DEFAULT_GROUP_ID,
         title: safeText(row.title || id) || id,

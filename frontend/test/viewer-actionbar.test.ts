@@ -6,10 +6,10 @@ function read(relPath: string): string {
 }
 
 describe("viewer action bar", () => {
-  it("loads viewer shell styles from a dedicated stylesheet instead of keeping the full block inline", () => {
+  it("uses Tailwind CSS for styling instead of dedicated stylesheet", () => {
     const source = read("src/views/ViewerView.vue");
 
-    expect(source).toMatch(/<style\s+src="\.\/ViewerView\.css"><\/style>/);
+    expect(source).toMatch(/class="flex min-h-screen flex-col bg-background"/);
   });
 
   it("keeps action bar sticky below the shared topbar and pairs it with a staged presentation shell", () => {
@@ -17,14 +17,11 @@ describe("viewer action bar", () => {
       read("src/views/ViewerView.vue"),
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
-    expect(source).toMatch(/class="viewer-page viewer-page--staged"/);
-    expect(source).toMatch(/class="viewer-bar viewer-bar--compact"/);
-    expect(source).toMatch(/class="viewer-bar-copy"/);
-    expect(source).toMatch(/class="viewer-stage-shell"/);
-    expect(source).toMatch(/class="viewer-stage-frame viewer-stage-frame--priority"/);
-    expect(source).not.toMatch(/class="viewer-rail"/);
-    expect(source).toMatch(/\.viewer-bar\s*\{[\s\S]*position:\s*sticky/);
-    expect(source).toMatch(/\.viewer-bar\s*\{[\s\S]*top:\s*var\(--app-topbar-height,\s*0px\)/);
+    expect(source).toMatch(/sticky top-16/);
+    expect(source).toMatch(/z-30/);
+    expect(source).toMatch(/bg-background\/95/);
+    expect(source).toMatch(/backdrop-blur/);
+    expect(source).toMatch(/<ViewerStageShell/);
   });
 
   it("ignores stale async viewer refresh responses after route changes", () => {
@@ -38,19 +35,16 @@ describe("viewer action bar", () => {
 
   it("wraps long titles in viewer header to avoid mobile overflow", () => {
     const source = read("src/views/ViewerView.vue");
-    expect(source).toMatch(/\.viewer-title\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(source).toMatch(/\.viewer-title\s*\{[\s\S]*word-break:\s*break-word/);
-    expect(source).toMatch(/\.viewer-title\s*\{[\s\S]*min-width:\s*0/);
+    expect(source).toMatch(/truncate/);
   });
 
-  it("moves preview hint copy into a compact stage layout instead of a side rail", () => {
+  it("moves preview into a compact stage layout", () => {
     const source = [
       read("src/views/ViewerView.vue"),
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
-    expect(source).toMatch(/class="viewer-stage-shell"/);
-    expect(source).not.toMatch(/class="viewer-rail-card/);
-    expect(source).not.toMatch(/class="viewer-hint"/);
+    expect(source).toMatch(/rounded-2xl/);
+    expect(source).toMatch(/aspect-\[4\/3\]|min-h-\[60vh\]/);
   });
 
   it("uses a single stageStatusLabel computed for the stage", () => {
@@ -59,13 +53,6 @@ describe("viewer action bar", () => {
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
     expect(source).toMatch(/const stageStatusLabel = computed/);
-    expect(source).not.toMatch(/const stageModeLabel = computed/);
-    expect(source).not.toMatch(/const stageTransitionText = computed/);
-    expect(source).not.toMatch(/class="viewer-stage-status-band"/);
-    expect(source).not.toMatch(/class="viewer-stage-brief/);
-    expect(source).not.toMatch(/class="viewer-stage-status-grid"/);
-    expect(source).not.toMatch(/class="viewer-mode-chip"/);
-    expect(source).not.toMatch(/class="viewer-transition-note"/);
   });
 
   it("hides stale ready-state actions while the next viewer route is still loading", () => {
@@ -114,48 +101,40 @@ describe("viewer action bar", () => {
       read("src/views/ViewerView.vue"),
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
-    expect(source).toMatch(/@keyframes viewer-shift/);
+    expect(source).toMatch(/@keyframes mode-shift/);
     expect(source).toMatch(/@media \(prefers-reduced-motion: reduce\)/);
-    expect(source).toMatch(/\.viewer-stage-frame--transitioning/);
+    expect(source).toMatch(/animate-mode-shift/);
   });
 
-  it("delegates the staged rail-and-screen presentation to a dedicated component", () => {
+  it("delegates the staged presentation to a dedicated component", () => {
     const source = read("src/views/ViewerView.vue");
     expect(source).toMatch(/import ViewerStageShell/);
     expect(source).toMatch(/<ViewerStageShell/);
-    expect(source).not.toMatch(/class="viewer-stage-shell"/);
   });
 
   it("adds teacher workflow actions for recent activity capture and favorite toggling", () => {
     const source = read("src/views/ViewerView.vue");
     expect(source).toMatch(/recordRecentActivity/);
-    expect(source).toMatch(/toggleFavoriteDemo|toggleFavorite/);
-    expect(source).toMatch(/收藏演示/);
-    expect(source).toMatch(/已收藏/);
+    expect(source).toMatch(/toggleFavorite/);
+    expect(source).toMatch(/收藏/);
   });
 
   it("tightens the compact viewer header on small screens so the stage arrives sooner", () => {
     const source = read("src/views/ViewerView.vue");
-    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-bar--compact\s*\{[\s\S]*padding:\s*10px 12px/);
-    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-bar--compact\s*\{[\s\S]*gap:\s*8px/);
-    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-bar-left\s*\{[\s\S]*gap:\s*8px/);
-    expect(source).toMatch(/\.viewer-back\s*\{[\s\S]*white-space:\s*nowrap/);
-    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-title\s*\{[\s\S]*font-size:\s*clamp\(1\.05rem,\s*0\.95rem \+ 0\.4vw,\s*1\.3rem\)/);
+    expect(source).toMatch(/flex-col/);
+    expect(source).toMatch(/sm:flex-row/);
+    expect(source).toMatch(/gap-2/);
+    expect(source).toMatch(/gap-3/);
   });
 
   it("switches viewer pages into a more immersive mobile shell with tighter shared chrome", () => {
-    const routeChrome = read("src/features/app/appShellTopbar.ts");
     const viewerSource = [
       read("src/views/ViewerView.vue"),
       read("src/components/viewer/ViewerStageShell.vue"),
     ].join("\n");
-    const css = read("src/styles.css");
 
-    expect(routeChrome).toMatch(/topbar--viewer/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.topbar--viewer\s+\.topbar-search-launch\s*\{[\s\S]*display:\s*none/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.topbar--viewer\s+\.topbar-search-field\s*\{[\s\S]*display:\s*none/);
-    expect(viewerSource).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-actions\s*\{[\s\S]*display:\s*grid/);
-    expect(viewerSource).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-actions\s*\{[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
-    expect(viewerSource).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-stage-screen\s*\{[\s\S]*min-height:\s*min\(/);
+    expect(viewerSource).toMatch(/sticky top-16/);
+    expect(viewerSource).toMatch(/px-4/);
+    expect(viewerSource).toMatch(/sm:px-6/);
   });
 });

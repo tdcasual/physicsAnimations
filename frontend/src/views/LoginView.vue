@@ -3,6 +3,7 @@ import { onMounted, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../features/auth/useAuthStore";
 import { resolveAdminRedirect } from "../router/redirect";
+import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 const router = useRouter();
 const route = useRoute();
@@ -61,40 +62,30 @@ async function submit() {
       </aside>
 
       <form class="login-form" @submit.prevent="submit">
-        <label class="field">
-          <span>用户名</span>
-          <input
+        <PAField label="用户名">
+          <PAInput
             v-model="username"
-            class="field-input"
             type="text"
             autocomplete="username"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
             @input="clearErrorText"
           />
-        </label>
+        </PAField>
 
-        <label class="field">
-          <span>密码</span>
-          <input
+        <PAField label="密码">
+          <PAInput
             v-model="password"
-            class="field-input"
             type="password"
             autocomplete="current-password"
-            autocapitalize="none"
-            autocorrect="off"
-            spellcheck="false"
             @input="clearErrorText"
           />
-        </label>
+        </PAField>
 
         <div v-if="errorText" class="error-text">{{ errorText }}</div>
 
-        <div class="actions">
-          <RouterLink class="btn btn-ghost" to="/">返回工作区目录</RouterLink>
-          <button type="submit" class="btn btn-primary" :disabled="auth.loading">登录</button>
-        </div>
+        <PAActions align="end">
+          <PAButton as="a" variant="ghost" href="/">返回工作区目录</PAButton>
+          <PAButton type="submit" :disabled="auth.loading">登录</PAButton>
+        </PAActions>
       </form>
     </div>
   </section>
@@ -109,7 +100,7 @@ async function submit() {
 .login-panel {
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
-  background: var(--surface);
+  background: var(--card);
   padding: clamp(20px, 3vw, 32px);
   display: grid;
   gap: 20px;
@@ -137,7 +128,7 @@ async function submit() {
   padding: 20px;
   border: 0;
   border-radius: var(--radius-m);
-  background: var(--bg);
+  background: var(--background);
 }
 
 .login-note {
@@ -146,11 +137,11 @@ async function submit() {
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
-  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
+  background: color-mix(in oklab, var(--card) 86%, var(--background));
 }
 
 .login-note-label {
-  color: var(--accent);
+  color: var(--primary);
   font-size: calc(11px * var(--ui-scale));
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -185,7 +176,7 @@ h1 {
 }
 
 .error-text {
-  color: var(--danger);
+  color: var(--destructive);
   font-size: calc(13px * var(--ui-scale));
 }
 

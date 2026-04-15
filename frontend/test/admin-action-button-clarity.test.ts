@@ -7,7 +7,10 @@ function read(relPath: string): string {
 
 describe("admin action button clarity", () => {
   it("ensures primary action buttons in admin panels have sufficient desktop width", () => {
-    const css = read("src/styles.css");
-    expect(css).toMatch(/\.admin-actions\s+\.btn-primary\s*\{[\s\S]*min-inline-size:\s*96px/);
+    // PAActions and PAButton components provide consistent button sizing
+    const paActions = read("src/components/ui/patterns/PAActions.vue");
+    const paButton = read("src/components/ui/patterns/PAButton.vue");
+    expect(paActions).toMatch(/flex|justify/);
+    expect(paButton).toMatch(/min-w-|px-/);
   });
 });

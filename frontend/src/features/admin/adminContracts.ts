@@ -1,4 +1,4 @@
-import type { AdminApiError, AdminItemsResponse } from "./adminTypes";
+import type { AdminApiError, AdminItemsResponse, AdminItemRow } from "./adminTypes";
 
 function toInt(value: unknown, fallback: number): number {
   const n = Number(value);
@@ -6,8 +6,21 @@ function toInt(value: unknown, fallback: number): number {
   return Math.trunc(n);
 }
 
-export function parseAdminItemsResponse(raw: any): AdminItemsResponse {
-  const items = Array.isArray(raw?.items) ? raw.items : [];
+interface RawAdminItemsResponse {
+  items?: unknown[];
+  page?: unknown;
+  pageSize?: unknown;
+  total?: unknown;
+}
+
+interface ApiErrorResponse {
+  error?: string;
+  details?: Record<string, unknown>;
+  [key: string]: unknown;
+}
+
+export function parseAdminItemsResponse(raw: RawAdminItemsResponse | null): AdminItemsResponse {
+  const items = Array.isArray(raw?.items) ? (raw.items as AdminItemRow[]) : [];
 
   return {
     page: toInt(raw?.page, 1),
@@ -17,7 +30,7 @@ export function parseAdminItemsResponse(raw: any): AdminItemsResponse {
   };
 }
 
-export function toApiError(status: number, data: any): AdminApiError {
+export function toApiError(status: number, data: ApiErrorResponse | null): AdminApiError {
   const code = typeof data?.error === "string" ? data.error : "request_failed";
   const err = new Error(code) as AdminApiError;
   err.status = status;

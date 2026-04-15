@@ -24,9 +24,10 @@ test("ui audit capture delegates the bulky viewport runtime helpers into scripts
 
 test("ui audit capture recognizes catalog shell, empty state, and error state as ready targets", () => {
   const source = readUiAuditSources();
-  assert.match(source, /topbar-search/);
-  assert.match(source, /catalog-empty/);
-  assert.match(source, /catalog-state/);
+  assert.match(source, /input\[type="search"\]/);
+  assert.match(source, /cat-group-tabs/);
+  assert.match(source, /cat-card/);
+  assert.match(source, /加载目录失败/);
 });
 
 test("ui audit capture creates a temporary viewer fixture and captures viewer screenshots", () => {

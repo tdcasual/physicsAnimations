@@ -16,7 +16,7 @@
 
   <div class="admin-workspace-grid admin-workspace-grid--balanced library-page-shell">
     <aside class="admin-page-stack">
-      <section class="admin-card library-metrics-panel">
+      <PACard variant="admin" class="library-metrics-panel">
         <p class="library-block-kicker">当前规模</p>
         <div class="library-metric-grid">
           <article class="library-metric-card">
@@ -32,9 +32,9 @@
             <strong>{{ vm.data.embedProfiles.length }}</strong>
           </article>
         </div>
-      </section>
+      </PACard>
     </aside>
-    <section class="admin-card library-focus-panel">
+    <PACard variant="admin" class="library-focus-panel">
       <div class="library-workspace-summary">
         <p class="library-block-kicker">桌面工作流</p>
         <h3>{{ vm.data.selectedFolder?.name || "先在左侧选择文件夹" }}</h3>
@@ -58,33 +58,32 @@
           }}
         </span>
       </div>
-    </section>
+    </PACard>
   </div>
 
-  <section class="library-mobile-taskbar admin-card">
+  <PACard variant="admin" class="library-mobile-taskbar">
     <div class="library-mobile-task-copy">
       <p class="library-block-kicker">手机端流程</p>
       <strong>{{ vm.data.selectedFolder?.name || "先选文件夹" }}</strong>
       <span>{{ mobileLibraryTaskSummary }}</span>
     </div>
     <div class="library-mobile-primary-actions">
-      <button type="button" class="btn btn-ghost" @click="focusMobileFolderList">选文件夹</button>
-      <button type="button" class="btn btn-ghost" @click="openMobileFolderCreateSheet">新建文件夹</button>
-      <button type="button" class="btn btn-primary" :disabled="!vm.data.selectedFolderId" @click="openMobileAssetSheet">上传/编辑资源</button>
+      <PAButton variant="ghost" @click="focusMobileFolderList">选文件夹</PAButton>
+      <PAButton variant="ghost" @click="openMobileFolderCreateSheet">新建文件夹</PAButton>
+      <PAButton variant="primary" :disabled="!vm.data.selectedFolderId" @click="openMobileAssetSheet">上传/编辑资源</PAButton>
     </div>
-  </section>
+  </PACard>
 
   <div class="library-workbench">
-    <aside class="library-sidebar admin-card">
+    <aside class="library-sidebar">
       <div ref="librarySidebarTopRef" class="library-sidebar-top library-mobile-focus-anchor" aria-hidden="true" />
       <div class="column-head">
         <h3>文件夹</h3>
         <div class="asset-meta">按分类与关键词定位课堂素材</div>
       </div>
-      <label class="field">
-        <span>文件夹搜索</span>
-        <input v-model="vm.filters.folderSearchQuery" class="field-input folder-search-input" type="text" placeholder="名称 / 分类 / ID" />
-      </label>
+      <PAField label="文件夹搜索">
+        <PAInput v-model="vm.filters.folderSearchQuery" class="folder-search-input" type="text" placeholder="名称 / 分类 / ID" />
+      </PAField>
       <div class="folder-list">
         <article
           v-for="folder in vm.filters.filteredFolders"
@@ -96,15 +95,14 @@
             <div class="folder-name">{{ folder.name || folder.id }}</div>
             <div class="folder-meta">{{ folder.categoryId }} · {{ folder.assetCount || 0 }} 个资源</div>
           </button>
-          <button
-            type="button"
-            class="btn btn-ghost"
+          <PAButton
+            variant="ghost"
             :disabled="vm.ui.savingFolder"
             @click="openFolderEditor(folder.id)"
           >
             编辑
-          </button>
-          <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingFolder" @click="vm.actions.removeFolder(folder.id)">删除</button>
+          </PAButton>
+          <PAButton variant="ghost" :disabled="vm.ui.savingFolder" @click="vm.actions.removeFolder(folder.id)">删除</PAButton>
         </article>
         <div v-if="!vm.ui.loading && vm.filters.filteredFolders.length === 0" class="empty">{{ folderListEmptyText() }}</div>
       </div>
@@ -113,45 +111,40 @@
         <div class="column-divider" />
 
         <h3>新建文件夹</h3>
-        <label class="field" :class="{ 'has-error': vm.actions.getFieldError('createFolderName') }">
-          <span>名称</span>
-          <input v-model="vm.drafts.folderName" class="field-input" type="text" :disabled="vm.ui.savingFolder" />
-          <div v-if="vm.actions.getFieldError('createFolderName')" class="field-error-text">{{ vm.actions.getFieldError("createFolderName") }}</div>
-        </label>
-        <label class="field">
-          <span>分类</span>
-          <select v-model="vm.drafts.folderCategoryId" class="field-input" :disabled="vm.ui.savingFolder">
+        <PAField label="名称" :error="vm.actions.getFieldError('createFolderName')">
+          <PAInput v-model="vm.drafts.folderName" type="text" :disabled="vm.ui.savingFolder" />
+        </PAField>
+        <PAField label="分类">
+          <select v-model="vm.drafts.folderCategoryId" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingFolder">
             <option v-for="option in vm.data.groupedCategoryOptions" :key="option.value" :value="option.value">
               {{ option.label }}
             </option>
           </select>
-        </label>
-        <label class="field">
-          <span>创建时封面（可选）</span>
-          <input id="library-create-cover-file" class="field-input" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
-        </label>
-        <div class="admin-actions">
-          <button type="button" class="btn btn-primary" :disabled="vm.ui.savingFolder" @click="vm.actions.createFolderEntry">创建文件夹</button>
-        </div>
+        </PAField>
+        <PAField label="创建时封面（可选）">
+          <input id="library-create-cover-file" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
+        </PAField>
+        <PAActions align="end">
+          <PAButton variant="primary" :disabled="vm.ui.savingFolder" @click="vm.actions.createFolderEntry">创建文件夹</PAButton>
+        </PAActions>
       </div>
     </aside>
 
     <div class="library-main-grid">
-      <section class="library-asset-area admin-card">
+      <PACard variant="admin" class="library-asset-area">
         <div class="column-head">
           <h3>资源列表</h3>
           <div class="selected-folder">{{ vm.data.selectedFolder?.name || "未选择文件夹" }}</div>
         </div>
-        <label class="field">
-          <span>资源搜索</span>
-          <input
+        <PAField label="资源搜索">
+          <PAInput
             v-model="vm.filters.assetSearchQuery"
-            class="field-input asset-search-input"
+            class="asset-search-input"
             type="text"
             :disabled="!vm.data.selectedFolderId"
             placeholder="显示名 / 源文件名 / 平台"
           />
-        </label>
+        </PAField>
         <div v-if="vm.data.selectedFolderId" class="library-mobile-tools">
           <button
             type="button"
@@ -169,33 +162,30 @@
         </div>
         <div id="library-mobile-tools-body" :class="['library-mobile-tools-body', { 'is-open': mobileLibraryToolsOpen }]">
           <div class="asset-filter-row">
-            <label class="field">
-              <span>打开方式筛选</span>
-              <select v-model="vm.filters.assetModeFilter" class="field-input asset-mode-filter">
+            <PAField label="打开方式筛选">
+              <select v-model="vm.filters.assetModeFilter" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm asset-mode-filter">
                 <option value="all">全部</option>
                 <option value="embed">演示</option>
                 <option value="download">仅下载</option>
               </select>
-            </label>
-            <label class="field">
-              <span>Embed 平台筛选</span>
-              <select v-model="vm.filters.assetEmbedProfileFilter" class="field-input asset-profile-filter">
+            </PAField>
+            <PAField label="Embed 平台筛选">
+              <select v-model="vm.filters.assetEmbedProfileFilter" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm asset-profile-filter">
                 <option value="all">全部</option>
                 <option value="none">仅自动适配</option>
                 <option v-for="profile in vm.data.embedProfiles" :key="profile.id" :value="profile.id">
                   {{ profile.name || profile.id }}
                 </option>
               </select>
-            </label>
-            <label class="field">
-              <span>排序</span>
-              <select v-model="vm.filters.assetSortMode" class="field-input asset-sort-select">
+            </PAField>
+            <PAField label="排序">
+              <select v-model="vm.filters.assetSortMode" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm asset-sort-select">
                 <option value="updated_desc">更新时间（新到旧）</option>
                 <option value="updated_asc">更新时间（旧到新）</option>
                 <option value="name_asc">名称（A-Z）</option>
                 <option value="name_desc">名称（Z-A）</option>
               </select>
-            </label>
+            </PAField>
           </div>
           <div v-if="vm.data.selectedFolderId" class="asset-batch-toolbar">
             <label class="batch-select-all">
@@ -208,35 +198,34 @@
               全选当前筛选
             </label>
             <div class="asset-meta">已选 {{ vm.selection.selectedAssetCount }}</div>
-            <select v-model="vm.selection.assetBatchMoveFolderId" class="field-input batch-move-folder" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets">
+            <select v-model="vm.selection.assetBatchMoveFolderId" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm batch-move-folder" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets">
               <option value="">移动到...</option>
               <option v-for="folder in vm.data.folders" :key="folder.id" :value="folder.id">
                 {{ folder.name || folder.id }}
               </option>
             </select>
-            <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets || !vm.selection.assetBatchMoveFolderId" @click="vm.actions.runAssetBatchMove">
+            <PAButton variant="ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets || !vm.selection.assetBatchMoveFolderId" @click="vm.actions.runAssetBatchMove">
               批量移动
-            </button>
+            </PAButton>
             <details class="batch-more-menu">
-              <summary class="btn btn-ghost">更多批量操作</summary>
+              <summary class="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md border border-transparent text-sm font-medium hover:bg-muted cursor-pointer">更多批量操作</summary>
               <div class="batch-more-menu-body">
-                <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchOpenMode('embed')">
+                <PAButton variant="ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchOpenMode('embed')">
                   批量设为演示
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-ghost"
+                </PAButton>
+                <PAButton
+                  variant="ghost"
                   :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets"
                   @click="vm.actions.runAssetBatchOpenMode('download')"
                 >
                   批量设为下载
-                </button>
-                <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchDelete">
+                </PAButton>
+                <PAButton variant="ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasSelectedAssets" @click="vm.actions.runAssetBatchDelete">
                   批量删除
-                </button>
-                <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasUndoAssets" @click="vm.actions.runAssetBatchUndo">
+                </PAButton>
+                <PAButton variant="ghost" :disabled="vm.ui.savingAsset || !vm.selection.hasUndoAssets" @click="vm.actions.runAssetBatchUndo">
                   撤销最近删除
-                </button>
+                </PAButton>
               </div>
             </details>
           </div>
@@ -278,20 +267,19 @@
               <div v-if="asset.embedProfileId" class="asset-meta">Embed 平台：{{ asset.embedProfileId }}</div>
             </div>
             <div class="asset-actions-inline">
-              <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="openAssetEditor(asset)">编辑</button>
+              <PAButton variant="ghost" :disabled="vm.ui.savingAsset" @click="openAssetEditor(asset)">编辑</PAButton>
               <details class="asset-more-menu">
-                <summary class="btn btn-ghost">更多</summary>
+                <summary class="inline-flex items-center justify-center h-10 px-4 py-2 rounded-md border border-transparent text-sm font-medium hover:bg-muted cursor-pointer">更多</summary>
                 <div class="asset-more-menu-body">
-                  <button
-                    type="button"
-                    class="btn btn-ghost"
+                  <PAButton
+                    variant="ghost"
                     :disabled="vm.ui.savingAsset"
                     @click="vm.actions.switchAssetOpenMode(asset, asset.openMode === 'embed' ? 'download' : 'embed')"
                   >
                     {{ asset.openMode === "embed" ? "设为仅下载" : "设为演示" }}
-                  </button>
-                  <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.renameAssetDisplayName(asset)">重命名显示名</button>
-                  <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.removeAsset(asset.id)">删除</button>
+                  </PAButton>
+                  <PAButton variant="ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.renameAssetDisplayName(asset)">重命名显示名</PAButton>
+                  <PAButton variant="ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.removeAsset(asset.id)">删除</PAButton>
                 </div>
               </details>
             </div>
@@ -322,14 +310,14 @@
                 <div class="asset-meta">{{ asset.deletedAt ? `删除时间：${asset.deletedAt}` : "已删除" }}</div>
               </div>
               <div class="asset-actions-inline">
-                <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.restoreDeletedAsset(asset.id)">恢复</button>
-                <button type="button" class="btn btn-danger" :disabled="vm.ui.savingAsset" @click="vm.actions.removeDeletedAssetPermanently(asset)">永久删除</button>
+                <PAButton variant="ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.restoreDeletedAsset(asset.id)">恢复</PAButton>
+                <PAButton variant="danger" :disabled="vm.ui.savingAsset" @click="vm.actions.removeDeletedAssetPermanently(asset)">永久删除</PAButton>
               </div>
             </article>
             <div v-if="vm.data.deletedAssets.length === 0" class="empty">当前文件夹暂无已删除资源。</div>
           </div>
         </div>
-      </section>
+      </PACard>
 
       <button
         v-if="isMobileLibraryViewport && isMobileLibrarySheetOpen"
@@ -349,35 +337,31 @@
             <p class="library-block-kicker">移动端工具</p>
             <strong>{{ mobileLibrarySheetTitle }}</strong>
           </div>
-          <button type="button" class="btn btn-ghost" @click="closeMobileLibrarySheet">关闭</button>
+          <PAButton variant="ghost" @click="closeMobileLibrarySheet">关闭</PAButton>
         </div>
 
-        <section v-if="activeMobileLibrarySheet === 'folder-create'" class="panel-section">
+        <PACard v-if="activeMobileLibrarySheet === 'folder-create'" class="panel-section">
           <div class="panel-section-body">
             <h3>新建文件夹</h3>
-            <label class="field" :class="{ 'has-error': vm.actions.getFieldError('createFolderName') }">
-              <span>名称</span>
-              <input v-model="vm.drafts.folderName" class="field-input" type="text" :disabled="vm.ui.savingFolder" />
-              <div v-if="vm.actions.getFieldError('createFolderName')" class="field-error-text">{{ vm.actions.getFieldError("createFolderName") }}</div>
-            </label>
-            <label class="field">
-              <span>分类</span>
-              <select v-model="vm.drafts.folderCategoryId" class="field-input" :disabled="vm.ui.savingFolder">
+            <PAField label="名称" :error="vm.actions.getFieldError('createFolderName')">
+              <PAInput v-model="vm.drafts.folderName" type="text" :disabled="vm.ui.savingFolder" />
+            </PAField>
+            <PAField label="分类">
+              <select v-model="vm.drafts.folderCategoryId" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingFolder">
                 <option v-for="option in vm.data.groupedCategoryOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
               </select>
-            </label>
-            <label class="field">
-              <span>创建时封面（可选）</span>
-              <input id="library-create-cover-file-sheet" class="field-input" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
-            </label>
-            <div class="admin-actions">
-              <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingFolder" @click="closeMobileLibrarySheet">取消</button>
-              <button type="button" class="btn btn-primary" :disabled="vm.ui.savingFolder" @click="vm.actions.createFolderEntry">创建文件夹</button>
-            </div>
+            </PAField>
+            <PAField label="创建时封面（可选）">
+              <input id="library-create-cover-file-sheet" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
+            </PAField>
+            <PAActions align="end">
+              <PAButton variant="ghost" :disabled="vm.ui.savingFolder" @click="closeMobileLibrarySheet">取消</PAButton>
+              <PAButton variant="primary" :disabled="vm.ui.savingFolder" @click="vm.actions.createFolderEntry">创建文件夹</PAButton>
+            </PAActions>
           </div>
-        </section>
+        </PACard>
 
         <template v-else>
           <div class="library-panel-tabs">
@@ -401,28 +385,24 @@
                 <span class="asset-meta">{{ vm.actions.isPanelSectionOpen("folder:meta") ? "收起" : "展开" }}</span>
               </button>
               <div v-if="vm.actions.isPanelSectionOpen('folder:meta')" class="panel-section-body">
-                <div class="field">
-                  <span>当前文件夹</span>
+                <PAField label="当前文件夹">
                   <div class="selected-folder">{{ vm.data.selectedFolder?.name || "未选择" }}</div>
-                </div>
-                <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editFolderName') }">
-                  <span>名称</span>
-                  <input v-model="vm.drafts.folderEditName" class="field-input" type="text" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" />
-                  <div v-if="vm.actions.getFieldError('editFolderName')" class="field-error-text">{{ vm.actions.getFieldError("editFolderName") }}</div>
-                </label>
-                <label class="field">
-                  <span>分类</span>
-                  <select v-model="vm.drafts.folderEditCategoryId" class="field-input" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId">
+                </PAField>
+                <PAField label="名称" :error="vm.actions.getFieldError('editFolderName')">
+                  <PAInput v-model="vm.drafts.folderEditName" type="text" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" />
+                </PAField>
+                <PAField label="分类">
+                  <select v-model="vm.drafts.folderEditCategoryId" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId">
                     <option v-for="option in vm.data.groupedCategoryOptions" :key="option.value" :value="option.value">
                       {{ option.label }}
                     </option>
                   </select>
-                </label>
-                <div class="admin-actions">
-                  <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @click="vm.actions.saveFolderMeta">
+                </PAField>
+                <PAActions align="end">
+                  <PAButton variant="ghost" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @click="vm.actions.saveFolderMeta">
                     保存文件夹信息
-                  </button>
-                </div>
+                  </PAButton>
+                </PAActions>
               </div>
             </div>
 
@@ -432,13 +412,12 @@
                 <span class="asset-meta">{{ vm.actions.isPanelSectionOpen("folder:cover") ? "收起" : "展开" }}</span>
               </button>
               <div v-if="vm.actions.isPanelSectionOpen('folder:cover')" class="panel-section-body">
-                <label class="field">
-                  <span>更改封面</span>
-                  <input id="library-cover-file" class="field-input" type="file" accept="image/*" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @change="vm.actions.onCoverFileChange" />
-                </label>
-                <div class="admin-actions">
-                  <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @click="vm.actions.uploadCover">上传封面</button>
-                </div>
+                <PAField label="更改封面">
+                  <input id="library-cover-file" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @change="vm.actions.onCoverFileChange" />
+                </PAField>
+                <PAActions align="end">
+                  <PAButton variant="ghost" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @click="vm.actions.uploadCover">上传封面</PAButton>
+                </PAActions>
               </div>
             </div>
           </FolderPanel>
@@ -452,65 +431,52 @@
                 <span class="asset-meta">{{ vm.actions.isPanelSectionOpen("asset:upload") ? "收起" : "展开" }}</span>
               </button>
               <div v-if="vm.actions.isPanelSectionOpen('asset:upload')" class="panel-section-body">
-                <label class="field" :class="{ 'has-error': vm.actions.getFieldError('uploadAssetFile') }">
-                  <span>资源文件</span>
+                <PAField label="资源文件" :error="vm.actions.getFieldError('uploadAssetFile')">
                   <input
                     id="library-asset-file"
-                    class="field-input"
+                    class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     type="file"
                     accept=".ggb,.html,.htm,.json,.zip,application/vnd.geogebra.file,text/html,application/json,application/zip"
                     :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId"
                     @change="vm.actions.onAssetFileChange"
                   />
-                  <div v-if="vm.actions.getFieldError('uploadAssetFile')" class="field-error-text">{{ vm.actions.getFieldError("uploadAssetFile") }}</div>
-                </label>
-                <label class="field">
-                  <span>资源显示名称（可选）</span>
-                  <input v-model="vm.drafts.assetDisplayName" class="field-input" type="text" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId" placeholder="例如：力学-抛体运动演示" />
-                </label>
-                <label class="field">
-                  <span>解析方式</span>
-                  <select v-model="vm.drafts.assetParserMode" class="field-input" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId">
+                </PAField>
+                <PAField label="资源显示名称（可选）">
+                  <PAInput v-model="vm.drafts.assetDisplayName" type="text" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId" placeholder="例如：力学-抛体运动演示" />
+                </PAField>
+                <PAField label="解析方式">
+                  <select v-model="vm.drafts.assetParserMode" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId">
                     <option value="auto">自动识别（.ggb / PhET HTML）</option>
                     <option value="profile">指定 Embed 平台</option>
                   </select>
-                </label>
-                <label v-if="vm.drafts.assetParserMode === 'profile'" class="field" :class="{ 'has-error': vm.actions.getFieldError('uploadAssetEmbedProfile') }">
-                  <span>Embed 平台</span>
-                  <select v-model="vm.drafts.assetEmbedProfileId" class="field-input" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId">
+                </PAField>
+                <PAField v-if="vm.drafts.assetParserMode === 'profile'" label="Embed 平台" :error="vm.actions.getFieldError('uploadAssetEmbedProfile')">
+                  <select v-model="vm.drafts.assetEmbedProfileId" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId">
                     <option v-for="profile in vm.data.selectableEmbedProfiles" :key="profile.id" :value="profile.id">
                       {{ profile.name }} ({{ profile.id }})
                     </option>
                   </select>
-                  <div v-if="vm.actions.getFieldError('uploadAssetEmbedProfile')" class="field-error-text">
-                    {{ vm.actions.getFieldError("uploadAssetEmbedProfile") }}
-                  </div>
-                </label>
-                <label v-if="vm.drafts.assetParserMode === 'profile'" class="field" :class="{ 'has-error': vm.actions.getFieldError('uploadAssetEmbedOptionsJson') }">
-                  <span>Embed 参数 JSON（可选）</span>
-                  <textarea
+                </PAField>
+                <PAField v-if="vm.drafts.assetParserMode === 'profile'" label="Embed 参数 JSON（可选）" :error="vm.actions.getFieldError('uploadAssetEmbedOptionsJson')">
+                  <PAInput
                     v-model="vm.drafts.assetEmbedOptionsJson"
-                    class="field-input"
+                    type="textarea"
                     rows="4"
                     :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId"
                     placeholder='例如：{"mode":"view","autoplay":true}'
                   />
-                  <div v-if="vm.actions.getFieldError('uploadAssetEmbedOptionsJson')" class="field-error-text">
-                    {{ vm.actions.getFieldError("uploadAssetEmbedOptionsJson") }}
-                  </div>
-                </label>
-                <label class="field">
-                  <span>打开方式</span>
-                  <select v-model="vm.drafts.openMode" class="field-input" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId">
+                </PAField>
+                <PAField label="打开方式">
+                  <select v-model="vm.drafts.openMode" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId">
                     <option value="embed">演示（默认）</option>
                     <option value="download">仅下载原文件</option>
                   </select>
-                </label>
-                <div class="admin-actions">
-                  <button type="button" class="btn btn-primary" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId" @click="vm.actions.uploadAssetEntry">
+                </PAField>
+                <PAActions align="end">
+                  <PAButton variant="primary" :disabled="vm.ui.savingAsset || !vm.data.selectedFolderId" @click="vm.actions.uploadAssetEntry">
                     上传资源
-                  </button>
-                </div>
+                  </PAButton>
+                </PAActions>
               </div>
             </div>
 
@@ -522,60 +488,47 @@
               <div v-if="vm.actions.isPanelSectionOpen('asset:edit')" class="panel-section-body">
                 <div v-if="vm.drafts.editingAssetId" class="editor-panel">
                   <div v-if="vm.data.editingAsset" class="asset-meta">资源 ID：{{ vm.data.editingAsset.id }}</div>
-                  <label class="field">
-                    <span>显示名称</span>
-                    <input v-model="vm.drafts.assetEditDisplayName" class="field-input" type="text" :disabled="vm.ui.savingAsset" placeholder="留空则显示源文件名" />
-                  </label>
-                  <label class="field" :class="{ 'has-error': vm.actions.getFieldError('editAssetFolderId') }">
-                    <span>所属文件夹</span>
-                    <select v-model="vm.drafts.assetEditFolderId" class="field-input" :disabled="vm.ui.savingAsset">
+                  <PAField label="显示名称">
+                    <PAInput v-model="vm.drafts.assetEditDisplayName" type="text" :disabled="vm.ui.savingAsset" placeholder="留空则显示源文件名" />
+                  </PAField>
+                  <PAField label="所属文件夹" :error="vm.actions.getFieldError('editAssetFolderId')">
+                    <select v-model="vm.drafts.assetEditFolderId" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingAsset">
                       <option v-for="folder in vm.data.folders" :key="folder.id" :value="folder.id">
                         {{ folder.name || folder.id }}
                       </option>
                     </select>
-                    <div v-if="vm.actions.getFieldError('editAssetFolderId')" class="field-error-text">{{ vm.actions.getFieldError("editAssetFolderId") }}</div>
-                  </label>
-                  <label class="field">
-                    <span>解析方式</span>
-                    <select v-model="vm.drafts.assetEditParserMode" class="field-input" :disabled="vm.ui.savingAsset">
+                  </PAField>
+                  <PAField label="解析方式">
+                    <select v-model="vm.drafts.assetEditParserMode" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingAsset">
                       <option value="auto">自动识别</option>
                       <option value="profile">指定 Embed 平台</option>
                     </select>
-                  </label>
-                  <label v-if="vm.drafts.assetEditParserMode === 'profile'" class="field" :class="{ 'has-error': vm.actions.getFieldError('editAssetEmbedProfile') }">
-                    <span>Embed 平台</span>
-                    <select v-model="vm.drafts.assetEditEmbedProfileId" class="field-input" :disabled="vm.ui.savingAsset">
+                  </PAField>
+                  <PAField v-if="vm.drafts.assetEditParserMode === 'profile'" label="Embed 平台" :error="vm.actions.getFieldError('editAssetEmbedProfile')">
+                    <select v-model="vm.drafts.assetEditEmbedProfileId" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingAsset">
                       <option v-for="profile in vm.data.selectableEmbedProfiles" :key="profile.id" :value="profile.id">
                         {{ profile.name }} ({{ profile.id }})
                       </option>
                     </select>
-                    <div v-if="vm.actions.getFieldError('editAssetEmbedProfile')" class="field-error-text">
-                      {{ vm.actions.getFieldError("editAssetEmbedProfile") }}
-                    </div>
-                  </label>
-                  <label v-if="vm.drafts.assetEditParserMode === 'profile'" class="field" :class="{ 'has-error': vm.actions.getFieldError('editAssetEmbedOptionsJson') }">
-                    <span>Embed 参数 JSON</span>
-                    <textarea
+                  </PAField>
+                  <PAField v-if="vm.drafts.assetEditParserMode === 'profile'" label="Embed 参数 JSON" :error="vm.actions.getFieldError('editAssetEmbedOptionsJson')">
+                    <PAInput
                       v-model="vm.drafts.assetEditEmbedOptionsJson"
-                      class="field-input"
+                      type="textarea"
                       rows="4"
                       :disabled="vm.ui.savingAsset"
                       placeholder='例如：{"mode":"view","autoplay":true}'
                     />
-                    <div v-if="vm.actions.getFieldError('editAssetEmbedOptionsJson')" class="field-error-text">
-                      {{ vm.actions.getFieldError("editAssetEmbedOptionsJson") }}
-                    </div>
-                  </label>
-                  <label class="field">
-                    <span>打开方式</span>
-                    <select v-model="vm.drafts.assetEditOpenMode" class="field-input" :disabled="vm.ui.savingAsset">
+                  </PAField>
+                  <PAField label="打开方式">
+                    <select v-model="vm.drafts.assetEditOpenMode" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="vm.ui.savingAsset">
                       <option value="embed">演示</option>
                       <option value="download">仅下载</option>
                     </select>
-                  </label>
+                  </PAField>
                   <div class="asset-actions-inline">
-                    <button type="button" class="btn btn-primary" :disabled="vm.ui.savingAsset" @click="vm.actions.saveAssetEdit">保存资源</button>
-                    <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.cancelAssetEdit">取消</button>
+                    <PAButton variant="primary" :disabled="vm.ui.savingAsset" @click="vm.actions.saveAssetEdit">保存资源</PAButton>
+                    <PAButton variant="ghost" :disabled="vm.ui.savingAsset" @click="vm.actions.cancelAssetEdit">取消</PAButton>
                   </div>
                 </div>
                 <div v-else class="empty">选择资源以编辑</div>
@@ -593,15 +546,14 @@
                 <span class="asset-meta">{{ vm.actions.isPanelSectionOpen("embed:list") ? "收起" : "展开" }}</span>
               </button>
               <div v-if="vm.actions.isPanelSectionOpen('embed:list')" class="panel-section-body">
-                <label class="field">
-                  <span>平台搜索</span>
-                  <input
+                <PAField label="平台搜索">
+                  <PAInput
                     v-model="vm.filters.profileSearchQuery"
-                    class="field-input profile-search-input"
+                    class="profile-search-input"
                     type="text"
                     placeholder="名称 / ID / 脚本地址"
                   />
-                </label>
+                </PAField>
                 <div class="asset-list">
                   <article v-for="profile in vm.filters.filteredEmbedProfiles" :key="profile.id" class="asset-item">
                     <div class="asset-main">
@@ -614,9 +566,9 @@
                       <div class="asset-meta">{{ profile.enabled === false ? "禁用" : "启用" }}</div>
                     </div>
                     <div class="asset-actions-inline">
-                      <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.startEditEmbedProfile(profile)">编辑</button>
-                      <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.syncEmbedProfileEntry(profile.id)">手动更新</button>
-                      <button type="button" class="btn btn-ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.removeEmbedProfile(profile.id)">删除</button>
+                      <PAButton variant="ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.startEditEmbedProfile(profile)">编辑</PAButton>
+                      <PAButton variant="ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.syncEmbedProfileEntry(profile.id)">手动更新</PAButton>
+                      <PAButton variant="ghost" :disabled="vm.ui.savingEmbed" @click="vm.actions.removeEmbedProfile(profile.id)">删除</PAButton>
                     </div>
                   </article>
                   <div v-if="!vm.ui.loading && vm.filters.filteredEmbedProfiles.length === 0" class="empty">{{ embedProfilesEmptyText() }}</div>
@@ -634,15 +586,15 @@
             </button>
             <div v-if="vm.actions.isPanelSectionOpen('recent:log')" class="recent-action-list">
               <div class="recent-action-tools">
-                <select v-model="vm.panels.operationLogFilter" class="field-input operation-log-filter">
+                <select v-model="vm.panels.operationLogFilter" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm operation-log-filter">
                   <option value="all">全部</option>
                   <option value="success">成功</option>
                   <option value="error">失败</option>
                   <option value="info">信息</option>
                 </select>
-                <button type="button" class="btn btn-ghost" :disabled="vm.logs.operationLogs.length === 0" @click="vm.logs.clearOperationLogs">
+                <PAButton variant="ghost" :disabled="vm.logs.operationLogs.length === 0" @click="vm.logs.clearOperationLogs">
                   清空记录
-                </button>
+                </PAButton>
               </div>
               <article v-for="item in vm.logs.filteredOperationLogs" :key="item.id" class="recent-action-item" :class="item.level">
                 <div class="asset-meta">{{ item.message }}</div>

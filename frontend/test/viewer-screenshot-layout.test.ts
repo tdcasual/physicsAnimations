@@ -6,45 +6,32 @@ function read(relPath: string): string {
 }
 
 describe("viewer screenshot layout", () => {
-  it("takes the iframe out of layout when screenshot preview is active", () => {
-    const source = [
-      read("src/views/ViewerView.vue"),
-      read("src/components/viewer/ViewerStageShell.vue"),
-    ].join("\n");
-    expect(source).toMatch(/class="viewer-stage-shell"/);
-    expect(source).toMatch(/viewer-stage-shell--screenshot': props\.screenshotVisible/);
-    expect(source).toMatch(/viewer-stage-shell--interactive': props\.interactiveStarted && !props\.screenshotVisible/);
-    expect(source).toMatch(/class="viewer-stage-frame(?: [^"]+)?"/);
-    expect(source).toMatch(/v-show="!props\.screenshotVisible"/);
+  it("uses aspect ratio and rounded corners for the stage", () => {
+    const shell = read("src/components/viewer/ViewerStageShell.vue");
+
+    expect(shell).toMatch(/rounded-2xl/);
+    expect(shell).toMatch(/rounded-xl/);
   });
 
-  it("lets the screenshot image define the stage height in screenshot mode", () => {
-    const source = [
-      read("src/views/ViewerView.vue"),
-      read("src/components/viewer/ViewerStageShell.vue"),
-    ].join("\n");
-    expect(source).toMatch(/\.viewer-stage-frame--screenshot \.viewer-shot\s*\{[\s\S]*position:\s*static/);
-    expect(source).toMatch(/\.viewer-stage-frame--screenshot \.viewer-shot\s*\{[\s\S]*height:\s*auto/);
+  it("keeps screenshot in a contained stage with object-fit", () => {
+    const shell = read("src/components/viewer/ViewerStageShell.vue");
+
+    expect(shell).toMatch(/object-contain/);
+    expect(shell).toMatch(/absolute inset-0/);
   });
 
-  it("keeps the stage shell single-column so the screen stays primary across breakpoints", () => {
-    const source = [
-      read("src/views/ViewerView.vue"),
-      read("src/components/viewer/ViewerStageShell.vue"),
-    ].join("\n");
+  it("defers iframe mounting until interactive mode starts", () => {
+    const shell = read("src/components/viewer/ViewerStageShell.vue");
 
-    expect(source).toMatch(/\.viewer-stage-shell\s*\{[\s\S]*display:\s*grid/);
-    expect(source).not.toMatch(/class="viewer-stage-column"/);
-    expect(source).not.toMatch(/class="viewer-rail"/);
+    expect(shell).toMatch(/v-if="props\.interactiveStarted"/);
+    expect(shell).toMatch(/v-show="!props\.screenshotVisible"/);
   });
 
-  it("uses a compact stage frame with tighter spacing on phones", () => {
-    const source = [
-      read("src/views/ViewerView.vue"),
-      read("src/components/viewer/ViewerStageShell.vue"),
-    ].join("\n");
+  it("provides minimal stage chrome while loading and error states", () => {
+    const viewer = read("src/views/ViewerView.vue");
 
-    expect(source).toMatch(/class="viewer-stage-frame viewer-stage-frame--priority"/);
-    expect(source).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.viewer-stage-frame--priority\s*\{[\s\S]*padding:\s*10px/);
+    expect(viewer).toMatch(/loading/);
+    expect(viewer).toMatch(/model\?\.status === 'error'/);
+    expect(viewer).toMatch(/showDeferredFallback/);
   });
 });

@@ -32,3 +32,32 @@ Object.defineProperty(globalThis, "localStorage", {
   writable: true,
   value: localStorageShim,
 });
+
+// Early mock for matchMedia (needed by GSAP before tests run)
+Object.defineProperty(globalThis, "matchMedia", {
+  configurable: true,
+  enumerable: true,
+  writable: true,
+  value: (query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  }),
+});
+
+// Early mock for ResizeObserver
+Object.defineProperty(globalThis, "ResizeObserver", {
+  configurable: true,
+  enumerable: true,
+  writable: true,
+  value: () => ({
+    observe: () => {},
+    unobserve: () => {},
+    disconnect: () => {},
+  }),
+});

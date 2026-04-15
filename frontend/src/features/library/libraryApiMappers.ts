@@ -79,70 +79,73 @@ function toSyncCache(value: unknown): LibraryEmbedProfile["syncCache"] {
   return out;
 }
 
-export function toFolder(value: any): LibraryFolder {
+export function toFolder(value: unknown): LibraryFolder {
+  const v = value as Record<string, unknown>;
   return {
-    id: String(value?.id || ""),
-    name: String(value?.name || ""),
-    categoryId: String(value?.categoryId || "other"),
-    coverType: value?.coverType === "image" ? "image" : "blank",
-    coverPath: String(value?.coverPath || ""),
-    parentId: toOptionalId(value?.parentId),
-    order: toFiniteNumber(value?.order, 0),
-    assetCount: toFiniteNumber(value?.assetCount, 0),
-    createdAt: String(value?.createdAt || ""),
-    updatedAt: String(value?.updatedAt || ""),
+    id: String(v?.id || ""),
+    name: String(v?.name || ""),
+    categoryId: String(v?.categoryId || "other"),
+    coverType: v?.coverType === "image" ? "image" : "blank",
+    coverPath: String(v?.coverPath || ""),
+    parentId: toOptionalId(v?.parentId),
+    order: toFiniteNumber(v?.order, 0),
+    assetCount: toFiniteNumber(v?.assetCount, 0),
+    createdAt: String(v?.createdAt || ""),
+    updatedAt: String(v?.updatedAt || ""),
   };
 }
 
-export function toAsset(value: any): LibraryAsset {
-  const deleted = value?.deleted === true;
+export function toAsset(value: unknown): LibraryAsset {
+  const v = value as Record<string, unknown>;
+  const deleted = v?.deleted === true;
   return {
-    id: String(value?.id || ""),
-    folderId: String(value?.folderId || ""),
-    adapterKey: String(value?.adapterKey || ""),
-    displayName: String(value?.displayName || ""),
-    fileName: String(value?.fileName || ""),
-    filePath: String(value?.filePath || ""),
-    fileSize: toFiniteNumber(value?.fileSize, 0),
-    openMode: toOpenMode(value?.openMode),
-    generatedEntryPath: String(value?.generatedEntryPath || ""),
-    embedProfileId: String(value?.embedProfileId || ""),
-    embedOptions: toObjectRecord(value?.embedOptions),
-    status: value?.status === "failed" ? "failed" : "ready",
+    id: String(v?.id || ""),
+    folderId: String(v?.folderId || ""),
+    adapterKey: String(v?.adapterKey || ""),
+    displayName: String(v?.displayName || ""),
+    fileName: String(v?.fileName || ""),
+    filePath: String(v?.filePath || ""),
+    fileSize: toFiniteNumber(v?.fileSize, 0),
+    openMode: toOpenMode(v?.openMode),
+    generatedEntryPath: String(v?.generatedEntryPath || ""),
+    embedProfileId: String(v?.embedProfileId || ""),
+    embedOptions: toObjectRecord(v?.embedOptions),
+    status: v?.status === "failed" ? "failed" : "ready",
     deleted,
-    deletedAt: deleted ? String(value?.deletedAt || "") : "",
-    createdAt: String(value?.createdAt || ""),
-    updatedAt: String(value?.updatedAt || ""),
+    deletedAt: deleted ? String(v?.deletedAt || "") : "",
+    createdAt: String(v?.createdAt || ""),
+    updatedAt: String(v?.updatedAt || ""),
   };
 }
 
-export function toEmbedProfile(value: any): LibraryEmbedProfile {
+export function toEmbedProfile(value: unknown): LibraryEmbedProfile {
+  const v = value as Record<string, unknown>;
   return {
-    id: String(value?.id || ""),
-    name: String(value?.name || ""),
-    scriptUrl: String(value?.scriptUrl || ""),
-    fallbackScriptUrl: String(value?.fallbackScriptUrl || ""),
-    viewerPath: String(value?.viewerPath || ""),
-    remoteScriptUrl: String(value?.remoteScriptUrl || value?.scriptUrl || ""),
-    remoteViewerPath: String(value?.remoteViewerPath || value?.viewerPath || ""),
-    syncStatus: String(value?.syncStatus || "pending"),
-    syncMessage: String(value?.syncMessage || ""),
-    lastSyncAt: String(value?.lastSyncAt || ""),
-    constructorName: String(value?.constructorName || "ElectricFieldApp"),
-    assetUrlOptionKey: String(value?.assetUrlOptionKey || "sceneUrl"),
-    matchExtensions: Array.isArray(value?.matchExtensions)
-      ? value.matchExtensions.map((item: unknown) => String(item || "").trim()).filter(Boolean)
+    id: String(v?.id || ""),
+    name: String(v?.name || ""),
+    scriptUrl: String(v?.scriptUrl || ""),
+    fallbackScriptUrl: String(v?.fallbackScriptUrl || ""),
+    viewerPath: String(v?.viewerPath || ""),
+    remoteScriptUrl: String(v?.remoteScriptUrl || v?.scriptUrl || ""),
+    remoteViewerPath: String(v?.remoteViewerPath || v?.viewerPath || ""),
+    syncStatus: String(v?.syncStatus || "pending"),
+    syncMessage: String(v?.syncMessage || ""),
+    lastSyncAt: String(v?.lastSyncAt || ""),
+    constructorName: String(v?.constructorName || "ElectricFieldApp"),
+    assetUrlOptionKey: String(v?.assetUrlOptionKey || "sceneUrl"),
+    matchExtensions: Array.isArray(v?.matchExtensions)
+      ? v.matchExtensions.map((item: unknown) => String(item || "").trim()).filter(Boolean)
       : [],
-    defaultOptions: toObjectRecord(value?.defaultOptions),
-    syncOptions: toSyncOptions(value?.syncOptions),
-    syncLastReport: toSyncReport(value?.syncLastReport),
-    syncCache: toSyncCache(value?.syncCache),
-    activeReleaseId: String(value?.activeReleaseId || ""),
-    releaseHistory: Array.isArray(value?.releaseHistory)
-      ? value.releaseHistory.map((item: unknown) => String(item || "").trim()).filter(Boolean)
+    defaultOptions: toObjectRecord(v?.defaultOptions),
+    syncOptions: toSyncOptions(v?.syncOptions),
+    syncLastReport: toSyncReport(v?.syncLastReport),
+    syncCache: toSyncCache(v?.syncCache),
+    activeReleaseId: String(v?.activeReleaseId || ""),
+    releaseHistory: Array.isArray(v?.releaseHistory)
+      ? v.releaseHistory.map((item: unknown) => String(item || "").trim()).filter(Boolean)
       : [],
-    enabled: value?.enabled !== false,
-    createdAt: String(value?.createdAt || ""),
-    updatedAt: String(value?.updatedAt || ""),
+    enabled: v?.enabled !== false,
+    createdAt: String(v?.createdAt || ""),
+    updatedAt: String(v?.updatedAt || ""),
   };
 }

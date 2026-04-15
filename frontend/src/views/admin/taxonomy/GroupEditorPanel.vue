@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { TaxonomyGroup } from "../../../features/admin/taxonomyUiState";
+import { PAButton, PACard, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 const props = defineProps<{
   saving: boolean;
@@ -89,26 +90,26 @@ const createCategoryHiddenModel = computed({
 </script>
 
 <template>
-  <div class="panel admin-card">
+  <PACard variant="admin" class="panel">
     <h3>新增大类</h3>
     <div class="form-grid">
-      <label class="field">
-        <span>大类 ID（英文/数字）</span>
-        <input v-model="createGroupIdModel" class="field-input" type="text" :disabled="saving" />
-      </label>
+      <PAField>
+        <template #label>大类 ID（英文/数字）</template>
+        <PAInput v-model="createGroupIdModel" :disabled="saving" />
+      </PAField>
 
-      <label class="field">
-        <span>标题</span>
-        <input v-model="createGroupTitleModel" class="field-input" type="text" :disabled="saving" />
-      </label>
+      <PAField>
+        <template #label>标题</template>
+        <PAInput v-model="createGroupTitleModel" :disabled="saving" />
+      </PAField>
 
       <details class="subaccordion" :open="createGroupHiddenModel || Number(createGroupOrderModel || 0) !== 0">
         <summary>高级设置</summary>
         <div class="form-grid subaccordion-body">
-          <label class="field">
-            <span>排序（越大越靠前）</span>
-            <input v-model.number="createGroupOrderModel" class="field-input" type="number" :disabled="saving" />
-          </label>
+          <PAField>
+            <template #label>排序（越大越靠前）</template>
+            <PAInput v-model="createGroupOrderModel" type="number" :disabled="saving" />
+          </PAField>
           <label class="checkbox">
             <input v-model="createGroupHiddenModel" type="checkbox" :disabled="saving" />
             <span>隐藏该大类（首页不显示）</span>
@@ -117,10 +118,10 @@ const createCategoryHiddenModel = computed({
       </details>
     </div>
 
-    <div class="actions admin-actions">
-      <button type="button" class="btn btn-ghost" :disabled="saving" @click="emit('reset-create-group')">重置</button>
-      <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('create-group')">创建</button>
-    </div>
+    <PAActions align="end">
+      <PAButton variant="ghost" :disabled="saving" @click="emit('reset-create-group')">重置</PAButton>
+      <PAButton :disabled="saving" @click="emit('create-group')">创建</PAButton>
+    </PAActions>
 
     <div
       v-if="actionFeedback"
@@ -139,18 +140,18 @@ const createCategoryHiddenModel = computed({
       </div>
 
       <div class="form-grid">
-        <label class="field field-span">
-          <span>标题</span>
-          <input v-model="groupFormTitleModel" class="field-input" type="text" :disabled="saving" />
-        </label>
+        <PAField class="field-span">
+          <template #label>标题</template>
+          <PAInput v-model="groupFormTitleModel" :disabled="saving" />
+        </PAField>
 
         <details class="subaccordion" :open="groupFormHiddenModel || Number(groupFormOrderModel || 0) !== 0">
           <summary>高级设置</summary>
           <div class="form-grid subaccordion-body">
-            <label class="field">
-              <span>排序（越大越靠前）</span>
-              <input v-model.number="groupFormOrderModel" class="field-input" type="number" :disabled="saving" />
-            </label>
+            <PAField>
+              <template #label>排序（越大越靠前）</template>
+              <PAInput v-model="groupFormOrderModel" type="number" :disabled="saving" />
+            </PAField>
             <label class="checkbox">
               <input v-model="groupFormHiddenModel" type="checkbox" :disabled="saving" />
               <span>隐藏该大类（首页不显示）</span>
@@ -159,38 +160,36 @@ const createCategoryHiddenModel = computed({
         </details>
       </div>
 
-      <div class="actions admin-actions">
-        <button
-          type="button"
-          class="btn"
-          :class="selectedGroup.id === defaultGroupId ? 'btn-ghost' : 'btn-danger'"
+      <PAActions align="end">
+        <PAButton
+          :variant="selectedGroup.id === defaultGroupId ? 'ghost' : 'destructive'"
           :disabled="saving"
           @click="emit('reset-or-delete-group')"
         >
           {{ selectedGroup.id === defaultGroupId ? "重置" : "删除" }}
-        </button>
-        <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('save-group')">保存</button>
-      </div>
+        </PAButton>
+        <PAButton :disabled="saving" @click="emit('save-group')">保存</PAButton>
+      </PAActions>
 
       <h3>新增二级分类</h3>
       <div class="form-grid">
-        <label class="field">
-          <span>分类 ID（英文/数字）</span>
-          <input id="taxonomy-category-create-id" v-model="createCategoryIdModel" class="field-input" type="text" :disabled="saving" />
-        </label>
+        <PAField>
+          <template #label>分类 ID（英文/数字）</template>
+          <PAInput id="taxonomy-category-create-id" v-model="createCategoryIdModel" :disabled="saving" />
+        </PAField>
 
-        <label class="field">
-          <span>标题</span>
-          <input v-model="createCategoryTitleModel" class="field-input" type="text" :disabled="saving" />
-        </label>
+        <PAField>
+          <template #label>标题</template>
+          <PAInput v-model="createCategoryTitleModel" :disabled="saving" />
+        </PAField>
 
         <details class="subaccordion" :open="createCategoryHiddenModel || Number(createCategoryOrderModel || 0) !== 0">
           <summary>高级设置</summary>
           <div class="form-grid subaccordion-body">
-            <label class="field">
-              <span>排序（越大越靠前）</span>
-              <input v-model.number="createCategoryOrderModel" class="field-input" type="number" :disabled="saving" />
-            </label>
+            <PAField>
+              <template #label>排序（越大越靠前）</template>
+              <PAInput v-model="createCategoryOrderModel" type="number" :disabled="saving" />
+            </PAField>
             <label class="checkbox">
               <input v-model="createCategoryHiddenModel" type="checkbox" :disabled="saving" />
               <span>隐藏该分类（首页不显示）</span>
@@ -199,19 +198,19 @@ const createCategoryHiddenModel = computed({
         </details>
       </div>
 
-      <div class="actions admin-actions">
-        <button type="button" class="btn btn-ghost" :disabled="saving" @click="emit('reset-create-category')">重置</button>
-        <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('create-category')">创建</button>
-      </div>
+      <PAActions align="end">
+        <PAButton variant="ghost" :disabled="saving" @click="emit('reset-create-category')">重置</PAButton>
+        <PAButton :disabled="saving" @click="emit('create-category')">创建</PAButton>
+      </PAActions>
     </template>
-  </div>
+  </PACard>
 </template>
 
 <style scoped>
 .panel {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -235,7 +234,7 @@ h3 {
 }
 
 .action-feedback.error {
-  color: var(--danger);
+  color: var(--destructive);
 }
 
 .action-feedback.success {
@@ -296,7 +295,7 @@ h3 {
     padding-top: 10px;
     padding-bottom: 2px;
     background:
-      linear-gradient(180deg, color-mix(in oklab, var(--surface) 35%, transparent), color-mix(in oklab, var(--surface) 96%, var(--paper)) 32%);
+      linear-gradient(180deg, color-mix(in oklab, var(--card) 35%, transparent), color-mix(in oklab, var(--card) 96%, var(--background)) 32%);
   }
 }
 </style>

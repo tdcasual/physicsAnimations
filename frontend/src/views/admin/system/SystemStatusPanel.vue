@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { SystemStorage } from "../../../features/admin/system/useSystemWizard";
+import { PACard } from "@/components/ui/patterns";
 
 defineProps<{
   loading: boolean;
@@ -9,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="panel admin-card">
+  <PACard variant="admin" class="panel">
     <h3>当前状态</h3>
     <div v-if="loading" class="empty">加载中...</div>
     <div v-else-if="storage" class="status-grid">
@@ -22,14 +23,14 @@ defineProps<{
       <div><span>WebDAV 密码：</span>{{ storage.webdav.hasPassword ? "已配置" : "未配置" }}</div>
       <div><span>上次同步：</span>{{ formatDate(storage.lastSyncedAt) }}</div>
     </div>
-  </div>
+  </PACard>
 </template>
 
 <style scoped>
 .panel {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
   display: grid;
   gap: 10px;

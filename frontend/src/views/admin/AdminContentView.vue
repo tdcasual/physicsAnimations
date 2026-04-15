@@ -5,6 +5,7 @@ import { useContentAdmin } from "../../features/admin/content/useContentAdmin";
 import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
 import ContentCreateForm from "./content/ContentCreateForm.vue";
 import ContentEditPanel from "./content/ContentEditPanel.vue";
+import { PACard } from "@/components/ui/patterns";
 import ContentListPanel from "./content/ContentListPanel.vue";
 
 const vm = reactive(useContentAdmin());
@@ -59,7 +60,7 @@ onBeforeUnmount(() => {
     </header>
 
     <div class="admin-workspace-grid">
-      <div class="list-panel admin-card">
+      <PACard variant="admin" class="list-panel">
         <ContentCreateForm
           :grouped-category-options="vm.groupedCategoryOptions"
           :link-category-id="vm.linkCategoryId"
@@ -91,7 +92,7 @@ onBeforeUnmount(() => {
           @remove-item="vm.removeItem"
           @load-more="vm.reloadItems({ reset: false })"
         />
-      </div>
+      </PACard>
 
       <button
         v-if="vm.selectedItem"
@@ -101,9 +102,11 @@ onBeforeUnmount(() => {
         @click="vm.resetEdit"
       />
 
-      <aside
+      <PACard
+        variant="admin"
+        as="aside"
         ref="contentEditorPanelRef"
-        :class="['editor-panel', 'editor-panel--sheet', 'admin-card', 'admin-mobile-focus-anchor', { 'is-open': isEditorSheetOpen }]"
+        :class="['editor-panel', 'editor-panel--sheet', 'admin-mobile-focus-anchor', { 'is-open': isEditorSheetOpen }]"
       >
         <ContentEditPanel
           :selected-item="vm.selectedItem"
@@ -132,7 +135,7 @@ onBeforeUnmount(() => {
           @close-edit="vm.resetEdit"
           @save-edit="vm.saveEdit"
         />
-      </aside>
+      </PACard>
     </div>
   </section>
 </template>
@@ -140,7 +143,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .admin-content-view {
   display: grid;
-  gap: 14px;
+  gap: 20px;
 }
 
 .list-panel,
@@ -188,63 +191,6 @@ h3 {
   flex-wrap: wrap;
 }
 
-:deep(.list-divider) {
-  border-top: 1px dashed var(--border);
-}
-
-:deep(.list-header) {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-:deep(.list-search) {
-  width: min(360px, 100%);
-}
-
-:deep(.item-card) {
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px;
-  display: grid;
-  gap: 10px;
-  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
-}
-
-:deep(.item-card.selected) {
-  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-  background: color-mix(in srgb, var(--primary) 9%, var(--surface));
-}
-
-:deep(.item-head) {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-:deep(.item-title) {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-:deep(.item-meta) {
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
-:deep(.item-actions) {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 .editor-header {
   display: flex;
   justify-content: space-between;
@@ -254,58 +200,37 @@ h3 {
 
 .editor-form {
   display: grid;
-  gap: 10px;
+  gap: 16px;
 }
 
 .editor-footer {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .action-feedback {
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
+  font-size: 13px;
+  color: var(--muted-foreground);
 }
 
 .action-feedback.error {
-  color: var(--danger);
+  color: var(--destructive);
 }
 
 .action-feedback.success {
-  color: var(--success);
+  color: var(--primary);
 }
 
 .checkbox {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: calc(13px * var(--ui-scale));
+  gap: 8px;
+  font-size: 14px;
 }
 
 .error-text {
-  color: var(--danger);
-  font-size: calc(13px * var(--ui-scale));
-}
-
-:deep(.empty) {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  color: var(--muted);
-}
-
-:deep(.list-footer) {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-:deep(.meta) {
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-  overflow-wrap: anywhere;
+  color: var(--destructive);
+  font-size: 14px;
 }
 
 @media (max-width: 1024px) {
@@ -318,6 +243,10 @@ h3 {
 }
 
 @media (max-width: 640px) {
+  .admin-content-view {
+    gap: 16px;
+  }
+
   .editor-sheet-backdrop {
     display: block;
     position: fixed;
@@ -325,54 +254,30 @@ h3 {
     z-index: calc(var(--z-modal) - 2);
     border: 0;
     padding: 0;
-    background: oklch(16% 0.025 250 / 0.32);
+    background: rgb(0 0 0 / 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 
   .editor-panel--sheet {
     position: fixed;
-    left: 12px;
-    right: 12px;
+    left: 16px;
+    right: 16px;
     bottom: 0;
     top: auto;
     z-index: calc(var(--z-modal) - 1);
     max-height: min(78dvh, 720px);
     overflow: auto;
-    border-radius: 22px 22px 0 0;
-    box-shadow: 0 -20px 48px -30px color-mix(in oklab, var(--accent) 28%, transparent);
-    transform: translateY(calc(100% + 16px));
-    transition: transform 180ms ease;
+    border-radius: 24px 24px 0 0;
+    box-shadow: 0 -20px 48px -20px rgb(0 0 0 / 0.2);
+    transform: translateY(calc(100% + 20px));
+    transition: transform 200ms ease;
     pointer-events: none;
   }
 
   .editor-panel--sheet.is-open {
     transform: translateY(0);
     pointer-events: auto;
-  }
-
-  :deep(.list-header) {
-    gap: 6px;
-  }
-
-  :deep(.list-search) {
-    width: 100%;
-  }
-
-  :deep(.item-head) {
-    gap: 8px;
-  }
-
-  :deep(.item-actions) {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    width: 100%;
-  }
-
-  :deep(.item-actions > *) {
-    min-width: 0;
-  }
-
-  :deep(.list-heading) {
-    display: none;
   }
 }
 </style>

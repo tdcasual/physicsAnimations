@@ -1,250 +1,226 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { RouterLink } from "vue-router";
-import CatalogQuickAccessBand from "../components/catalog/CatalogQuickAccessBand.vue";
-import CatalogTeacherQuickAccessArea from "../components/catalog/CatalogTeacherQuickAccessArea.vue";
-import { isCatalogAppRoute, normalizePublicUrl } from "../features/catalog/catalogLink";
-import { toggleFavoriteDemo } from "../features/catalog/favorites";
-import { useCatalogViewState } from "../features/catalog/useCatalogViewState";
-import { writeBackNavigationFallbackHash } from "../features/navigation/backNavigation";
-import { useCatalogViewChrome } from "./useCatalogViewChrome";
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { useCatalogViewState } from "@/features/catalog/useCatalogViewState";
+import { useCatalogTheme } from "@/features/catalog/theme";
+import { Skeleton } from "@/components/ui/skeleton";
+import type { gsap as GSAPType, ScrollTrigger as ScrollTriggerType } from "@/lib/gsap";
+
+import HeroSection from "./catalog/components/HeroSection.vue";
+import FilterTabs from "./catalog/components/FilterTabs.vue";
+import DemoCard from "./catalog/components/DemoCard.vue";
+import FolderCard from "./catalog/components/FolderCard.vue";
+import CatalogThemeSwitcher from "@/components/catalog/CatalogThemeSwitcher.vue";
 
 const {
   loading,
   loadError,
   view,
-  directGroups,
-  overflowGroups,
-  directCategories,
-  overflowCategories,
-  quickCategories,
-  hasCatalogGroups,
   filteredLibraryFolders,
-  recentItems,
-  favoriteItems,
-  favoriteIds,
-  currentItems,
-  recommendedItems,
-  libraryHighlights,
-  heroTitle,
-  getItemHref,
-  refreshTeacherQuickAccess,
   selectGroup,
   selectCategory,
+  getItemHref,
 } = useCatalogViewState();
+
+// 主题系统
+const { currentTheme, initTheme } = useCatalogTheme();
+
+const gridRef = ref<HTMLElement | null>(null);
+const hasAnimated = ref(false);
+let animationTimeoutId: number | null = null;
 
 function getFolderHref(folderId: string): string {
   const base = import.meta.env.BASE_URL || "/";
   return `${base.replace(/\/+$/, "/")}library/folder/${encodeURIComponent(folderId)}`;
 }
 
-function getCardNavigationComponent(href: string) {
-  return isCatalogAppRoute(href) ? RouterLink : "a";
+async function animateGrid() {
+  if (!gridRef.value) return;
+  const cards = gridRef.value.querySelectorAll(".gallery-card");
+  if (cards.length === 0) return;
+
+  const { initGsap } = await import("@/lib/gsap");
+  const { gsap, ScrollTrigger } = await initGsap();
+
+  gsap.fromTo(
+    cards,
+    { y: 60, opacity: 0, scale: 0.95 },
+    {
+      y: 0,
+      opacity: 1,
+      scale: 1,
+      duration: 0.6,
+      stagger: 0.08,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: gridRef.value,
+        start: "top 85%",
+        once: true,
+      } as ScrollTriggerType.Vars,
+    }
+  );
 }
 
-function getCardNavigationProps(href: string): Record<string, string> {
-  return isCatalogAppRoute(href) ? { to: href } : { href };
-}
+// Re-animate when content changes
+watch(
+  () => [view.value.activeGroupId, view.value.activeCategoryId, loading.value],
+  async ([, , isLoading]) => {
+    if (isLoading) return;
+    hasAnimated.value = false;
+    await nextTick();
+    animationTimeoutId = window.setTimeout(() => {
+      if (!hasAnimated.value) {
+        animateGrid();
+        hasAnimated.value = true;
+      }
+    }, 50);
+  },
+  { immediate: true }
+);
 
-function rememberWorkflowFallbackHash(hash: string) {
-  writeBackNavigationFallbackHash(hash);
-}
-
-function toggleCatalogFavorite(itemId: string) {
-  toggleFavoriteDemo(itemId);
-  refreshTeacherQuickAccess();
-}
-
-const { mobileFiltersOpen, mobileFilterTriggerRef, mobileFilterPanelRef, chooseGroup, chooseCategory } = useCatalogViewChrome({
-  loading,
-  loadError,
-  heroTitle,
-  selectGroup,
-  selectCategory,
+onUnmounted(() => {
+  if (animationTimeoutId !== null) {
+    clearTimeout(animationTimeoutId);
+  }
 });
 
-const stageFeaturedKind = computed<"current" | "recommended" | "archive" | null>(() => {
-  if (currentItems.value.length) return "current";
-  if (recommendedItems.value.length) return "recommended";
-  if (view.value.items.length) return "archive";
-  return null;
+onMounted(() => {
+  // 初始化主题
+  initTheme();
+  
+  if (!loading.value && !hasAnimated.value) {
+    animateGrid();
+    hasAnimated.value = true;
+  }
 });
 
-const stageFeaturedItems = computed(() => {
-  if (stageFeaturedKind.value === "current") return currentItems.value.slice(0, 4);
-  if (stageFeaturedKind.value === "recommended") return recommendedItems.value.slice(0, 4);
-  if (stageFeaturedKind.value === "archive") return view.value.items.slice(0, 4);
-  return [];
+const showEmptyState = computed(() => {
+  return !loading.value && view.value.items.length === 0 && filteredLibraryFolders.value.length === 0;
 });
 
-const stageFeaturedTitle = computed(() => {
-  if (stageFeaturedKind.value === "current") return "当前分类";
-  if (stageFeaturedKind.value === "recommended") return "推荐演示";
-  if (stageFeaturedKind.value === "archive") return "先从这些演示开始";
-  return "";
+const emptyMessage = computed(() => {
+  if (view.value.hasAnyItems) return "没有匹配的作品。";
+  return "未找到任何作品。";
 });
 
-const stageFeaturedCopy = computed(() => {
-  if (stageFeaturedKind.value === "current") return "桌面端优先把当前筛选里的演示放到首屏，浏览时不用先穿过辅助信息区。";
-  if (stageFeaturedKind.value === "recommended") return "当前分类还没形成清晰入口时，先从推荐演示进入，再继续展开完整目录。";
-  if (stageFeaturedKind.value === "archive") return "当前没有前置精选时，先给出一组可直接打开的演示，避免首屏只剩导航与空状态。";
-  return "";
+// Calculate total items for display
+const totalItems = computed(() => {
+  return view.value.items.length + filteredLibraryFolders.value.length;
 });
 
-const showCurrentSection = computed(() => hasCatalogGroups.value && currentItems.value.length > 0 && stageFeaturedKind.value !== "current");
-const showRecommendedSection = computed(() => recommendedItems.value.length > 0 && stageFeaturedKind.value !== "recommended");
+// Optimize category title lookup
+const activeCategoryTitle = computed(() => {
+  return view.value.categories.find(c => c.id === view.activeCategoryId)?.title || '全部演示';
+});
 </script>
 
 <template>
-  <section class="catalog-view">
-    <div v-if="loading" class="catalog-state">正在加载作品...</div>
-    <div v-else-if="loadError" class="catalog-state">{{ loadError }}</div>
-    <template v-else>
-      <section class="catalog-stage">
-        <h1 class="sr-only">{{ heroTitle }}</h1>
-        <div class="catalog-stage-layout">
-          <div class="catalog-stage-primary">
-            <CatalogQuickAccessBand
-              v-if="quickCategories.length || libraryHighlights.length"
-              :quick-categories="quickCategories"
-              @select-category="selectCategory"
-            />
+  <section class="min-h-screen pb-24 cat-transition-theme" :data-catalog-theme="currentTheme">
+    <!-- Theme Switcher - Fixed position, bottom-left on mobile to avoid overlap -->
+    <div class="fixed bottom-20 left-4 z-50 sm:top-24 sm:right-6 sm:bottom-auto sm:left-auto md:top-24 md:right-6">
+      <CatalogThemeSwitcher />
+    </div>
+    
+    <!-- Hero -->
+    <HeroSection />
 
-            <section v-if="stageFeaturedItems.length" class="catalog-stage-feature">
-              <div class="catalog-stage-feature-head">
-                <p class="catalog-stage-kicker">桌面优先浏览</p>
-                <h2 class="catalog-section-title catalog-stage-feature-title">{{ stageFeaturedTitle }}</h2>
-                <p class="catalog-section-copy catalog-stage-feature-copy">{{ stageFeaturedCopy }}</p>
-              </div>
-              <div class="catalog-card-strip catalog-card-strip--stage">
-                <component
-                  :is="getCardNavigationComponent(getItemHref(item))"
-                  v-for="item in stageFeaturedItems"
-                  :key="`stage-${item.id}`"
-                  class="catalog-card"
-                  v-bind="getCardNavigationProps(getItemHref(item))"
-                >
-                  <div class="catalog-thumb"><img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || '?' }}</div></div>
-                  <div class="catalog-card-body"><div class="catalog-card-title">{{ item.title }}</div><div v-if="item.description" class="catalog-card-desc">{{ item.description }}</div></div>
-                </component>
-              </div>
-            </section>
-          </div>
+    <!-- Filters - Sticky with subtle transition -->
+    <div class="sticky top-16 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
+      <div class="px-4 py-3 sm:px-6 lg:px-8">
+        <FilterTabs
+          :groups="view.groups"
+          :categories="view.categories"
+          :active-group-id="view.activeGroupId"
+          :active-category-id="view.activeCategoryId"
+          @select-group="selectGroup"
+          @select-category="selectCategory"
+        />
+      </div>
+    </div>
 
-          <CatalogTeacherQuickAccessArea :recent-items="recentItems" :favorite-items="favoriteItems" :favorite-ids="favoriteIds" @open-item="rememberWorkflowFallbackHash" @toggle-favorite="toggleCatalogFavorite" />
+    <!-- Content -->
+    <div class="px-4 pt-12 sm:px-6 lg:px-8">
+      <!-- Section Header - Clean gallery style -->
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-lg font-normal text-gray-900">
+          {{ activeCategoryTitle }}
+        </h2>
+        <span class="text-xs font-light tracking-wide text-gray-400">
+          {{ totalItems }} 件作品
+        </span>
+      </div>
+
+      <!-- Loading Skeletons - Compact gallery style -->
+      <div v-if="loading" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div v-for="i in 8" :key="i" class="flex flex-col gap-2">
+          <Skeleton class="aspect-[3/2] bg-gray-100" />
+          <Skeleton class="h-4 w-2/3 bg-gray-100" />
+          <Skeleton class="h-3 w-1/3 bg-gray-100" />
         </div>
-      </section>
+      </div>
 
-      <section v-if="hasCatalogGroups" class="catalog-section catalog-section-nav catalog-section--map catalog-section--flat">
-        <h2 class="catalog-section-title">导航分组</h2>
-        <button
-          type="button"
-          ref="mobileFilterTriggerRef"
-          class="catalog-mobile-filter-trigger"
-          :aria-expanded="mobileFiltersOpen ? 'true' : 'false'"
-          aria-controls="catalog-mobile-filter-panel"
-          @click="mobileFiltersOpen = !mobileFiltersOpen"
+      <!-- Error -->
+      <div v-else-if="loadError" class="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+        <p class="text-lg text-muted-foreground">{{ loadError }}</p>
+      </div>
+
+      <!-- Gallery Grid - Compact gallery style -->
+      <template v-else>
+        <!-- Folders Section -->
+        <div
+          v-if="filteredLibraryFolders.length > 0"
+          class="mb-12"
         >
-          <span>筛选导航</span>
-          <span>{{ mobileFiltersOpen ? '收起' : '展开' }}</span>
-        </button>
-        <div ref="mobileFilterPanelRef" id="catalog-mobile-filter-panel" class="catalog-mobile-filter-panel" :class="{ 'is-open': mobileFiltersOpen }" :aria-hidden="mobileFiltersOpen ? 'false' : 'true'">
-          <div class="catalog-mobile-filter-block">
-            <span class="catalog-mobile-filter-label">切换大类</span>
-            <div class="catalog-mobile-filter-actions">
-              <button v-for="group in directGroups" :key="`mobile-group-${group.id}`" type="button" class="catalog-tab" :class="{ active: group.id === view.activeGroupId }" @click="chooseGroup(group.id)">{{ group.title }}</button>
-              <select v-if="overflowGroups.length" aria-label="更多大类" class="catalog-tab catalog-select" :value="overflowGroups.some((group) => group.id === view.activeGroupId) ? view.activeGroupId : ''" @change="chooseGroup(($event.target as HTMLSelectElement).value)">
-                <option value="">更多…</option>
-                <option v-for="group in overflowGroups" :key="group.id" :value="group.id">{{ group.title || group.id }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="catalog-mobile-filter-block">
-            <span class="catalog-mobile-filter-label">切换分类</span>
-            <div class="catalog-mobile-filter-actions">
-              <button type="button" class="catalog-tab" :class="{ active: view.activeCategoryId === 'all' }" @click="chooseCategory('all')">全部</button>
-              <button v-for="category in directCategories" :key="`mobile-category-${category.id}`" type="button" class="catalog-tab" :class="{ active: category.id === view.activeCategoryId }" @click="chooseCategory(category.id)">{{ category.title }}</button>
-              <select v-if="overflowCategories.length" aria-label="更多分类" class="catalog-tab catalog-select" :value="overflowCategories.some((category) => category.id === view.activeCategoryId) ? view.activeCategoryId : ''" @change="chooseCategory(($event.target as HTMLSelectElement).value)">
-                <option value="">更多…</option>
-                <option v-for="category in overflowCategories" :key="category.id" :value="category.id">{{ category.title || category.id }}</option>
-              </select>
-            </div>
+          <h3 class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-gray-400">
+            资源库精选
+          </h3>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            <FolderCard
+              v-for="(folder, idx) in filteredLibraryFolders"
+              :key="`folder-${folder.id}`"
+              class="gallery-card"
+              :id="folder.id"
+              :name="folder.name"
+              :cover-path="folder.coverPath"
+              :href="getFolderHref(folder.id)"
+              tag="资源库"
+              :index="idx"
+            />
           </div>
         </div>
-        <nav class="catalog-tabs" aria-label="大类">
-          <button v-for="group in directGroups" :key="group.id" type="button" class="catalog-tab" :class="{ active: group.id === view.activeGroupId }" @click="selectGroup(group.id)">{{ group.title }}</button>
-          <select v-if="overflowGroups.length" aria-label="更多大类" class="catalog-tab catalog-select" :value="overflowGroups.some((group) => group.id === view.activeGroupId) ? view.activeGroupId : ''" @change="selectGroup(($event.target as HTMLSelectElement).value)">
-            <option value="">更多…</option>
-            <option v-for="group in overflowGroups" :key="group.id" :value="group.id">{{ group.title || group.id }}</option>
-          </select>
-        </nav>
-        <nav class="catalog-tabs" aria-label="分类">
-          <button type="button" class="catalog-tab" :class="{ active: view.activeCategoryId === 'all' }" @click="selectCategory('all')">全部</button>
-          <button v-for="category in directCategories" :key="category.id" type="button" class="catalog-tab" :class="{ active: category.id === view.activeCategoryId }" @click="selectCategory(category.id)">{{ category.title }}</button>
-          <select v-if="overflowCategories.length" aria-label="更多分类" class="catalog-tab catalog-select" :value="overflowCategories.some((category) => category.id === view.activeCategoryId) ? view.activeCategoryId : ''" @change="selectCategory(($event.target as HTMLSelectElement).value)">
-            <option value="">更多…</option>
-            <option v-for="category in overflowCategories" :key="category.id" :value="category.id">{{ category.title || category.id }}</option>
-          </select>
-        </nav>
-      </section>
 
-      <section v-if="showCurrentSection" id="catalog-current" class="catalog-section catalog-section--current catalog-section--flat">
-        <h2 class="catalog-section-title">当前分类</h2>
-        <div class="catalog-card-strip">
-          <component :is="getCardNavigationComponent(getItemHref(item))" v-for="item in currentItems" :key="`current-${item.id}`" class="catalog-card" v-bind="getCardNavigationProps(getItemHref(item))">
-            <div class="catalog-thumb"><img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || '?' }}</div></div>
-            <div class="catalog-card-body"><div class="catalog-card-title">{{ item.title }}</div><div v-if="item.description" class="catalog-card-desc">{{ item.description }}</div></div>
-          </component>
+        <!-- Demo Items Section -->
+        <div>
+          <h3 v-if="filteredLibraryFolders.length > 0" class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-gray-400">
+            演示动画
+          </h3>
+          <div
+            ref="gridRef"
+            class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+          >
+            <DemoCard
+              v-for="(item, idx) in view.items"
+              :key="item.id"
+              class="gallery-card"
+              :id="item.id"
+              :title="item.title"
+              :description="item.description"
+              :thumbnail="item.thumbnail"
+              :href="getItemHref(item)"
+              :tag="view.categories.find((c) => c.id === item.categoryId)?.title"
+              :index="idx"
+              @tag-click="selectCategory"
+            />
+          </div>
         </div>
-      </section>
 
-      <section v-if="showRecommendedSection" class="catalog-section catalog-section--recommended catalog-section--flat">
-        <h2 class="catalog-section-title">推荐演示</h2>
-        <div class="catalog-card-strip">
-          <component :is="getCardNavigationComponent(getItemHref(item))" v-for="item in recommendedItems" :key="item.id" class="catalog-card" v-bind="getCardNavigationProps(getItemHref(item))">
-            <div class="catalog-thumb"><img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || '?' }}</div></div>
-            <div class="catalog-card-body"><div class="catalog-card-title">{{ item.title }}</div><div v-if="item.description" class="catalog-card-desc">{{ item.description }}</div></div>
-          </component>
+        <!-- Empty State -->
+        <div v-if="showEmptyState" class="flex min-h-[30vh] flex-col items-center justify-center gap-3 text-center">
+          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
+            <span class="text-3xl text-muted-foreground">?</span>
+          </div>
+          <p class="text-muted-foreground">{{ emptyMessage }}</p>
         </div>
-      </section>
-
-      <section id="catalog-library" v-if="libraryHighlights.length" class="catalog-section catalog-section--library catalog-section--flat">
-        <h2 class="catalog-section-title">资源库精选</h2>
-        <div class="catalog-card-strip">
-          <component :is="getCardNavigationComponent(getFolderHref(folder.id))" v-for="folder in libraryHighlights" :key="`library-${folder.id}`" class="catalog-card catalog-folder-card" v-bind="getCardNavigationProps(getFolderHref(folder.id))">
-            <div class="catalog-thumb"><img v-if="folder.coverPath" :src="normalizePublicUrl(folder.coverPath)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">文件夹</div></div>
-            <div class="catalog-card-body"><div class="catalog-card-title">{{ folder.name || folder.id }}</div></div>
-          </component>
-        </div>
-      </section>
-
-      <section id="catalog-all" class="catalog-section" :class="'catalog-section--archive'" data-section="archive">
-        <h2 class="catalog-section-title">全部内容</h2>
-        <div class="catalog-grid">
-          <component :is="getCardNavigationComponent(getFolderHref(folder.id))" v-for="folder in filteredLibraryFolders" :key="`folder-${folder.id}`" class="catalog-card catalog-folder-card" v-bind="getCardNavigationProps(getFolderHref(folder.id))">
-            <div class="catalog-thumb"><img v-if="folder.coverPath" :src="normalizePublicUrl(folder.coverPath)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">文件夹</div></div>
-            <div class="catalog-card-body"><div class="catalog-card-title">{{ folder.name || folder.id }}</div></div>
-          </component>
-          <component :is="getCardNavigationComponent(getItemHref(item))" v-for="item in view.items" :key="item.id" class="catalog-card" v-bind="getCardNavigationProps(getItemHref(item))">
-            <div class="catalog-thumb"><img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" /><div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || '?' }}</div></div>
-            <div class="catalog-card-body"><div class="catalog-card-title">{{ item.title }}</div><div v-if="item.description" class="catalog-card-desc">{{ item.description }}</div></div>
-          </component>
-          <div v-if="view.items.length === 0 && filteredLibraryFolders.length === 0" class="catalog-empty catalog-empty--inline">{{ view.hasAnyItems ? '没有匹配的作品。' : '未找到任何作品。' }}</div>
-        </div>
-      </section>
-    </template>
+      </template>
+    </div>
   </section>
 </template>
-
-<style src="./CatalogView.css"></style>
-
-<style scoped>
-.catalog-view {
-  background: var(--surface);
-  border-color: var(--border);
-}
-
-.catalog-tab { min-height: 44px; }
-.catalog-card-title { flex-wrap: wrap; overflow-wrap: anywhere; }
-.catalog-card-desc { overflow-wrap: anywhere; word-break: break-word; }
-</style>

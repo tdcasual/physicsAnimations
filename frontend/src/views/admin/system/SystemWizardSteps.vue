@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import SystemWizardConnectionStep from "./SystemWizardConnectionStep.vue";
+import { PAButton, PACard } from "@/components/ui/patterns";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -62,7 +63,7 @@ function onModeChange() {
 </script>
 
 <template>
-  <div class="panel admin-card">
+  <PACard variant="admin" class="panel">
     <h3>配置流程</h3>
     <ol class="step-list">
       <li v-for="item in steps" :key="item.id" class="step-item">
@@ -94,7 +95,7 @@ function onModeChange() {
         </label>
       </div>
       <div class="actions admin-actions">
-        <button type="button" class="btn btn-primary" :disabled="wizardBusy" @click="emit('next-from-mode')">下一步</button>
+        <PAButton :disabled="wizardBusy" @click="emit('next-from-mode')">下一步</PAButton>
       </div>
     </div>
 
@@ -137,20 +138,19 @@ function onModeChange() {
       <div v-if="continueDisabledHint" class="continue-disabled-hint admin-feedback">{{ continueDisabledHint }}</div>
 
       <div class="actions admin-actions wizard-step3-actions">
-        <button type="button" class="btn btn-ghost" :disabled="wizardBusy" @click="emit('go-step', 2)">上一步</button>
-        <button
+        <PAButton variant="ghost" :disabled="wizardBusy" @click="emit('go-step', 2)">上一步</PAButton>
+        <PAButton
           v-if="remoteMode"
-          type="button"
-          class="btn btn-ghost"
+          variant="ghost"
           :disabled="wizardBusy || readOnlyMode"
           @click="emit('run-validation')"
         >
           {{ validating ? "校验中..." : "测试连接" }}
-        </button>
-        <button type="button" class="btn btn-primary" :disabled="wizardBusy || readOnlyMode" @click="emit('save-storage')">
+        </PAButton>
+        <PAButton :disabled="wizardBusy || readOnlyMode" @click="emit('save-storage')">
           {{ saving ? "保存中..." : "保存配置" }}
-        </button>
-        <button type="button" class="btn btn-ghost" :disabled="wizardBusy || hasUnsavedChanges" @click="emit('go-step', 4)">下一步</button>
+        </PAButton>
+        <PAButton variant="ghost" :disabled="wizardBusy || hasUnsavedChanges" @click="emit('go-step', 4)">下一步</PAButton>
       </div>
     </div>
 
@@ -159,26 +159,26 @@ function onModeChange() {
 
       <div v-if="remoteMode" class="sync-box">
         <div class="sync-hint" v-if="syncHint">{{ syncHint }}</div>
-        <button type="button" class="btn btn-primary" :disabled="syncing || !canSyncNow" @click="emit('sync-now')">
+        <PAButton :disabled="syncing || !canSyncNow" @click="emit('sync-now')">
           {{ syncing ? "同步中..." : "立即同步" }}
-        </button>
+        </PAButton>
       </div>
 
       <div v-else class="empty">local 模式已生效，无需远端同步。</div>
 
       <div class="actions admin-actions">
-        <button type="button" class="btn btn-ghost" :disabled="wizardBusy" @click="emit('go-step', 3)">上一步</button>
-        <button type="button" class="btn btn-ghost" :disabled="wizardBusy" @click="emit('go-step', 1)">重新配置</button>
+        <PAButton variant="ghost" :disabled="wizardBusy" @click="emit('go-step', 3)">上一步</PAButton>
+        <PAButton variant="ghost" :disabled="wizardBusy" @click="emit('go-step', 1)">重新配置</PAButton>
       </div>
     </div>
-  </div>
+  </PACard>
 </template>
 
 <style scoped>
 .panel {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -205,7 +205,7 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   border-radius: 999px;
   padding: 7px 10px;
   min-height: 44px;
-  background: color-mix(in srgb, var(--surface) 92%, var(--bg));
+  background: color-mix(in srgb, var(--card) 92%, var(--background));
   color: inherit;
   cursor: pointer;
   font-size: calc(13px * var(--ui-scale));
@@ -213,10 +213,10 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 }
 .step-button.active {
   border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-  background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+  background: color-mix(in srgb, var(--primary) 15%, var(--card));
 }
 .step-button.done {
-  background: color-mix(in srgb, var(--primary) 11%, var(--surface));
+  background: color-mix(in srgb, var(--primary) 11%, var(--card));
 }
 .step-hint {
   font-size: calc(12px * var(--ui-scale));
@@ -241,14 +241,14 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   display: grid;
   gap: 6px;
   cursor: pointer;
-  background: color-mix(in srgb, var(--surface) 94%, var(--bg));
+  background: color-mix(in srgb, var(--card) 94%, var(--background));
 }
 .mode-card input {
   margin: 0;
 }
 .mode-card.active {
   border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  background: color-mix(in srgb, var(--primary) 10%, var(--card));
 }
 
 .mode-card span {

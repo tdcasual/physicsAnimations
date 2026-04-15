@@ -1,6 +1,22 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { fetchDashboardStats, type DashboardStats } from "../../features/admin/adminApi";
+import { fetchDashboardStats, type DashboardStats } from "@/features/admin/adminApi";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { 
+  Upload, 
+  Database, 
+  Link2, 
+  Tags, 
+  LayoutGrid,
+  RefreshCw,
+  FolderOpen,
+  Settings,
+  ArrowRight,
+  Sparkles
+} from "lucide-vue-next";
 
 const loading = ref(false);
 const errorText = ref("");
@@ -36,281 +52,185 @@ async function reload() {
 onMounted(async () => {
   await reload();
 });
+
+const quickActions = [
+  {
+    title: "上传素材",
+    description: "添加新的演示动画或资源文件",
+    icon: Upload,
+    to: "/admin/uploads",
+    variant: "default" as const,
+  },
+  {
+    title: "整理内容",
+    description: "管理现有演示的分类和元数据",
+    icon: Database,
+    to: "/admin/content",
+    variant: "outline" as const,
+  },
+  {
+    title: "资源库",
+    description: "检查文件夹结构和资产状态",
+    icon: FolderOpen,
+    to: "/admin/library",
+    variant: "outline" as const,
+  },
+  {
+    title: "分类管理",
+    description: "维护学科分类和标签体系",
+    icon: Tags,
+    to: "/admin/taxonomy",
+    variant: "outline" as const,
+  },
+  {
+    title: "系统设置",
+    description: "配置站点参数和维护任务",
+    icon: Settings,
+    to: "/admin/system",
+    variant: "outline" as const,
+  },
+];
+
+const statCards = [
+  {
+    title: "全部内容",
+    value: () => stats.value.total,
+    description: "公开演示总数",
+    color: "foreground",
+    gradient: "from-gray-200 to-gray-50",
+  },
+  {
+    title: "上传内容",
+    value: () => stats.value.uploadTotal,
+    description: "站内托管资源",
+    color: "foreground",
+    gradient: "from-gray-200 to-gray-50",
+  },
+  {
+    title: "外链内容",
+    value: () => stats.value.linkTotal,
+    description: "外部链接资源",
+    color: "foreground",
+    gradient: "from-gray-200 to-gray-50",
+  },
+  {
+    title: "分类节点",
+    value: () => stats.value.categoryTotal,
+    description: "二级分类数量",
+    color: "foreground",
+    gradient: "from-gray-200 to-gray-50",
+  },
+];
 </script>
 
 <template>
-  <section class="admin-dashboard-view">
-    <header class="admin-page-header admin-page-header--dashboard">
-      <div class="admin-page-copy dashboard-copy">
-        <p class="admin-page-kicker dashboard-kicker">今日工作台</p>
-        <h2>概览</h2>
-      </div>
-      <div class="admin-page-meta">
-        <span class="admin-page-meta-label">当前节奏</span>
-        <strong>{{ loading ? "刷新中" : "就绪" }}</strong>
-        <div class="admin-actions">
-          <button type="button" class="btn btn-ghost" :disabled="loading" @click="reload">刷新</button>
+  <div class="space-y-8 p-6">
+    <!-- Header -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <Sparkles class="h-4 w-4 text-primary" />
+          </div>
+          <h1 class="text-2xl font-bold tracking-tight">管理后台</h1>
         </div>
+        <p class="text-sm text-muted-foreground">
+          管理演示内容、资源库和系统配置
+        </p>
       </div>
-    </header>
+      <Button variant="outline" size="sm" :disabled="loading" @click="reload" class="gap-2">
+        <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': loading }" />
+        {{ loading ? '刷新中...' : '刷新数据' }}
+      </Button>
+    </div>
 
-    <div v-if="errorText" class="error-text">{{ errorText }}</div>
-    <div v-if="loading" class="empty">加载中...</div>
+    <!-- Error Alert -->
+    <div 
+      v-if="errorText" 
+      class="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+    >
+      {{ errorText }}
+    </div>
+
+    <!-- Loading State -->
+    <div v-else-if="loading" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <Skeleton v-for="i in 4" :key="i" class="h-32 rounded-2xl" />
+    </div>
 
     <template v-else>
-      <section class="admin-task-grid admin-task-grid--dense" aria-label="今日工作台">
-        <article class="admin-task-card admin-task-card--primary admin-task-card--queue admin-task-card--focus admin-card">
-          <div class="admin-task-meta">
-            <span class="admin-task-badge">优先级 高</span>
-            <span>先做</span>
-          </div>
-          <p class="admin-task-kicker">下一步</p>
-          <h3>补充或修订即将上课的演示</h3>
-          <div class="admin-task-actions">
-            <RouterLink class="btn btn-primary" to="/admin/uploads">上传素材</RouterLink>
-            <RouterLink class="btn btn-ghost" to="/admin/content">整理内容</RouterLink>
-          </div>
-        </article>
+      <!-- Stats Grid -->
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card 
+          v-for="stat in statCards" 
+          :key="stat.title"
+          class="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+        >
+          <!-- Gradient Background -->
+          <div 
+            class="absolute right-0 top-0 h-32 w-32 -translate-y-1/2 translate-x-1/2 rounded-full bg-gradient-to-br opacity-60 blur-2xl transition-opacity group-hover:opacity-80"
+            :class="stat.gradient"
+          />
+          <CardHeader class="relative pb-2">
+            <CardDescription class="text-xs font-medium uppercase tracking-wider">
+              {{ stat.title }}
+            </CardDescription>
+            <CardTitle class="text-3xl font-bold" :class="stat.color === 'primary' ? 'text-primary' : stat.color === 'secondary' ? 'text-secondary' : 'text-accent'">
+              {{ stat.value() }}
+            </CardTitle>
+          </CardHeader>
+          <CardContent class="relative">
+            <p class="text-xs text-muted-foreground">{{ stat.description }}</p>
+          </CardContent>
+        </Card>
+      </div>
 
-        <article class="admin-task-card admin-task-card--queue admin-task-card--secondary admin-card">
-          <div class="admin-task-meta">
-            <span class="admin-task-badge">优先级 中</span>
-            <span>归档整理</span>
-          </div>
-          <p class="admin-task-kicker">归档</p>
-          <h3>检查资源库结构</h3>
-          <div class="admin-task-actions">
-            <RouterLink class="btn btn-ghost" to="/admin/library">打开资源库</RouterLink>
-          </div>
-        </article>
-
-        <article class="admin-task-card admin-task-card--queue admin-task-card--secondary admin-card">
-          <div class="admin-task-meta">
-            <span class="admin-task-badge">优先级 中</span>
-            <span>发布前巡检</span>
-          </div>
-          <p class="admin-task-kicker">巡检</p>
-          <h3>确认系统和分类配置</h3>
-          <div class="admin-task-actions">
-            <RouterLink class="btn btn-ghost" to="/admin/taxonomy">分类</RouterLink>
-            <RouterLink class="btn btn-ghost" to="/admin/system">系统</RouterLink>
-          </div>
-        </article>
-      </section>
-
-      <section class="admin-signal-section">
-        <div class="signal-heading">
-          <p class="admin-page-kicker dashboard-kicker">运行概况</p>
-          <h3>站点信号</h3>
+      <!-- Quick Actions -->
+      <div class="space-y-4">
+        <h2 class="text-lg font-semibold">快速操作</h2>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card 
+            v-for="action in quickActions" 
+            :key="action.to"
+            class="group cursor-pointer rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+          >
+            <CardHeader class="pb-3">
+              <div class="flex items-start justify-between">
+                <div 
+                  class="flex h-10 w-10 items-center justify-center rounded-xl bg-muted transition-all duration-300 group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground"
+                >
+                  <component :is="action.icon" class="h-5 w-5" />
+                </div>
+                <ArrowRight class="h-4 w-4 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" />
+              </div>
+              <CardTitle class="text-base font-semibold">
+                <RouterLink :to="action.to" class="hover:text-primary transition-colors">
+                  {{ action.title }}
+                </RouterLink>
+              </CardTitle>
+              <CardDescription class="text-xs leading-relaxed">
+                {{ action.description }}
+              </CardDescription>
+            </CardHeader>
+          </Card>
         </div>
-        <div class="stats-grid">
-          <article class="admin-signal-card admin-signal-card--metric admin-card">
-            <div class="label">全部内容</div>
-            <div class="value">{{ stats.total }}</div>
-            <div class="signal-copy">公开演示总数</div>
-          </article>
-          <article class="admin-signal-card admin-signal-card--metric admin-card">
-            <div class="label">上传内容</div>
-            <div class="value">{{ stats.uploadTotal }}</div>
-            <div class="signal-copy">站内托管</div>
-          </article>
-          <article class="admin-signal-card admin-signal-card--metric admin-card">
-            <div class="label">外链内容</div>
-            <div class="value">{{ stats.linkTotal }}</div>
-            <div class="signal-copy">外链依赖</div>
-          </article>
-          <article class="admin-signal-card admin-signal-card--metric admin-card">
-            <div class="label">二级分类</div>
-            <div class="value">{{ stats.categoryTotal }}</div>
-            <div class="signal-copy">分类节点</div>
-          </article>
-        </div>
-      </section>
+      </div>
+
+      <!-- Tips Section -->
+      <Card class="rounded-2xl border border-dashed bg-muted/30">
+        <CardHeader>
+          <div class="flex items-center gap-2">
+            <LayoutGrid class="h-4 w-4 text-muted-foreground" />
+            <CardTitle class="text-sm font-medium">使用提示</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent class="text-sm text-muted-foreground">
+          <ul class="list-inside list-disc space-y-2">
+            <li>定期上传新的演示动画以丰富内容库</li>
+            <li>使用分类管理维护清晰的学科结构</li>
+            <li>检查资源库确保所有文件可正常访问</li>
+          </ul>
+        </CardContent>
+      </Card>
     </template>
-  </section>
+  </div>
 </template>
-
-<style scoped>
-.admin-dashboard-view {
-  display: grid;
-  gap: 16px;
-}
-
-.dashboard-copy,
-.signal-heading {
-  display: grid;
-  gap: 6px;
-}
-
-.dashboard-kicker,
-.admin-task-kicker {
-  margin: 0;
-  color: color-mix(in oklab, var(--accent-copper-strong) 70%, var(--text));
-  font-size: calc(12px * var(--ui-scale));
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-h2,
-h3 {
-  margin: 0;
-}
-
-.dashboard-intro,
-.signal-copy,
-.admin-task-card p:last-of-type {
-  margin: 0;
-  color: var(--muted);
-}
-
-.admin-task-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-}
-
-.admin-task-grid--dense {
-  gap: 10px;
-}
-
-.admin-task-card,
-.admin-signal-card {
-  padding: 16px;
-}
-
-.admin-task-card {
-  display: grid;
-  gap: 10px;
-}
-
-.admin-task-card--focus {
-  border-color: color-mix(in oklab, var(--accent) 28%, var(--border));
-  box-shadow: 0 24px 46px -32px color-mix(in oklab, var(--accent) 28%, transparent);
-}
-
-.admin-task-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-  letter-spacing: 0.04em;
-}
-
-.admin-task-badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: color-mix(in oklab, var(--accent-copper) 16%, var(--surface));
-  color: color-mix(in oklab, var(--accent-copper-strong) 76%, var(--text));
-  font-weight: 700;
-}
-
-.admin-task-card--queue {
-  position: relative;
-  padding-top: 18px;
-}
-
-.admin-task-card--queue::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 3px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--accent-copper) 62%, transparent), transparent 72%);
-}
-
-.admin-task-card--primary {
-  background:
-    linear-gradient(180deg, color-mix(in oklab, var(--accent) 10%, var(--surface)), color-mix(in oklab, var(--surface) 92%, var(--paper))),
-    var(--surface);
-}
-
-.admin-task-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.admin-signal-section {
-  display: grid;
-  gap: 12px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
-}
-
-.admin-signal-card {
-  display: grid;
-  gap: 8px;
-}
-
-.admin-signal-card--metric {
-  position: relative;
-  padding-top: 18px;
-}
-
-.admin-signal-card--metric::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto;
-  height: 2px;
-  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 52%, transparent), transparent 78%);
-}
-
-.label {
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.value {
-  font-family: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", serif;
-  font-size: calc(34px * var(--ui-scale));
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
-}
-
-.empty {
-  border: 1px dashed color-mix(in oklab, var(--line-strong) 20%, var(--border));
-  border-radius: 12px;
-  padding: 14px;
-  color: var(--muted);
-  background: color-mix(in oklab, var(--surface) 86%, var(--paper));
-}
-
-.error-text {
-  color: var(--danger);
-  font-size: calc(13px * var(--ui-scale));
-}
-
-@media (max-width: 640px) {
-  .header-row {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .header-row :where(.btn) {
-    width: 100%;
-  }
-
-  .admin-task-actions :where(.btn) {
-    flex: 1 1 calc(50% - 4px);
-  }
-
-  .admin-task-card--secondary {
-    gap: 8px;
-    padding: 14px;
-  }
-
-  .admin-task-copy--secondary {
-    display: none;
-  }
-}
-</style>

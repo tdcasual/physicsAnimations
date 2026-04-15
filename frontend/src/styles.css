@@ -1,4 +1,17 @@
-@import "./styles/foundation.css";
 @import "./styles/topbar.css";
+/* Note: topbar.css now includes merged base + responsive styles */
 @import "./styles/admin-base.css";
 @import "./styles/modal.css";
+@import "./styles/catalog-themes.css";
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

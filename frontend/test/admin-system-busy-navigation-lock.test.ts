@@ -61,7 +61,7 @@ describe("admin system busy navigation lock", () => {
 
     expect(Array.from(mounted.host.querySelectorAll(".step-button")).every((node) => (node as HTMLButtonElement).disabled)).toBe(true);
     expect(Array.from(mounted.host.querySelectorAll('input[type="radio"]')).every((node) => (node as HTMLInputElement).disabled)).toBe(true);
-    expect((mounted.host.querySelector(".btn.btn-primary") as HTMLButtonElement).disabled).toBe(true);
+    expect((mounted.host.querySelector('button[type="button"]') as HTMLButtonElement).disabled).toBe(true);
 
     mounted.cleanup();
   });

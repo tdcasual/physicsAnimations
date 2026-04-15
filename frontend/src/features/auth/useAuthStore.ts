@@ -36,15 +36,13 @@ export const useAuthStore = defineStore("auth", {
     async loginWithPassword(input: LoginInput) {
       this.loading = true;
       try {
-        const data = await login(input);
+        await login(input);
         const account = await me().catch(() => null);
         this.loggedIn = true;
         this.username =
           typeof account?.username === "string"
             ? account.username
-            : typeof data?.username === "string"
-              ? data.username
-              : "";
+            : "";
       } catch (err) {
         this.loggedIn = false;
         this.username = "";

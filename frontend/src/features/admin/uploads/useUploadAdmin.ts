@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from "vue";
-import { normalizePublicUrl } from "../../catalog/catalogLink";
+import { buildPreviewHref, buildViewerHref } from "../adminLinks";
 import { type AdminItemRow, uploadHtmlItem } from "../adminApi";
 import { createAdminItemEditorState } from "../composables/useAdminItemEditorState";
 import { useActionFeedback } from "../composables/useActionFeedback";
@@ -55,16 +55,23 @@ export function useUploadAdmin() {
     }));
   });
 
-  function viewerHref(id: string): string {
-    const base = import.meta.env.BASE_URL || "/";
-    return `${base.replace(/\/+$/, "/")}viewer/${encodeURIComponent(id)}`;
-  }
-  function previewHref(item: AdminItem): string { return normalizePublicUrl(item.src || viewerHref(item.id)); }
+  function viewerHref(id: string): string { return buildViewerHref(id); }
+  function previewHref(item: AdminItem): string { return buildPreviewHref(item); }
 
-  function buildRiskConfirmMessage(details: any): string {
+  interface RiskFinding {
+    severity?: string;
+    message?: string;
+    source?: string;
+  }
+  interface RiskDetails {
+    findings?: RiskFinding[];
+    truncated?: boolean;
+    summary?: string;
+  }
+  function buildRiskConfirmMessage(details: RiskDetails): string {
     const findings = Array.isArray(details?.findings) ? details.findings : [];
     if (findings.length === 0) return "检测到潜在风险内容，确认后继续上传。是否继续？";
-    const lines = findings.slice(0, 6).map((item: any, index: number) => {
+    const lines = findings.slice(0, 6).map((item: RiskFinding, index: number) => {
       const severity = String(item?.severity || "unknown");
       const message = String(item?.message || "潜在风险");
       const source = item?.source ? ` (${String(item.source)})` : "";

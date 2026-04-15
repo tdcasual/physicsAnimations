@@ -97,7 +97,7 @@ export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
         categoryId: folderCategoryId.value.trim() || "other",
         coverType: "blank",
       });
-      const createdFolderId = String(created?.folder?.id || "");
+      const createdFolderId = String((created?.folder as { id?: string } | undefined)?.id || "");
       if (createCoverFile.value && createdFolderId) {
         await uploadLibraryFolderCover({
           folderId: createdFolderId,

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { TaxonomyCategory, TaxonomySelection, TaxonomyTreeNode } from "../../../features/admin/taxonomyUiState";
+import { PAButton, PACard, PAInput } from "@/components/ui/patterns";
 
 const props = defineProps<{
   loading: boolean;
@@ -42,16 +43,16 @@ function onToggle(groupId: string, event: Event) {
 </script>
 
 <template>
-  <div class="panel admin-card">
+  <PACard variant="admin" class="panel">
     <h3>大类 / 分类列表</h3>
 
     <div class="toolbar">
-      <input
+      <PAInput
         v-model="searchModel"
-        class="field-input toolbar-search"
         type="search"
         placeholder="搜索大类或分类（标题 / ID）..."
         autocomplete="off"
+        class="toolbar-search"
       />
       <div class="tree-mobile-toolbar">
         <label class="checkbox toolbar-check">
@@ -59,8 +60,8 @@ function onToggle(groupId: string, event: Event) {
           <span>显示隐藏项</span>
         </label>
         <div class="toolbar-actions">
-          <button type="button" class="btn btn-ghost" @click="emit('collapse-all')">全部收起</button>
-          <button type="button" class="btn btn-ghost" @click="emit('expand-all')">全部展开</button>
+          <PAButton variant="ghost" size="sm" @click="emit('collapse-all')">全部收起</PAButton>
+          <PAButton variant="ghost" size="sm" @click="emit('expand-all')">全部展开</PAButton>
         </div>
       </div>
     </div>
@@ -90,9 +91,9 @@ function onToggle(groupId: string, event: Event) {
             </div>
             <div class="group-meta">{{ groupMetaText(node) }}</div>
           </div>
-          <button type="button" class="btn btn-ghost btn-xs" @click.stop.prevent="emit('focus-create-category', node.group.id)">
+          <PAButton variant="ghost" size="sm" class="compact-btn" @click.stop.prevent="emit('focus-create-category', node.group.id)">
             ＋ 二级分类
-          </button>
+          </PAButton>
         </summary>
 
         <div class="category-list">
@@ -117,14 +118,14 @@ function onToggle(groupId: string, event: Event) {
         </div>
       </details>
     </div>
-  </div>
+  </PACard>
 </template>
 
 <style scoped>
 .panel {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -186,7 +187,7 @@ h3 {
 .group-block {
   border: 1px solid var(--border);
   border-radius: 10px;
-  background: color-mix(in srgb, var(--surface) 94%, var(--bg));
+  background: color-mix(in srgb, var(--card) 94%, var(--background));
 }
 
 .group-block.selected {
@@ -240,21 +241,21 @@ h3 {
   display: grid;
   gap: 2px;
   text-align: left;
-  background: var(--surface);
+  background: var(--card);
   color: inherit;
   cursor: pointer;
 }
 
 .category-item.selected {
   border-color: color-mix(in srgb, var(--primary) 60%, var(--border));
-  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  background: color-mix(in srgb, var(--primary) 12%, var(--card));
 }
 
 .tag {
   margin-left: 6px;
   display: inline-block;
   font-size: calc(11px * var(--ui-scale));
-  color: color-mix(in srgb, var(--danger) 70%, var(--text));
+  color: color-mix(in srgb, var(--destructive) 70%, var(--foreground));
 }
 
 .checkbox {
@@ -265,7 +266,7 @@ h3 {
   color: var(--muted);
 }
 
-.btn-xs {
+.compact-btn {
   font-size: calc(12px * var(--ui-scale));
   padding: 4px 8px;
 }
@@ -299,7 +300,7 @@ h3 {
     align-items: flex-start;
   }
 
-  .group-summary .btn-xs {
+  .group-summary .compact-btn {
     min-height: 40px;
     padding-inline: 10px;
   }

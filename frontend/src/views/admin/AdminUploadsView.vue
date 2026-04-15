@@ -5,6 +5,7 @@ import { useUploadAdmin } from "../../features/admin/uploads/useUploadAdmin";
 import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
 import UploadsCreateForm from "./uploads/UploadsCreateForm.vue";
 import UploadsEditPanel from "./uploads/UploadsEditPanel.vue";
+import { PACard } from "@/components/ui/patterns";
 import UploadsListPanel from "./uploads/UploadsListPanel.vue";
 
 const vm = reactive(useUploadAdmin());
@@ -59,7 +60,7 @@ onBeforeUnmount(() => {
     </header>
 
     <div class="admin-workspace-grid">
-      <div class="list-panel admin-card">
+      <PACard variant="admin" class="list-panel">
         <UploadsCreateForm
           :category-options="vm.categoryOptions"
           :category-id="vm.categoryId"
@@ -89,7 +90,7 @@ onBeforeUnmount(() => {
           @remove-item="vm.removeItem"
           @load-more="vm.reloadUploads({ reset: false })"
         />
-      </div>
+      </PACard>
 
       <button
         v-if="vm.selectedItem"
@@ -99,9 +100,11 @@ onBeforeUnmount(() => {
         @click="vm.resetEdit"
       />
 
-      <aside
+      <PACard
+        variant="admin"
+        as="aside"
         ref="uploadEditorPanelRef"
-        :class="['editor-panel', 'editor-panel--sheet', 'admin-card', 'admin-mobile-focus-anchor', { 'is-open': isEditorSheetOpen }]"
+        :class="['editor-panel', 'editor-panel--sheet', 'admin-mobile-focus-anchor', { 'is-open': isEditorSheetOpen }]"
       >
         <UploadsEditPanel
           :selected-item="vm.selectedItem"
@@ -130,7 +133,7 @@ onBeforeUnmount(() => {
           @close-edit="vm.resetEdit"
           @save-edit="vm.saveEdit"
         />
-      </aside>
+      </PACard>
     </div>
   </section>
 </template>
@@ -208,12 +211,12 @@ h3 {
   padding: 10px;
   display: grid;
   gap: 10px;
-  background: color-mix(in srgb, var(--surface) 90%, var(--bg));
+  background: color-mix(in srgb, var(--card) 90%, var(--background));
 }
 
 :deep(.item-card.selected) {
   border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
-  background: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  background: color-mix(in srgb, var(--primary) 9%, var(--card));
 }
 
 :deep(.item-head) {
@@ -266,7 +269,7 @@ h3 {
 }
 
 .action-feedback.error {
-  color: var(--danger);
+  color: var(--destructive);
 }
 
 .action-feedback.success {
@@ -281,7 +284,7 @@ h3 {
 }
 
 .error-text {
-  color: var(--danger);
+  color: var(--destructive);
   font-size: calc(13px * var(--ui-scale));
 }
 
@@ -336,7 +339,7 @@ h3 {
     max-height: min(78dvh, 720px);
     overflow: auto;
     border-radius: 22px 22px 0 0;
-    box-shadow: 0 -20px 48px -30px color-mix(in oklab, var(--accent) 28%, transparent);
+    box-shadow: 0 -20px 48px -30px color-mix(in oklab, var(--primary) 28%, transparent);
     transform: translateY(calc(100% + 16px));
     transition: transform 180ms ease;
     pointer-events: none;

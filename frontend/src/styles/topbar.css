@@ -1,2 +1,449 @@
-@import "./topbar.base.css";
-@import "./topbar.responsive.css";
+/* ── Topbar: Merged Styles ─────────────────────────────────── */
+
+/* ===== Base Styles ===== */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-topbar);
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 96%, transparent) 0%, color-mix(in oklab, var(--muted) 90%, transparent) 100%);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+}
+
+.topbar-inner {
+  width: min(var(--content-max-width), calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.topbar-shell-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+}
+
+.topbar-lead {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-lockup {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+/* Brand gradient text - Awwwards style */
+.brand-mark {
+  font-size: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  background: linear-gradient(135deg, var(--foreground) 0%, var(--primary) 50%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 电脑端：按钮直接平铺 */
+.topbar-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 手机端"更多"按钮，电脑端隐藏 */
+.topbar-more-trigger.btn {
+  display: none;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* 手机端展开面板，电脑端隐藏 */
+.topbar-more-panel {
+  display: none;
+}
+
+.topbar-more-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.topbar-more-group + .topbar-more-group {
+  margin-top: 4px;
+}
+
+.topbar-more-group-label {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: calc(11px * var(--ui-scale));
+  letter-spacing: 0.08em;
+}
+
+.topbar-utility-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Topbar search ── */
+.topbar-search-field {
+  flex: 1 1 120px;
+  max-width: 260px;
+  min-width: 0;
+}
+
+.topbar-search {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  min-height: 38px;
+  padding: 6px 12px;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: calc(14px * var(--ui-scale));
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.topbar-search:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.topbar-search-launch {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  flex: 1 1 120px;
+  max-width: 260px;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: color-mix(in oklab, var(--card) 82%, var(--background) 18%);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.topbar-search-launch:hover {
+  border-color: var(--border);
+  background: color-mix(in oklab, var(--card) 76%, var(--background) 24%);
+  box-shadow: var(--shadow-m);
+}
+
+.topbar-search-launch-kicker {
+  color: var(--muted-foreground);
+  font-size: calc(10px * var(--ui-scale));
+  letter-spacing: 0.08em;
+}
+
+.topbar-search-launch-label {
+  min-width: 0;
+  font-size: calc(13px * var(--ui-scale));
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.topbar-more-trigger.btn {
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  text-align: center;
+  padding-right: 30px;
+}
+
+.topbar-more-trigger-label {
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+/* ===== Responsive Styles ===== */
+@media (min-width: 1280px) {
+  .topbar--catalog .topbar-inner,
+  .topbar--library .topbar-inner {
+    width: min(1280px, calc(100% - 64px));
+  }
+
+  .topbar--admin .topbar-inner {
+    width: min(1360px, calc(100% - 64px));
+  }
+
+  .topbar--viewer .topbar-inner {
+    width: min(1440px, calc(100% - 64px));
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar--viewer .topbar-search-field {
+    display: none;
+  }
+
+  .topbar--viewer .topbar-search-launch {
+    display: none;
+  }
+
+  .topbar--viewer .topbar-shell-panel {
+    gap: 10px;
+    padding-block: 8px;
+  }
+
+  .topbar--viewer .topbar-actions {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-inner { width: calc(100% - 24px); }
+
+  .topbar-shell-panel {
+    padding: 4px 4px 3px;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+  }
+
+  .topbar-lead {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    width: 100%;
+    align-items: center;
+    gap: 6px 10px;
+  }
+
+  .brand-link { gap: 8px; min-height: 34px; }
+  .brand-mark { font-size: clamp(0.9rem, 0.84rem + 0.4vw, 0.98rem); }
+
+  .btn-nav-home { padding-inline: 12px; }
+
+  .topbar .btn {
+    min-height: 40px;
+    padding: 7px 12px;
+    font-size: calc(12px * var(--ui-scale));
+  }
+
+  .topbar-home-link {
+    justify-self: end;
+    align-self: start;
+  }
+
+  .topbar-search-field {
+    max-width: none;
+    grid-column: 1 / -1;
+  }
+  .topbar-search-launch {
+    max-width: none;
+    grid-column: 1 / -1;
+  }
+  .topbar-search { min-height: 34px; font-size: calc(12px * var(--ui-scale)); }
+  .topbar-search-launch {
+    min-height: 36px;
+    padding: 8px 12px;
+  }
+  .topbar-search-launch-kicker { display: none; }
+  .topbar-search-launch-label { font-size: calc(12px * var(--ui-scale)); }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    padding-bottom: 4px;
+  }
+
+  .topbar-utility-actions,
+  .actions .btn { flex: 0 0 auto; }
+
+  .topbar-more-panel .btn {
+    width: 100%;
+    justify-content: flex-start;
+    text-align: left;
+    padding-inline: 14px;
+  }
+
+  /* 手机端：隐藏平铺按钮，显示"更多"触发器和面板 */
+  .topbar-inline-actions { display: none; }
+
+  .topbar-more-trigger.btn {
+    display: inline-flex;
+    min-width: 118px;
+    padding-right: 30px;
+  }
+
+  .topbar-more-panel {
+    display: grid;
+    width: 100%;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: max-height 160ms ease, padding-top 160ms ease,
+                opacity 140ms ease, transform 140ms ease;
+  }
+
+  .topbar-more-panel.is-open {
+    max-height: 200px;
+    padding-top: 6px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .topbar--viewer .topbar-shell-panel {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .topbar--viewer .topbar-lead {
+    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar--viewer .topbar-actions {
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
+  }
+
+  .topbar--viewer .topbar-more-trigger.btn {
+    min-width: auto;
+  }
+
+  .topbar--viewer .topbar-home-link { display: none; }
+
+  .topbar--admin .topbar-shell-panel {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 2px 5px;
+  }
+
+  .topbar--admin .topbar-lead {
+    width: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .topbar--admin .topbar-search-field {
+    display: none;
+  }
+
+  .topbar--admin .topbar-search-launch {
+    display: none;
+  }
+
+  .topbar--admin .topbar-home-link {
+    display: none;
+  }
+
+  .topbar--admin .topbar-actions {
+    width: auto;
+    margin-left: auto;
+    position: relative;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .topbar--admin .topbar-more-trigger.btn {
+    min-width: auto;
+    min-height: 36px;
+    padding: 0 28px 0 12px;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    text-align: center;
+    border-radius: 12px;
+  }
+
+  .topbar--admin .topbar-more-trigger-label {
+    line-height: 1;
+  }
+
+  .topbar--admin .topbar-more-panel {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: min(220px, calc(100vw - 24px));
+    width: min(236px, calc(100vw - 24px));
+    gap: 10px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    background: color-mix(in oklab, var(--card) 94%, var(--background) 6%);
+    box-shadow: none;
+    z-index: 1;
+  }
+
+  .topbar--admin .topbar-more-panel.is-open {
+    max-height: 260px;
+    padding: 10px;
+    border-color: var(--border);
+    box-shadow: var(--shadow-l);
+  }
+
+  .topbar--admin .topbar-more-group {
+    gap: 6px;
+  }
+
+  .topbar--admin .topbar-more-group-label {
+    padding-inline: 4px;
+  }
+
+  .topbar--admin .topbar-more-panel .btn {
+    min-height: 38px;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .app-main {
+    width: calc(100% - 24px);
+    margin-top: 14px;
+  }
+}

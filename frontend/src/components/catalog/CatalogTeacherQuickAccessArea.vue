@@ -88,7 +88,7 @@ const workbenchToggleLabel = computed(() =>
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
   padding: 16px;
-  background: var(--surface-raised);
+  background: var(--card);
 }
 
 .catalog-workbench {
@@ -104,11 +104,11 @@ const workbenchToggleLabel = computed(() =>
 
 .catalog-workbench-title {
   margin: 0;
-  color: var(--accent);
+  color: var(--primary);
   font-size: clamp(1.15rem, 1rem + 0.3vw, 1.35rem);
   font-weight: 700;
   padding-left: 10px;
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--primary);
 }
 
 .catalog-workbench-columns {
@@ -122,7 +122,7 @@ const workbenchToggleLabel = computed(() =>
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
   padding: 10px 12px;
-  background: color-mix(in oklab, var(--surface-raised) 88%, var(--paper) 12%);
+  background: color-mix(in oklab, var(--card) 88%, var(--background) 12%);
   color: inherit;
   font-family: inherit;
   text-align: left;
@@ -148,7 +148,7 @@ const workbenchToggleLabel = computed(() =>
 
 .catalog-workbench-summary-toggle {
   justify-self: end;
-  color: var(--accent);
+  color: var(--primary);
   font-weight: 600;
 }
 

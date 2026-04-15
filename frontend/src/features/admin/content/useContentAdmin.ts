@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from "vue";
-import { normalizePublicUrl } from "../../catalog/catalogLink";
+import { buildPreviewHref, buildViewerHref } from "../adminLinks";
 import { type AdminItemRow, createLinkItem } from "../adminApi";
 import { createAdminItemEditorState } from "../composables/useAdminItemEditorState";
 import { useActionFeedback } from "../composables/useActionFeedback";
@@ -55,11 +55,8 @@ export function useContentAdmin() {
     }));
   });
 
-  function viewerHref(id: string): string {
-    const base = import.meta.env.BASE_URL || "/";
-    return `${base.replace(/\/+$/, "/")}viewer/${encodeURIComponent(id)}`;
-  }
-  function previewHref(item: AdminItem): string { return normalizePublicUrl(item.src || viewerHref(item.id)); }
+  function viewerHref(id: string): string { return buildViewerHref(id); }
+  function previewHref(item: AdminItem): string { return buildPreviewHref(item); }
 
   const { reloadTaxonomy, reloadItems, saveEdit, removeItem } = createContentAdminActions({
     loading,

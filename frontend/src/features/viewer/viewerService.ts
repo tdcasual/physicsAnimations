@@ -60,8 +60,17 @@ function toIsolatedUploadTarget(target: string): string {
   return `/content/isolated${target.slice("/content".length)}`;
 }
 
+interface ViewerItem {
+  id?: string;
+  src?: string;
+  title?: string;
+  thumbnail?: string;
+  type?: string;
+  [key: string]: unknown;
+}
+
 async function tryFetchItemMeta(id: string): Promise<{
-  item: any | null;
+  item: ViewerItem | null;
   status: number;
   networkError: boolean;
 }> {
@@ -94,7 +103,7 @@ async function tryFetchItemMeta(id: string): Promise<{
 export async function loadViewerModel(params: ViewerParams): Promise<ViewerModel> {
   const id = String(params.id || "").trim();
 
-  let item: any = null;
+  let item: ViewerItem | null = null;
   let screenshotUrl = "";
   let title = "作品预览";
 

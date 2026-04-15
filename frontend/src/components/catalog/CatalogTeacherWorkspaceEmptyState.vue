@@ -37,7 +37,7 @@ defineProps<{
 }
 
 .catalog-teacher-empty strong {
-  color: var(--text);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale, 1));
   line-height: 1.25;
 }

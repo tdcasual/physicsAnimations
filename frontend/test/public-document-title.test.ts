@@ -11,17 +11,17 @@ describe("public route document titles", () => {
       heroTitle: "目录首页",
     });
 
-    expect(document.title).toBe("正在加载目录 - 我的科学演示集");
+    expect(document.title).toBe("正在加载目录 - 演示工坊");
 
     harness.loading.value = false;
     harness.loadError.value = "加载失败";
     await nextTick();
-    expect(document.title).toBe("加载目录失败 - 我的科学演示集");
+    expect(document.title).toBe("加载目录失败 - 演示工坊");
 
     harness.loadError.value = "";
     harness.heroTitle.value = "力学演示";
     await nextTick();
-    expect(document.title).toBe("力学演示 - 我的科学演示集");
+    expect(document.title).toBe("力学演示 - 演示工坊");
 
     harness.cleanup();
   });

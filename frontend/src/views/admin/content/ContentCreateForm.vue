@@ -22,16 +22,17 @@ const emit = defineEmits<{
   "clear-link-url-error": [];
   submit: [];
 }>();
+import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 </script>
 
 <template>
   <h3>添加网页链接</h3>
   <div class="form-grid">
-    <label class="field">
-      <span>分类</span>
+    <PAField>
+      <template #label>分类</template>
       <select
         :value="props.linkCategoryId"
-        class="field-input"
+        class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10"
         :disabled="props.saving"
         @change="emit('update:linkCategoryId', ($event.target as HTMLSelectElement).value)"
       >
@@ -39,55 +40,47 @@ const emit = defineEmits<{
           {{ option.label }}
         </option>
       </select>
-    </label>
+    </PAField>
   </div>
 
-  <label class="field" :class="{ 'has-error': props.createLinkUrlError }">
-    <span>链接</span>
-    <input
-      :value="props.linkUrl"
-      class="field-input"
+  <PAField :error="props.createLinkUrlError">
+    <template #label>链接</template>
+    <PAInput
+      :model-value="props.linkUrl"
       type="url"
-      autocapitalize="none"
-      autocorrect="off"
-      spellcheck="false"
       placeholder="https://example.com"
+      :variant="props.createLinkUrlError ? 'error' : 'default'"
       :disabled="props.saving"
-      @input="
-        emit('update:linkUrl', ($event.target as HTMLInputElement).value);
-        emit('clear-link-url-error');
-      "
+      @update:model-value="emit('update:linkUrl', $event); emit('clear-link-url-error');"
     />
-    <div v-if="props.createLinkUrlError" class="field-error-text">{{ props.createLinkUrlError }}</div>
-  </label>
+  </PAField>
 
-  <label class="field">
-    <span>标题（可选）</span>
-    <input
-      :value="props.linkTitle"
-      class="field-input"
-      type="text"
+  <PAField>
+    <template #label>标题（可选）</template>
+    <PAInput
+      :model-value="props.linkTitle"
       :disabled="props.saving"
-      @input="emit('update:linkTitle', ($event.target as HTMLInputElement).value)"
+      @update:model-value="emit('update:linkTitle', $event)"
     />
-  </label>
+  </PAField>
 
   <details class="admin-optional-disclosure">
     <summary class="admin-optional-summary">补充描述（可选）</summary>
     <div class="admin-optional-fields">
-      <label class="field">
-        <span>描述（可选）</span>
-        <textarea
-          :value="props.linkDescription"
-          class="field-input field-textarea"
+      <PAField>
+        <template #label>描述（可选）</template>
+        <PAInput
+          :model-value="props.linkDescription"
+          type="textarea"
+          size="textarea"
           :disabled="props.saving"
-          @input="emit('update:linkDescription', ($event.target as HTMLTextAreaElement).value)"
+          @update:model-value="emit('update:linkDescription', $event)"
         />
-      </label>
+      </PAField>
     </div>
   </details>
 
-  <div class="actions admin-actions">
-    <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('submit')">添加</button>
-  </div>
+  <PAActions align="end">
+    <PAButton :disabled="props.saving" @click="emit('submit')">添加</PAButton>
+  </PAActions>
 </template>

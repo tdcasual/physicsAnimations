@@ -3,6 +3,7 @@ import { useSystemWizard } from "../../features/admin/system/useSystemWizard";
 import SystemStatusPanel from "./system/SystemStatusPanel.vue";
 import SystemWizardSteps from "./system/SystemWizardSteps.vue";
 import SystemEmbedUpdaterPanel from "./system/SystemEmbedUpdaterPanel.vue";
+import { PACard } from "@/components/ui/patterns";
 
 const system = useSystemWizard();
 
@@ -72,7 +73,7 @@ const {
 
     <div class="admin-workspace-grid">
       <SystemWizardSteps
-        class="admin-card"
+
         :steps="steps"
         :wizard-step="wizardStep"
         :loading="loading"
@@ -115,10 +116,10 @@ const {
       />
 
       <aside class="admin-page-stack">
-        <SystemStatusPanel class="admin-card" :loading="loading" :storage="storage" :format-date="formatDate" />
+        <SystemStatusPanel :loading="loading" :storage="storage" :format-date="formatDate" />
 
         <SystemEmbedUpdaterPanel
-          class="admin-card"
+  
           :embed-updater="embedUpdater"
           :loading="loading"
           :enabled="embedUpdaterEnabled"
@@ -145,7 +146,7 @@ const {
 }
 
 .error-text {
-  color: var(--danger);
+  color: var(--destructive);
   font-size: calc(13px * var(--ui-scale));
 }
 

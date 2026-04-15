@@ -9,7 +9,7 @@
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
-  background: var(--surface);
+  background: var(--card);
   box-shadow: var(--shadow-m);
 }
 
@@ -25,11 +25,11 @@
   padding: 8px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  color: var(--accent);
+  color: var(--primary);
   font-size: calc(12px * var(--ui-scale, 1));
   font-weight: 600;
   letter-spacing: 0.04em;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .library-folder-hero-body {
@@ -47,7 +47,7 @@
 .library-folder-kicker,
 .asset-kicker {
   margin: 0;
-  color: var(--accent);
+  color: var(--primary);
   font-size: calc(11px * var(--ui-scale, 1));
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -82,7 +82,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
   overflow: hidden;
-  background: var(--surface);
+  background: var(--card);
 }
 
 .library-folder-cover img {
@@ -109,7 +109,7 @@
   border-radius: var(--radius-l);
   padding: 18px;
   color: var(--muted);
-  background: var(--surface);
+  background: var(--card);
 }
 
 .library-assets {
@@ -121,7 +121,7 @@
 .asset-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
-  background: var(--surface);
+  background: var(--card);
   padding: 14px;
   display: grid;
   gap: 8px;
@@ -129,14 +129,14 @@
 }
 
 .asset-card--embed {
-  border-color: var(--accent);
-  background: var(--surface);
+  border-color: var(--primary);
+  background: var(--card);
 }
 
 .asset-card--download {
   border-style: dashed;
   border-color: var(--border);
-  background: var(--surface);
+  background: var(--card);
 }
 
 .asset-headline {
@@ -167,14 +167,14 @@
 }
 
 .asset-state-badge.is-embed {
-  color: var(--accent);
-  background: var(--surface);
-  border-color: var(--accent);
+  color: var(--primary);
+  background: var(--card);
+  border-color: var(--primary);
 }
 
 .asset-state-badge.is-download {
-  color: var(--accent);
-  background: var(--surface);
+  color: var(--primary);
+  background: var(--card);
   border-color: var(--border);
 }
 

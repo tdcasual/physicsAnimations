@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { parseTimeoutMs } from "../../../features/admin/systemFormState";
+import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 const props = defineProps<{
   remoteMode: boolean;
@@ -68,77 +69,54 @@ const scanRemoteModel = computed({
     <h4>连接配置</h4>
 
     <div v-if="remoteMode" class="form-grid">
-      <label class="field" :class="{ 'has-error': getFieldError('webdavUrl') }">
-        <span>WebDAV URL</span>
-        <input v-model="urlModel" class="field-input" type="url" :disabled="readOnlyMode"
+      <PAField label="WebDAV URL" :error="getFieldError('webdavUrl')">
+        <PAInput v-model="urlModel" type="url" :disabled="readOnlyMode"
           name="webdav_url"
           autocomplete="url"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
           placeholder="https://example.com/dav/"
           @input="clearFieldErrors('webdavUrl')"
         />
-        <div v-if="getFieldError('webdavUrl')" class="field-error-text">{{ getFieldError("webdavUrl") }}</div>
-      </label>
+      </PAField>
 
-      <label class="field">
-        <span>WebDAV Base Path</span>
-        <input
+      <PAField label="WebDAV Base Path">
+        <PAInput
           v-model="basePathModel"
-          class="field-input"
           type="text"
           :disabled="readOnlyMode"
           name="webdav_base_path"
           autocomplete="off"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
         />
-      </label>
+      </PAField>
 
-      <label class="field">
-        <span>WebDAV 用户名</span>
-        <input
+      <PAField label="WebDAV 用户名">
+        <PAInput
           v-model="usernameModel"
-          class="field-input"
           type="text"
           :disabled="readOnlyMode"
           name="webdav_username"
           autocomplete="username"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
         />
-      </label>
+      </PAField>
 
-      <label class="field">
-        <span>WebDAV 密码（留空表示不更新）</span>
-        <input
+      <PAField label="WebDAV 密码（留空表示不更新）">
+        <PAInput
           v-model="passwordModel"
-          class="field-input"
           type="password"
           :disabled="readOnlyMode"
           name="webdav_password"
           autocomplete="current-password"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
         />
-      </label>
+      </PAField>
 
-      <label class="field">
-        <span>超时（毫秒）</span>
-        <input
+      <PAField label="超时（毫秒）">
+        <PAInput
           v-model="timeoutMsModel"
-          class="field-input"
           type="number"
           :disabled="readOnlyMode"
           name="webdav_timeout_ms"
           autocomplete="off"
-          min="1000"
         />
-      </label>
+      </PAField>
 
       <label class="checkbox">
         <input v-model="scanRemoteModel" type="checkbox" :disabled="readOnlyMode" />
@@ -148,10 +126,10 @@ const scanRemoteModel = computed({
 
     <div v-else class="empty">local 模式，无需配置。</div>
 
-    <div class="actions admin-actions">
-      <button type="button" class="btn btn-ghost" @click="emit('go-prev')">上一步</button>
-      <button type="button" class="btn btn-primary" :disabled="readOnlyMode" @click="emit('go-next')">下一步</button>
-    </div>
+    <PAActions align="end">
+      <PAButton variant="ghost" @click="emit('go-prev')">上一步</PAButton>
+      <PAButton :disabled="readOnlyMode" @click="emit('go-next')">下一步</PAButton>
+    </PAActions>
   </div>
 </template>
 

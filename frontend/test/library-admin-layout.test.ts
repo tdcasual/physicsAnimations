@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { readExpandedSource } from "./helpers/sourceReader";
 
@@ -316,13 +318,14 @@ describe("admin library layout", () => {
     expect(feedback).toMatch(/function setFieldError/);
     expect(feedback).toMatch(/function clearFieldErrors/);
     expect(feedback).toMatch(/function getFieldError/);
-    expect(template).toMatch(/field-error-text/);
-    expect(template).toMatch(/has-error/);
-    expect(template).toMatch(/getFieldError\("createFolderName"\)/);
-    expect(template).toMatch(/getFieldError\("uploadAssetFile"\)/);
-    expect(template).toMatch(/getFieldError\("uploadAssetEmbedProfile"\)/);
-    expect(combined).toMatch(/getFieldError\("createEmbedProfileName"\)/);
-    expect(combined).toMatch(/getFieldError\("createEmbedScriptUrl"\)/);
+    // PAField component handles error display internally with text-destructive
+    expect(template).toMatch(/PAField/);
+    expect(template).toMatch(/:error="vm\.actions\.getFieldError/);
+    expect(template).toMatch(/getFieldError\(['"]createFolderName['"]\)/);
+    expect(template).toMatch(/getFieldError\(['"]uploadAssetFile['"]\)/);
+    expect(template).toMatch(/getFieldError\(['"]uploadAssetEmbedProfile['"]\)/);
+    expect(combined).toMatch(/getFieldError\(['"]createEmbedProfileName['"]\)/);
+    expect(combined).toMatch(/getFieldError\(['"]createEmbedScriptUrl['"]\)/);
   });
 
   it("prevents long names from breaking mobile row layout", () => {
@@ -336,11 +339,14 @@ describe("admin library layout", () => {
 
   it("disables mobile auto-correct and auto-capitalization for embed URL fields", () => {
     const { combined } = readLibrarySources();
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"[\s\S]*autocorrect="off"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
-    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditFallbackScriptUrl"[\s\S]*autocapitalize="none"/);
+    // Uses PAInput component which has default autocapitalize/autocorrect/spellcheck
+    expect(combined).toMatch(/PAInput/);
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedScriptUrl"/);
+    expect(combined).toMatch(/v-model="vm\.drafts\.embedEditScriptUrl"/);
+    // Verify PAInput component has the safeguards
+    const inputComponent = fs.readFileSync(path.resolve(process.cwd(), "src/components/ui/patterns/PAInput.vue"), "utf8");
+    expect(inputComponent).toMatch(/autocapitalize:\s*"none"/);
+    expect(inputComponent).toMatch(/autocorrect:\s*"off"/);
+    expect(inputComponent).toMatch(/spellcheck:\s*"false"/);
   });
 });

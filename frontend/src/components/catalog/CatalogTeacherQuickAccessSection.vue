@@ -103,7 +103,7 @@ function isFavorited(itemId: string): boolean {
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   background: transparent;
-  color: var(--accent);
+  color: var(--primary);
   font-size: calc(11px * var(--ui-scale, 1));
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -127,7 +127,7 @@ function isFavorited(itemId: string): boolean {
 }
 
 .catalog-teacher-row:hover {
-  background: var(--surface-ink);
+  background: var(--muted);
 }
 
 .catalog-teacher-row:first-child {
@@ -148,7 +148,7 @@ function isFavorited(itemId: string): boolean {
   aspect-ratio: 4 / 3;
   overflow: hidden;
   border-radius: var(--radius-m);
-  background: var(--surface);
+  background: var(--card);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -190,7 +190,7 @@ function isFavorited(itemId: string): boolean {
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 6px 10px;
-  background: var(--surface);
+  background: var(--card);
   color: inherit;
   cursor: pointer;
   font-size: calc(12px * var(--ui-scale, 1));
@@ -198,9 +198,9 @@ function isFavorited(itemId: string): boolean {
 }
 
 .catalog-teacher-action--active {
-  border-color: var(--accent);
+  border-color: var(--primary);
   background: oklch(58% 0.18 30 / 0.08);
-  color: var(--accent-strong);
+  color: var(--primary);
   font-weight: 600;
 }
 

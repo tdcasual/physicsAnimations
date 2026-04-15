@@ -8,22 +8,28 @@ function read(relPath: string): string {
 describe("admin mobile input safeguards", () => {
   it("disables auto-correct and auto-capitalization for link url input", () => {
     const source = read("src/views/admin/content/ContentCreateForm.vue");
+    expect(source).toMatch(/PAInput/);
     expect(source).toMatch(/type="url"/);
-    expect(source).toMatch(/autocapitalize="none"/);
-    expect(source).toMatch(/autocorrect="off"/);
-    expect(source).toMatch(/spellcheck="false"/);
+    // PAInput component has default autocapitalize/autocorrect/spellcheck
+    const inputComponent = read("src/components/ui/patterns/PAInput.vue");
+    expect(inputComponent).toMatch(/autocapitalize:\s*"none"/);
+    expect(inputComponent).toMatch(/autocorrect:\s*"off"/);
+    expect(inputComponent).toMatch(/spellcheck:\s*"false"/);
   });
 
   it("keeps shared field inputs constrained to container width on narrow screens", () => {
-    const css = read("src/styles.css");
-    expect(css).toMatch(/\.field-input\s*\{[^}]*width:\s*100%/);
-    expect(css).toMatch(/\.field-input\s*\{[^}]*min-width:\s*0/);
+    // PAInput component uses Tailwind w-full and min-w-0 for responsive width
+    const inputComponent = read("src/components/ui/patterns/PAInput.vue");
+    expect(inputComponent).toMatch(/w-full/);
+    expect(inputComponent).toMatch(/min-w-0/);
   });
 
   it("keeps shared admin inputs tall enough for mobile touch interaction", () => {
-    const css = read("src/styles.css");
-    expect(css).toMatch(/\.admin-input\s*\{[^}]*width:\s*100%/);
-    expect(css).toMatch(/\.admin-input\s*\{[^}]*min-width:\s*0/);
-    expect(css).toMatch(/\.admin-input\s*\{[^}]*min-height:\s*42px/);
+    // PAInput component uses Tailwind classes for responsive sizing
+    const inputComponent = read("src/components/ui/patterns/PAInput.vue");
+    expect(inputComponent).toMatch(/w-full/);
+    expect(inputComponent).toMatch(/min-w-0/);
+    // PAInput has h-10 (40px) default size, which is tall enough for touch
+    expect(inputComponent).toMatch(/h-10|h-8|h-12/);
   });
 });

@@ -15,7 +15,9 @@ describe("admin system readOnly guards", () => {
     expect(steps).toMatch(/type="radio"[^\\n]*:disabled="readOnlyMode"/);
 
     expect(connection).toMatch(/readOnlyMode:\s*boolean/);
-    expect(connection).toMatch(/class="field-input"[^\\n]*:disabled="readOnlyMode"/);
+    // PAInput component handles disabled state
+    expect(connection).toMatch(/PAInput/);
+    expect(connection).toMatch(/:disabled="readOnlyMode"/);
     expect(connection).toMatch(/type="checkbox"[^\\n]*:disabled="readOnlyMode"/);
   });
 });

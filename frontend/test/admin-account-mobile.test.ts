@@ -9,11 +9,15 @@ function read(relPath: string): string {
 describe("admin account mobile input behavior", () => {
   it("disables auto-capitalization and auto-correct on credential fields", () => {
     const source = read("src/views/admin/AdminAccountView.vue");
-    expect(source).toMatch(/name="username"[\s\S]*autocapitalize="none"/);
-    expect(source).toMatch(/name="username"[\s\S]*autocorrect="off"/);
-    expect(source).toMatch(/name="username"[\s\S]*spellcheck="false"/);
-    expect(source).toMatch(/name="current_password"[\s\S]*autocapitalize="none"/);
-    expect(source).toMatch(/name="new_password"[\s\S]*autocapitalize="none"/);
-    expect(source).toMatch(/name="confirm_new_password"[\s\S]*autocapitalize="none"/);
+    // Check for PAInput component usage with proper name attributes
+    expect(source).toMatch(/name="username"/);
+    expect(source).toMatch(/name="current_password"/);
+    expect(source).toMatch(/name="new_password"/);
+    expect(source).toMatch(/name="confirm_new_password"/);
+    // Check PAInput component has default autocapitalize/autocorrect/spellcheck
+    const inputComponent = read("src/components/ui/patterns/PAInput.vue");
+    expect(inputComponent).toMatch(/autocapitalize:\s*"none"/);
+    expect(inputComponent).toMatch(/autocorrect:\s*"off"/);
+    expect(inputComponent).toMatch(/spellcheck:\s*"false"/);
   });
 });

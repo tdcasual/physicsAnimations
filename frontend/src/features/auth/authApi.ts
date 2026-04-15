@@ -4,13 +4,13 @@ const TOKEN_KEY = "pa_admin_token";
 
 export interface ApiError extends Error {
   status?: number;
-  data?: any;
+  data?: Record<string, unknown> | null;
 }
 
 function toApiError(message: string, status?: number, data?: unknown): ApiError {
   const err = new Error(message) as ApiError;
   err.status = status;
-  err.data = data;
+  err.data = data as Record<string, unknown> | null | undefined;
   return err;
 }
 
@@ -26,17 +26,31 @@ export function clearToken(): void {
   sessionStorage.removeItem(TOKEN_KEY);
 }
 
-async function apiFetch(path: string, options: RequestInit = {}): Promise<any> {
-  return apiFetchJson({
+interface LoginResponse {
+  token: string;
+  user?: {
+    id: string;
+    username: string;
+  };
+}
+
+interface UserInfo {
+  id: string;
+  username: string;
+  role?: string;
+}
+
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  return apiFetchJson<T>({
     path,
     options,
     token: getToken(),
-    toError: (status, data) => toApiError(data?.error || "request_failed", status, data),
+    toError: (status, data) => toApiError(String(data?.error) || "request_failed", status, data),
   });
 }
 
-export async function login(params: { username: string; password: string }): Promise<any> {
-  const data = await apiFetch("/api/auth/login", {
+export async function login(params: { username: string; password: string }): Promise<LoginResponse> {
+  const data = await apiFetch<LoginResponse>("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -50,6 +64,6 @@ export async function login(params: { username: string; password: string }): Pro
   return data;
 }
 
-export async function me(): Promise<any> {
-  return apiFetch("/api/auth/me", { method: "GET" });
+export async function me(): Promise<UserInfo> {
+  return apiFetch<UserInfo>("/api/auth/me", { method: "GET" });
 }

@@ -25,10 +25,15 @@ import {
 interface LibraryApiError extends Error {
   status: number;
   code: string;
-  data?: any;
+  data?: Record<string, unknown> | null;
 }
 
-function toApiError(status: number, data: any): LibraryApiError {
+interface ApiErrorResponse {
+  error?: string;
+  [key: string]: unknown;
+}
+
+function toApiError(status: number, data: ApiErrorResponse | null): LibraryApiError {
   const code = typeof data?.error === "string" ? data.error : "request_failed";
   const err = new Error(code) as LibraryApiError;
   err.status = status;
@@ -37,7 +42,7 @@ function toApiError(status: number, data: any): LibraryApiError {
   return err;
 }
 
-async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   return apiFetchJson<T>({
     path,
     options,
@@ -48,35 +53,60 @@ async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promi
         window.dispatchEvent(new CustomEvent("pa-auth-expired"));
       }
     },
-    toError: (status, data) => toApiError(status, data),
+    toError: (status, data) => toApiError(status, data as ApiErrorResponse | null),
   });
 }
 
+interface CatalogApiResponse {
+  folders?: unknown[];
+}
+
+interface FoldersApiResponse {
+  folders?: unknown[];
+}
+
+interface EmbedProfilesApiResponse {
+  profiles?: unknown[];
+}
+
+interface FolderApiResponse {
+  folder?: unknown;
+}
+
+interface AssetsApiResponse {
+  assets?: unknown[];
+}
+
+interface ApiSuccessResponse {
+  success?: boolean;
+  [key: string]: unknown;
+}
+
 export async function listLibraryCatalog(): Promise<LibraryCatalogResponse> {
-  const data = await apiFetch<any>("/api/library/catalog", { method: "GET" });
+  const data = await apiFetch<CatalogApiResponse>("/api/library/catalog", { method: "GET" });
   const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : [];
   return { folders };
 }
 
 export async function listLibraryFolders(): Promise<LibraryFolder[]> {
-  const data = await apiFetch<any>("/api/library/folders", { method: "GET" });
+  const data = await apiFetch<FoldersApiResponse>("/api/library/folders", { method: "GET" });
   const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : [];
   return folders;
 }
 
 export async function listLibraryEmbedProfiles(): Promise<LibraryEmbedProfile[]> {
-  const data = await apiFetch<any>("/api/library/embed-profiles", { method: "GET" });
+  const data = await apiFetch<EmbedProfilesApiResponse>("/api/library/embed-profiles", { method: "GET" });
   const profiles = Array.isArray(data?.profiles) ? data.profiles.map(toEmbedProfile) : [];
   return profiles;
 }
 
 export async function getLibraryFolder(folderId: string): Promise<LibraryFolder> {
-  const data = await apiFetch<any>(`/api/library/folders/${encodeURIComponent(folderId)}`, { method: "GET" });
+  const data = await apiFetch<FolderApiResponse>(`/api/library/folders/${encodeURIComponent(folderId)}`, { method: "GET" });
   return toFolder(data?.folder || {});
 }
 
 export async function listLibraryFolderAssets(folderId: string): Promise<LibraryFolderAssetsResponse> {
-  const data = await apiFetch<any>(`/api/library/folders/${encodeURIComponent(folderId)}/assets`, {
+  const data = await apiFetch<AssetsApiResponse>(`/api/library/folders/${encodeURIComponent(folderId)}/assets`, {
     method: "GET",
   });
   const assets = Array.isArray(data?.assets) ? data.assets.map(toAsset) : [];
@@ -88,12 +118,12 @@ export async function listLibraryDeletedAssets(folderId?: string): Promise<Libra
   if (folderId) params.set("folderId", String(folderId || "").trim());
   const query = params.toString();
   const path = query ? `/api/library/deleted-assets?${query}` : "/api/library/deleted-assets";
-  const data = await apiFetch<any>(path, { method: "GET" });
+  const data = await apiFetch<AssetsApiResponse>(path, { method: "GET" });
   const assets = Array.isArray(data?.assets) ? data.assets.map(toAsset) : [];
   return { assets };
 }
 
-export async function createLibraryFolder(payload: CreateLibraryFolderPayload): Promise<any> {
+export async function createLibraryFolder(payload: CreateLibraryFolderPayload): Promise<ApiSuccessResponse> {
   return apiFetch("/api/library/folders", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -104,7 +134,7 @@ export async function createLibraryFolder(payload: CreateLibraryFolderPayload): 
 export async function updateLibraryFolder(
   folderId: string,
   patch: UpdateLibraryFolderPatch,
-): Promise<any> {
+): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/folders/${encodeURIComponent(folderId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -115,7 +145,7 @@ export async function updateLibraryFolder(
 export async function uploadLibraryFolderCover(payload: {
   folderId: string;
   file: File;
-}): Promise<any> {
+}): Promise<ApiSuccessResponse> {
   const formData = new FormData();
   formData.append("file", payload.file);
 
@@ -125,14 +155,14 @@ export async function uploadLibraryFolderCover(payload: {
   });
 }
 
-export async function uploadLibraryAsset(payload: UploadLibraryAssetPayload): Promise<any> {
+export async function uploadLibraryAsset(payload: UploadLibraryAssetPayload): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/folders/${encodeURIComponent(payload.folderId)}/assets`, {
     method: "POST",
     body: buildUploadLibraryAssetFormData(payload),
   });
 }
 
-export async function createLibraryEmbedProfile(payload: CreateLibraryEmbedProfilePayload): Promise<any> {
+export async function createLibraryEmbedProfile(payload: CreateLibraryEmbedProfilePayload): Promise<ApiSuccessResponse> {
   return apiFetch("/api/library/embed-profiles", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -143,7 +173,7 @@ export async function createLibraryEmbedProfile(payload: CreateLibraryEmbedProfi
 export async function updateLibraryEmbedProfile(
   profileId: string,
   patch: UpdateLibraryEmbedProfilePatch,
-): Promise<any> {
+): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/embed-profiles/${encodeURIComponent(profileId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -151,13 +181,13 @@ export async function updateLibraryEmbedProfile(
   });
 }
 
-export async function deleteLibraryEmbedProfile(profileId: string): Promise<any> {
+export async function deleteLibraryEmbedProfile(profileId: string): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/embed-profiles/${encodeURIComponent(profileId)}`, {
     method: "DELETE",
   });
 }
 
-export async function syncLibraryEmbedProfile(profileId: string): Promise<any> {
+export async function syncLibraryEmbedProfile(profileId: string): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/embed-profiles/${encodeURIComponent(profileId)}/sync`, {
     method: "POST",
   });
@@ -166,7 +196,7 @@ export async function syncLibraryEmbedProfile(profileId: string): Promise<any> {
 export async function updateLibraryAsset(
   assetId: string,
   patch: UpdateLibraryAssetPatch,
-): Promise<any> {
+): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -174,25 +204,25 @@ export async function updateLibraryAsset(
   });
 }
 
-export async function deleteLibraryFolder(folderId: string): Promise<any> {
+export async function deleteLibraryFolder(folderId: string): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/folders/${encodeURIComponent(folderId)}`, {
     method: "DELETE",
   });
 }
 
-export async function deleteLibraryAsset(assetId: string): Promise<any> {
+export async function deleteLibraryAsset(assetId: string): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}`, {
     method: "DELETE",
   });
 }
 
-export async function deleteLibraryAssetPermanently(assetId: string): Promise<any> {
+export async function deleteLibraryAssetPermanently(assetId: string): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}/permanent`, {
     method: "DELETE",
   });
 }
 
-export async function restoreLibraryAsset(assetId: string): Promise<any> {
+export async function restoreLibraryAsset(assetId: string): Promise<ApiSuccessResponse> {
   return apiFetch(`/api/library/assets/${encodeURIComponent(assetId)}/restore`, {
     method: "POST",
   });

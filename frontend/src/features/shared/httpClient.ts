@@ -14,7 +14,7 @@ function toHeaderRecord(headers?: HeadersInit): Record<string, string> {
     }
     return out;
   }
-  return { ...(headers as Record<string, string>) };
+  return { ...(headers as unknown as Record<string, string>) };
 }
 
 function buildHeaders(headers?: HeadersInit, token = ""): Record<string, string> {
@@ -29,12 +29,19 @@ function buildHeaders(headers?: HeadersInit, token = ""): Record<string, string>
   };
 }
 
-export async function apiFetchJson<T = any>(params: {
+export interface ApiErrorData {
+  error?: string;
+  [key: string]: unknown;
+}
+
+export type ApiErrorHandler = (status: number, data: ApiErrorData | null) => Error;
+
+export async function apiFetchJson<T>(params: {
   path: string;
   options?: RequestInit;
   token?: string;
   onUnauthorized?: () => void;
-  toError?: (status: number, data: any) => Error;
+  toError?: ApiErrorHandler;
 }): Promise<T> {
   const { path, options = {}, token = "", onUnauthorized, toError } = params;
   const response = await fetch(path, {
@@ -59,10 +66,10 @@ export async function apiFetchJson<T = any>(params: {
 
   const fallback = new Error(typeof data?.error === "string" ? data.error : "request_failed") as Error & {
     status?: number;
-    data?: any;
+    data?: ApiErrorData | null;
   };
   fallback.status = response.status;
-  fallback.data = data;
+  fallback.data = data as ApiErrorData | null;
   throw fallback;
 }
 

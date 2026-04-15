@@ -4,6 +4,7 @@ import { setToken } from "../../features/auth/authApi";
 import { useAuthStore } from "../../features/auth/useAuthStore";
 import { updateAccount } from "../../features/admin/adminApi";
 import { usePendingChangesGuard } from "../../features/admin/composables/usePendingChangesGuard";
+import { PAButton, PACard, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 const auth = useAuthStore();
 
@@ -144,83 +145,66 @@ async function submit() {
     <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
     <div v-if="successText" class="success-text admin-feedback success">{{ successText }}</div>
 
-    <form class="admin-card" @submit.prevent="submit">
+    <PACard variant="admin" class="max-w-[480px]" as="form" @submit.prevent="submit">
       <div class="current-user">
         当前登录用户：<strong>{{ auth.username || "-" }}</strong>
       </div>
 
-      <label class="field" :class="{ 'has-error': getFieldError('currentPassword') }">
-        <span>当前密码</span>
-        <input
+      <PAField :error="getFieldError('currentPassword')">
+        <template #label>当前密码</template>
+        <PAInput
           v-model="currentPassword"
-          class="field-input"
-          type="password"
           name="current_password"
+          type="password"
           autocomplete="current-password"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
+          :state="getFieldError('currentPassword') ? 'error' : 'default'"
           :disabled="saving"
           @input="clearFieldErrors('currentPassword')"
         />
-        <div v-if="getFieldError('currentPassword')" class="field-error-text">{{ getFieldError("currentPassword") }}</div>
-      </label>
+      </PAField>
 
-      <label class="field" :class="{ 'has-error': getFieldError('newUsername') }">
-        <span>新用户名（可选）</span>
-        <input
+      <PAField :error="getFieldError('newUsername')">
+        <template #label>新用户名（可选）</template>
+        <PAInput
           v-model="newUsername"
-          class="field-input"
-          type="text"
           name="username"
           autocomplete="username"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
+          :state="getFieldError('newUsername') ? 'error' : 'default'"
           :disabled="saving"
           @input="clearFieldErrors('newUsername')"
         />
-        <div v-if="getFieldError('newUsername')" class="field-error-text">{{ getFieldError("newUsername") }}</div>
-      </label>
+      </PAField>
 
-      <label class="field" :class="{ 'has-error': getFieldError('newPassword') }">
-        <span>新密码（可选）</span>
-        <input
+      <PAField :error="getFieldError('newPassword')">
+        <template #label>新密码（可选）</template>
+        <PAInput
           v-model="newPassword"
-          class="field-input"
-          type="password"
           name="new_password"
+          type="password"
           autocomplete="new-password"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
+          :state="getFieldError('newPassword') ? 'error' : 'default'"
           :disabled="saving"
           @input="clearFieldErrors('newPassword')"
         />
-        <div v-if="getFieldError('newPassword')" class="field-error-text">{{ getFieldError("newPassword") }}</div>
-      </label>
+      </PAField>
 
-      <label class="field" :class="{ 'has-error': getFieldError('confirmPassword') }">
-        <span>确认新密码</span>
-        <input
+      <PAField :error="getFieldError('confirmPassword')">
+        <template #label>确认新密码</template>
+        <PAInput
           v-model="confirmPassword"
-          class="field-input"
-          type="password"
           name="confirm_new_password"
+          type="password"
           autocomplete="new-password"
-          autocapitalize="none"
-          autocorrect="off"
-          spellcheck="false"
+          :state="getFieldError('confirmPassword') ? 'error' : 'default'"
           :disabled="saving"
           @input="clearFieldErrors('confirmPassword')"
         />
-        <div v-if="getFieldError('confirmPassword')" class="field-error-text">{{ getFieldError("confirmPassword") }}</div>
-      </label>
+      </PAField>
 
-      <div class="actions admin-actions">
-        <button type="submit" class="btn btn-primary" :disabled="saving">保存</button>
-      </div>
-    </form>
+      <PAActions align="end">
+        <PAButton type="submit" :disabled="saving">保存</PAButton>
+      </PAActions>
+    </PACard>
   </section>
 </template>
 
@@ -230,9 +214,7 @@ async function submit() {
   gap: 12px;
 }
 
-form.admin-card {
-  max-width: 480px;
-}
+
 
 .current-user {
   color: var(--muted);

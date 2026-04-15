@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { PAButton, PAField, PAInput } from "@/components/ui/patterns";
 import type { LibraryAsset } from "../../features/library/types";
 import { useLibraryAdminState } from "../../features/library/useLibraryAdminState";
 import { createAdminLibraryMobileInspectorFocus } from "./library/useAdminLibraryMobileInspectorFocus";
@@ -192,3 +193,4 @@ onMounted(() => {
 <template src="./library/AdminLibraryView.template.html"></template>
 
 <style scoped src="./library/AdminLibraryView.css"></style>
+<!-- Note: CSS merged from base/list/activity/responsive into single file -->

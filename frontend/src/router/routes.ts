@@ -1,17 +1,19 @@
 import type { RouteRecordRaw } from "vue-router";
 
-import AdminAccountView from "../views/admin/AdminAccountView.vue";
-import AdminContentView from "../views/admin/AdminContentView.vue";
-import AdminDashboardView from "../views/admin/AdminDashboardView.vue";
-import AdminLibraryView from "../views/admin/AdminLibraryView.vue";
 import AdminLayoutView from "../views/admin/AdminLayoutView.vue";
-import AdminSystemView from "../views/admin/AdminSystemView.vue";
-import AdminTaxonomyView from "../views/admin/AdminTaxonomyView.vue";
-import AdminUploadsView from "../views/admin/AdminUploadsView.vue";
 import CatalogView from "../views/CatalogView.vue";
 import LibraryFolderView from "../views/LibraryFolderView.vue";
 import LoginView from "../views/LoginView.vue";
 import ViewerView from "../views/ViewerView.vue";
+
+// Admin views - lazy loaded for better performance
+const AdminDashboardView = () => import("../views/admin/AdminDashboardView.vue");
+const AdminContentView = () => import("../views/admin/AdminContentView.vue");
+const AdminUploadsView = () => import("../views/admin/AdminUploadsView.vue");
+const AdminLibraryView = () => import("../views/admin/AdminLibraryView.vue");
+const AdminTaxonomyView = () => import("../views/admin/AdminTaxonomyView.vue");
+const AdminSystemView = () => import("../views/admin/AdminSystemView.vue");
+const AdminAccountView = () => import("../views/admin/AdminAccountView.vue");
 
 export const appRoutes: RouteRecordRaw[] = [
   {

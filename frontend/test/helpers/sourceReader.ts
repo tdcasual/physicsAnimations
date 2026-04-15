@@ -7,6 +7,10 @@ function readFile(filePath: string): string {
 
 function resolveCssImports(source: string, filePath: string, seen: Set<string>): string {
   return source.replace(/@import\s+["']([^"']+)["'];/g, (_full, relPath: string) => {
+    // Skip bare imports like "tailwindcss" - only resolve relative or absolute paths
+    if (!relPath.startsWith(".") && !relPath.startsWith("/")) {
+      return _full;
+    }
     const nextPath = path.resolve(path.dirname(filePath), relPath);
     return `\n${readExpandedSource(nextPath, seen)}\n`;
   });

@@ -12,7 +12,7 @@ describe("admin preview default open", () => {
     const listPanel = read("src/views/admin/content/ContentListPanel.vue");
     const page = read("src/views/admin/AdminContentView.vue");
     expect(logic).toMatch(/function previewHref\(item: AdminItem\)/);
-    expect(logic).toMatch(/normalizePublicUrl\(item\.src \|\| viewerHref\(item\.id\)\)/);
+    expect(logic).toMatch(/buildPreviewHref\(item\)/);
     expect(listPanel).toMatch(/:href="props\.previewHref\(item\)"/);
     expect(page).toMatch(/:preview-href="vm\.previewHref"/);
   });
@@ -22,7 +22,7 @@ describe("admin preview default open", () => {
     const listPanel = read("src/views/admin/uploads/UploadsListPanel.vue");
     const page = read("src/views/admin/AdminUploadsView.vue");
     expect(logic).toMatch(/function previewHref\(item: AdminItem\)/);
-    expect(logic).toMatch(/normalizePublicUrl\(item\.src \|\| viewerHref\(item\.id\)\)/);
+    expect(logic).toMatch(/buildPreviewHref\(item\)/);
     expect(listPanel).toMatch(/:href="props\.previewHref\(item\)"/);
     expect(page).toMatch(/:preview-href="vm\.previewHref"/);
   });

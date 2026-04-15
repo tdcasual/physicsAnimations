@@ -1,63 +1,79 @@
-.admin-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-l);
-  background: var(--surface);
-  padding: 16px;
-  display: grid;
-  gap: 12px;
-}
-
 /* ── Admin page header ── */
 .admin-page-header {
-  --admin-page-tone: var(--accent);
-  --admin-page-tone-ink: var(--accent-strong);
+  --admin-page-tone: var(--primary);
+  --admin-page-tone-ink: var(--primary);
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
+  gap: 20px;
   flex-wrap: wrap;
-  padding: 20px 24px;
+  padding: 24px 28px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-l);
-  background: var(--surface);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--card) 0%, var(--muted) 50%, var(--card) 100%);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+}
+
+.admin-page-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
 }
 
 .admin-page-header--dashboard {
-  --admin-page-tone: var(--accent);
-  --admin-page-tone-ink: var(--accent-strong);
+  --admin-page-tone: var(--primary);
+  --admin-page-tone-ink: var(--primary);
 }
 
 .admin-page-header--content {
-  --admin-page-tone: var(--accent);
-  --admin-page-tone-ink: var(--accent-strong);
+  --admin-page-tone: var(--primary);
+  --admin-page-tone-ink: var(--primary);
 }
 
 .admin-page-header--uploads {
-  --admin-page-tone: var(--accent-copper);
-  --admin-page-tone-ink: var(--accent-copper-strong);
+  --admin-page-tone: var(--primary);
+  --admin-page-tone-ink: var(--primary);
 }
 
 .admin-page-header--library {
-  --admin-page-tone: var(--accent-copper);
-  --admin-page-tone-ink: var(--accent-copper-strong);
+  --admin-page-tone: var(--primary);
+  --admin-page-tone-ink: var(--primary);
 }
 
 .admin-page-header--taxonomy {
-  --admin-page-tone: var(--line-strong);
-  --admin-page-tone-ink: var(--ink-soft);
+  --admin-page-tone: var(--border);
+  --admin-page-tone-ink: var(--muted-foreground);
 }
 
 .admin-page-header--system {
-  --admin-page-tone: var(--line-strong);
-  --admin-page-tone-ink: var(--ink-soft);
+  --admin-page-tone: var(--border);
+  --admin-page-tone-ink: var(--muted-foreground);
 }
 
 .admin-page-header--account {
-  --admin-page-tone: var(--accent-copper);
-  --admin-page-tone-ink: var(--accent-copper-strong);
+  --admin-page-tone: var(--primary);
+  --admin-page-tone-ink: var(--primary);
 }
 
-.admin-page-header :is(h1, h2, h3) { margin: 0; }
+.admin-page-header :is(h1, h2, h3) { 
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.admin-page-header h1 {
+  font-size: calc(24px * var(--ui-scale));
+  background: linear-gradient(135deg, var(--foreground) 0%, var(--muted-foreground) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
 .admin-page-copy {
   display: grid;
@@ -77,7 +93,7 @@
 .admin-page-intro {
   margin: 0;
   max-width: 56ch;
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 
@@ -93,13 +109,13 @@
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
-  background: var(--surface);
-  color: var(--muted);
+  background: var(--card);
+  color: var(--muted-foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 
 .admin-page-meta strong {
-  color: var(--text);
+  color: var(--foreground);
   font-size: calc(15px * var(--ui-scale));
 }
 
@@ -112,7 +128,7 @@
   margin: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
-  background: var(--surface);
+  background: var(--card);
   overflow: hidden;
 }
 
@@ -125,7 +141,7 @@
   gap: 10px;
   min-height: 44px;
   padding: 10px 14px;
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: calc(13px * var(--ui-scale));
   font-weight: 600;
 }
@@ -134,7 +150,7 @@
 
 .admin-optional-disclosure > .admin-optional-summary::after {
   content: "展开";
-  color: var(--accent);
+  color: var(--primary);
   font-size: calc(12px * var(--ui-scale));
   font-weight: 600;
 }
@@ -162,8 +178,8 @@
   padding: 3px 10px;
   border: 1px solid var(--border);
   border-radius: var(--radius-s);
-  background: var(--surface);
-  color: var(--muted);
+  background: var(--card);
+  color: var(--muted-foreground);
   font-size: calc(12px * var(--ui-scale));
 }
 
@@ -197,55 +213,12 @@
 }
 
 /* ── Form elements ── */
-.admin-field {
-  display: grid;
-  gap: 6px;
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
-}
-
-.admin-input {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  background: var(--surface);
-  color: var(--text);
-  font-family: inherit;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 42px;
-  padding: 10px 12px;
-  transition: border-color 140ms ease;
-}
-
-.admin-input:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--focus-ring);
-}
-
-.admin-textarea {
-  min-height: 72px;
-  resize: vertical;
-}
-
-.admin-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.admin-actions .btn-primary {
-  min-inline-size: 96px;
-}
-
 .admin-feedback {
   font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
-.admin-feedback.error { color: var(--danger); }
+.admin-feedback.error { color: var(--destructive); }
 .admin-feedback.success { color: var(--success); }
 
 @media (min-width: 960px) {
@@ -290,15 +263,6 @@
 
 
 @media (max-width: 640px) {
-  .admin-card {
-    padding: 14px;
-    gap: 10px;
-    border-radius: 18px;
-  }
-
-  .admin-actions { justify-content: stretch; }
-  .admin-actions .btn { flex: 1 1 calc(50% - 6px); }
-
   .admin-page-header {
     gap: 10px;
     padding: 12px 12px 10px;
@@ -321,7 +285,7 @@
     gap: 12px;
     padding: 8px 10px;
     border-radius: 14px;
-    background: color-mix(in oklab, var(--surface) 84%, var(--paper));
+    background: color-mix(in oklab, var(--card) 84%, var(--background));
   }
 
   .admin-page-meta strong {

@@ -17,28 +17,30 @@ const emit = defineEmits<{
 
 <template>
   <section
-    class="viewer-stage-shell"
-    :class="{ 'viewer-stage-shell--screenshot': props.screenshotVisible, 'viewer-stage-shell--interactive': props.interactiveStarted && !props.screenshotVisible }"
+    class="relative w-full rounded-2xl border border-border bg-muted/50 p-3 shadow-sm transition-all"
+    :class="{
+      'shadow-lg': props.interactiveStarted && !props.screenshotVisible,
+    }"
   >
     <div
-      class="viewer-stage-frame viewer-stage-frame--priority"
+      class="relative overflow-hidden rounded-xl"
       :class="{
-        'viewer-stage-frame--screenshot': props.screenshotVisible,
-        'viewer-stage-frame--interactive': props.interactiveStarted && !props.screenshotVisible,
-        'viewer-stage-frame--transitioning': props.stageTransitionState === 'mode-shift',
+        'animate-mode-shift': props.stageTransitionState === 'mode-shift',
       }"
     >
-      <div class="viewer-stage-screen">
+      <div
+        class="relative min-h-[60vh] overflow-hidden rounded-xl bg-background sm:min-h-[72vh]"
+      >
         <img
           v-if="props.screenshotUrl && props.screenshotVisible"
-          class="viewer-shot"
+          class="absolute inset-0 z-10 h-full w-full object-contain"
           :src="props.normalizedScreenshotSrc"
           alt=""
         />
         <iframe
           v-if="props.interactiveStarted"
           v-show="!props.screenshotVisible"
-          class="viewer-frame"
+          class="block min-h-[60vh] w-full border-0 bg-white sm:min-h-[72vh]"
           :src="props.frameSrc"
           title="作品"
           loading="eager"
@@ -52,92 +54,16 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
-.viewer-stage-shell {
-  display: grid;
-  gap: 14px;
-  min-width: 0;
+@keyframes mode-shift {
+  from { transform: translateY(8px) scale(0.99); opacity: 0.8; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-.viewer-stage-frame {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: clamp(14px, 2vw, 20px);
-  background: oklch(14% 0.02 250);
-}
-
-.viewer-stage-screen {
-  position: relative;
-  min-height: calc(var(--viewer-min-height, 72vh) - clamp(28px, 4vw, 40px));
-  border-radius: var(--radius-m);
-  overflow: hidden;
-  background: oklch(12% 0.015 250);
-}
-
-.viewer-stage-shell--interactive .viewer-stage-frame {
-  box-shadow: var(--shadow-xl);
-}
-
-.viewer-stage-shell--screenshot .viewer-stage-frame {
-  background: oklch(15% 0.015 250);
-}
-
-.viewer-stage-frame--transitioning {
-  animation: viewer-shift 280ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.viewer-shot {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  background: oklch(12% 0.015 250);
-  z-index: var(--z-raised);
-}
-
-.viewer-stage-frame--screenshot .viewer-stage-screen {
-  min-height: 0;
-}
-
-.viewer-stage-frame--screenshot .viewer-shot {
-  position: static;
-  inset: auto;
-  display: block;
-  width: 100%;
-  height: auto;
-}
-
-.viewer-frame {
-  width: 100%;
-  min-height: calc(var(--viewer-min-height, 72vh) - clamp(28px, 4vw, 40px));
-  border: 0;
-  display: block;
-  background: var(--surface);
-}
-
-@keyframes viewer-shift {
-  from { transform: translateY(8px) scale(0.99); }
-  to { transform: translateY(0) scale(1); }
-}
-
-@media (max-width: 640px) {
-  .viewer-stage-frame--priority {
-    padding: 10px;
-    border-radius: var(--radius-l);
-  }
-
-  .viewer-stage-screen {
-    min-height: min(68dvh, calc(100dvh - var(--app-topbar-height, 0px) - 164px));
-  }
-
-  .viewer-frame {
-    min-height: min(68dvh, calc(100dvh - var(--app-topbar-height, 0px) - 164px));
-  }
+.animate-mode-shift {
+  animation: mode-shift 280ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .viewer-stage-frame--transitioning { animation: none; }
+  .animate-mode-shift { animation: none; }
 }
 </style>

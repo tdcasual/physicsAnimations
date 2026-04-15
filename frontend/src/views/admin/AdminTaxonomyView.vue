@@ -5,6 +5,7 @@ import { createAdminTaxonomyMobileEditorFocus } from "./taxonomy/useAdminTaxonom
 import CategoryEditorPanel from "./taxonomy/CategoryEditorPanel.vue";
 import GroupEditorPanel from "./taxonomy/GroupEditorPanel.vue";
 import TaxonomyTreePanel from "./taxonomy/TaxonomyTreePanel.vue";
+import { PAButton, PACard } from "@/components/ui/patterns";
 
 const taxonomy = useTaxonomyAdmin();
 type TaxonomyMobileSheetMode = "create-group" | "group" | "category" | null;
@@ -169,20 +170,20 @@ onBeforeUnmount(() => {
   </header>
   <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
 
-    <section class="taxonomy-mobile-actions admin-card">
+    <PACard variant="admin" as="section" class="taxonomy-mobile-actions">
       <div class="taxonomy-mobile-summary">
         <strong>{{ selection ? "已选节点" : "先选节点" }}</strong>
         <span>{{ mobileSelectionSummary }}</span>
       </div>
-      <button type="button" class="btn btn-ghost" @click="openCreateGroupSheet">新建大类</button>
-      <button type="button" class="btn btn-primary" :disabled="!selection && !isMobileEditorSheetOpen" @click="handleMobilePrimaryAction">
+      <PAButton variant="ghost" @click="openCreateGroupSheet">新建大类</PAButton>
+      <PAButton :disabled="!selection && !isMobileEditorSheetOpen" @click="handleMobilePrimaryAction">
         {{ mobilePrimaryActionLabel }}
-      </button>
-    </section>
+      </PAButton>
+    </PACard>
 
     <div class="admin-workspace-grid admin-workspace-grid--balanced">
       <TaxonomyTreePanel
-        class="admin-card"
+        variant="admin"
         :loading="loading"
         :search-query="searchQuery"
         :show-hidden="showHidden"
@@ -217,12 +218,12 @@ onBeforeUnmount(() => {
             <p class="admin-page-kicker">移动端编辑</p>
             <strong>{{ activeMobileEditorSheet === "create-group" ? "新建大类" : "节点编辑" }}</strong>
           </div>
-          <button type="button" class="btn btn-ghost" @click="closeMobileEditorSheet">关闭</button>
+          <PAButton variant="ghost" @click="closeMobileEditorSheet">关闭</PAButton>
         </div>
 
         <div v-if="selectedGroup" ref="groupEditorRef" class="taxonomy-mobile-focus-anchor">
           <GroupEditorPanel
-            class="admin-card"
+            variant="admin"
             :saving="saving"
             :selected-group="selectedGroup"
             :default-group-id="DEFAULT_GROUP_ID"
@@ -262,7 +263,7 @@ onBeforeUnmount(() => {
 
         <div v-else-if="selectedCategory" ref="categoryEditorRef" class="taxonomy-mobile-focus-anchor">
           <CategoryEditorPanel
-            class="admin-card"
+            variant="admin"
             :saving="saving"
             :selected-category="selectedCategory"
             :all-sorted-groups="allSortedGroups"
@@ -282,7 +283,7 @@ onBeforeUnmount(() => {
           />
         </div>
 
-        <div v-else class="admin-card empty">选择节点以编辑</div>
+        <PACard v-else variant="admin" class="empty">选择节点以编辑</PACard>
       </div>
     </div>
   </section>

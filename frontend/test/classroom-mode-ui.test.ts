@@ -13,8 +13,8 @@ describe("classroom mode ui", () => {
   });
 
   it("defines classroom mode style hooks in global stylesheet", () => {
-    const css = read("src/styles.css");
-    expect(css).toMatch(/:root\[data-classroom="on"\]/);
+    const css = read("src/styles/globals.css");
+    expect(css).toMatch(/\[data-classroom="on"\]/);
     expect(css).toMatch(/--content-max-width/);
   });
 });

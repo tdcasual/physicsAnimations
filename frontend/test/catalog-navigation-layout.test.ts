@@ -1,99 +1,73 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function readFile(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return readExpandedSource(relPath);
 }
 
 describe("catalog navigation homepage layout", () => {
-  it("replaces the hero with a sr-only heading and keeps the stage container clean", () => {
-    const source = readFile("src/views/CatalogView.vue");
+  it("uses a clean hero section with title and subtitle", () => {
+    const source = readFile("src/views/catalog/components/HeroSection.vue");
 
-    expect(source).toMatch(/class="sr-only"/);
-    expect(source).toMatch(/class="catalog-stage"/);
-    expect(source).not.toMatch(/class="catalog-hero"/);
-    expect(source).not.toMatch(/class="catalog-hero-mainline"/);
-    expect(source).not.toMatch(/class="catalog-hero-primary"/);
-    expect(source).not.toMatch(/catalog-hero-overview/);
-    expect(source).not.toMatch(/catalog-overview-card/);
-    expect(source).not.toMatch(/catalog-hero-note/);
-    expect(source).not.toMatch(/catalog-hero-map/);
-    expect(source).not.toMatch(/class="catalog-hero-status"/);
-    expect(source).not.toMatch(/class="catalog-hero-itinerary"/);
-    expect(source).not.toMatch(/CatalogHeroSection/);
+    // Title - Gallery style
+    expect(source).toMatch(/演示工坊/);
+    expect(source).toMatch(/font-serif/);
   });
 
   it("moves the search box into the global topbar for cross-route access", () => {
     const appSource = readFile("src/App.vue");
 
-    expect(appSource).toMatch(/class="topbar-search"/);
-    expect(appSource).toMatch(/topbar-search-field/);
-    expect(appSource).toMatch(/onTopbarSearch/);
+    expect(appSource).toMatch(/type="search"/);
+    expect(appSource).toMatch(/useCatalogSearch/);
   });
 
-  it("no longer inlines heroStatusItems in the catalog view", () => {
-    const source = readFile("src/views/CatalogView.vue");
-
-    expect(source).not.toMatch(/const heroStatusItems = computed/);
-    expect(source).not.toMatch(/heroOverviewCards/);
-    expect(source).not.toMatch(/label:\s*"当前聚焦"/);
-    expect(source).not.toMatch(/label:\s*"下一步"/);
-    expect(source).not.toMatch(/label:\s*"当前范围"/);
-    expect(source).not.toMatch(/label:\s*"优先入口"/);
-    expect(source).not.toMatch(/label:\s*"资源补充"/);
-  });
-
-  it("introduces a compact quick-access band for common categories and shortcuts", () => {
+  it("uses capsule filter tabs for group and category selection", () => {
     const source = [
       readFile("src/views/CatalogView.vue"),
-      readFile("src/components/catalog/CatalogQuickAccessBand.vue"),
+      readFile("src/views/catalog/components/FilterTabs.vue"),
     ].join("\n");
 
-    expect(source).toMatch(/class="catalog-stage"/);
-    expect(source).toMatch(/class="catalog-quick-access"/);
-    expect(source).toMatch(/catalog-stage-band/);
-    expect(source).toMatch(/class="catalog-quick-access-band"/);
-    expect(source).toMatch(/class="catalog-quick-access-copy"/);
-    expect(source).toMatch(/catalog-quick-access-label/);
-    expect(source).not.toMatch(/catalog-quick-access-title/);
-    expect(source).not.toMatch(/catalog-quick-access-note/);
-    expect(source).not.toMatch(/catalog-quick-access"[^>]*>\s*<div class="catalog-section-heading"/);
-    expect(source).not.toMatch(/data-tone="atlas"/);
-    expect(source).toMatch(/常用分类|快捷入口/);
+    expect(source).toMatch(/FilterTabs/);
+    expect(source).toMatch(/activeGroupId/);
+    expect(source).toMatch(/activeCategoryId/);
   });
 
-  it("splits the homepage into curated content sections before the main grid", () => {
+  it("presents items in a responsive gallery grid", () => {
     const source = readFile("src/views/CatalogView.vue");
 
-    expect(source).toMatch(/class="catalog-section"/);
-    expect(source).toMatch(/catalog-section--flat/);
-    expect(source).toMatch(/catalog-section--archive/);
-    expect(source).toMatch(/catalog-empty--inline/);
-    expect(source).toMatch(/推荐演示|资源库精选|当前分类/);
+    expect(source).toMatch(/grid-cols-2/);
+    expect(source).toMatch(/lg:grid-cols-5/);
   });
 
-  it("delegates quick-access presentation to a dedicated page component", () => {
+  it("delegates item presentation to dedicated card components", () => {
     const source = readFile("src/views/CatalogView.vue");
 
-    expect(source).toMatch(/import CatalogQuickAccessBand/);
-    expect(source).toMatch(/<CatalogQuickAccessBand/);
-    expect(source).not.toMatch(/class="catalog-quick-access"/);
+    expect(source).toMatch(/DemoCard/);
+    expect(source).toMatch(/FolderCard/);
   });
 
-  it("keeps teacher workspace summary inside the extracted quick-access component instead of inlining it in the route view", () => {
-    const view = readFile("src/views/CatalogView.vue");
-    const quickAccess = [
-      readFile("src/components/catalog/CatalogTeacherQuickAccessArea.vue"),
-      readFile("src/components/catalog/CatalogTeacherWorkspaceSummary.vue"),
+  it("keeps sticky filter bar for easy access while scrolling", () => {
+    const source = readFile("src/views/CatalogView.vue");
+
+    expect(source).toMatch(/sticky top-16/);
+    expect(source).toMatch(/z-40/);
+  });
+
+  it("provides scroll-reveal animations for gallery items", () => {
+    const source = [
+      readFile("src/views/CatalogView.vue"),
+      readFile("src/lib/gsap.ts"),
     ].join("\n");
 
-    expect(view).not.toMatch(/catalog-workbench/);
-    expect(quickAccess).toMatch(/catalog-workbench/);
-    expect(quickAccess).toMatch(/catalog-stage-rail/);
-    expect(quickAccess).toMatch(/catalog-workspace-strip/);
-    expect(quickAccess).not.toMatch(/catalog-workbench-note/);
-    expect(quickAccess).not.toMatch(/catalog-workbench-column-note/);
-    expect(quickAccess).toMatch(/教学工作区/);
+    expect(source).toMatch(/gsap/);
+    expect(source).toMatch(/ScrollTrigger/);
+    expect(source).toMatch(/stagger/);
+  });
+
+  it("displays item count in section header", () => {
+    const source = readFile("src/views/CatalogView.vue");
+
+    expect(source).toMatch(/totalItems/);
+    expect(source).toMatch(/件作品/);
   });
 });

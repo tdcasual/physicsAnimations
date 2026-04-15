@@ -9,13 +9,13 @@ function read(relPath: string): string {
 describe("admin save/cancel locking", () => {
   it("locks content editor cancel while a save is in flight", () => {
     const source = read("src/views/admin/content/ContentEditPanel.vue");
-    expect(source).toMatch(/<button type="button" class="btn btn-ghost" :disabled="props\.saving" @click="emit\('reset-edit'\)">取消<\/button>/);
-    expect(source).toMatch(/<button type="button" class="btn btn-primary" :disabled="props\.saving" @click="emit\('save-edit', props\.selectedItem\.id\)">/);
+    expect(source).toMatch(/<PAButton variant="ghost" :disabled="props\.saving" @click="emit\('reset-edit'\)">取消<\/PAButton>/);
+    expect(source).toMatch(/<PAButton :disabled="props\.saving" @click="emit\('save-edit', props\.selectedItem\.id\)">/);
   });
 
   it("locks uploads editor cancel while a save is in flight", () => {
     const source = read("src/views/admin/uploads/UploadsEditPanel.vue");
-    expect(source).toMatch(/<button type="button" class="btn btn-ghost" :disabled="props\.saving" @click="emit\('reset-edit'\)">取消<\/button>/);
-    expect(source).toMatch(/<button type="button" class="btn btn-primary" :disabled="props\.saving" @click="emit\('save-edit', props\.selectedItem\.id\)">/);
+    expect(source).toMatch(/<PAButton variant="ghost" :disabled="props\.saving" @click="emit\('reset-edit'\)">取消<\/PAButton>/);
+    expect(source).toMatch(/<PAButton :disabled="props\.saving" @click="emit\('save-edit', props\.selectedItem\.id\)">/);
   });
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { TaxonomyCategory, TaxonomyGroup } from "../../../features/admin/taxonomyUiState";
+import { PAButton, PACard, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 const props = defineProps<{
   saving: boolean;
@@ -43,34 +44,34 @@ const categoryFormHiddenModel = computed({
 </script>
 
 <template>
-  <div class="panel admin-card">
+  <PACard variant="admin" class="panel">
     <h3>二级分类：{{ selectedCategory.title || selectedCategory.id }} ({{ selectedCategory.id }})</h3>
     <div class="meta-line">
       内容 {{ Number(selectedCategory.count || 0) }} · 新增 {{ Number(selectedCategory.dynamicCount || 0) }}
     </div>
 
     <div class="form-grid">
-      <label class="field">
-        <span>大类</span>
-        <select v-model="categoryFormGroupIdModel" class="field-input" :disabled="saving">
+      <PAField>
+        <template #label>大类</template>
+        <select v-model="categoryFormGroupIdModel" class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10 text-sm" :disabled="saving">
           <option v-for="group in allSortedGroups" :key="group.id" :value="group.id">
             {{ group.title || group.id }} ({{ group.id }})
           </option>
         </select>
-      </label>
+      </PAField>
 
-      <label class="field">
-        <span>标题</span>
-        <input v-model="categoryFormTitleModel" class="field-input" type="text" :disabled="saving" />
-      </label>
+      <PAField>
+        <template #label>标题</template>
+        <PAInput v-model="categoryFormTitleModel" :disabled="saving" />
+      </PAField>
 
       <details class="subaccordion" :open="categoryFormHiddenModel || Number(categoryFormOrderModel || 0) !== 0">
         <summary>高级设置</summary>
         <div class="form-grid subaccordion-body">
-          <label class="field">
-            <span>排序（越大越靠前）</span>
-            <input v-model.number="categoryFormOrderModel" class="field-input" type="number" :disabled="saving" />
-          </label>
+          <PAField>
+            <template #label>排序（越大越靠前）</template>
+            <PAInput v-model="categoryFormOrderModel" type="number" :disabled="saving" />
+          </PAField>
           <label class="checkbox">
             <input v-model="categoryFormHiddenModel" type="checkbox" :disabled="saving" />
             <span>隐藏该分类（首页不显示）</span>
@@ -79,18 +80,16 @@ const categoryFormHiddenModel = computed({
       </details>
     </div>
 
-    <div class="actions admin-actions">
-      <button
-        type="button"
-        class="btn"
-        :class="canDeleteSelectedCategory ? 'btn-danger' : 'btn-ghost'"
+    <PAActions align="end">
+      <PAButton
+        :variant="canDeleteSelectedCategory ? 'destructive' : 'ghost'"
         :disabled="saving"
         @click="emit('reset-or-delete-category')"
       >
         {{ canDeleteSelectedCategory ? "删除" : "重置" }}
-      </button>
-      <button type="button" class="btn btn-primary" :disabled="saving" @click="emit('save-category')">保存</button>
-    </div>
+      </PAButton>
+      <PAButton :disabled="saving" @click="emit('save-category')">保存</PAButton>
+    </PAActions>
 
     <div
       v-if="actionFeedback"
@@ -101,14 +100,14 @@ const categoryFormHiddenModel = computed({
     </div>
 
     <div class="hint">选择大类后可新增分类</div>
-  </div>
+  </PACard>
 </template>
 
 <style scoped>
 .panel {
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: var(--surface);
+  background: var(--card);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -132,7 +131,7 @@ h3 {
 }
 
 .action-feedback.error {
-  color: var(--danger);
+  color: var(--destructive);
 }
 
 .action-feedback.success {
@@ -192,7 +191,7 @@ h3 {
     padding-top: 10px;
     padding-bottom: 2px;
     background:
-      linear-gradient(180deg, color-mix(in oklab, var(--surface) 35%, transparent), color-mix(in oklab, var(--surface) 96%, var(--paper)) 32%);
+      linear-gradient(180deg, color-mix(in oklab, var(--card) 35%, transparent), color-mix(in oklab, var(--card) 96%, var(--background)) 32%);
   }
 }
 </style>

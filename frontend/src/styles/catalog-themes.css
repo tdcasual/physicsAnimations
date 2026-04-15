@@ -1,0 +1,256 @@
+/**
+ * Catalog 首页主题系统
+ * 独立于全局 dark/light 主题
+ * 
+ * 注意：这个文件由预设主题自动生成
+ * 要添加新主题，请修改 frontend/src/features/catalog/theme/presets/
+ */
+
+/* ========================================
+   基础变量（现代极简风 - 默认）
+   这些变量会被其他主题覆盖
+   ======================================== */
+:root {
+  /* 边框 */
+  --cat-border-radius: 4px;
+  --cat-border-radius-lg: 8px;
+  --cat-border-width: 1px;
+  --cat-border-color: var(--border, #e5e5e8);
+  --cat-border-color-strong: var(--foreground, #1a1a1a);
+
+  /* 阴影 */
+  --cat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cat-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --cat-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* 字体 */
+  --cat-font-heading: var(--font-display, 'Playfair Display', 'Noto Serif SC', serif);
+  --cat-font-body: var(--font-body, 'Inter', 'Noto Sans SC', sans-serif);
+
+  /* 背景 */
+  --cat-bg-primary: var(--background, #ffffff);
+  --cat-bg-secondary: var(--muted, #f8f8f8);
+  --cat-bg-card: var(--card, #ffffff);
+
+  /* 文字 */
+  --cat-text-primary: var(--foreground, #1a1a1a);
+  --cat-text-secondary: var(--muted-foreground, #666666);
+  --cat-text-accent: var(--primary, #1a1a1a);
+
+  /* 间距 */
+  --cat-spacing-xs: 4px;
+  --cat-spacing-sm: 8px;
+  --cat-spacing-md: 16px;
+  --cat-spacing-lg: 24px;
+  --cat-spacing-xl: 32px;
+
+  /* 过渡 */
+  --cat-transition-fast: 150ms ease;
+  --cat-transition-base: 300ms ease;
+}
+
+/* ========================================
+   手绘风 (handdrawn)
+   ======================================== */
+[data-catalog-theme="handdrawn"] {
+  /* 边框 - 不规则圆角 */
+  --cat-border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --cat-border-radius-lg: 255px 25px 225px 25px / 25px 225px 25px 255px;
+  --cat-border-width: 2px;
+  --cat-border-color: #3a3a3a;
+  --cat-border-color-strong: #1a1a1a;
+
+  /* 阴影 - 手绘感偏移 */
+  --cat-shadow-sm: 2px 2px 0 rgba(0, 0, 0, 0.08);
+  --cat-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
+  --cat-shadow-lg: 4px 4px 0 rgba(0, 0, 0, 0.12);
+
+  /* 字体 - 手写体 */
+  --cat-font-heading: 'Zeyada', 'Ma Shan Zheng', 'STXingkai', cursive;
+
+  /* 背景 - 暖白纸张色 */
+  --cat-bg-primary: #faf8f5;
+  --cat-bg-secondary: #f5f2ed;
+  --cat-bg-card: #ffffff;
+
+  /* 文字 - 略微柔和的深色 */
+  --cat-text-primary: #2d2d2d;
+  --cat-text-secondary: #6b6b6b;
+  --cat-text-accent: #4a4a4a;
+
+  /* 间距 - 稍微宽松 */
+  --cat-spacing-xs: 6px;
+  --cat-spacing-sm: 10px;
+  --cat-spacing-md: 18px;
+  --cat-spacing-lg: 28px;
+  --cat-spacing-xl: 36px;
+
+  /* 过渡 - 更柔和的动画 */
+  --cat-transition-fast: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --cat-transition-base: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 手绘风特殊样式 */
+[data-catalog-theme="handdrawn"] .cat-card {
+  border: 2px solid var(--cat-border-color);
+  border-radius: var(--cat-border-radius);
+  box-shadow: var(--cat-shadow);
+  background: var(--cat-bg-card);
+  position: relative;
+}
+
+[data-catalog-theme="handdrawn"] .cat-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+[data-catalog-theme="handdrawn"] .cat-btn {
+  border: 2px solid var(--cat-border-color-strong);
+  border-radius: var(--cat-border-radius);
+  background: var(--cat-bg-card);
+  box-shadow: var(--cat-shadow-sm);
+  transition: all var(--cat-transition-fast);
+}
+
+[data-catalog-theme="handdrawn"] .cat-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.12);
+}
+
+[data-catalog-theme="handdrawn"] .cat-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+[data-catalog-theme="handdrawn"] .cat-title {
+  font-family: var(--cat-font-heading);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ========================================
+   新粗野主义 (brutalist)
+   ======================================== */
+[data-catalog-theme="brutalist"] {
+  /* 边框 - 直角、粗线条 */
+  --cat-border-radius: 0;
+  --cat-border-radius-lg: 0;
+  --cat-border-width: 3px;
+  --cat-border-color: #000000;
+  --cat-border-color-strong: #000000;
+
+  /* 阴影 - 硬阴影、高对比 */
+  --cat-shadow-sm: 2px 2px 0 #000;
+  --cat-shadow: 4px 4px 0 #000;
+  --cat-shadow-lg: 6px 6px 0 #000;
+
+  /* 字体 - 几何感 */
+  --cat-font-heading: 'Space Grotesk', 'Noto Sans SC', sans-serif;
+
+  /* 背景 */
+  --cat-bg-primary: #ffffff;
+  --cat-bg-secondary: #f0f0f0;
+  --cat-bg-card: #ffffff;
+
+  /* 文字 */
+  --cat-text-primary: #000000;
+  --cat-text-secondary: #333333;
+  --cat-text-accent: #0000ff;
+
+  /* 间距 - 紧凑 */
+  --cat-spacing-xs: 4px;
+  --cat-spacing-sm: 8px;
+  --cat-spacing-md: 12px;
+  --cat-spacing-lg: 20px;
+  --cat-spacing-xl: 28px;
+
+  /* 过渡 - 快速直接 */
+  --cat-transition-fast: 100ms ease-out;
+  --cat-transition-base: 200ms ease-out;
+}
+
+/* 新粗野主义特殊样式 */
+[data-catalog-theme="brutalist"] .cat-card {
+  border: 3px solid #000;
+  box-shadow: 4px 4px 0 #000;
+  background: #fff;
+  transition: all var(--cat-transition-fast);
+}
+
+[data-catalog-theme="brutalist"] .cat-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #000;
+}
+
+[data-catalog-theme="brutalist"] .cat-btn {
+  border: 3px solid #000;
+  background: #fff;
+  box-shadow: 3px 3px 0 #000;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all var(--cat-transition-fast);
+}
+
+[data-catalog-theme="brutalist"] .cat-btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 #000;
+}
+
+[data-catalog-theme="brutalist"] .cat-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+[data-catalog-theme="brutalist"] .cat-btn-primary {
+  background: #000;
+  color: #fff;
+}
+
+[data-catalog-theme="brutalist"] .cat-title {
+  font-family: var(--cat-font-heading);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+/* ========================================
+   工具类（所有主题通用）
+   ======================================== */
+.cat-transition-theme {
+  transition: background-color var(--cat-transition-base),
+    border-color var(--cat-transition-base), box-shadow var(--cat-transition-base),
+    color var(--cat-transition-base);
+}
+
+/* 防止布局跳动 - 给所有主题元素添加过渡 */
+[data-catalog-theme] .cat-theme-element {
+  transition: all var(--cat-transition-base);
+}
+
+/* 
+ * 添加新主题的步骤：
+ * 
+ * 1. 在 frontend/src/features/catalog/theme/presets/ 创建新文件
+ *    例如：cyberpunk.ts
+ * 
+ * 2. 定义主题配置和变量：
+ *    export const cyberpunkTheme = { id: 'cyberpunk', ... }
+ *    export const cyberpunkVars = { '--cat-bg-primary': '#0a0a0f', ... }
+ * 
+ * 3. 在 presets/index.ts 中导入并添加到 presetThemes 和 themeVarsMap
+ * 
+ * 4. 在下面的 CSS 中添加主题样式：
+ *    [data-catalog-theme="cyberpunk"] {
+ *      --cat-bg-primary: #0a0a0f;
+ *      --cat-text-primary: #00ff9d;
+ *      // ...
+ *    }
+ * 
+ * 5. （可选）添加组件特殊样式：
+ *    [data-catalog-theme="cyberpunk"] .cat-card { ... }
+ */

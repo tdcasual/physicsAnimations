@@ -128,7 +128,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]" @keydown.esc.window="closeMobileNav">
+  <section 
+    :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]" 
+    @keydown.esc.window="closeMobileNav"
+  >
     <AdminShellHeader :current-admin-section="currentAdminSection" :current-admin-group="currentAdminGroup" />
 
     <div class="admin-shell">
@@ -170,6 +173,8 @@ onBeforeUnmount(() => {
         aria-label="关闭工作区菜单"
         @click="closeMobileNav"
       />
+      
+      <!-- Unified Navigation Bar -->
       <nav
         id="admin-nav-shell"
         ref="adminNavShellRef"
@@ -186,6 +191,7 @@ onBeforeUnmount(() => {
           </div>
           <button type="button" class="admin-nav-sheet-close" @click="closeMobileNav">关闭</button>
         </div>
+        
         <div ref="adminNavRef" class="admin-nav">
           <section v-for="group in adminNavGroups" :key="group.id" class="admin-nav-group">
             <div class="admin-nav-group-copy">
@@ -193,7 +199,13 @@ onBeforeUnmount(() => {
               <div class="admin-nav-group-summary">{{ group.summary }}</div>
             </div>
             <div class="admin-nav-group-links">
-              <RouterLink v-for="item in group.items" :key="item.to" class="admin-link" active-class="active" :to="item.to">
+              <RouterLink 
+                v-for="item in group.items" 
+                :key="item.to" 
+                class="admin-link" 
+                active-class="active" 
+                :to="item.to"
+              >
                 {{ item.label }}
               </RouterLink>
             </div>

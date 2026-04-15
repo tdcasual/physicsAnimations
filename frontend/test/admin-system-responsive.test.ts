@@ -14,9 +14,15 @@ describe("admin system status readability", () => {
       path.resolve(process.cwd(), "src/views/admin/system/SystemWizardConnectionStep.vue"),
       "utf8",
     );
-    expect(source).toMatch(/name="webdav_url"[\s\S]*autocapitalize="none"/);
-    expect(source).toMatch(/name="webdav_url"[\s\S]*autocorrect="off"/);
-    expect(source).toMatch(/name="webdav_username"[\s\S]*autocapitalize="none"/);
-    expect(source).toMatch(/name="webdav_password"[\s\S]*autocapitalize="none"/);
+    // Uses PAInput component which has default autocapitalize/autocorrect/spellcheck
+    expect(source).toMatch(/PAInput/);
+    expect(source).toMatch(/name="webdav_url"/);
+    expect(source).toMatch(/name="webdav_username"/);
+    expect(source).toMatch(/name="webdav_password"/);
+    // Verify PAInput component has the safeguards
+    const inputComponent = fs.readFileSync(path.resolve(process.cwd(), "src/components/ui/patterns/PAInput.vue"), "utf8");
+    expect(inputComponent).toMatch(/autocapitalize:\s*"none"/);
+    expect(inputComponent).toMatch(/autocorrect:\s*"off"/);
+    expect(inputComponent).toMatch(/spellcheck:\s*"false"/);
   });
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { SystemEmbedUpdater } from "../../../features/admin/system/useSystemWizard";
+import { PAButton, PACard, PAActions, PAField, PAInput } from "@/components/ui/patterns";
 
 const props = defineProps<{
   embedUpdater: SystemEmbedUpdater | null;
@@ -28,15 +29,14 @@ function onEnabledChange(event: Event) {
   emit("update:enabled", input?.checked === true);
 }
 
-function onIntervalInput(event: Event) {
-  const input = event.target as HTMLInputElement | null;
-  const parsed = Number(input?.value || "");
+function onIntervalInput(value: string) {
+  const parsed = Number(value || "");
   emit("update:intervalDays", Number.isFinite(parsed) ? Math.trunc(parsed) : Number.NaN);
 }
 </script>
 
 <template>
-  <section class="panel admin-card system-embed-updater-panel">
+  <PACard variant="admin" as="section" class="panel system-embed-updater-panel">
     <div class="panel-heading">
       <div>
         <h3>Embed 自动更新</h3>
@@ -46,28 +46,27 @@ function onIntervalInput(event: Event) {
     </div>
 
     <div class="settings-grid">
-      <label class="admin-field toggle-field">
-        <span class="field-label">启用自动更新</span>
-        <span class="toggle-control">
+      <PAField class="toggle-field">
+        <template #label>启用自动更新</template>
+        <label class="inline-flex items-center gap-3 cursor-pointer">
           <input type="checkbox" :checked="enabled" :disabled="loading || saving" @change="onEnabledChange" />
           <span>{{ enabled ? "已启用" : "已暂停" }}</span>
-        </span>
-      </label>
+        </label>
+      </PAField>
 
-      <label class="admin-field">
-        <span class="field-label">更新周期（天）</span>
-        <input
-          class="admin-input"
+      <PAField>
+        <template #label>更新周期（天）</template>
+        <PAInput
           type="number"
           min="1"
           max="365"
           step="1"
           inputmode="numeric"
-          :value="Number.isFinite(intervalDays) ? intervalDays : ''"
+          :model-value="Number.isFinite(intervalDays) ? intervalDays : ''"
           :disabled="loading || saving"
-          @input="onIntervalInput"
+          @update:model-value="onIntervalInput"
         />
-      </label>
+      </PAField>
     </div>
 
     <div class="status-grid">
@@ -106,12 +105,12 @@ function onIntervalInput(event: Event) {
     <div v-if="hasUnsavedChanges" class="admin-feedback pending-text">存在未保存的自动更新配置。</div>
     <div v-if="saveHint" class="admin-feedback save-hint">{{ saveHint }}</div>
 
-    <div class="admin-actions">
-      <button type="button" class="btn btn-primary" :disabled="loading || saving || Boolean(saveHint)" @click="emit('save')">
+    <PAActions align="end">
+      <PAButton :disabled="loading || saving || Boolean(saveHint)" @click="emit('save')">
         保存自动更新设置
-      </button>
-    </div>
-  </section>
+      </PAButton>
+    </PAActions>
+  </PACard>
 </template>
 
 <style scoped>
@@ -145,8 +144,8 @@ function onIntervalInput(event: Event) {
 
 .status-chip[data-status="partial_failure"],
 .status-chip[data-status="failed"] {
-  background: color-mix(in oklab, var(--danger) 12%, transparent);
-  color: var(--danger);
+  background: color-mix(in oklab, var(--destructive) 12%, transparent);
+  color: var(--destructive);
 }
 
 .settings-grid,
@@ -184,7 +183,7 @@ function onIntervalInput(event: Event) {
   gap: 4px;
   padding: 10px 12px;
   border-radius: 12px;
-  background: color-mix(in oklab, var(--ink) 4%, transparent);
+  background: color-mix(in oklab, var(--foreground) 4%, transparent);
 }
 
 .status-item span {
@@ -198,7 +197,7 @@ function onIntervalInput(event: Event) {
 }
 
 .error-text {
-  color: var(--danger);
+  color: var(--destructive);
 }
 
 .success-text {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminItemRow } from "../../../features/admin/adminApi";
+import { PAButton, PAInput } from "@/components/ui/patterns";
 
 const props = defineProps<{
   items: AdminItemRow[];
@@ -26,13 +27,13 @@ const emit = defineEmits<{
 
   <div class="list-header">
     <h3 class="list-heading">上传列表</h3>
-    <input
-      :value="props.query"
-      class="field-input list-search"
+    <PAInput
+      :model-value="props.query"
       type="search"
       placeholder="搜索上传内容..."
       autocomplete="off"
-      @input="emit('update:query', ($event.target as HTMLInputElement).value)"
+      class="list-search"
+      @update:model-value="emit('update:query', $event)"
     />
   </div>
 
@@ -54,21 +55,21 @@ const emit = defineEmits<{
         </div>
       </div>
       <div class="item-actions">
-        <a class="btn btn-ghost" :href="props.previewHref(item)" target="_blank" rel="noreferrer">预览</a>
-        <button type="button" class="btn btn-ghost" @click="emit('begin-edit', item)">
+        <PAButton as="a" variant="ghost" :href="props.previewHref(item)" target="_blank" rel="noreferrer">预览</PAButton>
+        <PAButton variant="ghost" @click="emit('begin-edit', item)">
           {{ props.editingId === item.id ? "已选中" : "编辑" }}
-        </button>
-        <button type="button" class="btn btn-danger" :disabled="props.saving" @click="emit('remove-item', item.id)">
+        </PAButton>
+        <PAButton variant="destructive" :disabled="props.saving" @click="emit('remove-item', item.id)">
           删除
-        </button>
+        </PAButton>
       </div>
     </div>
   </article>
 
   <div class="list-footer">
     <div class="meta">已加载 {{ props.items.length }} / {{ props.total }}</div>
-    <button v-if="props.hasMore" type="button" class="btn btn-ghost" :disabled="props.loading" @click="emit('load-more')">
+    <PAButton v-if="props.hasMore" variant="ghost" :disabled="props.loading" @click="emit('load-more')">
       加载更多
-    </button>
+    </PAButton>
   </div>
 </template>

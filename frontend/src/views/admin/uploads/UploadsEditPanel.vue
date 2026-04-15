@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminItemRow } from "../../../features/admin/adminApi";
+import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 interface OptionItem {
   value: string;
@@ -41,9 +42,9 @@ const emit = defineEmits<{
       <h3>编辑面板</h3>
       <div class="meta" v-if="props.selectedItem">{{ props.selectedItem.id }}</div>
     </div>
-    <button v-if="props.showSheetClose" type="button" class="btn btn-ghost editor-close" :disabled="props.saving" @click="emit('close-edit')">
+    <PAButton v-if="props.showSheetClose" variant="ghost" class="editor-close" :disabled="props.saving" @click="emit('close-edit')">
       收起
-    </button>
+    </PAButton>
   </div>
 
   <div
@@ -57,34 +58,33 @@ const emit = defineEmits<{
   <div v-if="!props.selectedItem" class="empty">选择条目以编辑</div>
 
   <div v-else class="editor-form">
-    <label class="field" :class="{ 'has-error': props.editTitleError }">
-      <span>标题</span>
-      <input
-        :value="props.editTitle"
-        class="field-input"
-        type="text"
+    <PAField :error="props.editTitleError">
+      <template #label>标题</template>
+      <PAInput
+        :model-value="props.editTitle"
+        :variant="props.editTitleError ? 'error' : 'default'"
         :disabled="props.saving"
-        @input="emit('update:editTitle', ($event.target as HTMLInputElement).value)"
+        @update:model-value="emit('update:editTitle', $event)"
       />
-      <div v-if="props.editTitleError" class="field-error-text">{{ props.editTitleError }}</div>
-    </label>
+    </PAField>
 
-    <label class="field">
-      <span>描述</span>
-      <textarea
-        :value="props.editDescription"
-        class="field-input field-textarea"
+    <PAField>
+      <template #label>描述</template>
+      <PAInput
+        :model-value="props.editDescription"
+        type="textarea"
+        size="textarea"
         :disabled="props.saving"
-        @input="emit('update:editDescription', ($event.target as HTMLTextAreaElement).value)"
+        @update:model-value="emit('update:editDescription', $event)"
       />
-    </label>
+    </PAField>
 
     <div class="form-grid">
-      <label class="field">
-        <span>分类</span>
+      <PAField>
+        <template #label>分类</template>
         <select
           :value="props.editCategoryId"
-          class="field-input"
+          class="flex w-full rounded-md border border-input bg-background px-3 py-2 h-10"
           :disabled="props.saving"
           @change="emit('update:editCategoryId', ($event.target as HTMLSelectElement).value)"
         >
@@ -92,18 +92,17 @@ const emit = defineEmits<{
             {{ option.label }}
           </option>
         </select>
-      </label>
+      </PAField>
 
-      <label class="field">
-        <span>排序（越大越靠前）</span>
-        <input
-          :value="props.editOrder"
-          class="field-input"
+      <PAField>
+        <template #label>排序（越大越靠前）</template>
+        <PAInput
+          :model-value="props.editOrder"
           type="number"
           :disabled="props.saving"
-          @input="emit('update:editOrder', Number(($event.target as HTMLInputElement).value || 0))"
+          @update:model-value="emit('update:editOrder', Number($event || 0))"
         />
-      </label>
+      </PAField>
     </div>
 
     <div class="form-grid">
@@ -129,12 +128,12 @@ const emit = defineEmits<{
     </div>
 
     <div class="editor-footer">
-      <div class="actions admin-actions">
-        <button type="button" class="btn btn-ghost" :disabled="props.saving" @click="emit('reset-edit')">取消</button>
-        <button type="button" class="btn btn-primary" :disabled="props.saving" @click="emit('save-edit', props.selectedItem.id)">
+      <PAActions align="end">
+        <PAButton variant="ghost" :disabled="props.saving" @click="emit('reset-edit')">取消</PAButton>
+        <PAButton :disabled="props.saving" @click="emit('save-edit', props.selectedItem.id)">
           保存
-        </button>
-      </div>
+        </PAButton>
+      </PAActions>
     </div>
   </div>
 </template>
@@ -167,7 +166,7 @@ const emit = defineEmits<{
     bottom: 0;
     margin-inline: -2px;
     padding-top: 12px;
-    background: linear-gradient(180deg, color-mix(in oklab, var(--surface) 10%, transparent), var(--surface) 28%);
+    background: linear-gradient(180deg, color-mix(in oklab, var(--card) 10%, transparent), var(--card) 28%);
   }
 }
 </style>

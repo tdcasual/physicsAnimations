@@ -1,25 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { readExpandedSource } from "./helpers/sourceReader";
 
-function readFile(relPath: string): string {
+function read(relPath: string): string {
   return readExpandedSource(relPath);
 }
 
 describe("catalog mobile filter behavior", () => {
-  it("adds an explicit mobile filter trigger and stateful panel", () => {
-    const source = readFile("src/views/CatalogView.vue");
+  it("provides sticky filter tabs on mobile", () => {
+    const source = read("src/views/CatalogView.vue");
 
-    expect(source).toMatch(/mobileFiltersOpen/);
-    expect(source).toMatch(/class="catalog-mobile-filter-trigger"/);
-    expect(source).toMatch(/class="catalog-mobile-filter-panel"/);
-    expect(source).toMatch(/筛选导航/);
+    expect(source).toMatch(/sticky top-16/);
+    expect(source).toMatch(/z-40/);
   });
 
-  it("hides the mobile trigger on wide screens and shows a controlled panel on small screens", () => {
-    const css = readFile("src/views/CatalogView.css");
+  it("uses horizontal scrollable filter tabs", () => {
+    const source = read("src/views/catalog/components/FilterTabs.vue");
 
-    expect(css).toMatch(/\.catalog-mobile-filter-trigger\s*\{[\s\S]*display:\s*none/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-mobile-filter-trigger\s*\{[\s\S]*display:\s*inline-flex/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*\.catalog-mobile-filter-panel\s*\{[\s\S]*display:\s*grid/);
+    expect(source).toMatch(/overflow-x-auto/);
+    expect(source).toMatch(/scrollbar-hide/);
   });
 });

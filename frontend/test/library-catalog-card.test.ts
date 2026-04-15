@@ -1,15 +1,16 @@
-import fs from "node:fs";
-import path from "node:path";
 import { describe, expect, it } from "vitest";
+import { readExpandedSource } from "./helpers/sourceReader";
 
 function read(relPath: string): string {
-  return fs.readFileSync(path.resolve(process.cwd(), relPath), "utf8");
+  return readExpandedSource(relPath);
 }
 
-describe("catalog library cards", () => {
-  it("renders dedicated folder card markup in catalog view", () => {
-    const source = read("src/views/CatalogView.vue");
-    expect(source).toMatch(/catalog-folder-card/);
-    expect(source).toMatch(/library\/folder\//);
+describe("library catalog card", () => {
+  it("renders folder cards with gallery styling in the catalog", () => {
+    const source = read("src/views/catalog/components/FolderCard.vue");
+    expect(source).toMatch(/FolderOpen/);
+    // Gallery style - no rounded corners
+    expect(source).not.toMatch(/rounded-2xl|rounded-xl|rounded-lg/);
+    expect(source).toMatch(/aspect-\[3\/2\]/);
   });
 });

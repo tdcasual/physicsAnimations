@@ -56,7 +56,7 @@ const emit = defineEmits<{
 
 .catalog-quick-access-label {
   margin: 0;
-  color: var(--accent);
+  color: var(--primary);
   font-size: calc(13px * var(--ui-scale, 1));
   font-weight: 600;
 }
@@ -77,7 +77,7 @@ const emit = defineEmits<{
   border-radius: var(--radius-m);
   min-height: 40px;
   padding: 7px 12px;
-  background: var(--surface-raised);
+  background: var(--card);
   color: inherit;
   text-decoration: none;
   display: inline-flex;
@@ -90,13 +90,13 @@ const emit = defineEmits<{
 
 .catalog-quick-chip:hover {
   transform: translateY(-1px);
-  border-color: var(--accent);
+  border-color: var(--primary);
   box-shadow: var(--shadow-s);
 }
 
 .catalog-quick-chip:focus-visible {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px oklch(0% 0 0 / 0.08);
 }
 

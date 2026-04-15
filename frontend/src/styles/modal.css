@@ -13,7 +13,7 @@
   width: min(420px, 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-l);
-  background: var(--surface);
+  background: var(--card);
   box-shadow: var(--shadow-xl);
   padding: 24px;
   max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 28px);
@@ -36,20 +36,13 @@
   gap: 14px;
 }
 
-.field {
-  display: grid;
-  gap: 6px;
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
-}
-
 .checkbox {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: 44px;
   font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 input[type="checkbox"],
@@ -57,41 +50,12 @@ input[type="radio"] {
   inline-size: 18px;
   block-size: 18px;
   margin: 0;
-  accent-color: var(--accent);
+  accent-color: var(--primary);
   flex: 0 0 auto;
 }
 
-.field-input {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-m);
-  background: var(--surface);
-  color: var(--text);
-  font-family: inherit;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
-  transition: border-color 140ms ease;
-}
-
-.field-input:focus-visible {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--focus-ring);
-}
-
-.field.has-error :is(.field-input) {
-  border-color: var(--danger);
-}
-
-.field-error-text {
-  color: var(--danger);
-  font-size: calc(12px * var(--ui-scale));
-}
-
 .error {
-  color: var(--danger);
+  color: var(--destructive);
   font-size: calc(13px * var(--ui-scale));
 }
 
@@ -102,3 +66,10 @@ input[type="radio"] {
 }
 
 /* ── Responsive ── */
+@media (max-width: 640px) {
+  .modal-card {
+    padding: 20px;
+    gap: 14px;
+    border-radius: 20px;
+  }
+}

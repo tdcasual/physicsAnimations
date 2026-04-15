@@ -13,11 +13,11 @@ describe("subject-neutral visible copy", () => {
     const state = read("src/features/catalog/useCatalogViewState.ts");
     const service = read("src/features/catalog/catalogService.ts");
 
-    expect(app).toMatch(/科学演示集/);
-    expect(app).not.toMatch(/我的科学演示集/);
-    expect(app).not.toMatch(/我的物理动画集/);
-    expect(app).not.toMatch(/我的学科演示集/);
-    expect(chrome).toMatch(/我的科学演示集/);
+    expect(app).toMatch(/演示工坊/);
+    expect(app).not.toMatch(/我的演示工坊/);
+    expect(app).not.toMatch(/我的科学动画集/);
+    expect(app).not.toMatch(/我的教学演示集/);
+    expect(chrome).toMatch(/演示工坊/);
     expect(state).toMatch(/"学科"/);
     expect(service).toMatch(/title:\s*"学科"/);
   });

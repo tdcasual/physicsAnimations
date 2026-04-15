@@ -160,3 +160,4 @@ dist
 
 frontend/node_modules
 .playwright-cli/
+frontend/screenshot-audit/

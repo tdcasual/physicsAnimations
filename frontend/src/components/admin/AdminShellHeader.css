@@ -1,30 +1,54 @@
 .admin-shell-header {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: var(--radius-l);
-  background: var(--surface);
+  border-radius: 24px;
+  background: var(--background) / 0.8;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: 20px;
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05), 0 1px 2px -1px rgb(0 0 0 / 0.05);
+}
+
+.admin-shell-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--primary) / 0.03, transparent 40%);
 }
 
 .admin-shell-header--compact {
-  gap: 12px;
-  padding: 16px 20px;
+  gap: 16px;
+  padding: 20px;
 }
 
 .admin-shell-header--dense {
   align-items: stretch;
 }
 
+.admin-shell-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--primary) / 0.1;
+  color: var(--primary);
+}
+
 .admin-shell-title {
   margin: 0;
-  font-size: clamp(1.6rem, 2.5vw, 2.2rem);
+  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.1;
+  color: var(--foreground);
 }
 
 .admin-shell-title-desktop,
@@ -41,30 +65,30 @@
   align-items: center;
   width: fit-content;
   min-height: 28px;
-  padding: 4px 10px;
-  border: 1px solid color-mix(in oklab, var(--line-strong) 18%, var(--border));
+  padding: 4px 12px;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  background: color-mix(in oklab, var(--surface) 88%, var(--paper));
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale, 1));
+  background: var(--muted) / 0.3;
+  color: var(--muted-foreground);
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .admin-shell-copy {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   flex: 1 1 420px;
 }
 
 .admin-shell-header--compact .admin-shell-copy {
-  gap: 6px;
+  gap: 8px;
 }
 
 .admin-shell-kicker {
   margin: 0;
-  color: var(--muted);
-  font-size: calc(11px * var(--ui-scale, 1));
+  color: var(--muted-foreground);
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -73,7 +97,7 @@
 .admin-shell-summary-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -81,12 +105,12 @@
   display: inline-flex;
   align-items: center;
   min-height: 26px;
-  padding: 3px 10px;
-  border: 1px solid oklch(58% 0.18 30 / 0.2);
-  border-radius: var(--radius-s, 4px);
-  background: oklch(58% 0.18 30 / 0.06);
-  color: var(--accent);
-  font-size: calc(12px * var(--ui-scale, 1));
+  padding: 4px 12px;
+  border: 1px solid var(--primary) / 0.2;
+  border-radius: 999px;
+  background: var(--primary) / 0.08;
+  color: var(--primary);
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -96,11 +120,11 @@
 .admin-shell-description,
 .admin-shell-note,
 .admin-shell-status-copy {
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .admin-shell-summary-copy {
-  font-size: calc(13px * var(--ui-scale, 1));
+  font-size: 13px;
 }
 
 .admin-shell-description,
@@ -108,38 +132,38 @@
 
 .admin-shell-note {
   max-width: 50ch;
-  font-size: calc(13px * var(--ui-scale, 1));
+  font-size: 13px;
 }
 
 .admin-shell-header--compact .admin-shell-description {
-  font-size: calc(14px * var(--ui-scale, 1));
+  font-size: 14px;
 }
 
 .admin-shell-header--compact .admin-shell-note {
   max-width: 44ch;
-  font-size: calc(12px * var(--ui-scale, 1));
+  font-size: 12px;
 }
 
 .admin-shell-status-strip {
   display: grid;
   gap: 4px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: var(--radius-m, 6px);
+  border-radius: 16px;
   max-width: 44ch;
-  background: var(--bg);
+  background: var(--muted) / 0.2;
 }
 
 .admin-shell-header--compact .admin-shell-status-strip {
-  gap: 3px;
-  padding: 10px 12px;
+  gap: 4px;
+  padding: 12px 14px;
   max-width: 40ch;
 }
 
 .admin-shell-status-label {
   margin: 0;
-  color: var(--accent);
-  font-size: calc(11px * var(--ui-scale, 1));
+  color: var(--primary);
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -149,7 +173,7 @@
   display: grid;
   align-content: start;
   justify-items: end;
-  gap: 10px;
+  gap: 12px;
   flex: 0 1 340px;
   min-width: 0;
 }
@@ -165,7 +189,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
@@ -177,25 +201,22 @@
   flex: 0 0 auto;
 }
 
-.admin-shell-actions .admin-link-home,
-.admin-shell-actions .admin-mobile-nav-trigger {
-  min-height: 40px;
-}
-
+/* Desktop Responsive */
 @media (min-width: 960px) {
   .admin-shell-header {
     align-items: center;
-    gap: 18px;
-    padding: 12px 18px;
+    gap: 20px;
+    padding: 16px 20px;
+    border-radius: 20px;
   }
 
   .admin-shell-copy {
-    gap: 4px;
+    gap: 6px;
     flex: 1 1 auto;
   }
 
   .admin-shell-title {
-    font-size: clamp(1.38rem, 1.2rem + 0.7vw, 1.82rem);
+    font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.875rem);
   }
 
   .admin-shell-description {
@@ -203,11 +224,11 @@
   }
 
   .admin-shell-summary-row {
-    gap: 10px;
+    gap: 12px;
   }
 
   .admin-shell-summary-copy {
-    font-size: calc(12px * var(--ui-scale, 1));
+    font-size: 12px;
     line-height: 1.4;
   }
 
@@ -227,44 +248,58 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
-    padding: 8px 10px;
+    gap: 10px;
+    padding: 10px 14px;
     min-width: 0;
     max-width: none;
+    border-radius: 999px;
   }
 
   .admin-shell-status-copy {
     display: none;
   }
+}
 
-  .admin-shell-actions .admin-link-home,
-  .admin-shell-actions .admin-mobile-nav-trigger {
-    min-height: 36px;
+/* Tablet Responsive */
+@media (max-width: 900px) {
+  .admin-shell-header--dense { 
+    flex-direction: column; 
+    gap: 16px;
+  }
+  .admin-shell-ops { 
+    width: 100%; 
+    justify-items: stretch; 
+  }
+  .admin-shell-toolbar { 
+    justify-content: flex-start; 
+  }
+  .admin-shell-actions { 
+    justify-content: flex-start; 
   }
 }
 
-@media (max-width: 900px) {
-  .admin-shell-header--dense { flex-direction: column; }
-  .admin-shell-ops { width: 100%; justify-items: stretch; }
-  .admin-shell-toolbar { justify-content: flex-start; }
-  .admin-shell-actions { justify-content: flex-start; }
-}
-
+/* Mobile Responsive */
 @media (max-width: 640px) {
   .admin-shell-header {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    gap: 8px;
+    gap: 12px;
     border: 0;
-    padding: 2px 2px 0;
+    padding: 0;
     border-radius: 0;
     background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  
+  .admin-shell-header::before {
+    display: none;
   }
 
   .admin-shell-title {
-    font-size: clamp(1.18rem, 5.4vw, 1.44rem);
-    line-height: 1.08;
+    font-size: clamp(1.25rem, 5.4vw, 1.5rem);
+    line-height: 1.1;
   }
 
   .admin-shell-title-desktop {
@@ -277,15 +312,16 @@
 
   .admin-shell-mobile-context {
     display: inline-flex;
-    min-height: 24px;
-    padding: 2px 8px;
-    font-size: calc(11px * var(--ui-scale, 1));
+    min-height: 26px;
+    padding: 4px 10px;
+    font-size: 11px;
   }
 
   .admin-shell-copy {
     flex: initial;
-    gap: 4px;
+    gap: 6px;
   }
+  
   .admin-shell-kicker { display: none; }
   .admin-shell-summary-row { display: none; }
 
@@ -328,19 +364,18 @@
     width: auto;
   }
 
-  .admin-link-home {
-    min-height: 36px;
-    padding-inline: 12px;
-    border-radius: 999px;
+  .admin-shell-icon {
+    width: 28px;
+    height: 28px;
   }
-
-  .admin-shell-actions .admin-link-home,
-  .admin-shell-actions .admin-mobile-nav-trigger { min-height: 38px; }
 
   .admin-shell-status-copy {
     display: block;
-    font-size: calc(12px * var(--ui-scale, 1));
+    font-size: 12px;
     line-height: 1.35;
   }
+  
+  .admin-link-home-text {
+    display: none;
+  }
 }
-
