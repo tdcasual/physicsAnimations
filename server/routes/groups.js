@@ -2,9 +2,8 @@ const express = require("express");
 const { z } = require("zod");
 
 const { requireAuth, optionalAuth } = require("../lib/auth");
-const { DEFAULT_GROUP_ID } = require("../lib/categories");
-const { loadCatalog } = require("../lib/catalog");
-const { mutateCategoriesState, noSave } = require("../lib/state");
+const { DEFAULT_GROUP_ID, GROUP_TITLES } = require("../lib/categories");
+const { loadCategoriesState, mutateCategoriesState, noSave } = require("../lib/state");
 const { parseWithSchema } = require("../lib/validation");
 const { asyncHandler } = require("../middleware/asyncHandler");
 const { rateLimit } = require("../middleware/rateLimit");
@@ -15,6 +14,10 @@ const { hasOwnProperty } = Object.prototype;
 
 function isSafeTaxonomyId(value) {
   return !FORBIDDEN_TAXONOMY_IDS.has(String(value || "").toLowerCase());
+}
+
+function getDefaultGroupTitle(groupId) {
+  return String(GROUP_TITLES[groupId] || groupId || "").trim();
 }
 
 function createGroupsRouter({ rootDir, authConfig, store }) {
@@ -48,21 +51,29 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
 
   router.get("/groups", authOptional, (req, res) => {
     const isAdmin = req.user?.role === "admin";
-    loadCatalog({
-      rootDir,
-      store,
-      includeHiddenCategories: isAdmin,
-      includeHiddenItems: isAdmin,
-      includeUnpublishedItems: isAdmin,
-      includeConfigCategories: isAdmin,
-    })
+    loadCategoriesState({ store })
       .then((catalog) => {
-        const groups = Object.values(catalog.groups || {}).map((group) => ({
-          id: group.id,
-          title: group.title,
-          order: group.order || 0,
-          hidden: Boolean(group.hidden),
-        }));
+        const groupsMap = {
+          ...(catalog?.groups && typeof catalog.groups === "object" ? catalog.groups : {}),
+        };
+
+        if (!groupsMap[DEFAULT_GROUP_ID]) {
+          groupsMap[DEFAULT_GROUP_ID] = {
+            id: DEFAULT_GROUP_ID,
+            title: getDefaultGroupTitle(DEFAULT_GROUP_ID),
+            order: 0,
+            hidden: false,
+          };
+        }
+
+        const groups = Object.values(groupsMap)
+          .filter((group) => isAdmin || group?.hidden !== true)
+          .map((group) => ({
+            id: group.id,
+            title: group.title || getDefaultGroupTitle(group.id),
+            order: group.order || 0,
+            hidden: Boolean(group.hidden),
+          }));
         groups.sort((a, b) => {
           const orderDiff = (b.order || 0) - (a.order || 0);
           if (orderDiff) return orderDiff;
@@ -129,7 +140,16 @@ function createGroupsRouter({ rootDir, authConfig, store }) {
       try {
         const updated = await mutateCategoriesState({ store }, (state) => {
           if (!state.groups) state.groups = {};
-          if (!hasOwnProperty.call(state.groups, id)) return noSave({ __kind: "not_found" });
+          if (!hasOwnProperty.call(state.groups, id)) {
+            if (id !== DEFAULT_GROUP_ID) return noSave({ __kind: "not_found" });
+            state.groups[id] = {
+              id,
+              title: getDefaultGroupTitle(id),
+              order: 0,
+              hidden: false,
+              updatedAt: now,
+            };
+          }
 
           if (body.title !== undefined) state.groups[id].title = body.title.trim();
           if (body.order !== undefined) state.groups[id].order = body.order;

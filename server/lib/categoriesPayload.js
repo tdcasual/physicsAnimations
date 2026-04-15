@@ -178,6 +178,18 @@ async function buildCategoriesPayloadWithSql({ rootDir, store, isAdmin, taxonomy
     };
   }
 
+  if (isAdmin && !groups[DEFAULT_GROUP_ID]) {
+    const defaultGroup = {
+      id: DEFAULT_GROUP_ID,
+      title: getDefaultGroupTitle(DEFAULT_GROUP_ID),
+      order: 0,
+      hidden: false,
+      categories: Object.create(null),
+    };
+    applyGroupConfig(defaultGroup, categoryState.groups?.[DEFAULT_GROUP_ID]);
+    groups[DEFAULT_GROUP_ID] = defaultGroup;
+  }
+
   const categoryMap = new Map();
   for (const group of Object.values(groups)) {
     for (const category of Object.values(group.categories || {})) {

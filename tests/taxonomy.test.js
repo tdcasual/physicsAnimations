@@ -144,6 +144,47 @@ test("/api/categories returns groups and categories with groupId", async () => {
   }
 });
 
+test("/api/categories exposes the default admin group when taxonomy is empty", async () => {
+  const rootDir = makeTempRoot({ animationsJson: {}, itemsJson: { version: 2, items: [] } });
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+    const response = await fetch(`${baseUrl}/api/categories`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.ok(Array.isArray(data.groups));
+    assert.ok(data.groups.find((group) => group.id === "physics"));
+    assert.deepEqual(data.categories, []);
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("/api/groups returns the default group instead of 500 when taxonomy is empty", async () => {
+  const rootDir = makeTempRoot({ animationsJson: {}, itemsJson: { version: 2, items: [] } });
+  const authConfig = makeAuthConfig();
+  const app = createApp({ rootDir, authConfig });
+  const { server, baseUrl } = await startServer(app);
+  try {
+    const token = await login(baseUrl, authConfig);
+    const response = await fetch(`${baseUrl}/api/groups`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.ok(Array.isArray(data.groups));
+    assert.ok(data.groups.find((group) => group.id === "physics"));
+  } finally {
+    await stopServer(server);
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("category create rejects unknown group", async () => {
   const rootDir = makeTempRoot();
   const authConfig = makeAuthConfig();
