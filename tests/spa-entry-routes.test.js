@@ -17,6 +17,9 @@ test("root routes serve SPA entry and static assets", async () => {
   fs.mkdirSync(path.join(spaDist, "assets"), { recursive: true });
   fs.writeFileSync(path.join(spaDist, "index.html"), "<!doctype html><title>root-spa</title>");
   fs.writeFileSync(path.join(spaDist, "assets", "app.js"), "console.log('ok');");
+  fs.writeFileSync(path.join(spaDist, "registerSW.js"), "console.log('register');");
+  fs.writeFileSync(path.join(spaDist, "sw.js"), "console.log('sw');");
+  fs.writeFileSync(path.join(spaDist, "manifest.webmanifest"), '{"name":"root-spa"}');
 
   const app = createApp({ rootDir });
   const { server, baseUrl } = await startServer(app);
@@ -36,6 +39,18 @@ test("root routes serve SPA entry and static assets", async () => {
     const asset = await fetch(`${baseUrl}/assets/app.js`);
     assert.equal(asset.status, 200);
     assert.equal(await asset.text(), "console.log('ok');");
+
+    const registerSw = await fetch(`${baseUrl}/registerSW.js`);
+    assert.equal(registerSw.status, 200);
+    assert.equal(await registerSw.text(), "console.log('register');");
+
+    const sw = await fetch(`${baseUrl}/sw.js`);
+    assert.equal(sw.status, 200);
+    assert.equal(await sw.text(), "console.log('sw');");
+
+    const manifest = await fetch(`${baseUrl}/manifest.webmanifest`);
+    assert.equal(manifest.status, 200);
+    assert.equal(await manifest.text(), '{"name":"root-spa"}');
 
     const apiHealth = await fetch(`${baseUrl}/api/health`);
     assert.equal(apiHealth.status, 200);

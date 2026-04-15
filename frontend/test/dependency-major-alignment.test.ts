@@ -14,11 +14,11 @@ describe("frontend major dependency alignment", () => {
     };
 
     expect(pkg.dependencies?.pinia).toBe("^3.0.4");
-    expect(pkg.dependencies?.["vue-router"]).toBe("^5.0.2");
-    expect(pkg.devDependencies?.vite).toBe("^7.3.1");
-    expect(pkg.devDependencies?.vitest).toBe("^4.0.18");
-    expect(pkg.devDependencies?.["@vitejs/plugin-vue"]).toBe("^6.0.4");
-    expect(pkg.devDependencies?.jsdom).toBe("^28.0.0");
-    expect(pkg.overrides?.rollup).toBe("^4.59.0");
+    expect(pkg.dependencies?.["vue-router"]).toBe("^5.0.4");
+    expect(pkg.devDependencies?.vite).toBe("^7.3.2");
+    expect(pkg.devDependencies?.vitest).toBe("^4.1.4");
+    expect(pkg.devDependencies?.["@vitejs/plugin-vue"]).toBe("^6.0.6");
+    expect(pkg.devDependencies?.jsdom).toBe("^29.0.2");
+    expect(pkg.overrides?.rollup).toBe("^4.60.1");
   });
 });

@@ -2,9 +2,8 @@ const path = require("node:path");
 
 async function captureViewerScreen(page, outputDir, tag, viewportName, captureFullPage, fixtureId, capturePage) {
   await page.goto(`/viewer/${encodeURIComponent(fixtureId)}`, { waitUntil: "networkidle" });
-  await page.locator(".viewer-bar").first().waitFor({ state: "visible", timeout: 10000 });
-  await page.locator(".viewer-stage-frame").first().waitFor({ state: "visible", timeout: 10000 });
-  await page.locator(".viewer-frame, .viewer-shot").first().waitFor({ state: "visible", timeout: 10000 });
+  await page.getByRole("link", { name: /原页面|打开原页面/ }).waitFor({ state: "visible", timeout: 10000 });
+  await page.locator('iframe[title="作品"], iframe.viewer-frame').first().waitFor({ state: "visible", timeout: 10000 });
   await capturePage(page, path.join(outputDir, `${tag}-${viewportName}-viewer.png`), {
     fullPage: captureFullPage,
   });

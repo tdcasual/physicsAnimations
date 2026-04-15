@@ -1,119 +1,77 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { resolveAdminRedirect } from "./router/redirect";
 import type { ApiError } from "./features/auth/authApi";
 import { useAuthStore } from "./features/auth/useAuthStore";
-import { resolveTopbarModeClass, resolveTopbarSearchState } from "./features/app/appShellTopbar";
-import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
-import { applyStoredTheme, toggleTheme } from "./features/theme/theme";
 import { useCatalogSearch } from "./features/catalog/catalogSearch";
+import { useTheme } from "./composables/useTheme";
+import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import PerfMetrics from "@/components/dev/PerfMetrics.vue";
+import PwaNetworkStatus from "@/components/PwaNetworkStatus.vue";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt.vue";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sun, Moon, Search, GraduationCap, User, LogOut, LayoutDashboard, Menu, X } from "lucide-vue-next";
 
 const router = useRouter();
 const route = useRoute();
 const auth = useAuthStore();
+const { isDark, toggleTheme } = useTheme();
 
+// State
 const loginOpen = ref(false);
 const loginUsername = ref("");
 const loginPassword = ref("");
 const loginError = ref("");
+const isDev = import.meta.env.DEV;
 const classroomModeEnabled = ref(false);
-const topbarUtilityOpen = ref(false);
+const mobileMenuOpen = ref(false);
 const topbarRef = ref<HTMLElement | null>(null);
-const modalCardRef = ref<HTMLElement | null>(null);
-const loginUsernameInputRef = ref<HTMLInputElement | null>(null);
+const loginUsernameInputRef = ref<(ComponentPublicInstance & { $el?: Element | null }) | HTMLInputElement | null>(null);
+const isScrolled = ref(false);
+
+// Computed
 const currentPath = computed(() => String(route.path || ""));
 const isLoginRoute = computed(() => currentPath.value === "/login");
 const isCatalogRoute = computed(() => currentPath.value === "/");
-const isAdminShellRoute = computed(() => {
-  return currentPath.value.startsWith("/admin") || currentPath.value === "/login";
-});
+const isAdminShellRoute = computed(() => currentPath.value.startsWith("/admin") || currentPath.value === "/login");
 const isAdminRoute = computed(() => currentPath.value.startsWith("/admin"));
 const isViewerRoute = computed(() => currentPath.value.startsWith("/viewer"));
 const isLibraryRoute = computed(() => currentPath.value.startsWith("/library"));
-const classroomModeLabel = computed(() => `课堂模式${classroomModeEnabled.value ? "开" : "关"}`);
 const showAdminShortcut = computed(() => auth.loggedIn && !isAdminShellRoute.value);
 const catalogQuery = useCatalogSearch();
-const topbarSearchState = computed(() => resolveTopbarSearchState(currentPath.value));
-const topbarMoreSummary = computed(() => (auth.loggedIn ? "账号与后台" : "设置与登录"));
-function onTopbarSearch(event: Event) {
-  catalogQuery.value = (event.target as HTMLInputElement).value;
-}
-const topbarModeClass = computed(() => resolveTopbarModeClass(currentPath.value));
-const appMainClasses = computed(() => ({
-  "app-main--catalog": isCatalogRoute.value,
-  "app-main--admin": isAdminRoute.value,
-  "app-main--login": isLoginRoute.value,
-  "app-main--viewer": isViewerRoute.value,
-  "app-main--library": isLibraryRoute.value,
-}));
+
+// Helpers
 let lastFocusedBeforeLogin: HTMLElement | null = null;
 let bodyOverflowBeforeLogin = "";
 let topbarResizeObserver: ResizeObserver | null = null;
+
 function openLogin() {
-  topbarUtilityOpen.value = false;
+  mobileMenuOpen.value = false;
   lastFocusedBeforeLogin = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   loginOpen.value = true;
   loginError.value = "";
 }
+
 function closeLogin() {
   loginOpen.value = false;
   loginError.value = "";
   loginUsername.value = "";
   loginPassword.value = "";
 }
-function getModalFocusables(): HTMLElement[] {
-  if (!modalCardRef.value) return [];
-  const focusable = modalCardRef.value.querySelectorAll<HTMLElement>(
-    'a[href],button:not([disabled]),textarea,input:not([disabled]),select,[tabindex]:not([tabindex="-1"])',
-  );
-  return Array.from(focusable).filter((node) => {
-    if (!(node instanceof HTMLElement)) return false;
-    return !node.hasAttribute("disabled") && node.tabIndex !== -1;
-  });
-}
 
-function handleLoginModalKeydown(event: KeyboardEvent) {
-  if (!loginOpen.value) return;
-  if (event.key === "Escape") {
-    event.preventDefault();
-    closeLogin();
-    return;
-  }
-  if (event.key !== "Tab") return;
-  const focusables = getModalFocusables();
-  if (focusables.length === 0) return;
-  const first = focusables[0];
-  const last = focusables[focusables.length - 1];
-  const active = document.activeElement as HTMLElement | null;
-  const inModal = active ? modalCardRef.value?.contains(active) === true : false;
-
-  if (event.shiftKey) {
-    if (!inModal || active === first) {
-      event.preventDefault();
-      last.focus();
-    }
-    return;
-  }
-  if (!inModal || active === last) {
-    event.preventDefault();
-    first.focus();
-  }
-}
 function clearLoginError() {
   if (!loginError.value) return;
   loginError.value = "";
-}
-function toggleTopbarUtilityPanel() {
-  topbarUtilityOpen.value = !topbarUtilityOpen.value;
-}
-function toggleClassroom() {
-  classroomModeEnabled.value = toggleClassroomMode();
-  topbarUtilityOpen.value = false;
-}
-function toggleThemeMode() {
-  toggleTheme();
-  topbarUtilityOpen.value = false;
 }
 
 function toLoginMessage(err: unknown): string {
@@ -152,7 +110,7 @@ async function submitLogin() {
 }
 
 async function logout() {
-  topbarUtilityOpen.value = false;
+  mobileMenuOpen.value = false;
   auth.logout();
   if (String(route.path || "").startsWith("/admin")) {
     await router.replace("/");
@@ -160,7 +118,7 @@ async function logout() {
 }
 
 function handleAuthExpired() {
-  topbarUtilityOpen.value = false;
+  mobileMenuOpen.value = false;
   auth.logout();
   const currentPath = String(route.fullPath || "");
   if (currentPath.startsWith("/admin")) {
@@ -171,15 +129,23 @@ function handleAuthExpired() {
   }
 }
 
+function toggleClassroom() {
+  classroomModeEnabled.value = toggleClassroomMode();
+}
+
 function syncTopbarHeight() {
   const topbarHeight = Math.ceil(topbarRef.value?.getBoundingClientRect().height || 0);
   document.documentElement.style.setProperty("--app-topbar-height", `${topbarHeight}px`);
 }
 
+function handleScroll() {
+  isScrolled.value = window.scrollY > 10;
+}
+
 onMounted(async () => {
   window.addEventListener("pa-auth-expired", handleAuthExpired as EventListener);
+  window.addEventListener("scroll", handleScroll, { passive: true });
   classroomModeEnabled.value = applyStoredClassroomMode();
-  applyStoredTheme();
   await nextTick();
   syncTopbarHeight();
   if (typeof ResizeObserver !== "undefined" && topbarRef.value) {
@@ -197,12 +163,16 @@ watch(loginOpen, async (open) => {
   if (open) {
     bodyOverflowBeforeLogin = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleLoginModalKeydown);
     await nextTick();
-    loginUsernameInputRef.value?.focus();
+    const inputEl =
+      loginUsernameInputRef.value instanceof HTMLInputElement
+        ? loginUsernameInputRef.value
+        : loginUsernameInputRef.value && "$el" in loginUsernameInputRef.value
+          ? loginUsernameInputRef.value.$el?.querySelector("input")
+          : null;
+    inputEl?.focus();
     return;
   }
-  window.removeEventListener("keydown", handleLoginModalKeydown);
   document.body.style.overflow = bodyOverflowBeforeLogin;
   bodyOverflowBeforeLogin = "";
   const restoreTarget = lastFocusedBeforeLogin;
@@ -213,13 +183,13 @@ watch(loginOpen, async (open) => {
 watch(
   () => route.fullPath,
   () => {
-    topbarUtilityOpen.value = false;
+    mobileMenuOpen.value = false;
   },
 );
 
 onBeforeUnmount(() => {
   window.removeEventListener("pa-auth-expired", handleAuthExpired as EventListener);
-  window.removeEventListener("keydown", handleLoginModalKeydown);
+  window.removeEventListener("scroll", handleScroll);
   topbarResizeObserver?.disconnect();
   topbarResizeObserver = null;
   document.documentElement.style.removeProperty("--app-topbar-height");
@@ -228,147 +198,220 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="app-shell">
-    <header ref="topbarRef" :class="['topbar', topbarModeClass]">
-      <div class="topbar-inner">
-        <div class="topbar-shell-panel">
-          <div class="topbar-lead">
-            <RouterLink to="/" class="brand brand-link" aria-label="返回目录">
-              <span class="brand-lockup">
-                <span class="brand-mark">科学演示集</span>
-              </span>
-            </RouterLink>
-            <RouterLink v-if="!isCatalogRoute" to="/" class="btn btn-ghost btn-nav-home topbar-home-link" aria-label="浏览首页">
-              <span class="topbar-home-label">首页</span>
-            </RouterLink>
-            <label v-if="topbarSearchState.kind === 'input'" class="topbar-search-field">
-              <span class="sr-only">搜索</span>
-              <input
-                :value="catalogQuery"
-                class="topbar-search"
-                type="search"
-                :placeholder="topbarSearchState.placeholder"
-                autocomplete="off"
-                @input="onTopbarSearch"
-              />
-            </label>
+  <div class="min-h-screen bg-background text-foreground">
+    <!-- Topbar -->
+    <header
+      ref="topbarRef"
+      class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      :class="[
+        isScrolled || mobileMenuOpen
+          ? 'bg-background/80 backdrop-blur-xl border-b border-border shadow-sm'
+          : 'bg-transparent',
+      ]"
+    >
+      <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10">
+        <div class="flex h-16 items-center justify-between gap-4">
+          <!-- Logo -->
+          <div class="flex items-center gap-6">
             <RouterLink
-              v-else
-              :to="topbarSearchState.target || '/'"
-              class="topbar-search-launch"
-              :aria-label="topbarSearchState.placeholder"
+              to="/"
+              class="font-serif text-xl font-normal tracking-wide text-foreground transition-opacity hover:opacity-60"
             >
-              <span class="topbar-search-launch-kicker">查找演示</span>
-              <span class="topbar-search-launch-label">{{ topbarSearchState.placeholder }}</span>
+              演示工坊
             </RouterLink>
-          </div>
-          <div class="topbar-actions">
-            <!-- 电脑端：直接平铺所有按钮 -->
-            <div class="topbar-inline-actions">
-              <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-                {{ classroomModeLabel }}
-              </button>
-              <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
-              <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
-                登录
-              </button>
-              <template v-else-if="auth.loggedIn">
-                <RouterLink v-if="showAdminShortcut" to="/admin/dashboard" class="btn btn-primary topbar-admin-link">管理</RouterLink>
-                <button type="button" class="btn btn-ghost topbar-logout-button" @click="logout">退出</button>
-              </template>
-            </div>
-            <!-- 手机端：折叠到"更多"按钮 -->
-            <button
-              type="button"
-              class="btn btn-ghost topbar-more-trigger"
-              :class="{ 'is-open': topbarUtilityOpen }"
-              :aria-expanded="topbarUtilityOpen ? 'true' : 'false'"
-              aria-controls="topbar-more-panel"
-              :aria-label="`更多：${topbarMoreSummary}`"
-              @click="toggleTopbarUtilityPanel"
-            >
-              <span class="topbar-more-trigger-label">更多</span>
-            </button>
-            <div
-              id="topbar-more-panel"
-              class="topbar-more-panel"
-              :class="{ 'is-open': topbarUtilityOpen }"
-              :aria-hidden="topbarUtilityOpen ? 'false' : 'true'"
-            >
-              <div class="topbar-more-group">
-                <p class="topbar-more-group-label">界面与课堂</p>
-                <button type="button" class="btn btn-ghost" :aria-pressed="classroomModeEnabled" @click="toggleClassroom">
-                  {{ classroomModeLabel }}
-                </button>
-                <button type="button" class="btn btn-ghost" @click="toggleThemeMode">昼夜主题</button>
-              </div>
-              <div class="topbar-more-group">
-                <p class="topbar-more-group-label">{{ auth.loggedIn ? "账号与后台" : "登录与后台" }}</p>
-                <button v-if="!auth.loggedIn && !isLoginRoute" type="button" class="btn btn-primary" @click="openLogin">
-                  登录
-                </button>
-                <template v-else-if="auth.loggedIn">
-                  <RouterLink v-if="showAdminShortcut" to="/admin/dashboard" class="btn btn-primary topbar-admin-link">管理</RouterLink>
-                  <button type="button" class="btn btn-ghost topbar-logout-button" @click="logout">退出</button>
-                </template>
+
+            <!-- Desktop Search -->
+            <div v-if="isCatalogRoute" class="hidden md:flex items-center">
+              <div class="relative">
+                <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  :model-value="catalogQuery"
+                  type="search"
+                  placeholder="搜索演示..."
+                  class="h-9 w-64 rounded-full border-border bg-muted pl-9 text-sm focus-visible:ring-primary"
+                  @update:model-value="catalogQuery = $event"
+                />
               </div>
             </div>
           </div>
+
+          <!-- Desktop Actions -->
+          <div class="hidden md:flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              class="gap-2 rounded-full"
+              :class="classroomModeEnabled ? 'bg-secondary text-secondary-foreground' : ''"
+              @click="toggleClassroom"
+            >
+              <GraduationCap class="h-4 w-4" />
+              <span>课堂模式</span>
+            </Button>
+
+            <Button variant="ghost" size="icon" class="rounded-full" @click="toggleTheme">
+              <Sun v-if="isDark" class="h-4 w-4" />
+              <Moon v-else class="h-4 w-4" />
+            </Button>
+
+            <template v-if="!auth.loggedIn && !isLoginRoute">
+              <Button size="sm" class="rounded-full px-4" @click="openLogin">登录</Button>
+            </template>
+
+            <template v-else-if="auth.loggedIn">
+              <Button v-if="showAdminShortcut" variant="outline" size="sm" class="gap-2 rounded-full" as-child>
+                <RouterLink to="/admin/dashboard">
+                  <LayoutDashboard class="h-4 w-4" />
+                  管理
+                </RouterLink>
+              </Button>
+              <Button variant="ghost" size="sm" class="gap-2 rounded-full text-muted-foreground" @click="logout">
+                <LogOut class="h-4 w-4" />
+                退出
+              </Button>
+            </template>
+          </div>
+
+          <!-- Mobile Menu Trigger -->
+          <button
+            class="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary"
+            @click="mobileMenuOpen = !mobileMenuOpen"
+          >
+            <X v-if="mobileMenuOpen" class="h-5 w-5" />
+            <Menu v-else class="h-5 w-5" />
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Search (catalog only) -->
+      <div v-if="isCatalogRoute && mobileMenuOpen" class="border-t border-border px-4 py-3 md:hidden">
+        <div class="relative">
+          <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            :model-value="catalogQuery"
+            type="search"
+            placeholder="搜索演示..."
+            class="h-10 w-full rounded-full border-border bg-muted pl-9"
+            @update:model-value="catalogQuery = $event"
+          />
+        </div>
+      </div>
+
+      <!-- Mobile Menu Panel -->
+      <div
+        v-if="mobileMenuOpen"
+        class="border-t border-border bg-background px-4 py-4 md:hidden"
+      >
+        <div class="flex flex-col gap-2">
+          <Button
+            variant="ghost"
+            class="justify-start gap-3 rounded-xl"
+            :class="classroomModeEnabled ? 'bg-secondary' : ''"
+            @click="toggleClassroom"
+          >
+            <GraduationCap class="h-4 w-4" />
+            课堂模式
+          </Button>
+
+          <Button variant="ghost" class="justify-start gap-3 rounded-xl" @click="toggleTheme">
+            <Sun v-if="isDark" class="h-4 w-4" />
+            <Moon v-else class="h-4 w-4" />
+            {{ isDark ? '浅色模式' : '深色模式' }}
+          </Button>
+
+          <template v-if="!auth.loggedIn && !isLoginRoute">
+            <Button class="justify-start gap-3 rounded-xl" @click="openLogin">
+              <User class="h-4 w-4" />
+              管理员登录
+            </Button>
+          </template>
+
+          <template v-else-if="auth.loggedIn">
+            <Button v-if="showAdminShortcut" variant="ghost" class="justify-start gap-3 rounded-xl" as-child>
+              <RouterLink to="/admin/dashboard">
+                <LayoutDashboard class="h-4 w-4" />
+                管理后台
+              </RouterLink>
+            </Button>
+            <Button variant="ghost" class="justify-start gap-3 rounded-xl text-muted-foreground" @click="logout">
+              <LogOut class="h-4 w-4" />
+              退出登录
+            </Button>
+          </template>
         </div>
       </div>
     </header>
-    <main :class="['app-main', appMainClasses]">
+
+    <!-- Main Content -->
+    <main
+      class="transition-all"
+      :class="[
+        isAdminRoute ? 'app-main--admin pt-0' : 'pt-16',
+        isCatalogRoute ? 'app-main--catalog' : '',
+        isViewerRoute ? 'app-main--viewer' : '',
+        isLibraryRoute ? 'app-main--library' : '',
+      ]"
+    >
       <RouterView />
     </main>
-    <div v-if="loginOpen" class="modal-backdrop" @click="closeLogin">
-      <div
-        ref="modalCardRef"
-        class="modal-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="login-title"
-        @click.stop
-      >
-        <h2 id="login-title" class="modal-title">管理员登录</h2>
-        <form class="modal-form" @submit.prevent="submitLogin">
-          <label class="field">
-            <span>用户名</span>
-            <input
+
+    <!-- Login Dialog -->
+    <Dialog :open="loginOpen" @update:open="(v) => { if (!v) closeLogin(); }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>管理员登录</DialogTitle>
+          <DialogDescription>请输入管理员账号和密码以进入后台</DialogDescription>
+        </DialogHeader>
+
+        <form class="mt-2 space-y-4" @submit.prevent="submitLogin">
+          <div class="space-y-2">
+            <label class="text-sm font-medium">用户名</label>
+            <Input
               ref="loginUsernameInputRef"
               v-model="loginUsername"
-              class="field-input"
               type="text"
-              name="username"
               autocomplete="username"
               autocapitalize="none"
               autocorrect="off"
               spellcheck="false"
+              placeholder="admin"
               @input="clearLoginError"
             />
-          </label>
-          <label class="field">
-            <span>密码</span>
-            <input
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium">密码</label>
+            <Input
               v-model="loginPassword"
-              class="field-input"
               type="password"
-              name="password"
               autocomplete="current-password"
               autocapitalize="none"
               autocorrect="off"
               spellcheck="false"
+              placeholder="••••••"
               @input="clearLoginError"
             />
-          </label>
-          <div v-if="loginError" class="error">{{ loginError }}</div>
-          <div class="modal-actions">
-            <button type="button" class="btn btn-ghost" @click="closeLogin">取消</button>
-            <button type="submit" class="btn btn-primary" :disabled="auth.loading">登录</button>
+          </div>
+
+          <div v-if="loginError" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {{ loginError }}
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" @click="closeLogin">取消</Button>
+            <Button type="submit" :disabled="auth.loading">
+              {{ auth.loading ? '登录中...' : '登录' }}
+            </Button>
           </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- 开发环境性能指标 -->
+    <PerfMetrics v-if="isDev" />
+    
+    <!-- PWA 网络状态指示器 -->
+    <PwaNetworkStatus />
+    
+    <!-- PWA 安装提示 -->
+    <PwaInstallPrompt />
   </div>
 </template>
-
-<style scoped src="./AppShell.css"></style>

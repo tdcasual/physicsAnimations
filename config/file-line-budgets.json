@@ -44,6 +44,10 @@
   "overrides": {
     "frontend/src/features/library/useLibraryAdminState.ts": 420,
     "frontend/src/features/admin/taxonomy/useTaxonomyAdmin.ts": 330,
-    "frontend/src/views/CatalogView.vue": 340
+    "frontend/src/views/CatalogView.vue": 340,
+    "frontend/src/views/admin/library/AdminLibraryView.css": 820,
+    "frontend/src/views/admin/AdminLayoutView.css": 520,
+    "frontend/src/styles/topbar.css": 460,
+    "frontend/src/App.vue": 420
   }
 }

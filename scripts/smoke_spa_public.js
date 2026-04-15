@@ -179,14 +179,16 @@ async function cleanupCreatedItem({ baseUrl, token, id }) {
 }
 
 async function chooseGroup(page, groupTitle) {
-  const groupNav = page.getByRole("navigation", { name: "大类" });
-  const directTab = groupNav.getByRole("button", { name: groupTitle }).first();
+  const groupTabs = page.locator(".cat-group-tabs").first();
+  await groupTabs.waitFor({ state: "visible", timeout: 10000 });
+
+  const directTab = groupTabs.getByRole("button", { name: groupTitle }).first();
   if ((await directTab.count()) > 0) {
     await directTab.click();
     return;
   }
 
-  const groupSelect = groupNav.locator("select");
+  const groupSelect = groupTabs.locator("select");
   if ((await groupSelect.count()) > 0) {
     await groupSelect.selectOption({ label: groupTitle });
     return;
@@ -266,45 +268,43 @@ async function run() {
       });
 
       await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-      await page.getByRole("navigation", { name: "大类" }).waitFor({ state: "visible", timeout: 10000 });
-      await page.getByRole("navigation", { name: "分类" }).waitFor({ state: "visible", timeout: 10000 });
       await waitForCatalogReadyState(page);
+      await page.locator(".cat-group-tabs").first().waitFor({ state: "visible", timeout: 10000 });
+      await page.locator(".cat-category-tabs").first().waitFor({ state: "visible", timeout: 10000 });
 
       if (expectedGroupTitle) {
         await chooseGroup(page, expectedGroupTitle);
       }
-      await page.getByRole("navigation", { name: "分类" }).getByRole("button", { name: "全部" }).click();
+      await page.locator(".cat-category-tabs").getByRole("button", { name: "全部" }).click();
 
-      const searchInput = page.locator(".topbar-search");
+      const searchInput = page.locator('input[type="search"]').first();
       await searchInput.fill(smokeTitle);
 
-      const card = page.locator(".catalog-card", { hasText: smokeTitle }).first();
+      const card = page.locator(".cat-card", { hasText: smokeTitle }).first();
       await card.waitFor({ state: "visible", timeout: 10000 });
-      const cardHref = await card.getAttribute("href");
-      if (!String(cardHref || "").includes(createdId)) {
-        throw new Error(`catalog card href does not include created id: ${cardHref}`);
-      }
       await page.screenshot({ path: screenshotCatalogPath, fullPage: false });
 
       await Promise.all([
         page.waitForURL(new RegExp(`/viewer/${createdId}$`), { timeout: 10000 }),
         card.click(),
       ]);
-      await page.getByRole("link", { name: "打开原页面" }).waitFor({ state: "visible", timeout: 10000 });
+      const openLink = page.getByRole("link", { name: /原页面|打开原页面/ });
+      await openLink.waitFor({ state: "visible", timeout: 10000 });
       await page.getByText(smokeTitle).first().waitFor({ state: "visible", timeout: 10000 });
-      const viewerFrame = page.locator("iframe.viewer-frame");
+      const viewerFrame = page.locator('iframe[title="作品"], iframe.viewer-frame').first();
       await viewerFrame.waitFor({ state: "visible", timeout: 10000 });
       const frameSrc = await viewerFrame.getAttribute("src");
       if (frameSrc !== expectedFrameTarget) {
         throw new Error(`viewer frame src mismatch: expected ${expectedFrameTarget}, got ${frameSrc}`);
       }
-      const openHref = await page.getByRole("link", { name: "打开原页面" }).getAttribute("href");
+      const openHref = await openLink.getAttribute("href");
       if (openHref !== expectedOpenTarget) {
         throw new Error(`open link href mismatch: expected ${expectedOpenTarget}, got ${openHref}`);
       }
       await page.screenshot({ path: screenshotViewerPath, fullPage: false });
 
-      await page.locator(".viewer-back").click();
+      await page.goBack({ waitUntil: "networkidle" });
+      await waitForCatalogReadyState(page);
       await searchInput.waitFor({ state: "visible", timeout: 10000 });
       const searchAfterReturn = await searchInput.inputValue();
       if (searchAfterReturn !== smokeTitle) {

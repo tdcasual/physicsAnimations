@@ -24,9 +24,10 @@ test("ui audit capture delegates the bulky viewport runtime helpers into scripts
 
 test("ui audit capture recognizes catalog shell, empty state, and error state as ready targets", () => {
   const source = readUiAuditSources();
-  assert.match(source, /topbar-search/);
-  assert.match(source, /catalog-empty/);
-  assert.match(source, /catalog-state/);
+  assert.match(source, /input\[type="search"\]/);
+  assert.match(source, /cat-group-tabs/);
+  assert.match(source, /cat-card/);
+  assert.match(source, /加载目录失败/);
 });
 
 test("ui audit capture creates a temporary viewer fixture and captures viewer screenshots", () => {
@@ -34,6 +35,7 @@ test("ui audit capture creates a temporary viewer fixture and captures viewer sc
   assert.match(source, /createTemporaryViewerFixture/);
   assert.match(source, /viewer\.png/);
   assert.match(source, /temp viewer fixture/i);
+  assert.match(source, /iframe\[title="作品"\]|iframe\.viewer-frame/);
 });
 
 test("ui audit capture cleans up the temporary viewer fixture after capture", () => {
@@ -49,9 +51,12 @@ test("ui audit capture accepts either a visible manage shortcut or an admin redi
   assert.match(source, /getByRole\("button",\s*\{\s*name:\s*"退出"/);
 });
 
-test("ui audit capture and smoke auth helpers can reveal auth actions from the mobile more panel", () => {
+test("ui audit capture and smoke auth helpers can reveal auth actions from the current app-shell header", () => {
   const source = readUiAuditSources();
   assert.match(source, /revealTopbarAuthActions/);
-  assert.match(source, /topbar-more-trigger/);
-  assert.match(source, /topbar-more-panel/);
+  assert.match(source, /getByRole\("button",\s*\{\s*name:\s*"登录"/);
+  assert.match(source, /getByRole\("button",\s*\{\s*name:\s*"管理员登录"/);
+  assert.match(source, /button\.md\\\\:hidden/);
+  assert.match(source, /autocomplete="username"|autocomplete=\\"username\\"|input\[autocomplete="username"\]/);
+  assert.match(source, /current-password|input\[type="password"\]/);
 });

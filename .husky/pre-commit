@@ -1,1 +1,1 @@
-npm run update-list && git add animations.json
+npm run guard:security
