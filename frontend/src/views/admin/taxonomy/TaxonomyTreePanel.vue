@@ -165,11 +165,6 @@ function onToggle(groupId: string, event: Event) {
   white-space: nowrap;
 }
 
-.meta-line {
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-}
-
 .tree-list {
   display: grid;
   gap: 8px;
@@ -246,14 +241,6 @@ function onToggle(groupId: string, event: Event) {
   display: inline-block;
   font-size: calc(11px * var(--ui-scale));
   color: color-mix(in srgb, var(--destructive) 70%, var(--foreground));
-}
-
-.checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
 }
 
 .compact-btn {

@@ -119,10 +119,6 @@ async function submit() {
   line-height: 1.55;
 }
 
-.login-kicker {
-  display: none;
-}
-
 .login-form {
   display: grid;
   gap: 14px;
@@ -174,11 +170,6 @@ h1 {
   justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
-}
-
-.error-text {
-  color: var(--destructive);
-  font-size: calc(13px * var(--ui-scale));
 }
 
 @media (min-width: 960px) {

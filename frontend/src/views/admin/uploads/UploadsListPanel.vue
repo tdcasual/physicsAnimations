@@ -121,12 +121,6 @@ const emit = defineEmits<{
   flex-wrap: wrap;
   justify-content: flex-end;
 }
-.empty {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  color: var(--muted);
-}
 .list-footer {
   display: flex;
   justify-content: space-between;

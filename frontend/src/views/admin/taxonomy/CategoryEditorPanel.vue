@@ -104,48 +104,6 @@ const categoryFormHiddenModel = computed({
 </template>
 
 <style scoped>
-.panel {
-  display: grid;
-  gap: 10px;
-}
-
-.meta-line {
-  color: var(--muted);
-  font-size: calc(12px * var(--ui-scale));
-}
-
-.form-grid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-}
-
-.checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
-}
-
-.subaccordion {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 8px;
-}
-
-.subaccordion > summary {
-  cursor: pointer;
-  min-height: 44px;
-  padding: 10px 0;
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale));
-}
-
-.subaccordion-body {
-  margin-top: 8px;
-}
-
 .hint {
   border: 1px dashed var(--border);
   border-radius: 8px;

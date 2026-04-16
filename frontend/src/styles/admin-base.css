@@ -312,3 +312,63 @@
   .admin-page-header { align-items: flex-start; }
   .admin-workspace-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Shared admin utilities ── */
+.error-text {
+  color: var(--destructive);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.empty {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.meta-line {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.subaccordion {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.subaccordion > summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 10px 0;
+  color: var(--muted);
+  font-size: calc(13px * var(--ui-scale));
+}
+
+.subaccordion-body {
+  margin-top: 8px;
+}
+
+.status-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.status-grid > div {
+  min-width: 0;
+  word-break: break-word;
+}

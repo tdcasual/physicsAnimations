@@ -32,24 +32,7 @@ defineProps<{
   gap: 10px;
 }
 
-.status-grid {
-  display: grid;
-  gap: 6px;
-}
-
-.status-grid > div {
-  min-width: 0;
-  word-break: break-word;
-}
-
 .status-grid span {
-  color: var(--muted);
-}
-
-.empty {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 14px;
   color: var(--muted);
 }
 </style>

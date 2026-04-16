@@ -37,17 +37,6 @@
   scroll-margin-top: calc(var(--app-topbar-height, 0px) + 16px);
 }
 
-.empty {
-  border: 1px dashed var(--border);
-  color: var(--muted);
-  font-size: calc(13px * var(--ui-scale));
-}
-
-.error-text {
-  color: var(--destructive);
-  font-size: calc(13px * var(--ui-scale));
-}
-
 @media (max-width: 640px) {
   .taxonomy-mobile-actions {
     display: grid;

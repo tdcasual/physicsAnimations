@@ -286,13 +286,6 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   color: var(--success);
 }
 
-.empty {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  color: var(--muted);
-}
-
 @media (max-width: 640px) {
   .step-list {
     display: grid;

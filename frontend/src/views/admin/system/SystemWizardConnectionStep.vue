@@ -140,13 +140,6 @@ const scanRemoteModel = computed({
   gap: 10px;
 }
 
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: calc(13px * var(--ui-scale));
-}
-
 @media (max-width: 640px) {
   .form-grid {
     grid-template-columns: 1fr;

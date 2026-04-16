@@ -5,8 +5,9 @@ import { describe, expect, it } from "vitest";
 describe("admin system status readability", () => {
   it("allows long status values to wrap instead of overflowing", () => {
     const source = fs.readFileSync(path.resolve(process.cwd(), "src/views/admin/system/SystemStatusPanel.vue"), "utf8");
+    const adminBase = fs.readFileSync(path.resolve(process.cwd(), "src/styles/admin-base.css"), "utf8");
     expect(source).toMatch(/class="break-anywhere"/);
-    expect(source).toMatch(/word-break:\s*break-word/);
+    expect(adminBase).toMatch(/word-break:\s*break-word/);
   });
 
   it("disables mobile auto-correct/capitalize for webdav credentials", () => {
