@@ -139,6 +139,8 @@ const activeCategoryTitle = computed(() => {
     <HeroSection
       :item-count="view.items.length"
       :category-count="view.categories.length"
+      :categories="view.categories"
+      @select-category="selectCategory"
     />
 
     <!-- Filters - Sticky with subtle transition -->
