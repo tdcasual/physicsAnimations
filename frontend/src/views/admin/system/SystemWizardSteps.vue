@@ -263,11 +263,6 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
   gap: 8px;
 }
 
-.btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
 .sync-box {
   display: grid;
   gap: 8px;

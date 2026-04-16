@@ -65,8 +65,8 @@
   --cat-border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   --cat-border-radius-lg: 255px 25px 225px 25px / 25px 225px 25px 255px;
   --cat-border-width: 2px;
-  --cat-border-color: #3a3a3a;
-  --cat-border-color-strong: #1a1a1a;
+  --cat-border-color: color-mix(in oklab, var(--cat-ink) 80%, white);
+  --cat-border-color-strong: color-mix(in oklab, var(--cat-ink) 55%, black);
 
   /* 阴影 - 手绘感偏移 */
   --cat-shadow-sm: 2px 2px 0 color-mix(in oklab, var(--cat-ink) 8%, transparent);

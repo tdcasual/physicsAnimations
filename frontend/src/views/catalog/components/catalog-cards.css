@@ -1,0 +1,123 @@
+/* ===== 基础样式（极简主题） ===== */
+.cat-card {
+  background: var(--cat-bg-card, #ffffff);
+}
+
+.cat-card-image-wrapper {
+  background: var(--cat-bg-secondary, #f8f8f8);
+  border-radius: var(--cat-border-radius, 4px);
+}
+
+.cat-card-placeholder {
+  background: var(--cat-bg-secondary, #f8f8f8);
+}
+
+.cat-card-overlay {
+  background: transparent;
+}
+
+.group:hover .cat-card-overlay {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.cat-card-info {
+  color: var(--cat-text-primary, #1a1a1a);
+}
+
+.cat-card-title {
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--cat-text-primary);
+}
+
+.cat-card-tag {
+  font-size: 0.625rem;
+  font-weight: 300;
+  color: var(--cat-text-secondary, #666666);
+  cursor: pointer;
+}
+
+.cat-card-tag:hover {
+  color: var(--cat-text-primary, #1a1a1a);
+}
+
+.cat-placeholder-text {
+  font-family: var(--cat-font-heading);
+  font-size: 2.25rem;
+  font-weight: 300;
+  color: var(--cat-text-secondary, #666666);
+  opacity: 0.5;
+}
+
+/* ===== 手绘风 (handdrawn) ===== */
+[data-catalog-theme="handdrawn"] .cat-card {
+  border: 2px solid var(--cat-border-color);
+  border-radius: var(--cat-border-radius);
+  box-shadow: var(--cat-shadow);
+  background: var(--cat-bg-card);
+  padding: var(--cat-spacing-sm);
+  transform: rotate(var(--card-rotation, 0deg));
+  transition: all var(--cat-transition-base);
+}
+
+[data-catalog-theme="handdrawn"] .cat-card:hover {
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.12);
+}
+
+[data-catalog-theme="handdrawn"] .cat-card-image-wrapper {
+  border: 1px solid var(--cat-border-color);
+  border-radius: calc(var(--cat-border-radius) * 0.5);
+  overflow: hidden;
+}
+
+[data-catalog-theme="handdrawn"] .cat-placeholder-text {
+  font-family: 'Ma Shan Zheng', cursive;
+  font-weight: 400;
+}
+
+[data-catalog-theme="handdrawn"] .cat-card-title {
+  font-family: var(--cat-font-body);
+  font-weight: 500;
+}
+
+/* ===== 新粗野主义 (brutalist) ===== */
+[data-catalog-theme="brutalist"] .cat-card {
+  border: 3px solid var(--cat-ink);
+  box-shadow: 4px 4px 0 var(--cat-ink);
+  background: var(--cat-paper);
+  padding: 0;
+}
+
+[data-catalog-theme="brutalist"] .cat-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--cat-ink);
+}
+
+[data-catalog-theme="brutalist"] .cat-card-image-wrapper {
+  border-radius: 0;
+  border-bottom: 3px solid var(--cat-ink);
+}
+
+[data-catalog-theme="brutalist"] .cat-placeholder-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+}
+
+[data-catalog-theme="brutalist"] .cat-card-info {
+  padding: 12px;
+}
+
+[data-catalog-theme="brutalist"] .cat-card-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+[data-catalog-theme="brutalist"] .cat-card-tag {
+  color: var(--cat-text-accent);
+  font-weight: 500;
+  text-transform: uppercase;
+}
