@@ -161,3 +161,7 @@ dist
 frontend/node_modules
 .playwright-cli/
 frontend/screenshot-audit/
+
+# Lighthouse CI
+.lighthouseci/
+frontend/.lighthouseci/
