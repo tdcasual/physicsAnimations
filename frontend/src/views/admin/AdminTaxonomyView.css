@@ -20,7 +20,7 @@
 }
 
 .taxonomy-mobile-summary span {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 

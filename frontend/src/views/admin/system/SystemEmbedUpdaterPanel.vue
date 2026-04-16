@@ -123,7 +123,7 @@ function onIntervalInput(value: string) {
 
 .panel-hint {
   margin: 6px 0 0;
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 
@@ -170,12 +170,12 @@ function onIntervalInput(value: string) {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 .field-label {
   font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 .status-item {
@@ -188,7 +188,7 @@ function onIntervalInput(value: string) {
 
 .status-item span {
   font-size: calc(12px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 .status-item strong {
@@ -205,7 +205,7 @@ function onIntervalInput(value: string) {
 
 .pending-text,
 .save-hint {
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 @media (max-width: 640px) {

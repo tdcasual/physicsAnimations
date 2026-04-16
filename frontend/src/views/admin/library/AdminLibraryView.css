@@ -32,7 +32,7 @@
 
 .library-workspace-summary p:last-child,
 .library-focus-panel span {
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 .library-focus-panel {
@@ -67,7 +67,7 @@
 }
 
 .library-metric-card span {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(12px * var(--ui-scale));
 }
 
@@ -100,7 +100,7 @@
 }
 
 .library-mobile-task-copy span {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 
@@ -123,7 +123,7 @@
 }
 
 .library-mobile-disclosure-copy span {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(12px * var(--ui-scale));
 }
 
@@ -215,7 +215,7 @@
   border: 1px solid color-mix(in oklab, var(--border) 18%, var(--border));
   border-radius: 14px;
   background: color-mix(in oklab, var(--card) 92%, var(--background));
-  color: var(--muted);
+  color: var(--foreground);
   min-height: 44px;
   padding: 8px 10px;
   display: inline-flex;
@@ -315,7 +315,7 @@
   gap: 6px;
   min-height: 44px;
   font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 .batch-move-folder {
@@ -400,7 +400,7 @@
   gap: 8px;
   padding: 0 8px;
   font-size: calc(12px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -530,7 +530,7 @@
 .asset-meta,
 .selected-folder {
   font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
   word-break: break-word;
 }
 
@@ -538,7 +538,7 @@
   border: 1px dashed color-mix(in oklab, var(--primary) 14%, var(--border));
   border-radius: 14px;
   padding: 12px;
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 

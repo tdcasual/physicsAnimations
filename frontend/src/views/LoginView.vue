@@ -114,7 +114,7 @@ async function submit() {
 
 .login-copy {
   margin: 0;
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: calc(13px * var(--ui-scale));
   line-height: 1.55;
 }
@@ -152,7 +152,7 @@ async function submit() {
 
 .login-note p {
   margin: 0;
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: calc(13px * var(--ui-scale));
   line-height: 1.55;
 }

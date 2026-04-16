@@ -174,7 +174,7 @@ function isFavorited(itemId: string): boolean {
 }
 
 .catalog-teacher-desc {
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: calc(12px * var(--ui-scale, 1));
   line-height: 1.45;
   display: -webkit-box;

@@ -37,7 +37,7 @@ defineProps<{
 
 .catalog-workspace-label,
 .catalog-workspace-note {
-  color: var(--muted);
+  color: var(--muted-foreground);
 }
 
 .catalog-workspace-value {

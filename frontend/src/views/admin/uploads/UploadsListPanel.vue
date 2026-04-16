@@ -111,7 +111,7 @@ const emit = defineEmits<{
   word-break: break-word;
 }
 .item-meta {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(12px * var(--ui-scale));
   word-break: break-word;
 }
@@ -129,7 +129,7 @@ const emit = defineEmits<{
   flex-wrap: wrap;
 }
 .meta {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(12px * var(--ui-scale));
 }
 

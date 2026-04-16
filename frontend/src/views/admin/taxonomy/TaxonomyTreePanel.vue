@@ -211,7 +211,7 @@ function onToggle(groupId: string, event: Event) {
 .group-meta,
 .category-meta {
   font-size: calc(12px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 .category-list {
@@ -254,7 +254,7 @@ function onToggle(groupId: string, event: Event) {
   border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 12px;
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 

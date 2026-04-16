@@ -9,5 +9,5 @@
   border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 16px;
-  color: var(--muted);
+  color: var(--foreground);
 }

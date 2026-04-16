@@ -33,6 +33,6 @@ defineProps<{
 }
 
 .status-grid span {
-  color: var(--muted);
+  color: var(--foreground);
 }
 </style>

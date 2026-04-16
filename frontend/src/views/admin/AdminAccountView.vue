@@ -218,7 +218,7 @@ async function submit() {
 
 
 .current-user {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(14px * var(--ui-scale));
 }
 </style>

@@ -19,7 +19,7 @@ defineProps<{
   padding: 10px 0 0;
   border-top: 1px dashed var(--border);
   background: transparent;
-  color: var(--muted);
+  color: var(--muted-foreground);
   align-content: center;
   justify-items: center;
   text-align: center;

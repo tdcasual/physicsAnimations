@@ -181,7 +181,7 @@ function onModeChange() {
 }
 h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 .summary-grid span {
-  color: var(--muted);
+  color: var(--foreground);
 }
 .step-list {
   list-style: none;
@@ -215,7 +215,7 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 }
 .step-hint {
   font-size: calc(12px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
 }
 .wizard-panel {
   border: 1px dashed var(--border);
@@ -247,7 +247,7 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 }
 
 .mode-card span {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 
@@ -274,7 +274,7 @@ h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 .save-disabled-hint,
 .continue-disabled-hint {
   font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
+  color: var(--foreground);
 }
 
 .validate-text.ok {

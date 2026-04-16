@@ -141,7 +141,7 @@ const workbenchToggleLabel = computed(() =>
 
 .catalog-workbench-summary-copy span,
 .catalog-workbench-summary-toggle {
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: calc(12px * var(--ui-scale, 1));
   line-height: 1.35;
 }

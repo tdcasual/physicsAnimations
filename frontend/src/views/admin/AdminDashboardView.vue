@@ -95,28 +95,28 @@ const statCards = [
     value: () => stats.value.total,
     description: "公开演示总数",
     color: "foreground",
-    gradient: "from-gray-200 to-gray-50",
+    gradient: "from-muted to-background",
   },
   {
     title: "上传内容",
     value: () => stats.value.uploadTotal,
     description: "站内托管资源",
     color: "foreground",
-    gradient: "from-gray-200 to-gray-50",
+    gradient: "from-muted to-background",
   },
   {
     title: "外链内容",
     value: () => stats.value.linkTotal,
     description: "外部链接资源",
     color: "foreground",
-    gradient: "from-gray-200 to-gray-50",
+    gradient: "from-muted to-background",
   },
   {
     title: "分类节点",
     value: () => stats.value.categoryTotal,
     description: "二级分类数量",
     color: "foreground",
-    gradient: "from-gray-200 to-gray-50",
+    gradient: "from-muted to-background",
   },
 ];
 </script>

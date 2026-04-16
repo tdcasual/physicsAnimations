@@ -108,7 +108,7 @@ const categoryFormHiddenModel = computed({
   border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 12px;
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(13px * var(--ui-scale));
 }
 </style>

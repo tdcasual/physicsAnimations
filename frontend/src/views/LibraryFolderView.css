@@ -66,7 +66,7 @@
 
 .library-folder-summary {
   margin: 0;
-  color: var(--muted);
+  color: var(--muted-foreground);
   max-width: 52ch;
 }
 
@@ -96,7 +96,7 @@
 }
 
 .library-folder-cover-placeholder {
-  color: var(--muted);
+  color: var(--muted-foreground);
   font-size: calc(13px * var(--ui-scale, 1));
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -107,7 +107,7 @@
   border: 1px dashed var(--border);
   border-radius: var(--radius-l);
   padding: 18px;
-  color: var(--muted);
+  color: var(--muted-foreground);
   background: var(--card);
 }
 

@@ -183,7 +183,7 @@ const emit = defineEmits<{
 }
 
 .meta {
-  color: var(--muted);
+  color: var(--foreground);
   font-size: calc(12px * var(--ui-scale));
 }
 </style>
