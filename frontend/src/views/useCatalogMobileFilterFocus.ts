@@ -1,4 +1,5 @@
 import { nextTick, type Ref } from "vue";
+import { BREAKPOINTS } from "../lib/constants";
 
 type CreateCatalogMobileFilterFocusParams = {
   panelRef: Ref<HTMLElement | null>;
@@ -26,7 +27,7 @@ export function createCatalogMobileFilterFocus(params: CreateCatalogMobileFilter
   const {
     panelRef,
     triggerRef,
-    maxWidth = 640,
+    maxWidth = BREAKPOINTS.MOBILE,
     isMobileViewport = createDefaultViewportMatcher(maxWidth),
     getViewportHeight = createDefaultViewportHeightReader(),
   } = params;

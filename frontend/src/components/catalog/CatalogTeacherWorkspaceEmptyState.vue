@@ -47,4 +47,14 @@ defineProps<{
   line-height: 1.45;
 }
 
+@media (max-width: 640px) {
+  .catalog-teacher-empty {
+    min-height: 48px;
+    padding-top: 8px;
+    align-content: start;
+    justify-items: start;
+    text-align: left;
+  }
+}
+
 </style>

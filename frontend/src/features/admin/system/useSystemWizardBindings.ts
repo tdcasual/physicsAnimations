@@ -77,35 +77,38 @@ export function createSystemWizardBindings(params: SystemWizardBindingsParams) {
     params.loadedEmbedUpdaterSnapshot.value = buildEmbedUpdaterSnapshot();
   }
 
-  function applyStorage(nextStorage: any, options: { resetStep: boolean } = { resetStep: false }) {
-    const timeoutCandidate = Number(nextStorage?.webdav?.timeoutMs);
+  function applyStorage(nextStorage: unknown, options: { resetStep: boolean } = { resetStep: false }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const s = (nextStorage as Record<string, any> | null) || {};
+    const timeoutCandidate = Number(s.webdav?.timeoutMs);
     const normalizedTimeoutMs = Number.isFinite(timeoutCandidate) ? Math.trunc(timeoutCandidate) : 15000;
 
     params.storage.value = {
-      mode: nextStorage?.mode || "local",
-      effectiveMode: nextStorage?.effectiveMode || nextStorage?.mode || "local",
-      readOnly: nextStorage?.readOnly === true,
-      localPath: nextStorage?.localPath || "",
-      lastSyncedAt: nextStorage?.lastSyncedAt || "",
+      mode: s.mode || "local",
+      effectiveMode: s.effectiveMode || s.mode || "local",
+      readOnly: s.readOnly === true,
+      localPath: s.localPath || "",
+      lastSyncedAt: s.lastSyncedAt || "",
       webdav: {
-        url: nextStorage?.webdav?.url || "",
-        basePath: nextStorage?.webdav?.basePath || "physicsAnimations",
-        username: nextStorage?.webdav?.username || "",
+        url: s.webdav?.url || "",
+        basePath: s.webdav?.basePath || "physicsAnimations",
+        username: s.webdav?.username || "",
         timeoutMs: normalizedTimeoutMs,
-        hasPassword: nextStorage?.webdav?.hasPassword === true,
-        scanRemote: nextStorage?.webdav?.scanRemote === true,
+        hasPassword: s.webdav?.hasPassword === true,
+        scanRemote: s.webdav?.scanRemote === true,
       },
     };
 
-    const normalizedMode = normalizeUiMode(params.storage.value.mode || "local");
+    const storage = params.storage.value!;
+    const normalizedMode = normalizeUiMode(storage.mode || "local");
     if (!normalizedMode) throw new Error("invalid_storage_mode");
 
     params.mode.value = normalizedMode;
-    params.url.value = params.storage.value.webdav.url || "";
-    params.basePath.value = params.storage.value.webdav.basePath || "physicsAnimations";
-    params.username.value = params.storage.value.webdav.username || "";
+    params.url.value = storage.webdav.url || "";
+    params.basePath.value = storage.webdav.basePath || "physicsAnimations";
+    params.username.value = storage.webdav.username || "";
     params.timeoutMs.value = normalizedTimeoutMs;
-    params.scanRemote.value = params.storage.value.webdav.scanRemote === true;
+    params.scanRemote.value = storage.webdav.scanRemote === true;
     params.password.value = "";
     params.validateText.value = "";
     params.validateOk.value = false;
@@ -115,31 +118,32 @@ export function createSystemWizardBindings(params: SystemWizardBindingsParams) {
     if (options.resetStep) params.wizardStep.value = 1;
   }
 
-  function applyEmbedUpdater(nextEmbedUpdater: any) {
-    const summary =
-      nextEmbedUpdater?.lastSummary && typeof nextEmbedUpdater.lastSummary === "object" ? nextEmbedUpdater.lastSummary : {};
-    const intervalCandidate = Number(nextEmbedUpdater?.intervalDays);
+  function applyEmbedUpdater(nextEmbedUpdater: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const eu = (nextEmbedUpdater as Record<string, any> | null) || {};
+    const summary = eu.lastSummary && typeof eu.lastSummary === "object" ? eu.lastSummary : {};
+    const intervalCandidate = Number(eu.intervalDays);
     const intervalDays = Number.isFinite(intervalCandidate) ? Math.trunc(intervalCandidate) : 20;
 
     params.embedUpdater.value = {
-      enabled: nextEmbedUpdater?.enabled !== false,
+      enabled: eu.enabled !== false,
       intervalDays,
-      lastCheckedAt: nextEmbedUpdater?.lastCheckedAt || "",
-      lastRunAt: nextEmbedUpdater?.lastRunAt || "",
-      lastSuccessAt: nextEmbedUpdater?.lastSuccessAt || "",
-      lastError: nextEmbedUpdater?.lastError || "",
-      nextRunAt: nextEmbedUpdater?.nextRunAt || "",
+      lastCheckedAt: eu.lastCheckedAt || "",
+      lastRunAt: eu.lastRunAt || "",
+      lastSuccessAt: eu.lastSuccessAt || "",
+      lastError: eu.lastError || "",
+      nextRunAt: eu.nextRunAt || "",
       lastSummary: {
-        status: summary?.status || "idle",
-        ggbStatus: summary?.ggbStatus || "",
-        totalProfiles: Number.isFinite(summary?.totalProfiles) ? Math.trunc(summary.totalProfiles) : 0,
-        syncedProfiles: Number.isFinite(summary?.syncedProfiles) ? Math.trunc(summary.syncedProfiles) : 0,
-        skippedProfiles: Number.isFinite(summary?.skippedProfiles) ? Math.trunc(summary.skippedProfiles) : 0,
-        failedProfiles: Number.isFinite(summary?.failedProfiles) ? Math.trunc(summary.failedProfiles) : 0,
+        status: summary.status || "idle",
+        ggbStatus: summary.ggbStatus || "",
+        totalProfiles: Number.isFinite(summary.totalProfiles) ? Math.trunc(summary.totalProfiles) : 0,
+        syncedProfiles: Number.isFinite(summary.syncedProfiles) ? Math.trunc(summary.syncedProfiles) : 0,
+        skippedProfiles: Number.isFinite(summary.skippedProfiles) ? Math.trunc(summary.skippedProfiles) : 0,
+        failedProfiles: Number.isFinite(summary.failedProfiles) ? Math.trunc(summary.failedProfiles) : 0,
       },
     };
 
-    params.embedUpdaterEnabled.value = params.embedUpdater.value.enabled;
+    params.embedUpdaterEnabled.value = params.embedUpdater.value!.enabled;
     params.embedUpdaterIntervalDays.value = intervalDays;
     markLoadedEmbedUpdaterSnapshot();
   }

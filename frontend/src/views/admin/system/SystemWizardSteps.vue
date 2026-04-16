@@ -64,7 +64,7 @@ function onModeChange() {
 
 <template>
   <PACard variant="admin" class="panel">
-    <h3>配置流程</h3>
+    <h3 class="admin-panel-title">配置流程</h3>
     <ol class="step-list">
       <li v-for="item in steps" :key="item.id" class="step-item">
         <button
@@ -183,7 +183,6 @@ function onModeChange() {
   display: grid;
   gap: 10px;
 }
-h3 { margin: 0; font-size: calc(16px * var(--ui-scale)); }
 h4 { margin: 0; font-size: calc(15px * var(--ui-scale)); }
 .summary-grid span {
   color: var(--muted);

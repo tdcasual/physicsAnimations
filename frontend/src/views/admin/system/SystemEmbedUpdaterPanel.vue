@@ -72,27 +72,27 @@ function onIntervalInput(value: string) {
     <div class="status-grid">
       <div class="status-item">
         <span>下次计划</span>
-        <strong>{{ formatDate(embedUpdater?.nextRunAt || '') }}</strong>
+        <strong class="break-anywhere">{{ formatDate(embedUpdater?.nextRunAt || '') }}</strong>
       </div>
       <div class="status-item">
         <span>上次检查</span>
-        <strong>{{ formatDate(embedUpdater?.lastCheckedAt || '') }}</strong>
+        <strong class="break-anywhere">{{ formatDate(embedUpdater?.lastCheckedAt || '') }}</strong>
       </div>
       <div class="status-item">
         <span>上次执行</span>
-        <strong>{{ formatDate(embedUpdater?.lastRunAt || '') }}</strong>
+        <strong class="break-anywhere">{{ formatDate(embedUpdater?.lastRunAt || '') }}</strong>
       </div>
       <div class="status-item">
         <span>上次成功</span>
-        <strong>{{ formatDate(embedUpdater?.lastSuccessAt || '') }}</strong>
+        <strong class="break-anywhere">{{ formatDate(embedUpdater?.lastSuccessAt || '') }}</strong>
       </div>
       <div class="status-item">
         <span>GeoGebra</span>
-        <strong>{{ embedUpdater?.lastSummary?.ggbStatus || '-' }}</strong>
+        <strong class="break-anywhere">{{ embedUpdater?.lastSummary?.ggbStatus || '-' }}</strong>
       </div>
       <div class="status-item">
         <span>同步结果</span>
-        <strong>
+        <strong class="break-anywhere">
           {{ embedUpdater?.lastSummary?.syncedProfiles ?? 0 }}/{{ embedUpdater?.lastSummary?.totalProfiles ?? 0 }}
           成功
         </strong>
@@ -192,7 +192,6 @@ function onIntervalInput(value: string) {
 }
 
 .status-item strong {
-  overflow-wrap: anywhere;
   word-break: break-word;
 }
 

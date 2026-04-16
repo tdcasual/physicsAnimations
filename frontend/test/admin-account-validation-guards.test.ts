@@ -15,7 +15,7 @@ describe("admin account validation guards", () => {
 
   it("maps backend invalid field codes to field-level errors", () => {
     const source = read("src/views/admin/AdminAccountView.vue");
-    expect(source).toMatch(/e\?\.data\?\.error === "invalid_username"/);
-    expect(source).toMatch(/e\?\.data\?\.error === "invalid_password"/);
+    expect(source).toMatch(/e\.data\?\.error === "invalid_username"/);
+    expect(source).toMatch(/e\.data\?\.error === "invalid_password"/);
   });
 });

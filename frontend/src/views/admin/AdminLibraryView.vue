@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import AdminMobileSheet from "@/components/admin/AdminMobileSheet.vue";
 import { PAButton, PAField, PAInput } from "@/components/ui/patterns";
 import type { LibraryAsset } from "../../features/library/types";
 import { useLibraryAdminState } from "../../features/library/useLibraryAdminState";
@@ -29,7 +30,6 @@ const { focusInspectorTarget } = createAdminLibraryMobileInspectorFocus({
   assetEditSectionRef,
 });
 const isMobileLibrarySheetOpen = computed(() => Boolean(activeMobileLibrarySheet.value));
-const shouldRenderLibraryInspector = computed(() => !isMobileLibraryViewport.value || isMobileLibrarySheetOpen.value);
 const mobileLibrarySheetTitle = computed(() => {
   if (activeMobileLibrarySheet.value === "folder-create") return "新建文件夹";
   if (vm.panels.activePanelTab === "folder") return "文件夹设置";
@@ -63,7 +63,6 @@ const mobileDeletedAssetsSummary = computed(() => {
   const deletedCount = vm.data.deletedAssets.length;
   return deletedCount > 0 ? `${deletedCount} 个已删除资源` : "当前文件夹暂无已删除资源";
 });
-let bodyOverflowBeforeLibrarySheet = "";
 let libraryViewportMediaQuery: MediaQueryList | null = null;
 let removeLibraryViewportListener = () => {};
 
@@ -148,24 +147,12 @@ function embedProfilesEmptyText(): string {
   return vm.filters.profileSearchQuery.trim() ? "暂无匹配 Embed 平台。" : "暂无 Embed 平台。";
 }
 
-watch(isMobileLibrarySheetOpen, (open) => {
-  if (open && isMobileLibrarySheetViewport()) {
-    bodyOverflowBeforeLibrarySheet = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return;
-  }
-
-  document.body.style.overflow = bodyOverflowBeforeLibrarySheet;
-  bodyOverflowBeforeLibrarySheet = "";
-});
-
 watch(() => vm.data.selectedFolderId, () => {
   mobileLibraryToolsOpen.value = false;
   mobileDeletedAssetsOpen.value = false;
 });
 
 onBeforeUnmount(() => {
-  document.body.style.overflow = bodyOverflowBeforeLibrarySheet;
   removeLibraryViewportListener();
 });
 

@@ -4,6 +4,7 @@ import { setToken } from "../../features/auth/authApi";
 import { useAuthStore } from "../../features/auth/useAuthStore";
 import { updateAccount } from "../../features/admin/adminApi";
 import { usePendingChangesGuard } from "../../features/admin/composables/usePendingChangesGuard";
+import { extractApiError } from "../../features/shared/apiError";
 import { PAButton, PACard, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 const auth = useAuthStore();
@@ -94,7 +95,7 @@ async function submit() {
       newPassword: newPassword.value || undefined,
     });
 
-    if (data?.token) setToken(data.token);
+    if (typeof data?.token === "string") setToken(data.token);
     if (typeof data?.username === "string") {
       auth.username = data.username;
       auth.loggedIn = true;
@@ -105,25 +106,25 @@ async function submit() {
     confirmPassword.value = "";
     successText.value = "账号信息已更新。";
   } catch (err) {
-    const e = err as { status?: number; data?: any };
-    if (e?.status === 401 && e?.data?.error === "invalid_credentials") {
+    const e = extractApiError(err);
+    if (e.status === 401 && e.data?.error === "invalid_credentials") {
       setFieldError("currentPassword", "当前密码错误。");
       return;
     }
-    if (e?.data?.error === "invalid_username") {
+    if (e.data?.error === "invalid_username") {
       setFieldError("newUsername", "新用户名不能只包含空白字符。");
       return;
     }
-    if (e?.data?.error === "invalid_password") {
+    if (e.data?.error === "invalid_password") {
       setFieldError("newPassword", "新密码不能只包含空白字符。");
       return;
     }
-    if (e?.data?.error === "no_changes") {
+    if (e.data?.error === "no_changes") {
       setFieldError("newUsername", "请填写新用户名或新密码。");
       setFieldError("newPassword", "请填写新用户名或新密码。");
       return;
     }
-    errorText.value = e?.status === 401 ? "请先登录管理员账号。" : "更新账号失败。";
+    errorText.value = e.status === 401 ? "请先登录管理员账号。" : "更新账号失败。";
   } finally {
     saving.value = false;
   }

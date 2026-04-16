@@ -114,10 +114,10 @@
   --radius-xl: 14px;
 
   /* ── Shadows ── */
-  --shadow-s: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-m: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-l: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-s: 0 1px 2px 0 color-mix(in oklab, var(--foreground) 5%, transparent);
+  --shadow-m: 0 4px 6px -1px color-mix(in oklab, var(--foreground) 10%, transparent), 0 2px 4px -2px color-mix(in oklab, var(--foreground) 10%, transparent);
+  --shadow-l: 0 10px 15px -3px color-mix(in oklab, var(--foreground) 10%, transparent), 0 4px 6px -4px color-mix(in oklab, var(--foreground) 10%, transparent);
+  --shadow-xl: 0 20px 25px -5px color-mix(in oklab, var(--foreground) 10%, transparent), 0 8px 10px -6px color-mix(in oklab, var(--foreground) 10%, transparent);
 
   /* ── Z-index ── */
   --z-content: 1;
@@ -245,18 +245,22 @@ html, body, #app { min-height: 100%; }
 @media (min-width: 1280px) {
   .app-main--library {
     width: min(1280px, calc(100% - 64px));
+    margin: 0 auto;
   }
 
   .app-main--admin {
     width: min(1360px, calc(100% - 64px));
+    margin: 0 auto;
   }
 
   .app-main--login {
     width: min(1180px, calc(100% - 64px));
+    margin: 0 auto;
   }
 
   .app-main--viewer {
     width: min(1440px, calc(100% - 64px));
+    margin: 0 auto;
   }
 }
 
@@ -273,3 +277,9 @@ html, body, #app { min-height: 100%; }
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Utility helpers */
+.break-anywhere {
+  overflow-wrap: anywhere;
+}
+

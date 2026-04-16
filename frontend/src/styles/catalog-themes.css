@@ -11,6 +11,10 @@
    这些变量会被其他主题覆盖
    ======================================== */
 :root {
+  /* 材质 */
+  --cat-ink: #000000;
+  --cat-paper: #ffffff;
+
   /* 边框 */
   --cat-border-radius: 4px;
   --cat-border-radius-lg: 8px;
@@ -19,9 +23,9 @@
   --cat-border-color-strong: var(--foreground, #1a1a1a);
 
   /* 阴影 */
-  --cat-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --cat-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --cat-shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --cat-shadow-sm: 0 1px 2px color-mix(in oklab, var(--cat-ink) 5%, transparent);
+  --cat-shadow: 0 1px 3px color-mix(in oklab, var(--cat-ink) 10%, transparent);
+  --cat-shadow-lg: 0 4px 6px color-mix(in oklab, var(--cat-ink) 10%, transparent);
 
   /* 字体 */
   --cat-font-heading: var(--font-display, 'Playfair Display', 'Noto Serif SC', serif);
@@ -53,6 +57,10 @@
    手绘风 (handdrawn)
    ======================================== */
 [data-catalog-theme="handdrawn"] {
+  /* 材质 */
+  --cat-ink: #2d2d2d;
+  --cat-paper: #ffffff;
+
   /* 边框 - 不规则圆角 */
   --cat-border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
   --cat-border-radius-lg: 255px 25px 225px 25px / 25px 225px 25px 255px;
@@ -61,9 +69,9 @@
   --cat-border-color-strong: #1a1a1a;
 
   /* 阴影 - 手绘感偏移 */
-  --cat-shadow-sm: 2px 2px 0 rgba(0, 0, 0, 0.08);
-  --cat-shadow: 3px 3px 0 rgba(0, 0, 0, 0.1);
-  --cat-shadow-lg: 4px 4px 0 rgba(0, 0, 0, 0.12);
+  --cat-shadow-sm: 2px 2px 0 color-mix(in oklab, var(--cat-ink) 8%, transparent);
+  --cat-shadow: 3px 3px 0 color-mix(in oklab, var(--cat-ink) 10%, transparent);
+  --cat-shadow-lg: 4px 4px 0 color-mix(in oklab, var(--cat-ink) 12%, transparent);
 
   /* 字体 - 手写体 */
   --cat-font-heading: 'Zeyada', 'Ma Shan Zheng', 'STXingkai', cursive;
@@ -103,7 +111,7 @@
   content: '';
   position: absolute;
   inset: -1px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid color-mix(in oklab, var(--cat-ink) 5%, transparent);
   border-radius: inherit;
   pointer-events: none;
 }
@@ -118,12 +126,12 @@
 
 [data-catalog-theme="handdrawn"] .cat-btn:hover {
   transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.12);
+  box-shadow: 4px 4px 0 color-mix(in oklab, var(--cat-ink) 12%, transparent);
 }
 
 [data-catalog-theme="handdrawn"] .cat-btn:active {
   transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
+  box-shadow: 1px 1px 0 color-mix(in oklab, var(--cat-ink) 10%, transparent);
 }
 
 [data-catalog-theme="handdrawn"] .cat-title {
@@ -136,17 +144,21 @@
    新粗野主义 (brutalist)
    ======================================== */
 [data-catalog-theme="brutalist"] {
+  /* 材质 */
+  --cat-ink: #000000;
+  --cat-paper: #ffffff;
+
   /* 边框 - 直角、粗线条 */
   --cat-border-radius: 0;
   --cat-border-radius-lg: 0;
   --cat-border-width: 3px;
-  --cat-border-color: #000000;
-  --cat-border-color-strong: #000000;
+  --cat-border-color: var(--cat-ink);
+  --cat-border-color-strong: var(--cat-ink);
 
   /* 阴影 - 硬阴影、高对比 */
-  --cat-shadow-sm: 2px 2px 0 #000;
-  --cat-shadow: 4px 4px 0 #000;
-  --cat-shadow-lg: 6px 6px 0 #000;
+  --cat-shadow-sm: 2px 2px 0 var(--cat-ink);
+  --cat-shadow: 4px 4px 0 var(--cat-ink);
+  --cat-shadow-lg: 6px 6px 0 var(--cat-ink);
 
   /* 字体 - 几何感 */
   --cat-font-heading: 'Space Grotesk', 'Noto Sans SC', sans-serif;
@@ -175,21 +187,21 @@
 
 /* 新粗野主义特殊样式 */
 [data-catalog-theme="brutalist"] .cat-card {
-  border: 3px solid #000;
-  box-shadow: 4px 4px 0 #000;
-  background: #fff;
+  border: 3px solid var(--cat-ink);
+  box-shadow: 4px 4px 0 var(--cat-ink);
+  background: var(--cat-paper);
   transition: all var(--cat-transition-fast);
 }
 
 [data-catalog-theme="brutalist"] .cat-card:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 #000;
+  box-shadow: 6px 6px 0 var(--cat-ink);
 }
 
 [data-catalog-theme="brutalist"] .cat-btn {
-  border: 3px solid #000;
-  background: #fff;
-  box-shadow: 3px 3px 0 #000;
+  border: 3px solid var(--cat-ink);
+  background: var(--cat-paper);
+  box-shadow: 3px 3px 0 var(--cat-ink);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -198,17 +210,17 @@
 
 [data-catalog-theme="brutalist"] .cat-btn:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 #000;
+  box-shadow: 5px 5px 0 var(--cat-ink);
 }
 
 [data-catalog-theme="brutalist"] .cat-btn:active {
   transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 #000;
+  box-shadow: 1px 1px 0 var(--cat-ink);
 }
 
 [data-catalog-theme="brutalist"] .cat-btn-primary {
-  background: #000;
-  color: #fff;
+  background: var(--cat-ink);
+  color: var(--cat-paper);
 }
 
 [data-catalog-theme="brutalist"] .cat-title {

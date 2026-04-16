@@ -40,7 +40,7 @@ function getButtonClasses(themeId: string) {
         "border-[3px] border-black",
         isActive
           ? "bg-black text-white shadow-[2px_2px_0_#666]"
-          : "bg-white hover:shadow-[2px_2px_0_#000] hover:translate-y-[-1px]"
+          : "bg-white hover:shadow-[2px_2px_0_var(--cat-ink)] hover:translate-y-[-1px]"
       );
 
     default:
@@ -68,6 +68,7 @@ function getButtonClasses(themeId: string) {
         type="button"
         :class="getButtonClasses(theme.id)"
         :title="`${theme.label} - ${theme.description}`"
+        :aria-label="`${theme.label} - ${theme.description}`"
         @click="handleThemeChange(theme.id)"
       >
         <span class="select-none">{{ theme.icon }}</span>
@@ -105,18 +106,18 @@ function getButtonClasses(themeId: string) {
 /* 手绘风样式覆盖 */
 [data-catalog-theme="handdrawn"] .catalog-theme-switcher > div {
   border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
-  border: 2px solid #3a3a3a;
-  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.08);
+  border: 2px solid var(--cat-border-color);
+  box-shadow: var(--cat-shadow-sm);
 }
 
 /* 新粗野主义样式覆盖 */
 [data-catalog-theme="brutalist"] .catalog-theme-switcher > div {
   border-radius: 0;
-  border: 3px solid #000;
-  box-shadow: 3px 3px 0 #000;
+  border: 3px solid var(--cat-ink);
+  box-shadow: 3px 3px 0 var(--cat-ink);
 }
 
 [data-catalog-theme="brutalist"] .catalog-theme-switcher > div:hover {
-  box-shadow: 4px 4px 0 #000;
+  box-shadow: 4px 4px 0 var(--cat-ink);
 }
 </style>

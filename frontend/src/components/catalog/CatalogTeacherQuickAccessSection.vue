@@ -58,7 +58,7 @@ function isFavorited(itemId: string): boolean {
             <div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || "?" }}</div>
           </div>
           <div class="catalog-teacher-body">
-            <div class="catalog-teacher-title">{{ item.title }}</div>
+            <div class="catalog-teacher-title break-anywhere">{{ item.title }}</div>
             <div v-if="item.description" class="catalog-teacher-desc">{{ item.description }}</div>
           </div>
         </component>
@@ -170,7 +170,6 @@ function isFavorited(itemId: string): boolean {
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
-  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -205,9 +204,17 @@ function isFavorited(itemId: string): boolean {
 }
 
 @media (max-width: 640px) {
+  .catalog-workbench-column {
+    gap: 8px;
+  }
+
   .catalog-workbench-column-head {
     align-items: flex-start;
     gap: 6px;
+  }
+
+  .catalog-workbench-column-title {
+    font-size: calc(15px * var(--ui-scale, 1));
   }
 
   .catalog-workbench-column-badge {
@@ -217,11 +224,17 @@ function isFavorited(itemId: string): boolean {
   .catalog-teacher-row {
     grid-template-columns: 1fr;
     gap: 6px;
+    padding: 6px 0;
   }
 
   .catalog-teacher-link {
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 56px minmax(0, 1fr);
     gap: 8px;
+  }
+
+  .catalog-teacher-action {
+    min-height: 30px;
+    padding: 4px 8px;
   }
 }
 </style>

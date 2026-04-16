@@ -3,12 +3,10 @@ import { onMounted, ref } from "vue";
 import { fetchDashboardStats, type DashboardStats } from "@/features/admin/adminApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Upload, 
   Database, 
-  Link2, 
   Tags, 
   LayoutGrid,
   RefreshCw,
@@ -174,7 +172,7 @@ const statCards = [
             <CardDescription class="text-xs font-medium uppercase tracking-wider">
               {{ stat.title }}
             </CardDescription>
-            <CardTitle class="text-3xl font-bold" :class="stat.color === 'primary' ? 'text-primary' : stat.color === 'secondary' ? 'text-secondary' : 'text-accent'">
+            <CardTitle class="text-3xl font-bold" :class="stat.color === 'primary' ? 'text-primary' : stat.color === 'secondary' ? 'text-secondary' : 'text-foreground'">
               {{ stat.value() }}
             </CardTitle>
           </CardHeader>

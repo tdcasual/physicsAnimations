@@ -13,6 +13,10 @@ export const minimalTheme: CatalogThemeConfig = {
 
 // CSS 变量定义
 export const minimalVars = {
+  // 材质
+  "--cat-ink": "#000000",
+  "--cat-paper": "#ffffff",
+
   // 边框
   "--cat-border-radius": "4px",
   "--cat-border-radius-lg": "8px",
@@ -21,9 +25,9 @@ export const minimalVars = {
   "--cat-border-color-strong": "var(--foreground, #1a1a1a)",
 
   // 阴影
-  "--cat-shadow-sm": "0 1px 2px rgba(0, 0, 0, 0.05)",
-  "--cat-shadow": "0 1px 3px rgba(0, 0, 0, 0.1)",
-  "--cat-shadow-lg": "0 4px 6px rgba(0, 0, 0, 0.1)",
+  "--cat-shadow-sm": "0 1px 2px color-mix(in oklab, var(--cat-ink) 5%, transparent)",
+  "--cat-shadow": "0 1px 3px color-mix(in oklab, var(--cat-ink) 10%, transparent)",
+  "--cat-shadow-lg": "0 4px 6px color-mix(in oklab, var(--cat-ink) 10%, transparent)",
 
   // 字体
   "--cat-font-heading":

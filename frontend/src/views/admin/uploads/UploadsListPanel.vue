@@ -48,8 +48,8 @@ const emit = defineEmits<{
   >
     <div class="item-head">
       <div>
-        <div class="item-title">{{ item.title || item.id }}</div>
-        <div class="item-meta">
+        <div class="item-title break-anywhere">{{ item.title || item.id }}</div>
+        <div class="item-meta break-anywhere">
           {{ item.categoryId }} · {{ item.type }} · {{ item.hidden ? "隐藏" : "可见" }} ·
           {{ item.published === false ? "草稿" : "已发布" }}
         </div>
@@ -67,9 +67,98 @@ const emit = defineEmits<{
   </article>
 
   <div class="list-footer">
-    <div class="meta">已加载 {{ props.items.length }} / {{ props.total }}</div>
+    <div class="meta break-anywhere">已加载 {{ props.items.length }} / {{ props.total }}</div>
     <PAButton v-if="props.hasMore" variant="ghost" :disabled="props.loading" @click="emit('load-more')">
       加载更多
     </PAButton>
   </div>
 </template>
+
+<style scoped>
+.list-divider {
+  border-top: 1px dashed var(--border);
+}
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.list-search {
+  width: min(360px, 100%);
+}
+.item-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+  background: color-mix(in srgb, var(--card) 90%, var(--background));
+}
+.item-card.selected {
+  border-color: color-mix(in srgb, var(--primary) 70%, var(--border));
+  background: color-mix(in srgb, var(--primary) 9%, var(--card));
+}
+.item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.item-title {
+  font-weight: 600;
+  word-break: break-word;
+}
+.item-meta {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+  word-break: break-word;
+}
+.item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.empty {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--muted);
+}
+.list-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.meta {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+}
+
+@media (max-width: 640px) {
+  .list-header {
+    gap: 6px;
+  }
+  .list-search {
+    width: 100%;
+  }
+  .item-head {
+    gap: 8px;
+  }
+  .item-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+  .item-actions > * {
+    min-width: 0;
+  }
+  .list-heading {
+    display: none;
+  }
+}
+</style>

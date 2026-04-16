@@ -105,7 +105,7 @@ describe("admin shell structure", () => {
 
     expect(taxonomy).toMatch(/taxonomy-mobile-actions/);
     expect(taxonomy).toMatch(/taxonomy-editor-sheet/);
-    expect(taxonomy).toMatch(/taxonomy-editor-sheet-backdrop/);
+    expect(taxonomy).toMatch(/AdminSplitLayout/);
     expect(taxonomy).toMatch(/openCreateGroupSheet/);
     expect(taxonomy).toMatch(/closeMobileEditorSheet/);
   });

@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from "vue";
-import { buildPreviewHref, buildViewerHref } from "../adminLinks";
+import { buildPreviewHref } from "../adminLinks";
 import { type AdminItemRow, uploadHtmlItem } from "../adminApi";
 import { createAdminItemEditorState } from "../composables/useAdminItemEditorState";
 import { useActionFeedback } from "../composables/useActionFeedback";
@@ -8,6 +8,7 @@ import { usePagedAdminList } from "../composables/usePagedAdminList";
 import { usePendingChangesGuard } from "../composables/usePendingChangesGuard";
 import { useAdminQueryReload } from "../composables/useAdminQueryReload";
 import { createUploadAdminActions } from "./useUploadAdminActions";
+import { extractApiError } from "../../shared/apiError";
 
 interface CategoryRow { id: string; groupId: string; title: string; }
 interface GroupRow { id: string; title: string; }
@@ -55,7 +56,6 @@ export function useUploadAdmin() {
     }));
   });
 
-  function viewerHref(id: string): string { return buildViewerHref(id); }
   function previewHref(item: AdminItem): string { return buildPreviewHref(item); }
 
   interface RiskFinding {
@@ -132,15 +132,15 @@ export function useUploadAdmin() {
         title: title.value.trim(),
         description: description.value.trim(),
       };
-      let created: any;
+      let created: Record<string, unknown> | undefined;
 
       try {
         created = await uploadHtmlItem(basePayload);
       } catch (err) {
-        const e = err as { status?: number; data?: any };
-        if (e?.data?.error !== "risky_html_requires_confirmation") throw err;
+        const e = extractApiError(err);
+        if (e.data?.error !== "risky_html_requires_confirmation") throw err;
 
-        const confirmed = window.confirm(buildRiskConfirmMessage(e?.data?.details));
+        const confirmed = window.confirm(buildRiskConfirmMessage((e.data?.details as Record<string, unknown>) ?? {}));
         if (!confirmed) {
           setActionFeedback("已取消风险上传。", true);
           return;
@@ -162,14 +162,14 @@ export function useUploadAdmin() {
       }
       setActionFeedback("上传成功。", false);
     } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.status === 401) return void setActionFeedback("请先登录管理员账号。", true);
-      if (e?.data?.error === "missing_file") {
+      const e = extractApiError(err);
+      if (e.status === 401) return void setActionFeedback("请先登录管理员账号。", true);
+      if (e.data?.error === "missing_file") {
         setFieldError("uploadFile", "请选择 HTML 或 ZIP 文件。");
         setActionFeedback("请选择 HTML 或 ZIP 文件。", true);
         return;
       }
-      if (e?.data?.error === "invalid_file_type") {
+      if (e.data?.error === "invalid_file_type") {
         setFieldError("uploadFile", "仅支持上传 HTML 或 ZIP。");
         setActionFeedback("仅支持上传 HTML 或 ZIP。", true);
         return;

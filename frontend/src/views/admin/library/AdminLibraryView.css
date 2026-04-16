@@ -77,7 +77,6 @@
 }
 
 .library-mobile-taskbar,
-.library-mobile-sheet-backdrop,
 .library-mobile-sheet-header,
 .library-mobile-primary-actions {
   display: none;
@@ -524,7 +523,6 @@
 .folder-name,
 .asset-name {
   font-weight: 600;
-  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -533,7 +531,6 @@
 .selected-folder {
   font-size: calc(13px * var(--ui-scale));
   color: var(--muted);
-  overflow-wrap: anywhere;
   word-break: break-word;
 }
 
@@ -741,40 +738,8 @@
     min-width: 0;
   }
 
-  .library-mobile-sheet-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 34;
-    border: 0;
-    padding: 0;
-    background: color-mix(in oklab, var(--foreground) 22%, transparent);
-  }
-
-  .library-mobile-sheet {
-    display: none;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 35;
-    max-height: min(84dvh, 760px);
+  .library-mobile-sheet-body {
     padding: 14px 14px 18px;
-    border-radius: 24px 24px 0 0;
-    overflow: auto;
-    -webkit-overflow-scrolling: touch;
-    transform: translateY(104%);
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 -24px 56px -36px color-mix(in oklab, var(--foreground) 28%, transparent);
-    transition: transform 220ms ease, opacity 220ms ease;
-  }
-
-  .library-mobile-sheet.is-open {
-    display: grid;
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
   }
 
   .library-mobile-sheet-header {
@@ -783,13 +748,15 @@
     align-items: center;
     gap: 10px;
     position: sticky;
-    top: -14px;
-    margin: -14px -14px 10px;
+    align-self: start;
+    top: 0;
+    margin: 0 0 10px;
     padding: 14px;
     border-bottom: 1px solid color-mix(in oklab, var(--primary) 16%, var(--border));
     background:
       linear-gradient(180deg, color-mix(in oklab, var(--card) 97%, var(--background)), color-mix(in oklab, var(--primary) 5%, var(--card))),
       var(--card);
+    border-radius: inherit;
   }
 
   .library-panel-tabs {

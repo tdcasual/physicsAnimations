@@ -1,5 +1,5 @@
 import { computed, onMounted, ref } from "vue";
-import { buildPreviewHref, buildViewerHref } from "../adminLinks";
+import { buildPreviewHref } from "../adminLinks";
 import { type AdminItemRow, createLinkItem } from "../adminApi";
 import { createAdminItemEditorState } from "../composables/useAdminItemEditorState";
 import { useActionFeedback } from "../composables/useActionFeedback";
@@ -55,7 +55,6 @@ export function useContentAdmin() {
     }));
   });
 
-  function viewerHref(id: string): string { return buildViewerHref(id); }
   function previewHref(item: AdminItem): string { return buildPreviewHref(item); }
 
   const { reloadTaxonomy, reloadItems, saveEdit, removeItem } = createContentAdminActions({

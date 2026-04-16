@@ -329,12 +329,14 @@ describe("admin library layout", () => {
   });
 
   it("prevents long names from breaking mobile row layout", () => {
-    const { style } = readLibrarySources();
+    const { style, combined } = readLibrarySources();
     expect(style).toMatch(/\.folder-pick\s*\{[\s\S]*min-width:\s*0;/);
     expect(style).toMatch(/\.asset-main\s*\{[\s\S]*flex:\s*1;/);
     expect(style).toMatch(/\.asset-main\s*\{[\s\S]*min-width:\s*0;/);
-    expect(style).toMatch(/\.folder-name,\s*\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
-    expect(style).toMatch(/\.folder-meta,\s*\.asset-meta,\s*\.selected-folder\s*\{[\s\S]*overflow-wrap:\s*anywhere;/);
+    expect(style).toMatch(/\.folder-name,\s*\.asset-name\s*\{[\s\S]*word-break:\s*break-word;/);
+    expect(combined).toMatch(/class="[^"]*folder-name[^"]*break-anywhere"/);
+    expect(combined).toMatch(/class="[^"]*asset-name[^"]*break-anywhere"/);
+    expect(combined).toMatch(/class="[^"]*selected-folder[^"]*break-anywhere"/);
   });
 
   it("disables mobile auto-correct and auto-capitalization for embed URL fields", () => {

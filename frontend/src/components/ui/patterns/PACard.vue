@@ -26,7 +26,7 @@ type CardVariants = VariantProps<typeof cardVariants>;
 interface Props {
   variant?: CardVariants["variant"];
   class?: string;
-  as?: "div" | "form" | "section" | "article";
+  as?: "div" | "form" | "section" | "article" | "aside";
 }
 
 const props = withDefaults(defineProps<Props>(), {

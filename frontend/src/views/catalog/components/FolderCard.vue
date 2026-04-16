@@ -40,6 +40,7 @@ const rotation = computed(() => {
         :alt="name"
         class="h-full w-full object-cover transition-all duration-700 ease-out group-hover:scale-105"
         loading="lazy"
+        decoding="async"
       />
       <div
         v-else
@@ -164,25 +165,25 @@ const rotation = computed(() => {
 
 /* ===== 新粗野主义 (brutalist) ===== */
 [data-catalog-theme="brutalist"] .cat-card {
-  border: 3px solid #000;
-  box-shadow: 4px 4px 0 #000;
-  background: #fff;
+  border: 3px solid var(--cat-ink);
+  box-shadow: 4px 4px 0 var(--cat-ink);
+  background: var(--cat-paper);
   padding: 0;
 }
 
 [data-catalog-theme="brutalist"] .cat-card:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 #000;
+  box-shadow: 6px 6px 0 var(--cat-ink);
 }
 
 [data-catalog-theme="brutalist"] .cat-card-image-wrapper {
   border-radius: 0;
-  border-bottom: 3px solid #000;
+  border-bottom: 3px solid var(--cat-ink);
 }
 
 [data-catalog-theme="brutalist"] .cat-folder-badge {
-  background: #000;
-  color: #fff;
+  background: var(--cat-ink);
+  color: var(--cat-paper);
   border-radius: 0;
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 600;
@@ -201,7 +202,7 @@ const rotation = computed(() => {
 }
 
 [data-catalog-theme="brutalist"] .cat-card-tag {
-  color: #0000ff;
+  color: var(--cat-text-accent);
   font-weight: 500;
 }
 </style>

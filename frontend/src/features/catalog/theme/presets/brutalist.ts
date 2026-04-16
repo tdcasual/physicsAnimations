@@ -12,21 +12,24 @@ export const brutalistTheme: CatalogThemeConfig = {
 
 // CSS 变量定义
 export const brutalistVars = {
+  // 材质
+  "--cat-ink": "#000000",
+  "--cat-paper": "#ffffff",
+
   // 边框 - 直角、粗线条
   "--cat-border-radius": "0",
   "--cat-border-radius-lg": "0",
   "--cat-border-width": "3px",
-  "--cat-border-color": "#000000",
-  "--cat-border-color-strong": "#000000",
+  "--cat-border-color": "var(--cat-ink)",
+  "--cat-border-color-strong": "var(--cat-ink)",
 
   // 阴影 - 硬阴影、高对比
-  "--cat-shadow-sm": "2px 2px 0 #000",
-  "--cat-shadow": "4px 4px 0 #000",
-  "--cat-shadow-lg": "6px 6px 0 #000",
+  "--cat-shadow-sm": "2px 2px 0 var(--cat-ink)",
+  "--cat-shadow": "4px 4px 0 var(--cat-ink)",
+  "--cat-shadow-lg": "6px 6px 0 var(--cat-ink)",
 
   // 字体 - 几何感
-  "--cat-font-heading":
-    "'Space Grotesk', 'Noto Sans SC', sans-serif",
+  "--cat-font-heading": "'Space Grotesk', 'Noto Sans SC', sans-serif",
 
   // 背景
   "--cat-bg-primary": "#ffffff",

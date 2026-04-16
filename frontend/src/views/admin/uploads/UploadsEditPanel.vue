@@ -169,4 +169,15 @@ const emit = defineEmits<{
     background: linear-gradient(180deg, color-mix(in oklab, var(--card) 10%, transparent), var(--card) 28%);
   }
 }
+
+.meta {
+  color: var(--muted);
+  font-size: calc(12px * var(--ui-scale));
+}
+.empty {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  color: var(--muted);
+}
 </style>

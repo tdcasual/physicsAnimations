@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { TaxonomyCategory, TaxonomySelection, TaxonomyTreeNode } from "../../../features/admin/taxonomyUiState";
+import type { TaxonomyCategory, TaxonomyGroup, TaxonomySelection, TaxonomyTreeNode } from "../../../features/admin/taxonomyUiState";
 import { PAButton, PACard, PAInput } from "@/components/ui/patterns";
 
 const props = defineProps<{
@@ -11,7 +11,7 @@ const props = defineProps<{
   selection: TaxonomySelection | null;
   taxonomyMetaText: string;
   isGroupOpen: (groupId: string) => boolean;
-  groupMetaText: (node: { group: { categoryCount?: number; count?: number }; shownCategories: TaxonomyCategory[] }) => string;
+  groupMetaText: (node: { group: TaxonomyGroup; shownCategories: TaxonomyCategory[] }) => string;
   categoryMetaText: (category: TaxonomyCategory) => string;
 }>();
 
@@ -44,7 +44,7 @@ function onToggle(groupId: string, event: Event) {
 
 <template>
   <PACard variant="admin" class="panel">
-    <h3>大类 / 分类列表</h3>
+    <h3 class="admin-panel-title">大类 / 分类列表</h3>
 
     <div class="toolbar">
       <PAInput
@@ -85,7 +85,7 @@ function onToggle(groupId: string, event: Event) {
       >
         <summary class="group-summary" @click="emit('select-group', node.group.id)">
           <div class="group-main">
-            <div class="group-title">
+            <div class="group-title break-anywhere">
               {{ node.group.title || node.group.id }} ({{ node.group.id }})
               <span v-if="showHidden && node.group.hidden" class="tag">隐藏</span>
             </div>
@@ -105,7 +105,7 @@ function onToggle(groupId: string, event: Event) {
             :class="{ selected: selection?.kind === 'category' && selection.id === category.id }"
             @click="emit('select-category', category.id)"
           >
-            <div class="category-title">
+            <div class="category-title break-anywhere">
               {{ category.title || category.id }} ({{ category.id }})
               <span v-if="showHidden && category.hidden" class="tag">隐藏</span>
             </div>
@@ -129,11 +129,6 @@ function onToggle(groupId: string, event: Event) {
   padding: 12px;
   display: grid;
   gap: 10px;
-}
-
-h3 {
-  margin: 0;
-  font-size: calc(16px * var(--ui-scale));
 }
 
 .toolbar {
@@ -218,7 +213,6 @@ h3 {
 .category-title {
   font-size: calc(14px * var(--ui-scale));
   font-weight: 600;
-  overflow-wrap: anywhere;
   word-break: break-word;
 }
 

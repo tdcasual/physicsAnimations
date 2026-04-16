@@ -45,7 +45,7 @@ const categoryFormHiddenModel = computed({
 
 <template>
   <PACard variant="admin" class="panel">
-    <h3>二级分类：{{ selectedCategory.title || selectedCategory.id }} ({{ selectedCategory.id }})</h3>
+    <h3 class="admin-panel-title break-anywhere">二级分类：{{ selectedCategory.title || selectedCategory.id }} ({{ selectedCategory.id }})</h3>
     <div class="meta-line">
       内容 {{ Number(selectedCategory.count || 0) }} · 新增 {{ Number(selectedCategory.dynamicCount || 0) }}
     </div>
@@ -113,13 +113,6 @@ const categoryFormHiddenModel = computed({
   gap: 10px;
 }
 
-h3 {
-  margin: 0;
-  font-size: calc(16px * var(--ui-scale));
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-
 .meta-line {
   color: var(--muted);
   font-size: calc(12px * var(--ui-scale));
@@ -170,28 +163,11 @@ h3 {
   margin-top: 8px;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .hint {
   border: 1px dashed var(--border);
   border-radius: 8px;
   padding: 12px;
   color: var(--muted);
   font-size: calc(13px * var(--ui-scale));
-}
-
-@media (max-width: 640px) {
-  .actions {
-    position: sticky;
-    bottom: 0;
-    padding-top: 10px;
-    padding-bottom: 2px;
-    background:
-      linear-gradient(180deg, color-mix(in oklab, var(--card) 35%, transparent), color-mix(in oklab, var(--card) 96%, var(--background)) 32%);
-  }
 }
 </style>

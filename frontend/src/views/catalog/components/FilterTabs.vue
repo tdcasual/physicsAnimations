@@ -21,9 +21,9 @@ defineEmits<{
     <!-- Empty state skeleton -->
     <div v-if="groups.length === 0" class="flex items-center gap-4">
       <div class="flex items-center gap-3">
-        <div class="h-8 w-20 animate-pulse bg-gray-100 rounded" />
-        <div class="h-8 w-24 animate-pulse bg-gray-100 rounded" />
-        <div class="h-8 w-16 animate-pulse bg-gray-100 rounded" />
+        <div class="h-8 w-20 animate-pulse bg-muted rounded" />
+        <div class="h-8 w-24 animate-pulse bg-muted rounded" />
+        <div class="h-8 w-16 animate-pulse bg-muted rounded" />
       </div>
     </div>
     
@@ -167,10 +167,10 @@ defineEmits<{
 }
 
 [data-catalog-theme="brutalist"] .cat-tab {
-  border: 3px solid #000;
+  border: 3px solid var(--cat-ink);
   border-radius: 0;
-  background: #fff;
-  color: #000;
+  background: var(--cat-paper);
+  color: var(--cat-ink);
   font-family: 'Space Grotesk', sans-serif;
   font-weight: 500;
   text-transform: uppercase;
@@ -184,15 +184,15 @@ defineEmits<{
 }
 
 [data-catalog-theme="brutalist"] .cat-tab:hover {
-  background: #000;
-  color: #fff;
+  background: var(--cat-ink);
+  color: var(--cat-paper);
   z-index: 1;
 }
 
 [data-catalog-theme="brutalist"] .cat-tab.is-active {
-  background: #000;
-  color: #fff;
-  box-shadow: 3px 3px 0 #00f;
+  background: var(--cat-ink);
+  color: var(--cat-paper);
+  box-shadow: 3px 3px 0 var(--cat-text-accent);
   z-index: 2;
 }
 
@@ -203,6 +203,6 @@ defineEmits<{
 }
 
 [data-catalog-theme="brutalist"] .cat-category-tab.is-active {
-  box-shadow: 2px 2px 0 #00f;
+  box-shadow: 2px 2px 0 var(--cat-text-accent);
 }
 </style>

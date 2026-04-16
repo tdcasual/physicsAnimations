@@ -1,5 +1,3 @@
-@import "./styles/topbar.css";
-/* Note: topbar.css now includes merged base + responsive styles */
 @import "./styles/admin-base.css";
 @import "./styles/modal.css";
 @import "./styles/catalog-themes.css";

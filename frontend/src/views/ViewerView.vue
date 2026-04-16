@@ -12,7 +12,7 @@ import {
 } from "../features/navigation/backNavigation";
 import { loadViewerModel, type ViewerModel } from "../features/viewer/viewerService";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, Maximize2, ExternalLink, MonitorPlay } from "lucide-vue-next";
+import { ArrowLeft, Heart, ExternalLink, MonitorPlay } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();
@@ -215,7 +215,7 @@ onBeforeUnmount(() => {
     <header class="sticky top-16 z-30 border-b border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-10">
       <div class="mx-auto flex max-w-[1600px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex items-center gap-3">
-          <Button variant="ghost" size="icon" class="rounded-full" @click="goBack">
+          <Button variant="ghost" size="icon" class="rounded-full" aria-label="返回" @click="goBack">
             <ArrowLeft class="h-4 w-4" />
           </Button>
           <div class="min-w-0">

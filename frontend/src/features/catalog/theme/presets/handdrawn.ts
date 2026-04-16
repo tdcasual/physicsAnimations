@@ -13,6 +13,10 @@ export const handdrawnTheme: CatalogThemeConfig = {
 
 // CSS 变量定义（仅覆盖与默认不同的）
 export const handdrawnVars = {
+  // 材质
+  "--cat-ink": "#2d2d2d",
+  "--cat-paper": "#ffffff",
+
   // 边框 - 不规则圆角
   "--cat-border-radius": "255px 15px 225px 15px / 15px 225px 15px 255px",
   "--cat-border-radius-lg": "255px 25px 225px 25px / 25px 225px 25px 255px",
@@ -21,13 +25,12 @@ export const handdrawnVars = {
   "--cat-border-color-strong": "#1a1a1a",
 
   // 阴影 - 手绘感偏移
-  "--cat-shadow-sm": "2px 2px 0 rgba(0, 0, 0, 0.08)",
-  "--cat-shadow": "3px 3px 0 rgba(0, 0, 0, 0.1)",
-  "--cat-shadow-lg": "4px 4px 0 rgba(0, 0, 0, 0.12)",
+  "--cat-shadow-sm": "2px 2px 0 color-mix(in oklab, var(--cat-ink) 8%, transparent)",
+  "--cat-shadow": "3px 3px 0 color-mix(in oklab, var(--cat-ink) 10%, transparent)",
+  "--cat-shadow-lg": "4px 4px 0 color-mix(in oklab, var(--cat-ink) 12%, transparent)",
 
   // 字体 - 手写体（需要加载 Google Fonts）
-  "--cat-font-heading":
-    "'Zeyada', 'Ma Shan Zheng', 'STXingkai', cursive",
+  "--cat-font-heading": "'Zeyada', 'Ma Shan Zheng', 'STXingkai', cursive",
 
   // 背景 - 暖白纸张色
   "--cat-bg-primary": "#faf8f5",

@@ -190,36 +190,7 @@ const workbenchToggleLabel = computed(() =>
     padding-top: 8px;
   }
 
-  .catalog-workbench-columns :deep(.catalog-workbench-column) {
-    gap: 8px;
-  }
 
-  .catalog-workbench-columns :deep(.catalog-workbench-column-title) {
-    font-size: calc(15px * var(--ui-scale, 1));
-  }
-
-  .catalog-workbench-columns :deep(.catalog-teacher-row) {
-    gap: 6px;
-    padding: 6px 0;
-  }
-
-  .catalog-workbench-columns :deep(.catalog-teacher-link) {
-    grid-template-columns: 56px minmax(0, 1fr);
-    gap: 8px;
-  }
-
-  .catalog-workbench-columns :deep(.catalog-teacher-action) {
-    min-height: 30px;
-    padding: 4px 8px;
-  }
-
-  .catalog-workbench-columns :deep(.catalog-teacher-empty) {
-    min-height: 48px;
-    padding-top: 8px;
-    align-content: start;
-    justify-items: start;
-    text-align: left;
-  }
 }
 
 @media (max-width: 640px) {

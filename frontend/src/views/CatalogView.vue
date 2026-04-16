@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useCatalogViewState } from "@/features/catalog/useCatalogViewState";
 import { useCatalogTheme } from "@/features/catalog/theme";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { gsap as GSAPType, ScrollTrigger as ScrollTriggerType } from "@/lib/gsap";
+
 
 import HeroSection from "./catalog/components/HeroSection.vue";
 import FilterTabs from "./catalog/components/FilterTabs.vue";
@@ -39,7 +39,7 @@ async function animateGrid() {
   if (cards.length === 0) return;
 
   const { initGsap } = await import("@/lib/gsap");
-  const { gsap, ScrollTrigger } = await initGsap();
+  const { gsap } = await initGsap();
 
   gsap.fromTo(
     cards,
@@ -55,7 +55,7 @@ async function animateGrid() {
         trigger: gridRef.value,
         start: "top 85%",
         once: true,
-      } as ScrollTriggerType.Vars,
+      },
     }
   );
 }
@@ -109,14 +109,14 @@ const totalItems = computed(() => {
 
 // Optimize category title lookup
 const activeCategoryTitle = computed(() => {
-  return view.value.categories.find(c => c.id === view.activeCategoryId)?.title || '全部演示';
+  return view.value.categories.find(c => c.id === view.value.activeCategoryId)?.title || '全部演示';
 });
 </script>
 
 <template>
   <section class="min-h-screen pb-24 cat-transition-theme" :data-catalog-theme="currentTheme">
     <!-- Theme Switcher - Fixed position, bottom-left on mobile to avoid overlap -->
-    <div class="fixed bottom-20 left-4 z-50 sm:top-24 sm:right-6 sm:bottom-auto sm:left-auto md:top-24 md:right-6">
+    <div class="fixed bottom-4 right-4 z-50 sm:top-24 sm:right-6 sm:bottom-auto md:top-24 md:right-6">
       <CatalogThemeSwitcher />
     </div>
     
@@ -127,7 +127,7 @@ const activeCategoryTitle = computed(() => {
     />
 
     <!-- Filters - Sticky with subtle transition -->
-    <div class="sticky top-16 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
+    <div class="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
       <div class="px-4 py-3 sm:px-6 lg:px-8">
         <FilterTabs
           :groups="view.groups"
@@ -144,10 +144,10 @@ const activeCategoryTitle = computed(() => {
     <div class="px-4 pt-12 sm:px-6 lg:px-8">
       <!-- Section Header - Clean gallery style -->
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-lg font-normal text-gray-900">
+        <h2 class="text-lg font-normal text-foreground">
           {{ activeCategoryTitle }}
         </h2>
-        <span class="text-xs font-light tracking-wide text-gray-400">
+        <span class="text-xs font-light tracking-wide text-muted-foreground">
           {{ totalItems }} 件作品
         </span>
       </div>
@@ -155,9 +155,9 @@ const activeCategoryTitle = computed(() => {
       <!-- Loading Skeletons - Compact gallery style -->
       <div v-if="loading" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         <div v-for="i in 8" :key="i" class="flex flex-col gap-2">
-          <Skeleton class="aspect-[3/2] bg-gray-100" />
-          <Skeleton class="h-4 w-2/3 bg-gray-100" />
-          <Skeleton class="h-3 w-1/3 bg-gray-100" />
+          <Skeleton class="aspect-[3/2] bg-muted" />
+          <Skeleton class="h-4 w-2/3 bg-muted" />
+          <Skeleton class="h-3 w-1/3 bg-muted" />
         </div>
       </div>
 
@@ -173,7 +173,7 @@ const activeCategoryTitle = computed(() => {
           v-if="filteredLibraryFolders.length > 0"
           class="mb-12"
         >
-          <h3 class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-gray-400">
+          <h3 class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-muted-foreground">
             资源库精选
           </h3>
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -193,7 +193,7 @@ const activeCategoryTitle = computed(() => {
 
         <!-- Demo Items Section -->
         <div>
-          <h3 v-if="filteredLibraryFolders.length > 0" class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-gray-400">
+          <h3 v-if="filteredLibraryFolders.length > 0" class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-muted-foreground">
             演示动画
           </h3>
           <div

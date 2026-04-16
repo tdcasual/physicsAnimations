@@ -1,6 +1,8 @@
 import { apiFetchJson } from "../shared/httpClient";
 
-const TOKEN_KEY = "pa_admin_token";
+import { STORAGE_KEYS } from "../../lib/constants";
+
+const TOKEN_KEY = STORAGE_KEYS.ADMIN_TOKEN;
 
 export interface ApiError extends Error {
   status?: number;

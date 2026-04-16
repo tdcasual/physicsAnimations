@@ -125,7 +125,7 @@ watch(
       </div>
       <div class="library-folder-hero-body">
         <div class="library-folder-copy">
-          <h2>{{ pageHeading }}</h2>
+          <h2 class="break-anywhere">{{ pageHeading }}</h2>
           <p class="library-folder-summary">{{ folderSummary }}</p>
         </div>
         <div class="library-folder-cover" :class="{ 'is-empty': !folderCoverUrl }">
@@ -146,7 +146,7 @@ watch(
         :class="asset.openMode === 'embed' ? 'asset-card--embed' : 'asset-card--download'"
       >
         <div class="asset-headline">
-          <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
+          <div class="asset-name break-anywhere">{{ asset.displayName || asset.fileName || asset.id }}</div>
           <div class="asset-state-badge" :class="asset.openMode === 'embed' ? 'is-embed' : 'is-download'">
             {{ assetModeLabel(asset) }}
           </div>

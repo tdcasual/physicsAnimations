@@ -5,7 +5,7 @@ import type { AdminItemsResponse } from "./adminTypes";
 
 export type { AdminApiError, AdminItemRow, AdminItemsResponse } from "./adminTypes";
 
-async function apiFetch<T = any>(path: string, options: RequestInit = {}): Promise<T> {
+async function apiFetch<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   return apiFetchJson<T>({
     path,
     options,
@@ -27,6 +27,28 @@ export interface AdminListParams {
   type?: string;
 }
 
+export interface TaxonomyCategory {
+  id: string;
+  groupId: string;
+  title: string;
+  order?: number;
+  hidden?: boolean;
+  [key: string]: unknown;
+}
+
+export interface TaxonomyGroup {
+  id: string;
+  title: string;
+  order?: number;
+  hidden?: boolean;
+  [key: string]: unknown;
+}
+
+export interface TaxonomyResponse {
+  categories: TaxonomyCategory[];
+  groups?: TaxonomyGroup[];
+}
+
 export async function listAdminItems(params: AdminListParams = {}): Promise<AdminItemsResponse> {
   const query = new URLSearchParams();
   query.set("page", String(params.page || 1));
@@ -35,11 +57,11 @@ export async function listAdminItems(params: AdminListParams = {}): Promise<Admi
   if (params.type) query.set("type", params.type);
 
   const raw = await apiFetch(`/api/items?${query.toString()}`, { method: "GET" });
-  return parseAdminItemsResponse(raw);
+  return parseAdminItemsResponse(raw as { items?: unknown[]; total?: number } | null);
 }
 
-export async function listTaxonomy(): Promise<any> {
-  return apiFetch("/api/categories", { method: "GET" });
+export async function listTaxonomy(): Promise<TaxonomyResponse> {
+  return apiFetch<TaxonomyResponse>("/api/categories", { method: "GET" });
 }
 
 export async function createLinkItem(payload: {
@@ -47,7 +69,7 @@ export async function createLinkItem(payload: {
   categoryId: string;
   title: string;
   description: string;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   return apiFetch("/api/items", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -64,7 +86,7 @@ export async function uploadHtmlItem(payload: {
   title: string;
   description: string;
   allowRiskyHtml?: boolean;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   const formData = new FormData();
   formData.append("file", payload.file);
   formData.append("categoryId", payload.categoryId || "other");
@@ -80,7 +102,7 @@ export async function uploadHtmlItem(payload: {
   });
 }
 
-export async function updateAdminItem(id: string, patch: Record<string, unknown>): Promise<any> {
+export async function updateAdminItem(id: string, patch: Record<string, unknown>): Promise<Record<string, unknown>> {
   return apiFetch(`/api/items/${encodeURIComponent(id)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -88,7 +110,7 @@ export async function updateAdminItem(id: string, patch: Record<string, unknown>
   });
 }
 
-export async function deleteAdminItem(id: string): Promise<any> {
+export async function deleteAdminItem(id: string): Promise<Record<string, unknown>> {
   return apiFetch(`/api/items/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
@@ -97,7 +119,7 @@ export async function createGroup(payload: {
   title: string;
   order?: number;
   hidden?: boolean;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   return apiFetch("/api/groups", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -110,7 +132,7 @@ export async function createGroup(payload: {
   });
 }
 
-export async function updateGroup(id: string, patch: Record<string, unknown>): Promise<any> {
+export async function updateGroup(id: string, patch: Record<string, unknown>): Promise<Record<string, unknown>> {
   return apiFetch(`/api/groups/${encodeURIComponent(id)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -118,7 +140,7 @@ export async function updateGroup(id: string, patch: Record<string, unknown>): P
   });
 }
 
-export async function deleteGroup(id: string): Promise<any> {
+export async function deleteGroup(id: string): Promise<Record<string, unknown>> {
   return apiFetch(`/api/groups/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
@@ -130,7 +152,7 @@ export async function createCategory(payload: {
   title: string;
   order?: number;
   hidden?: boolean;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   return apiFetch("/api/categories", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -144,7 +166,7 @@ export async function createCategory(payload: {
   });
 }
 
-export async function updateCategory(id: string, patch: Record<string, unknown>): Promise<any> {
+export async function updateCategory(id: string, patch: Record<string, unknown>): Promise<Record<string, unknown>> {
   return apiFetch(`/api/categories/${encodeURIComponent(id)}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -152,20 +174,20 @@ export async function updateCategory(id: string, patch: Record<string, unknown>)
   });
 }
 
-export async function deleteCategory(id: string): Promise<any> {
+export async function deleteCategory(id: string): Promise<Record<string, unknown>> {
   return apiFetch(`/api/categories/${encodeURIComponent(id)}`, {
     method: "DELETE",
   });
 }
 
-export async function getSystemInfo(): Promise<any> {
+export async function getSystemInfo(): Promise<Record<string, unknown>> {
   return apiFetch("/api/system", { method: "GET" });
 }
 
 export async function updateSystemEmbedUpdater(payload: {
   enabled?: boolean;
   intervalDays?: number;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   return apiFetch("/api/system/embed-updater", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -180,7 +202,7 @@ export async function updateSystemStorage(payload: {
   mode?: string;
   webdav?: Record<string, unknown>;
   sync?: boolean;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   return apiFetch("/api/system/storage", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -194,7 +216,7 @@ export async function updateSystemStorage(payload: {
 
 export async function validateSystemStorage(payload: {
   webdav?: Record<string, unknown>;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   return apiFetch("/api/system/storage/validate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -208,7 +230,7 @@ export async function updateAccount(payload: {
   currentPassword: string;
   newUsername?: string;
   newPassword?: string;
-}): Promise<any> {
+}): Promise<Record<string, unknown>> {
   return apiFetch("/api/auth/account", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

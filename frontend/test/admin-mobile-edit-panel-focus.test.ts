@@ -20,12 +20,12 @@ describe("admin mobile edit panel focus", () => {
     expect(contentView).toMatch(/createAdminMobileEditPanelFocus/);
     expect(contentView).toMatch(/openContentEditor/);
     expect(contentView).toMatch(/@begin-edit="openContentEditor"/);
-    expect(contentView).toMatch(/ref="contentEditorPanelRef"/);
+    expect(contentView).toMatch(/ref="contentSplitLayoutRef"/);
 
     expect(uploadsView).toMatch(/createAdminMobileEditPanelFocus/);
     expect(uploadsView).toMatch(/openUploadEditor/);
     expect(uploadsView).toMatch(/@begin-edit="openUploadEditor"/);
-    expect(uploadsView).toMatch(/ref="uploadEditorPanelRef"/);
+    expect(uploadsView).toMatch(/ref="uploadSplitLayoutRef"/);
   });
 
   it("scrolls the edit panel into view on small screens", async () => {

@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import { resolveAdminRedirect } from "./router/redirect";
-import type { ApiError } from "./features/auth/authApi";
+
 import { useAuthStore } from "./features/auth/useAuthStore";
 import { useCatalogSearch } from "./features/catalog/catalogSearch";
 import { useTheme } from "./composables/useTheme";
@@ -74,10 +74,12 @@ function clearLoginError() {
   loginError.value = "";
 }
 
+import { extractApiError } from "./features/shared/apiError";
+
 function toLoginMessage(err: unknown): string {
-  const e = err as ApiError;
-  const status = e?.status;
-  const retryAfterSeconds = e?.data?.retryAfterSeconds;
+  const e = extractApiError(err);
+  const status = e.status;
+  const retryAfterSeconds = e.data?.retryAfterSeconds;
 
   if (window.location.protocol === "file:") {
     return "请先运行 npm start，再通过 http://localhost:4173 访问。";
@@ -143,7 +145,7 @@ function handleScroll() {
 }
 
 onMounted(async () => {
-  window.addEventListener("pa-auth-expired", handleAuthExpired as EventListener);
+  window.addEventListener("pa-auth-expired", handleAuthExpired as (e: Event) => void);
   window.addEventListener("scroll", handleScroll, { passive: true });
   classroomModeEnabled.value = applyStoredClassroomMode();
   await nextTick();
@@ -188,7 +190,7 @@ watch(
 );
 
 onBeforeUnmount(() => {
-  window.removeEventListener("pa-auth-expired", handleAuthExpired as EventListener);
+  window.removeEventListener("pa-auth-expired", handleAuthExpired as (e: Event) => void);
   window.removeEventListener("scroll", handleScroll);
   topbarResizeObserver?.disconnect();
   topbarResizeObserver = null;
@@ -226,7 +228,7 @@ onBeforeUnmount(() => {
                   type="search"
                   placeholder="搜索演示..."
                   class="h-9 w-64 rounded-full border-border bg-muted pl-9 text-sm focus-visible:ring-primary"
-                  @update:model-value="catalogQuery = $event"
+                  @update:model-value="catalogQuery = String($event)"
                 />
               </div>
             </div>
@@ -244,7 +246,7 @@ onBeforeUnmount(() => {
               <span>课堂模式</span>
             </Button>
 
-            <Button variant="ghost" size="icon" class="rounded-full" @click="toggleTheme">
+            <Button variant="ghost" size="icon" class="rounded-full" aria-label="切换主题" @click="toggleTheme">
               <Sun v-if="isDark" class="h-4 w-4" />
               <Moon v-else class="h-4 w-4" />
             </Button>
@@ -269,6 +271,7 @@ onBeforeUnmount(() => {
 
           <button
             class="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary"
+            aria-label="切换导航"
             @click="mobileMenuOpen = !mobileMenuOpen"
           >
             <X v-if="mobileMenuOpen" class="h-5 w-5" />
@@ -285,7 +288,7 @@ onBeforeUnmount(() => {
             type="search"
             placeholder="搜索演示..."
             class="h-10 w-full rounded-full border-border bg-muted pl-9"
-            @update:model-value="catalogQuery = $event"
+            @update:model-value="catalogQuery = String($event)"
           />
         </div>
       </div>

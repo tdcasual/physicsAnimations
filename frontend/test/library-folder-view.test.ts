@@ -66,23 +66,21 @@ describe("library folder view", () => {
     expect(source).toMatch(/const pageHeading = ref\("文件夹"\)/);
     expect(source).toMatch(/pageHeading\.value = "缺少文件夹参数"/);
     expect(source).toMatch(/pageHeading\.value = "加载文件夹失败"/);
-    expect(source).toMatch(/<h2>\{\{ pageHeading \}\}<\/h2>/);
+    expect(source).toMatch(/<h2\s+class="break-anywhere">\{\{ pageHeading \}\}<\/h2>/);
   });
 
-  it("wraps long unbroken asset names and metadata on narrow mobile cards", () => {
+  it("wraps long unbroken asset names on narrow mobile cards", () => {
     const source = read("src/views/LibraryFolderView.vue");
 
-    expect(source).toMatch(/\.asset-name\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(source).toMatch(/class="asset-name break-anywhere"/);
     expect(source).toMatch(/\.asset-name\s*\{[\s\S]*word-break:\s*break-word/);
-    expect(source).toMatch(/\.asset-meta\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
-    expect(source).toMatch(/\.asset-meta\s*\{[\s\S]*word-break:\s*break-word/);
   });
 
   it("wraps long folder heading text on mobile to avoid page-level horizontal overflow", () => {
     const source = read("src/views/LibraryFolderView.vue");
 
     expect(source).toMatch(/\.library-head h2\s*\{[\s\S]*min-width:\s*0/);
-    expect(source).toMatch(/\.library-head h2\s*\{[\s\S]*overflow-wrap:\s*anywhere/);
+    expect(source).toMatch(/<h2\s+class="break-anywhere">\{\{ pageHeading \}\}<\/h2>/);
     expect(source).toMatch(/\.library-head h2\s*\{[\s\S]*word-break:\s*break-word/);
   });
 

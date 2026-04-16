@@ -3,7 +3,6 @@ import { useSystemWizard } from "../../features/admin/system/useSystemWizard";
 import SystemStatusPanel from "./system/SystemStatusPanel.vue";
 import SystemWizardSteps from "./system/SystemWizardSteps.vue";
 import SystemEmbedUpdaterPanel from "./system/SystemEmbedUpdaterPanel.vue";
-import { PACard } from "@/components/ui/patterns";
 
 const system = useSystemWizard();
 

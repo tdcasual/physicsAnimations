@@ -92,7 +92,7 @@
           :class="{ active: vm.data.selectedFolderId === folder.id }"
         >
           <button type="button" class="folder-pick" @click="vm.actions.selectFolder(folder.id)">
-            <div class="folder-name">{{ folder.name || folder.id }}</div>
+            <div class="folder-name break-anywhere">{{ folder.name || folder.id }}</div>
             <div class="folder-meta">{{ folder.categoryId }} · {{ folder.assetCount || 0 }} 个资源</div>
           </button>
           <PAButton
@@ -134,7 +134,7 @@
       <PACard variant="admin" class="library-asset-area">
         <div class="column-head">
           <h3>资源列表</h3>
-          <div class="selected-folder">{{ vm.data.selectedFolder?.name || "未选择文件夹" }}</div>
+          <div class="selected-folder break-anywhere">{{ vm.data.selectedFolder?.name || "未选择文件夹" }}</div>
         </div>
         <PAField label="资源搜索">
           <PAInput
@@ -261,7 +261,7 @@
               />
             </label>
             <div class="asset-main">
-              <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
+              <div class="asset-name break-anywhere">{{ asset.displayName || asset.fileName || asset.id }}</div>
               <div class="asset-meta">源文件：{{ asset.fileName || asset.id }}</div>
               <div class="asset-meta">{{ asset.openMode === "embed" ? "演示" : "仅下载" }}</div>
               <div v-if="asset.embedProfileId" class="asset-meta">Embed 平台：{{ asset.embedProfileId }}</div>
@@ -305,7 +305,7 @@
             <div class="asset-meta">已删除资源（可恢复）</div>
             <article v-for="asset in vm.data.deletedAssets" :key="asset.id" class="asset-item">
               <div class="asset-main">
-                <div class="asset-name">{{ asset.displayName || asset.fileName || asset.id }}</div>
+                <div class="asset-name break-anywhere">{{ asset.displayName || asset.fileName || asset.id }}</div>
                 <div class="asset-meta">源文件：{{ asset.fileName || asset.id }}</div>
                 <div class="asset-meta">{{ asset.deletedAt ? `删除时间：${asset.deletedAt}` : "已删除" }}</div>
               </div>
@@ -319,28 +319,24 @@
         </div>
       </PACard>
 
-      <button
-        v-if="isMobileLibraryViewport && isMobileLibrarySheetOpen"
-        type="button"
-        class="library-mobile-sheet-backdrop"
-        aria-label="关闭资源库抽屉"
-        @click="closeMobileLibrarySheet"
-      />
-
-      <aside
-        v-if="shouldRenderLibraryInspector"
-        :class="['library-inspector-area', 'library-mobile-sheet', 'admin-card', { 'is-open': isMobileLibrarySheetOpen }]"
+      <AdminMobileSheet
+        :open="isMobileLibrarySheetOpen"
+        as="aside"
+        panel-class="library-inspector-area"
+        backdrop-label="关闭资源库抽屉"
+        @close="closeMobileLibrarySheet"
       >
-        <div ref="inspectorTopRef" class="library-inspector-top library-mobile-focus-anchor" aria-hidden="true" />
-        <div class="library-mobile-sheet-header">
-          <div class="library-mobile-sheet-copy">
-            <p class="library-block-kicker">移动端工具</p>
-            <strong>{{ mobileLibrarySheetTitle }}</strong>
+        <div class="library-mobile-sheet-body">
+          <div ref="inspectorTopRef" class="library-inspector-top library-mobile-focus-anchor" aria-hidden="true" />
+          <div class="library-mobile-sheet-header">
+            <div class="library-mobile-sheet-copy">
+              <p class="library-block-kicker">移动端工具</p>
+              <strong>{{ mobileLibrarySheetTitle }}</strong>
+            </div>
+            <PAButton variant="ghost" @click="closeMobileLibrarySheet">关闭</PAButton>
           </div>
-          <PAButton variant="ghost" @click="closeMobileLibrarySheet">关闭</PAButton>
-        </div>
 
-        <PACard v-if="activeMobileLibrarySheet === 'folder-create'" class="panel-section">
+          <PACard v-if="activeMobileLibrarySheet === 'folder-create'" class="panel-section">
           <div class="panel-section-body">
             <h3>新建文件夹</h3>
             <PAField label="名称" :error="vm.actions.getFieldError('createFolderName')">
@@ -386,7 +382,7 @@
               </button>
               <div v-if="vm.actions.isPanelSectionOpen('folder:meta')" class="panel-section-body">
                 <PAField label="当前文件夹">
-                  <div class="selected-folder">{{ vm.data.selectedFolder?.name || "未选择" }}</div>
+                  <div class="selected-folder break-anywhere">{{ vm.data.selectedFolder?.name || "未选择" }}</div>
                 </PAField>
                 <PAField label="名称" :error="vm.actions.getFieldError('editFolderName')">
                   <PAInput v-model="vm.drafts.folderEditName" type="text" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" />
@@ -557,7 +553,7 @@
                 <div class="asset-list">
                   <article v-for="profile in vm.filters.filteredEmbedProfiles" :key="profile.id" class="asset-item">
                     <div class="asset-main">
-                      <div class="asset-name">{{ profile.name || profile.id }}</div>
+                      <div class="asset-name break-anywhere">{{ profile.name || profile.id }}</div>
                       <div class="asset-meta">{{ profile.id }}</div>
                       <div class="asset-meta">远端脚本：{{ profile.remoteScriptUrl || profile.scriptUrl }}</div>
                       <div class="asset-meta">当前脚本：{{ profile.scriptUrl }}</div>
@@ -605,7 +601,8 @@
             </div>
           </OperationLogPanel>
         </template>
-      </aside>
+        </div>
+      </AdminMobileSheet>
     </div>
   </div>
 

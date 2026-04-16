@@ -68,7 +68,7 @@ onMounted(async () => {
     <div class="hand-drawn-decoration absolute bottom-[25%] right-[15%] hidden text-2xl opacity-40 md:block">✦</div>
 
     <svg class="hand-drawn-decoration absolute left-1/2 top-12 hidden h-16 w-px md:block" viewBox="0 0 2 64">
-      <path d="M1 0 Q1.5 16 1 32 Q0.5 48 1 64" stroke="currentColor" stroke-width="1" fill="none" class="text-gray-300" />
+      <path d="M1 0 Q1.5 16 1 32 Q0.5 48 1 64" stroke="currentColor" stroke-width="1" fill="none" class="text-muted-foreground/30" />
     </svg>
 
     <div class="relative mx-auto w-full max-w-4xl px-6">
@@ -87,7 +87,7 @@ onMounted(async () => {
           class="hero-stats cat-stat-item text-center"
         >
           <div class="cat-stat-number text-3xl font-light">{{ stat.value }}</div>
-          <div class="cat-stat-label mt-1 text-xs font-light uppercase tracking-widest opacity-60">{{ stat.label }}</div>
+          <div class="cat-stat-label mt-1 text-xs font-light uppercase tracking-widest">{{ stat.label }}</div>
         </div>
       </div>
     </div>
@@ -186,14 +186,14 @@ onMounted(async () => {
 }
 
 [data-catalog-theme="brutalist"] .cat-stat-item {
-  border: 3px solid #000;
-  box-shadow: 3px 3px 0 #000;
-  background: #fff;
+  border: 3px solid var(--cat-ink);
+  box-shadow: 3px 3px 0 var(--cat-ink);
+  background: var(--cat-paper);
 }
 
 [data-catalog-theme="brutalist"] .cat-stat-item:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 #000;
+  box-shadow: 5px 5px 0 var(--cat-ink);
 }
 
 [data-catalog-theme="brutalist"] .hand-drawn-decoration {

@@ -91,7 +91,7 @@ const createCategoryHiddenModel = computed({
 
 <template>
   <PACard variant="admin" class="panel">
-    <h3>新增大类</h3>
+    <h3 class="admin-panel-title">新增大类</h3>
     <div class="form-grid">
       <PAField>
         <template #label>大类 ID（英文/数字）</template>
@@ -134,7 +134,7 @@ const createCategoryHiddenModel = computed({
     <template v-if="!createOnly">
       <div class="panel-divider" />
 
-      <h3>大类：{{ selectedGroup.title || selectedGroup.id }} ({{ selectedGroup.id }})</h3>
+      <h3 class="admin-panel-title break-anywhere">大类：{{ selectedGroup.title || selectedGroup.id }} ({{ selectedGroup.id }})</h3>
       <div class="meta-line">
         分类 {{ Number(selectedGroup.categoryCount || 0) }} · 内容 {{ Number(selectedGroup.count || 0) }}
       </div>
@@ -171,7 +171,7 @@ const createCategoryHiddenModel = computed({
         <PAButton :disabled="saving" @click="emit('save-group')">保存</PAButton>
       </PAActions>
 
-      <h3>新增二级分类</h3>
+      <h3 class="admin-panel-title">新增二级分类</h3>
       <div class="form-grid">
         <PAField>
           <template #label>分类 ID（英文/数字）</template>
@@ -214,13 +214,6 @@ const createCategoryHiddenModel = computed({
   padding: 12px;
   display: grid;
   gap: 10px;
-}
-
-h3 {
-  margin: 0;
-  font-size: calc(16px * var(--ui-scale));
-  overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 .meta-line {
@@ -277,25 +270,8 @@ h3 {
   margin-top: 8px;
 }
 
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
 .panel-divider {
   border-top: 1px dashed var(--border);
   margin-top: 2px;
-}
-
-@media (max-width: 640px) {
-  .actions {
-    position: sticky;
-    bottom: 0;
-    padding-top: 10px;
-    padding-bottom: 2px;
-    background:
-      linear-gradient(180deg, color-mix(in oklab, var(--card) 35%, transparent), color-mix(in oklab, var(--card) 96%, var(--background)) 32%);
-  }
 }
 </style>

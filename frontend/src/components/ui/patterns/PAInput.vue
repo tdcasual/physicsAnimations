@@ -39,7 +39,7 @@ interface Props {
   autocomplete?: string;
   autocapitalize?: string;
   autocorrect?: string;
-  spellcheck?: string;
+  spellcheck?: boolean | "true" | "false" | undefined;
 }
 
 const props = withDefaults(defineProps<Props>(), {

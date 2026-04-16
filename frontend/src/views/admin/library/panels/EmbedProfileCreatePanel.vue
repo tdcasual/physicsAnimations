@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import type { UnwrapNestedRefs } from "vue";
 import type { useLibraryAdminState } from "../../../../features/library/useLibraryAdminState";
 import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
-defineProps<{ vm: ReturnType<typeof useLibraryAdminState> }>();
+defineProps<{ vm: UnwrapNestedRefs<ReturnType<typeof useLibraryAdminState>> }>();
 </script>
 
 <template>

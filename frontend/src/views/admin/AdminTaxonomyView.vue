@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { useTaxonomyAdmin } from "../../features/admin/taxonomy/useTaxonomyAdmin";
 import { createAdminTaxonomyMobileEditorFocus } from "./taxonomy/useAdminTaxonomyMobileEditorFocus";
 import CategoryEditorPanel from "./taxonomy/CategoryEditorPanel.vue";
 import GroupEditorPanel from "./taxonomy/GroupEditorPanel.vue";
 import TaxonomyTreePanel from "./taxonomy/TaxonomyTreePanel.vue";
 import { PAButton, PACard } from "@/components/ui/patterns";
+import AdminSplitLayout from "@/components/admin/AdminSplitLayout.vue";
 
 const taxonomy = useTaxonomyAdmin();
 type TaxonomyMobileSheetMode = "create-group" | "group" | "category" | null;
@@ -14,7 +15,6 @@ const editorTopRef = ref<HTMLElement | null>(null);
 const groupEditorRef = ref<HTMLElement | null>(null);
 const categoryEditorRef = ref<HTMLElement | null>(null);
 const activeMobileEditorSheet = ref<TaxonomyMobileSheetMode>(null);
-const mobileEditorSheetMaxWidth = 640;
 const { focusEditorTarget } = createAdminTaxonomyMobileEditorFocus({
   editorTopRef,
   groupEditorRef,
@@ -84,13 +84,6 @@ const mobilePrimaryActionLabel = computed(() => {
   if (selection.value) return "编辑当前节点";
   return "等待选择";
 });
-let bodyOverflowBeforeTaxonomySheet = "";
-
-function isMobileEditorSheetViewport() {
-  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
-  return window.matchMedia(`(max-width: ${mobileEditorSheetMaxWidth}px)`).matches;
-}
-
 function closeMobileEditorSheet() {
   activeMobileEditorSheet.value = null;
 }
@@ -99,7 +92,6 @@ async function openCreateGroupSheet() {
   selectGroup(selectedGroup.value?.id || DEFAULT_GROUP_ID);
   if (selection.value?.kind !== "group") return;
   activeMobileEditorSheet.value = "create-group";
-  if (isMobileEditorSheetViewport()) return;
   await focusEditorTarget("group");
 }
 
@@ -107,12 +99,10 @@ async function openCurrentSelectionSheet() {
   if (!selection.value) return;
   if (selection.value.kind === "group") {
     activeMobileEditorSheet.value = "group";
-    if (isMobileEditorSheetViewport()) return;
     await focusEditorTarget("group");
     return;
   }
   activeMobileEditorSheet.value = "category";
-  if (isMobileEditorSheetViewport()) return;
   await focusEditorTarget("category");
 }
 
@@ -128,7 +118,6 @@ async function openGroupEditor(groupId: string, options: { focusCreate?: boolean
   selectGroup(groupId, options);
   if (selection.value?.kind !== "group" || selection.value.id !== groupId) return;
   activeMobileEditorSheet.value = options.focusCreate ? "group" : "group";
-  if (isMobileEditorSheetViewport()) return;
   await focusEditorTarget("group");
 }
 
@@ -136,52 +125,43 @@ async function openCategoryEditor(categoryId: string) {
   selectCategory(categoryId);
   if (selection.value?.kind !== "category" || selection.value.id !== categoryId) return;
   activeMobileEditorSheet.value = "category";
-  if (isMobileEditorSheetViewport()) return;
   await focusEditorTarget("category");
 }
-
-watch(isMobileEditorSheetOpen, (open) => {
-  if (open && isMobileEditorSheetViewport()) {
-    bodyOverflowBeforeTaxonomySheet = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return;
-  }
-
-  document.body.style.overflow = bodyOverflowBeforeTaxonomySheet;
-  bodyOverflowBeforeTaxonomySheet = "";
-});
-
-onBeforeUnmount(() => {
-  document.body.style.overflow = bodyOverflowBeforeTaxonomySheet;
-});
 </script>
 
 <template>
-  <section class="admin-taxonomy-view">
-    <header class="admin-page-header admin-page-header--taxonomy">
-      <div class="admin-page-copy">
-        <p class="admin-page-kicker">目录编排</p>
-        <h2>分类管理</h2>
-      </div>
-      <div class="admin-page-meta">
-        <span class="admin-page-meta-label">当前焦点</span>
-        <strong>{{ selection ? "编辑中" : "待选择" }}</strong>
-      </div>
-  </header>
-  <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
+  <AdminSplitLayout
+    :editor-open="isMobileEditorSheetOpen"
+    editor-title="关闭分类编辑抽屉"
+    gap="12px"
+    @close-editor="closeMobileEditorSheet"
+  >
+    <template #header>
+      <header class="admin-page-header admin-page-header--taxonomy">
+        <div class="admin-page-copy">
+          <p class="admin-page-kicker">目录编排</p>
+          <h2>分类管理</h2>
+        </div>
+        <div class="admin-page-meta">
+          <span class="admin-page-meta-label">当前焦点</span>
+          <strong>{{ selection ? "编辑中" : "待选择" }}</strong>
+        </div>
+      </header>
+      <div v-if="errorText" class="error-text admin-feedback error">{{ errorText }}</div>
 
-    <PACard variant="admin" as="section" class="taxonomy-mobile-actions">
-      <div class="taxonomy-mobile-summary">
-        <strong>{{ selection ? "已选节点" : "先选节点" }}</strong>
-        <span>{{ mobileSelectionSummary }}</span>
-      </div>
-      <PAButton variant="ghost" @click="openCreateGroupSheet">新建大类</PAButton>
-      <PAButton :disabled="!selection && !isMobileEditorSheetOpen" @click="handleMobilePrimaryAction">
-        {{ mobilePrimaryActionLabel }}
-      </PAButton>
-    </PACard>
+      <PACard variant="admin" as="section" class="taxonomy-mobile-actions">
+        <div class="taxonomy-mobile-summary">
+          <strong>{{ selection ? "已选节点" : "先选节点" }}</strong>
+          <span>{{ mobileSelectionSummary }}</span>
+        </div>
+        <PAButton variant="ghost" @click="openCreateGroupSheet">新建大类</PAButton>
+        <PAButton :disabled="!selection && !isMobileEditorSheetOpen" @click="handleMobilePrimaryAction">
+          {{ mobilePrimaryActionLabel }}
+        </PAButton>
+      </PACard>
+    </template>
 
-    <div class="admin-workspace-grid admin-workspace-grid--balanced">
+    <template #list>
       <TaxonomyTreePanel
         variant="admin"
         :loading="loading"
@@ -202,16 +182,10 @@ onBeforeUnmount(() => {
         @focus-create-category="openGroupEditor($event, { focusCreate: true })"
         @select-category="openCategoryEditor($event)"
       />
+    </template>
 
-      <button
-        v-if="isMobileEditorSheetOpen"
-        type="button"
-        class="taxonomy-editor-sheet-backdrop"
-        aria-label="关闭分类编辑抽屉"
-        @click="closeMobileEditorSheet"
-      />
-
-      <div :class="['taxonomy-editor-slot', 'taxonomy-editor-sheet', { 'is-open': isMobileEditorSheetOpen }]">
+    <template #editor>
+      <div class="taxonomy-editor-sheet-body">
         <div ref="editorTopRef" class="taxonomy-mobile-editor-top taxonomy-mobile-focus-anchor" aria-hidden="true" />
         <div class="taxonomy-editor-sheet-header">
           <div class="taxonomy-editor-sheet-copy">
@@ -285,8 +259,8 @@ onBeforeUnmount(() => {
 
         <PACard v-else variant="admin" class="empty">选择节点以编辑</PACard>
       </div>
-    </div>
-  </section>
+    </template>
+  </AdminSplitLayout>
 </template>
 
 <style scoped src="./AdminTaxonomyView.css"></style>

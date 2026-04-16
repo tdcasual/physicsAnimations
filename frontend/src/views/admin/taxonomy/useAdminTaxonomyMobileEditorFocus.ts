@@ -1,4 +1,5 @@
 import { nextTick, type Ref } from "vue";
+import { BREAKPOINTS } from "../../../lib/constants";
 
 export type AdminTaxonomyEditorFocusTarget = "group" | "category";
 
@@ -11,7 +12,7 @@ type CreateAdminTaxonomyMobileEditorFocusParams = {
 
 function isMobileTaxonomyViewport() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
-  return window.matchMedia("(max-width: 960px)").matches;
+  return window.matchMedia(`(max-width: ${BREAKPOINTS.DESKTOP_COMPACT}px)`).matches;
 }
 
 export function createAdminTaxonomyMobileEditorFocus(params: CreateAdminTaxonomyMobileEditorFocusParams) {

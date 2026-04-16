@@ -46,7 +46,6 @@ function reportMetric(
   const rating = getRating(name as keyof typeof THRESHOLDS, value);
 
   if (options.debug) {
-    // eslint-disable-next-line no-console
     console.log(`[Web Vitals] ${name}: ${value}${name === "cls" ? "" : "ms"} (${rating})`);
   }
 

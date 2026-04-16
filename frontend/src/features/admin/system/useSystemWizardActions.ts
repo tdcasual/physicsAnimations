@@ -1,6 +1,7 @@
 import type { ComputedRef, Ref } from "vue";
 import { getSystemInfo, updateSystemEmbedUpdater, updateSystemStorage, validateSystemStorage } from "../adminApi";
 import { buildSystemUpdatePayload } from "../systemFormState";
+import { extractApiError, resolveAuthError } from "../../shared/apiError";
 
 type WizardStep = 1 | 2 | 3 | 4;
 
@@ -32,13 +33,9 @@ type SystemWizardActionsParams = {
   canSyncNow: ComputedRef<boolean>;
   setFieldError: (key: string, message: string) => void;
   clearFieldErrors: (key?: string) => void;
-  applyStorage: (nextStorage: any, options?: { resetStep: boolean }) => void;
-  applyEmbedUpdater: (nextEmbedUpdater: any) => void;
+  applyStorage: (nextStorage: unknown, options?: { resetStep: boolean }) => void;
+  applyEmbedUpdater: (nextEmbedUpdater: unknown) => void;
 };
-
-function resolveAuthError(status?: number, fallbackText = "操作失败。"): string {
-  return status === 401 ? "请先登录管理员账号。" : fallbackText;
-}
 
 function isValidIntervalDays(value: number): boolean {
   return Number.isFinite(value) && Number.isInteger(value) && value >= 1 && value <= 365;
@@ -53,12 +50,12 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
       ctx.applyStorage(data?.storage || {}, { resetStep: options.resetStep });
       ctx.applyEmbedUpdater(data?.embedUpdater || {});
     } catch (err) {
-      const e = err as { status?: number; message?: string };
-      if (e?.message === "invalid_storage_mode") {
+      const e = extractApiError(err);
+      if (e.message === "invalid_storage_mode") {
         ctx.errorText.value = "系统配置中的存储模式无效，请修正后重试。";
         return;
       }
-      ctx.errorText.value = resolveAuthError(e?.status, "加载系统配置失败。");
+      ctx.errorText.value = resolveAuthError(e.status, "加载系统配置失败。");
     } finally {
       ctx.loading.value = false;
     }
@@ -107,9 +104,9 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
       ctx.validateOk.value = true;
       ctx.validateText.value = "连接校验通过。";
     } catch (err) {
-      const e = err as { data?: any };
-      const reason = String(e?.data?.reason || "").trim();
-      if (e?.data?.error === "webdav_missing_url") {
+      const e = extractApiError(err);
+      const reason = String(e.data?.reason || "").trim();
+      if (e.data?.error === "webdav_missing_url") {
         ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
         ctx.errorText.value = "请填写 WebDAV 地址。";
         return;
@@ -154,17 +151,17 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
       ctx.successText.value = "系统配置已保存。";
       ctx.wizardStep.value = 4;
     } catch (err) {
-      const e = err as { status?: number; data?: any; message?: string };
-      if (e?.message === "invalid_storage_mode") {
+      const e = extractApiError(err);
+      if (e.message === "invalid_storage_mode") {
         ctx.errorText.value = "存储模式无效，请重新选择。";
         return;
       }
-      if (e?.data?.error === "webdav_missing_url") {
+      if (e.data?.error === "webdav_missing_url") {
         ctx.setFieldError("webdavUrl", "请填写 WebDAV 地址。");
         ctx.errorText.value = "请填写 WebDAV 地址。";
         return;
       }
-      ctx.errorText.value = resolveAuthError(e?.status, "保存系统配置失败。");
+      ctx.errorText.value = resolveAuthError(e.status, "保存系统配置失败。");
     } finally {
       ctx.saving.value = false;
     }
@@ -190,12 +187,12 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
       else await loadSystem({ resetStep: false });
       ctx.embedUpdaterSuccessText.value = "自动更新设置已保存。";
     } catch (err) {
-      const e = err as { status?: number; data?: any };
-      if (e?.data?.error === "invalid_embed_updater_interval_days") {
+      const e = extractApiError(err);
+      if (e.data?.error === "invalid_embed_updater_interval_days") {
         ctx.embedUpdaterErrorText.value = "自动更新周期需为 1-365 天的整数。";
         return;
       }
-      ctx.embedUpdaterErrorText.value = resolveAuthError(e?.status, "保存自动更新设置失败。");
+      ctx.embedUpdaterErrorText.value = resolveAuthError(e.status, "保存自动更新设置失败。");
     } finally {
       ctx.savingEmbedUpdater.value = false;
     }
@@ -218,8 +215,8 @@ export function createSystemWizardActions(ctx: SystemWizardActionsParams) {
 
       ctx.successText.value = "同步完成。";
     } catch (err) {
-      const e = err as { status?: number };
-      ctx.errorText.value = resolveAuthError(e?.status, "同步失败。");
+      const e = extractApiError(err);
+      ctx.errorText.value = resolveAuthError(e.status, "同步失败。");
     } finally {
       ctx.syncing.value = false;
     }

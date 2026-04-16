@@ -4,7 +4,6 @@
 }
 
 .taxonomy-mobile-actions,
-.taxonomy-editor-sheet-backdrop,
 .taxonomy-editor-sheet-header {
   display: none;
 }
@@ -25,14 +24,9 @@
   font-size: calc(13px * var(--ui-scale));
 }
 
-.taxonomy-editor-slot {
+.taxonomy-editor-sheet-body {
   display: grid;
   align-content: start;
-  position: sticky;
-  align-self: start;
-  top: calc(var(--app-topbar-height, 0px) + 12px);
-  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
-  overflow: auto;
 }
 
 .taxonomy-mobile-editor-top {
@@ -54,14 +48,6 @@
   font-size: calc(13px * var(--ui-scale));
 }
 
-@media (max-width: 960px) {
-  .taxonomy-editor-slot {
-    position: static;
-    max-height: none;
-    overflow: visible;
-  }
-}
-
 @media (max-width: 640px) {
   .taxonomy-mobile-actions {
     display: grid;
@@ -73,39 +59,8 @@
     grid-column: 1 / -1;
   }
 
-  .taxonomy-editor-sheet-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 34;
-    border: 0;
-    padding: 0;
-    background: color-mix(in oklab, var(--foreground) 22%, transparent);
-  }
-
-  .taxonomy-editor-sheet {
-    display: none;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 35;
-    max-height: min(84dvh, 760px);
+  .taxonomy-editor-sheet-body {
     padding: 14px 14px 18px;
-    border-radius: 24px 24px 0 0;
-    overflow: auto;
-    transform: translateY(104%);
-    opacity: 0;
-    pointer-events: none;
-    box-shadow: 0 -24px 56px -36px color-mix(in oklab, var(--foreground) 28%, transparent);
-    transition: transform 220ms ease, opacity 220ms ease;
-  }
-
-  .taxonomy-editor-sheet.is-open {
-    display: grid;
-    transform: translateY(0);
-    opacity: 1;
-    pointer-events: auto;
   }
 
   .taxonomy-editor-sheet-header {
@@ -114,13 +69,14 @@
     align-items: center;
     gap: 10px;
     position: sticky;
-    top: -14px;
-    margin: -14px -14px 10px;
+    align-self: start;
+    top: 0;
+    margin: 0 0 10px;
     padding: 14px;
     border-bottom: 1px solid color-mix(in oklab, var(--primary) 16%, var(--border));
     background:
       linear-gradient(180deg, color-mix(in oklab, var(--card) 97%, var(--background)), color-mix(in oklab, var(--primary) 5%, var(--card))),
       var(--card);
+    border-radius: inherit;
   }
 }
-

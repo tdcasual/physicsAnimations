@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { RouterLink, useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../features/auth/useAuthStore";
 import { resolveAdminRedirect } from "../router/redirect";
+import { extractApiError } from "../features/shared/apiError";
 import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
 
 const router = useRouter();
@@ -32,13 +33,13 @@ async function submit() {
     const redirect = resolveAdminRedirect(route.query.redirect);
     await router.replace(redirect);
   } catch (err) {
-    const e = err as { status?: number; data?: any };
-    if (e?.status === 401) {
+    const e = extractApiError(err);
+    if (e.status === 401) {
       errorText.value = "用户名或密码错误。";
       return;
     }
-    if (e?.status === 429) {
-      const retry = Number(e?.data?.retryAfterSeconds || 0);
+    if (e.status === 429) {
+      const retry = Number(e.data?.retryAfterSeconds || 0);
       errorText.value = retry > 0 ? `尝试过于频繁，请 ${retry} 秒后再试。` : "尝试过于频繁，请稍后再试。";
       return;
     }

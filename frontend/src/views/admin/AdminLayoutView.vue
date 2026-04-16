@@ -128,8 +128,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section 
-    :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]" 
+  <!-- eslint-disable-next-line vue/valid-v-on -->
+  <section
+    :class="['admin-layout-view', `admin-layout-view--${currentAdminGroup.id}`]"
     @keydown.esc.window="closeMobileNav"
   >
     <AdminShellHeader :current-admin-section="currentAdminSection" :current-admin-group="currentAdminGroup" />
