@@ -10,7 +10,7 @@ defineProps<{
 </script>
 
 <template>
-  <PACard variant="admin" class="panel">
+  <PACard variant="admin" class="panel p-3">
     <h3 class="admin-panel-title">当前状态</h3>
     <div v-if="loading" class="empty">加载中...</div>
     <div v-else-if="storage" class="status-grid">
@@ -28,10 +28,6 @@ defineProps<{
 
 <style scoped>
 .panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  padding: 12px;
   display: grid;
   gap: 10px;
 }

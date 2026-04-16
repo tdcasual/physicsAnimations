@@ -11,7 +11,7 @@ function assertSplitLayout(viewSource: string, splitLayoutSource: string, editPa
   expect(viewSource).toMatch(/class="[^"]*list-panel/);
   expect(splitLayoutSource).toMatch(/class="admin-split-layout__grid"/);
   expect(splitLayoutSource).toMatch(/panel-class="admin-split-layout__editor/);
-  expect(editPanelSource).toMatch(/class="[^"]*action-feedback/);
+  expect(editPanelSource).toMatch(/class="[^"]*admin-feedback/);
   expect(viewSource).not.toMatch(/v-if="editingId\s*===\s*item\.id"\s+class="item-edit"/);
 }
 

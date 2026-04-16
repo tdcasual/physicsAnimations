@@ -43,7 +43,7 @@ function onToggle(groupId: string, event: Event) {
 </script>
 
 <template>
-  <PACard variant="admin" class="panel">
+  <PACard variant="admin" class="panel p-3">
     <h3 class="admin-panel-title">大类 / 分类列表</h3>
 
     <div class="toolbar">
@@ -123,10 +123,6 @@ function onToggle(groupId: string, event: Event) {
 
 <style scoped>
 .panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  padding: 12px;
   display: grid;
   gap: 10px;
 }

@@ -190,6 +190,14 @@
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-body);
   }
+  input[type="checkbox"],
+  input[type="radio"] {
+    inline-size: 18px;
+    block-size: 18px;
+    margin: 0;
+    accent-color: var(--primary);
+    flex: 0 0 auto;
+  }
 }
 
 /* Smooth scrolling */

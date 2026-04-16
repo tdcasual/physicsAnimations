@@ -26,8 +26,8 @@ describe("admin taxonomy action feedback", () => {
     expect(combinedState).toMatch(/const\s+actionFeedbackError\s*=\s*ref\(false\)/);
 
     expect(treePanel).toMatch(/class="[^"]*tree-list/);
-    expect(groupPanel).toMatch(/class="[^"]*action-feedback/);
-    expect(categoryPanel).toMatch(/class="[^"]*action-feedback/);
+    expect(groupPanel).toMatch(/class="[^"]*admin-feedback/);
+    expect(categoryPanel).toMatch(/class="[^"]*admin-feedback/);
   });
 
   it("keeps long group and category labels wrapped on narrow mobile screens", () => {

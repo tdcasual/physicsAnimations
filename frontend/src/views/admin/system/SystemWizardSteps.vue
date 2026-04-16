@@ -63,7 +63,7 @@ function onModeChange() {
 </script>
 
 <template>
-  <PACard variant="admin" class="panel">
+  <PACard variant="admin" class="panel p-3">
     <h3 class="admin-panel-title">配置流程</h3>
     <ol class="step-list">
       <li v-for="item in steps" :key="item.id" class="step-item">
@@ -176,10 +176,6 @@ function onModeChange() {
 
 <style scoped>
 .panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  padding: 12px;
   display: grid;
   gap: 10px;
 }

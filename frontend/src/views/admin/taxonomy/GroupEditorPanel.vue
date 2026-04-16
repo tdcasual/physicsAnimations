@@ -90,7 +90,7 @@ const createCategoryHiddenModel = computed({
 </script>
 
 <template>
-  <PACard variant="admin" class="panel">
+  <PACard variant="admin" class="panel p-3">
     <h3 class="admin-panel-title">新增大类</h3>
     <div class="form-grid">
       <PAField>
@@ -125,7 +125,7 @@ const createCategoryHiddenModel = computed({
 
     <div
       v-if="actionFeedback"
-      class="action-feedback admin-feedback"
+      class="admin-feedback"
       :class="{ error: actionFeedbackError, success: !actionFeedbackError }"
     >
       {{ actionFeedback }}
@@ -208,10 +208,6 @@ const createCategoryHiddenModel = computed({
 
 <style scoped>
 .panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  padding: 12px;
   display: grid;
   gap: 10px;
 }
@@ -219,19 +215,6 @@ const createCategoryHiddenModel = computed({
 .meta-line {
   color: var(--muted);
   font-size: calc(12px * var(--ui-scale));
-}
-
-.action-feedback {
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
-}
-
-.action-feedback.error {
-  color: var(--destructive);
-}
-
-.action-feedback.success {
-  color: var(--success);
 }
 
 .form-grid {

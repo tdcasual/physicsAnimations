@@ -49,7 +49,7 @@ const emit = defineEmits<{
 
   <div
     v-if="props.actionFeedback"
-    class="action-feedback admin-feedback"
+    class="admin-feedback"
     :class="{ error: props.actionFeedbackError, success: !props.actionFeedbackError }"
   >
     {{ props.actionFeedback }}
@@ -139,6 +139,18 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+@import "../shared/admin-edit-panel.css";
+
+.editor-form {
+  display: grid;
+  gap: 10px;
+}
+
+.editor-footer {
+  display: grid;
+  gap: 8px;
+}
+
 .editor-header-copy {
   display: grid;
   gap: 4px;
@@ -173,11 +185,5 @@ const emit = defineEmits<{
 .meta {
   color: var(--muted);
   font-size: calc(12px * var(--ui-scale));
-}
-.empty {
-  border: 1px dashed var(--border);
-  border-radius: 8px;
-  padding: 16px;
-  color: var(--muted);
 }
 </style>

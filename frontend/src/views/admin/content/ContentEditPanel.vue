@@ -49,7 +49,7 @@ const emit = defineEmits<{
 
   <div
     v-if="props.actionFeedback"
-    class="action-feedback admin-feedback"
+    class="admin-feedback"
     :class="{ error: props.actionFeedbackError, success: !props.actionFeedbackError }"
   >
     {{ props.actionFeedback }}
@@ -139,6 +139,18 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+@import "../shared/admin-edit-panel.css";
+
+.editor-form {
+  display: grid;
+  gap: 16px;
+}
+
+.editor-footer {
+  display: grid;
+  gap: 12px;
+}
+
 .editor-header-copy {
   display: grid;
   gap: 4px;

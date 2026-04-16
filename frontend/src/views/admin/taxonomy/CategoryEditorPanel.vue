@@ -44,7 +44,7 @@ const categoryFormHiddenModel = computed({
 </script>
 
 <template>
-  <PACard variant="admin" class="panel">
+  <PACard variant="admin" class="panel p-3">
     <h3 class="admin-panel-title break-anywhere">二级分类：{{ selectedCategory.title || selectedCategory.id }} ({{ selectedCategory.id }})</h3>
     <div class="meta-line">
       内容 {{ Number(selectedCategory.count || 0) }} · 新增 {{ Number(selectedCategory.dynamicCount || 0) }}
@@ -93,7 +93,7 @@ const categoryFormHiddenModel = computed({
 
     <div
       v-if="actionFeedback"
-      class="action-feedback admin-feedback"
+      class="admin-feedback"
       :class="{ error: actionFeedbackError, success: !actionFeedbackError }"
     >
       {{ actionFeedback }}
@@ -105,10 +105,6 @@ const categoryFormHiddenModel = computed({
 
 <style scoped>
 .panel {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  padding: 12px;
   display: grid;
   gap: 10px;
 }
@@ -116,19 +112,6 @@ const categoryFormHiddenModel = computed({
 .meta-line {
   color: var(--muted);
   font-size: calc(12px * var(--ui-scale));
-}
-
-.action-feedback {
-  font-size: calc(13px * var(--ui-scale));
-  color: var(--muted);
-}
-
-.action-feedback.error {
-  color: var(--destructive);
-}
-
-.action-feedback.success {
-  color: var(--success);
 }
 
 .form-grid {

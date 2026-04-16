@@ -24,11 +24,11 @@ describe("admin content responsive layout", () => {
   });
 
   it("uses responsive layout for uploads view", () => {
-    const uploadsView = fs.readFileSync(
-      path.resolve(process.cwd(), "src/views/admin/AdminUploadsView.vue"),
+    const uploadsList = fs.readFileSync(
+      path.resolve(process.cwd(), "src/views/admin/uploads/UploadsListPanel.vue"),
       "utf8",
     );
     // Check for responsive patterns in Vue template/styles
-    expect(uploadsView).toMatch(/flex/);
+    expect(uploadsList).toMatch(/flex/);
   });
 });
