@@ -131,7 +131,7 @@ function onIntervalInput(value: string) {
   border-radius: 999px;
   padding: 4px 10px;
   background: var(--info-bg);
-  color: var(--info);
+  color: var(--foreground);
   font-size: calc(12px * var(--ui-scale));
   line-height: 1.2;
   white-space: nowrap;

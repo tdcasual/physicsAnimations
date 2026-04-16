@@ -201,7 +201,7 @@ const statCards = [
                 <ArrowRight class="h-4 w-4 text-muted-foreground opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100" />
               </div>
               <CardTitle class="text-base font-semibold">
-                <RouterLink :to="action.to" class="hover:text-primary transition-colors">
+                <RouterLink :to="action.to" class="text-card-foreground hover:text-primary transition-colors">
                   {{ action.title }}
                 </RouterLink>
               </CardTitle>
