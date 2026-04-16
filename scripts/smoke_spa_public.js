@@ -238,9 +238,8 @@ async function run() {
     });
     createdId = String(created.id);
     const createdItem = await loadItemById({ baseUrl, token: authToken, id: createdId });
-    const expectedFrameTarget = toViewerFrameExpectedTarget(createdItem?.src || "");
     const expectedOpenTarget = toViewerOpenExpectedTarget(createdItem?.src || "");
-    if (!expectedFrameTarget || !expectedOpenTarget) throw new Error("created upload item missing src");
+    if (!expectedOpenTarget) throw new Error("created upload item missing src");
 
     const itemGroupMeta = await findItemGroupMeta(baseUrl, createdId);
     const expectedGroupTitle = itemGroupMeta?.groupTitle || "";
@@ -285,21 +284,13 @@ async function run() {
       await page.screenshot({ path: screenshotCatalogPath, fullPage: false });
 
       await Promise.all([
-        page.waitForURL(new RegExp(`/viewer/${createdId}$`), { timeout: 10000 }),
+        page.waitForURL(new RegExp(`${expectedOpenTarget.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`), { timeout: 10000 }),
         card.click(),
       ]);
-      const openLink = page.getByRole("link", { name: /原页面|打开原页面/ });
-      await openLink.waitFor({ state: "visible", timeout: 10000 });
       await page.getByText(smokeTitle).first().waitFor({ state: "visible", timeout: 10000 });
       const viewerFrame = page.locator('iframe[title="作品"], iframe.viewer-frame').first();
-      await viewerFrame.waitFor({ state: "visible", timeout: 10000 });
-      const frameSrc = await viewerFrame.getAttribute("src");
-      if (frameSrc !== expectedFrameTarget) {
-        throw new Error(`viewer frame src mismatch: expected ${expectedFrameTarget}, got ${frameSrc}`);
-      }
-      const openHref = await openLink.getAttribute("href");
-      if (openHref !== expectedOpenTarget) {
-        throw new Error(`open link href mismatch: expected ${expectedOpenTarget}, got ${openHref}`);
+      if ((await viewerFrame.count()) > 0 && (await viewerFrame.isVisible().catch(() => false))) {
+        throw new Error("catalog default navigation should open the original page directly, but viewer iframe is still visible");
       }
       await page.screenshot({ path: screenshotViewerPath, fullPage: false });
 

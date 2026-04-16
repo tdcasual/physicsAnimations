@@ -106,3 +106,66 @@ test("createLinkItem cleans up thumbnail when state persistence fails", async ()
     fs.rmSync(rootDir, { recursive: true, force: true });
   }
 });
+
+test("createUploadItem returns a warning when thumbnail capture fails", async () => {
+  const rootDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-upload-warning-"));
+  const writes = [];
+  const state = { items: [] };
+
+  const loader = loadUploadIngestServiceWithMocks({
+    async captureScreenshotQueued() {
+      throw new Error("playwright_missing");
+    },
+    async assertPublicHttpUrl(value) {
+      return new URL(value);
+    },
+  });
+
+  try {
+    const service = loader.createUploadIngestService({
+      rootDir,
+      store: {
+        async writeBuffer(key, buffer) {
+          writes.push(key);
+          const target = path.join(rootDir, "content", key);
+          fs.mkdirSync(path.dirname(target), { recursive: true });
+          fs.writeFileSync(target, buffer);
+        },
+        async deletePath() {},
+      },
+      deps: {
+        mutateItemsState: async (_ctx, recipe) => {
+          recipe(state);
+          return null;
+        },
+        normalizeCategoryId: (value) => String(value || "other"),
+        warnScreenshotDeps: () => {},
+      },
+    });
+
+    const result = await service.createUploadItem({
+      fileBuffer: Buffer.from("<html><head><title>Demo</title></head><body>ok</body></html>", "utf8"),
+      originalName: "demo.html",
+      title: "",
+      description: "",
+      categoryId: "other",
+    });
+
+    assert.equal(result.ok, true);
+    assert.ok(result.id);
+    assert.equal(result.thumbnail, "");
+    assert.deepEqual(result.warnings, [
+      {
+        code: "thumbnail_capture_failed",
+        message: "封面生成失败，可稍后重试。",
+      },
+    ]);
+    assert.equal(state.items.length, 1);
+    assert.equal(state.items[0].thumbnail, "");
+    assert.equal(writes.some((key) => key.startsWith(`uploads/${result.id}/`)), true);
+    assert.equal(writes.includes(`thumbnails/${result.id}.png`), false);
+  } finally {
+    loader.restore();
+    fs.rmSync(rootDir, { recursive: true, force: true });
+  }
+});

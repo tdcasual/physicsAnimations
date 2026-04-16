@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { isCatalogAppRoute, normalizePublicUrl } from "../../features/catalog/catalogLink";
+import { getCatalogItemHref, isCatalogAppRoute, normalizePublicUrl } from "../../features/catalog/catalogLink";
 import type { CatalogItem } from "../../features/catalog/types";
 import CatalogTeacherWorkspaceEmptyState from "./CatalogTeacherWorkspaceEmptyState.vue";
 
@@ -21,7 +21,7 @@ const emit = defineEmits<{
 }>();
 
 function getItemHref(item: CatalogItem): string {
-  return normalizePublicUrl(item.href || item.src || "#");
+  return getCatalogItemHref(item);
 }
 
 function getNavigationComponent(item: CatalogItem) {

@@ -16,5 +16,7 @@ export function isCatalogAppRoute(href: string): boolean {
 }
 
 export function getCatalogItemHref(item: CatalogItem): string {
-  return normalizePublicUrl(item.href || item.src || "#");
+  const sourceHref = normalizePublicUrl(item.src || "");
+  if (sourceHref !== "#") return sourceHref;
+  return normalizePublicUrl(item.href || "#");
 }

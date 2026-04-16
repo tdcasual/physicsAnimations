@@ -121,7 +121,10 @@ const activeCategoryTitle = computed(() => {
     </div>
     
     <!-- Hero -->
-    <HeroSection />
+    <HeroSection
+      :item-count="view.items.length"
+      :category-count="view.categories.length"
+    />
 
     <!-- Filters - Sticky with subtle transition -->
     <div class="sticky top-16 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-sm">

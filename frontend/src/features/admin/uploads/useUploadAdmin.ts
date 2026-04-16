@@ -132,9 +132,10 @@ export function useUploadAdmin() {
         title: title.value.trim(),
         description: description.value.trim(),
       };
+      let created: any;
 
       try {
-        await uploadHtmlItem(basePayload);
+        created = await uploadHtmlItem(basePayload);
       } catch (err) {
         const e = err as { status?: number; data?: any };
         if (e?.data?.error !== "risky_html_requires_confirmation") throw err;
@@ -144,7 +145,7 @@ export function useUploadAdmin() {
           setActionFeedback("已取消风险上传。", true);
           return;
         }
-        await uploadHtmlItem({ ...basePayload, allowRiskyHtml: true });
+        created = await uploadHtmlItem({ ...basePayload, allowRiskyHtml: true });
       }
 
       file.value = null;
@@ -152,6 +153,13 @@ export function useUploadAdmin() {
       description.value = "";
       clearFieldErrors("uploadFile");
       await reloadUploads({ reset: true });
+
+      const warnings = Array.isArray(created?.warnings) ? created.warnings : [];
+      const thumbnailWarning = warnings.find((warning: { code?: string }) => warning?.code === "thumbnail_capture_failed");
+      if (thumbnailWarning) {
+        setActionFeedback("上传成功，但封面生成失败，可稍后重试。", false);
+        return;
+      }
       setActionFeedback("上传成功。", false);
     } catch (err) {
       const e = err as { status?: number; data?: any };

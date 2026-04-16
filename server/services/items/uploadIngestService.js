@@ -10,6 +10,13 @@ const { isZipUpload } = require("./uploadIngestUtils");
 const { ingestZipUpload } = require("./uploadZipIngest");
 const { ingestHtmlUpload } = require("./uploadHtmlIngest");
 
+function createThumbnailCaptureWarning() {
+  return {
+    code: "thumbnail_capture_failed",
+    message: "封面生成失败，可稍后重试。",
+  };
+}
+
 function createUploadIngestService({ rootDir, store, deps = {} }) {
   const mutateItemsState = deps.mutateItemsState;
   const normalizeCategoryId = deps.normalizeCategoryId || defaultNormalizeCategoryId;
@@ -27,6 +34,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
 
     let thumbnail = "";
     let thumbnailKey = "";
+    const warnings = [];
     let tmpDir = "";
     try {
       tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "pa-shot-"));
@@ -42,6 +50,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
       thumbnail = `content/${thumbnailKey}`;
     } catch (err) {
       warnScreenshotDeps(err);
+      warnings.push(createThumbnailCaptureWarning());
     } finally {
       if (tmpDir) fs.rmSync(tmpDir, { recursive: true, force: true });
     }
@@ -71,7 +80,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
       throw err;
     }
 
-    return { ok: true, id, thumbnail };
+    return { ok: true, id, thumbnail, warnings };
   }
 
   async function createUploadItem({
@@ -100,6 +109,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
     let inferredTitle = "";
     let inferredDescription = "";
     let wroteToStore = false;
+    const warnings = [];
 
     async function writeUploadBuffer(key, buffer, options) {
       wroteToStore = true;
@@ -150,6 +160,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
         thumbnail = `content/thumbnails/${id}.png`;
       } catch (err) {
         warnScreenshotDeps(err);
+        warnings.push(createThumbnailCaptureWarning());
       }
 
       await mutateItemsState({ store }, (state) => {
@@ -170,7 +181,7 @@ function createUploadIngestService({ rootDir, store, deps = {} }) {
         });
       });
 
-      return { ok: true, id, thumbnail };
+      return { ok: true, id, thumbnail, warnings };
     } catch (err) {
       if (wroteToStore) {
         await store.deletePath(`uploads/${id}`, { recursive: true }).catch(() => {});

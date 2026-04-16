@@ -98,7 +98,7 @@ export function useContentAdmin() {
     saving.value = true;
     setActionFeedback("");
     try {
-      await createLinkItem({
+      const created = await createLinkItem({
         url: normalizedUrl,
         categoryId: linkCategoryId.value,
         title: linkTitle.value.trim(),
@@ -109,6 +109,12 @@ export function useContentAdmin() {
       linkDescription.value = "";
       clearFieldErrors("createLinkUrl");
       await reloadItems({ reset: true });
+      const warnings = Array.isArray(created?.warnings) ? created.warnings : [];
+      const thumbnailWarning = warnings.find((warning: { code?: string }) => warning?.code === "thumbnail_capture_failed");
+      if (thumbnailWarning) {
+        setActionFeedback("链接已添加，但封面生成失败，可稍后重试。", false);
+        return;
+      }
       setActionFeedback("链接已添加。", false);
     } catch (err) {
       const e = err as { status?: number };

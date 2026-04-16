@@ -31,4 +31,4 @@ CMD ["npm", "start"]
 FROM runtime-base AS runtime-browser
 RUN npx playwright install --with-deps chromium && rm -rf /var/lib/apt/lists/*
 
-FROM runtime-base AS runtime
+FROM runtime-browser AS runtime

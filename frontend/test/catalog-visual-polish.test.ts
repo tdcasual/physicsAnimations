@@ -6,13 +6,16 @@ function read(relPath: string): string {
 }
 
 describe("catalog visual polish", () => {
-  it("uses a clean hero section with centered typography and stats", () => {
+  it("keeps the hero section centered while avoiding inflated hard-coded stats", () => {
     const vue = read("src/views/catalog/components/HeroSection.vue");
 
     expect(vue).toMatch(/text-center/);
     expect(vue).toMatch(/font-serif/);
-    expect(vue).toMatch(/100\+/);
-    expect(vue).toMatch(/演示/);
+    expect(vue).toMatch(/itemCount/);
+    expect(vue).toMatch(/categoryCount/);
+    expect(vue).not.toMatch(/100\+/);
+    expect(vue).not.toMatch(/>6</);
+    expect(vue).not.toMatch(/免费/);
   });
 
   it("uses gallery cards with subtle hover effect", () => {

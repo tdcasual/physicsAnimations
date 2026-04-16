@@ -3,7 +3,7 @@ import type { CatalogItem } from "../src/features/catalog/types";
 import { getCatalogItemHref, isCatalogAppRoute, normalizePublicUrl } from "../src/features/catalog/catalogLink";
 
 describe("catalog link selection", () => {
-  it("prefers viewer route for external link items when href is provided", () => {
+  it("defaults external link items to their original page when src is available", () => {
     const item: CatalogItem = {
       id: "link-1",
       type: "link",
@@ -16,10 +16,10 @@ describe("catalog link selection", () => {
       order: 0,
     };
 
-    expect(getCatalogItemHref(item)).toBe("/viewer/link-1");
+    expect(getCatalogItemHref(item)).toBe("https://example.com/link-1");
   });
 
-  it("prefers viewer route for upload items when href is provided", () => {
+  it("defaults upload items to their original page when src is available", () => {
     const item: CatalogItem = {
       id: "upload-2",
       type: "upload",
@@ -32,7 +32,7 @@ describe("catalog link selection", () => {
       order: 0,
     };
 
-    expect(getCatalogItemHref(item)).toBe("/viewer/upload-2");
+    expect(getCatalogItemHref(item)).toBe("/uploads/upload-2.html");
   });
 
   it("falls back to original source when viewer href is missing", () => {
@@ -49,6 +49,22 @@ describe("catalog link selection", () => {
     };
 
     expect(getCatalogItemHref(item)).toBe("/uploads/upload-1.html");
+  });
+
+  it("falls back to viewer route when original source is unavailable", () => {
+    const item: CatalogItem = {
+      id: "viewer-only-1",
+      type: "link",
+      categoryId: "other",
+      title: "查看器兜底",
+      description: "",
+      href: "/viewer/viewer-only-1",
+      src: "",
+      thumbnail: "",
+      order: 0,
+    };
+
+    expect(getCatalogItemHref(item)).toBe("/viewer/viewer-only-1");
   });
 
 
