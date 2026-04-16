@@ -117,7 +117,7 @@ function getStatusBadge(item: AdminItemRow) {
                 as-child
                 class="h-8 w-8 p-0 rounded-full"
               >
-                <a :href="props.previewHref(item)" target="_blank" rel="noreferrer">
+                <a :href="props.previewHref(item)" target="_blank" rel="noreferrer" aria-label="在新窗口预览">
                   <ExternalLink class="h-4 w-4" />
                 </a>
               </Button>
@@ -136,6 +136,7 @@ function getStatusBadge(item: AdminItemRow) {
                 variant="ghost"
                 size="sm"
                 :disabled="props.saving"
+                aria-label="删除"
                 class="h-8 w-8 p-0 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
                 @click="emit('remove-item', item.id)"
               >

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import AdminMobileSheet from "@/components/admin/AdminMobileSheet.vue";
 import { PAButton, PAField, PAInput } from "@/components/ui/patterns";
 import type { LibraryAsset } from "../../features/library/types";
@@ -12,7 +12,7 @@ import EmbedProfileEditPanel from "./library/panels/EmbedProfileEditPanel.vue";
 import FolderPanel from "./library/panels/FolderPanel.vue";
 import OperationLogPanel from "./library/panels/OperationLogPanel.vue";
 
-const vm = reactive(useLibraryAdminState());
+const vm = useLibraryAdminState();
 type MobileLibrarySheet = "folder-create" | "folder" | "asset" | "embed" | null;
 
 const librarySidebarTopRef = ref<HTMLElement | null>(null);

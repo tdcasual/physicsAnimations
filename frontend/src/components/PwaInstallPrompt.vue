@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { Download, X } from 'lucide-vue-next';
 
 interface BeforeInstallPromptEvent extends Event {
@@ -11,55 +11,45 @@ const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null);
 const showPrompt = ref(false);
 const isInstalled = ref(false);
 
+function onBeforeInstallPrompt(e: Event) {
+  e.preventDefault();
+  deferredPrompt.value = e as BeforeInstallPromptEvent;
+  showPrompt.value = true;
+}
+
+function onAppInstalled() {
+  isInstalled.value = true;
+  showPrompt.value = false;
+  deferredPrompt.value = null;
+}
+
 onMounted(() => {
-  // Check if already installed
   if (window.matchMedia('(display-mode: standalone)').matches) {
     isInstalled.value = true;
     return;
   }
-  
-  // Listen for beforeinstallprompt event
-  window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevent the mini-infobar from appearing on mobile
-    e.preventDefault();
-    // Store the event for later use
-    deferredPrompt.value = e as BeforeInstallPromptEvent;
-    // Show our custom install prompt
-    showPrompt.value = true;
-  });
-  
-  // Listen for appinstalled event
-  window.addEventListener('appinstalled', () => {
-    isInstalled.value = true;
-    showPrompt.value = false;
-    deferredPrompt.value = null;
-    console.log('PWA was installed');
-  });
+
+  window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+  window.addEventListener('appinstalled', onAppInstalled);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+  window.removeEventListener('appinstalled', onAppInstalled);
 });
 
 async function installPwa() {
   if (!deferredPrompt.value) return;
-  
-  // Show the install prompt
+
   deferredPrompt.value.prompt();
-  
-  // Wait for the user to respond
-  const { outcome } = await deferredPrompt.value.userChoice;
-  
-  if (outcome === 'accepted') {
-    console.log('User accepted the install prompt');
-  } else {
-    console.log('User dismissed the install prompt');
-  }
-  
-  // Clear the deferredPrompt
+  await deferredPrompt.value.userChoice;
+
   deferredPrompt.value = null;
   showPrompt.value = false;
 }
 
 function dismissPrompt() {
   showPrompt.value = false;
-  // Store dismissal time to avoid showing again too soon
   localStorage.setItem('pwa-install-dismissed', Date.now().toString());
 }
 </script>

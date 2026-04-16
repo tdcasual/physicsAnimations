@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, ref } from "vue";
 import type { AdminItemRow } from "../../features/admin/adminApi";
 import { useContentAdmin } from "../../features/admin/content/useContentAdmin";
 import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
@@ -9,7 +9,7 @@ import { PACard } from "@/components/ui/patterns";
 import ContentListPanel from "./content/ContentListPanel.vue";
 import AdminSplitLayout from "@/components/admin/AdminSplitLayout.vue";
 
-const vm = reactive(useContentAdmin());
+const vm = useContentAdmin();
 const mobileEditorSheetMaxWidth = 640;
 const isEditorSheetOpen = computed(() => Boolean(vm.selectedItem));
 const contentSplitLayoutRef = ref<{ panelRef: HTMLElement | null } | null>(null);

@@ -74,20 +74,22 @@ function reportMetric(
 /**
  * 初始化 Core Web Vitals 监控
  */
-export function initWebVitals(options: WebVitalsReportOptions = {}) {
-  if (typeof window === "undefined") return;
+export function initWebVitals(options: WebVitalsReportOptions = {}): () => void {
+  const cleanups: (() => void)[] = [];
+
+  if (typeof window === "undefined") {
+    return () => {};
+  }
 
   const opts = {
     debug: import.meta.env.DEV,
     ...options,
   };
 
-  // 动态导入 web-vitals 库 (如果可用)
   import("web-vitals")
     .then((webVitals) => {
       const metrics: WebVitalsMetrics = {};
       const { onLCP, onCLS, onFCP, onTTFB, onINP } = webVitals;
-      // FID 在 web-vitals v4 中已移除，使用类型安全的访问
       const onFID = (webVitals as unknown as Record<string, ((cb: (m: { value: number }) => void) => void)>).onFID;
 
       onLCP((metric: { value: number }) => {
@@ -95,7 +97,6 @@ export function initWebVitals(options: WebVitalsReportOptions = {}) {
         reportMetric("lcp", metric.value, opts);
       });
 
-      // FID 是可选的（在 web-vitals v4 中已弃用）
       if (onFID) {
         onFID((metric: { value: number }) => {
           metrics.fid = metric.value;
@@ -118,7 +119,6 @@ export function initWebVitals(options: WebVitalsReportOptions = {}) {
         reportMetric("ttfb", metric.value, opts);
       });
 
-      // Interaction to Next Paint (INP) - 新的核心指标
       if (onINP) {
         onINP((metric) => {
           metrics.inp = metric.value;
@@ -126,24 +126,31 @@ export function initWebVitals(options: WebVitalsReportOptions = {}) {
         });
       }
 
-      // 页面卸载时上报所有指标
-      window.addEventListener("visibilitychange", () => {
+      function onVisibilityChange() {
         if (document.visibilityState === "hidden" && options.onReport) {
           options.onReport(metrics);
         }
-      });
+      }
+      window.addEventListener("visibilitychange", onVisibilityChange);
+      cleanups.push(() => window.removeEventListener("visibilitychange", onVisibilityChange));
     })
     .catch(() => {
-      // web-vitals 库未安装，使用原生 Performance API
-      observeNativePerformance(opts);
+      const nativeCleanup = observeNativePerformance(opts);
+      cleanups.push(nativeCleanup);
     });
+
+  return () => {
+    cleanups.forEach((fn) => fn());
+    cleanups.length = 0;
+  };
 }
 
 /**
  * 使用原生 Performance API 作为 fallback
  */
-function observeNativePerformance(options: WebVitalsReportOptions) {
-  // 观察 Largest Contentful Paint
+function observeNativePerformance(options: WebVitalsReportOptions): () => void {
+  const cleanups: (() => void)[] = [];
+
   if ("PerformanceObserver" in window) {
     try {
       const lcpObserver = new PerformanceObserver((list) => {
@@ -154,11 +161,11 @@ function observeNativePerformance(options: WebVitalsReportOptions) {
         }
       });
       lcpObserver.observe({ entryTypes: ["largest-contentful-paint"] });
+      cleanups.push(() => lcpObserver.disconnect());
     } catch {
       // 浏览器不支持 LCP
     }
 
-    // 观察 First Input Delay
     try {
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
@@ -168,11 +175,11 @@ function observeNativePerformance(options: WebVitalsReportOptions) {
         }
       });
       fidObserver.observe({ entryTypes: ["first-input"] });
+      cleanups.push(() => fidObserver.disconnect());
     } catch {
       // 浏览器不支持 FID
     }
 
-    // 观察 Layout Shift
     try {
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
@@ -185,13 +192,13 @@ function observeNativePerformance(options: WebVitalsReportOptions) {
         reportMetric("cls", clsValue, options);
       });
       clsObserver.observe({ entryTypes: ["layout-shift"] });
+      cleanups.push(() => clsObserver.disconnect());
     } catch {
       // 浏览器不支持 CLS
     }
   }
 
-  // 获取 FCP 和 TTFB
-  window.addEventListener("load", () => {
+  function onLoad() {
     setTimeout(() => {
       const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
       const paint = performance.getEntriesByType("paint");
@@ -205,7 +212,15 @@ function observeNativePerformance(options: WebVitalsReportOptions) {
         reportMetric("fcp", fcpEntry.startTime, options);
       }
     }, 0);
-  });
+  }
+
+  window.addEventListener("load", onLoad);
+  cleanups.push(() => window.removeEventListener("load", onLoad));
+
+  return () => {
+    cleanups.forEach((fn) => fn());
+    cleanups.length = 0;
+  };
 }
 
 /**

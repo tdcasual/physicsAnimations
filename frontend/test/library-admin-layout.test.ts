@@ -184,7 +184,7 @@ describe("admin library layout", () => {
 
   it("consumes library admin state via a single vm object in the view shell", () => {
     const { view, template } = readLibrarySources();
-    expect(view).toMatch(/const vm = reactive\(useLibraryAdminState\(\)\);/);
+    expect(view).toMatch(/const vm = useLibraryAdminState\(\);/);
     expect(view).not.toMatch(/const\s*\{[\s\S]*\}\s*=\s*useLibraryAdminState\(\);/);
     expect(template).toMatch(/vm\./);
     expect(view).toMatch(/mobileLibraryToolsOpen/);

@@ -78,8 +78,7 @@ export function createSystemWizardBindings(params: SystemWizardBindingsParams) {
   }
 
   function applyStorage(nextStorage: unknown, options: { resetStep: boolean } = { resetStep: false }) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const s = (nextStorage as Record<string, any> | null) || {};
+    const s = (nextStorage as Record<string, unknown> | null) || {};
     const timeoutCandidate = Number(s.webdav?.timeoutMs);
     const normalizedTimeoutMs = Number.isFinite(timeoutCandidate) ? Math.trunc(timeoutCandidate) : 15000;
 
@@ -119,8 +118,7 @@ export function createSystemWizardBindings(params: SystemWizardBindingsParams) {
   }
 
   function applyEmbedUpdater(nextEmbedUpdater: unknown) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const eu = (nextEmbedUpdater as Record<string, any> | null) || {};
+    const eu = (nextEmbedUpdater as Record<string, unknown> | null) || {};
     const summary = eu.lastSummary && typeof eu.lastSummary === "object" ? eu.lastSummary : {};
     const intervalCandidate = Number(eu.intervalDays);
     const intervalDays = Number.isFinite(intervalCandidate) ? Math.trunc(intervalCandidate) : 20;
@@ -143,7 +141,7 @@ export function createSystemWizardBindings(params: SystemWizardBindingsParams) {
       },
     };
 
-    params.embedUpdaterEnabled.value = params.embedUpdater.value!.enabled;
+    params.embedUpdaterEnabled.value = params.embedUpdater.value?.enabled ?? false;
     params.embedUpdaterIntervalDays.value = intervalDays;
     markLoadedEmbedUpdaterSnapshot();
   }
