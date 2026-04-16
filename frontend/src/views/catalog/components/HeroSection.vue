@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronDown } from "lucide-vue-next";
-import { computed, onMounted } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
+import type { GSAPType } from "../../../lib/gsap";
 
 const props = withDefaults(defineProps<{
   itemCount?: number;
@@ -30,33 +31,48 @@ const stats = computed(() => {
   ];
 });
 
+let tweens: GSAPType.core.Tween[] = [];
+
 onMounted(async () => {
   const { initGsap } = await import("../../../lib/gsap");
   const { gsap } = await initGsap();
 
-  gsap.fromTo(
-    ".hero-title",
-    { y: 30, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }
+  tweens.push(
+    gsap.fromTo(
+      ".hero-title",
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }
+    )
   );
 
-  gsap.fromTo(
-    ".hero-subtitle",
-    { y: 20, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power2.out" }
+  tweens.push(
+    gsap.fromTo(
+      ".hero-subtitle",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power2.out" }
+    )
   );
 
-  gsap.fromTo(
-    ".hero-stats",
-    { y: 20, opacity: 0 },
-    { y: 0, opacity: 1, duration: 0.6, delay: 0.4, stagger: 0.1, ease: "power2.out" }
+  tweens.push(
+    gsap.fromTo(
+      ".hero-stats",
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.6, delay: 0.4, stagger: 0.1, ease: "power2.out" }
+    )
   );
 
-  gsap.fromTo(
-    ".hand-drawn-decoration",
-    { scale: 0, rotation: -20 },
-    { scale: 1, rotation: 0, duration: 0.6, delay: 0.6, ease: "back.out(1.7)", stagger: 0.1 }
+  tweens.push(
+    gsap.fromTo(
+      ".hand-drawn-decoration",
+      { scale: 0, rotation: -20 },
+      { scale: 1, rotation: 0, duration: 0.6, delay: 0.6, ease: "back.out(1.7)", stagger: 0.1 }
+    )
   );
+});
+
+onUnmounted(() => {
+  tweens.forEach((t) => t.kill());
+  tweens = [];
 });
 </script>
 

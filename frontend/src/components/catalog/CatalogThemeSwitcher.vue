@@ -30,8 +30,8 @@ function getButtonClasses(themeId: string) {
         baseClasses,
         "border-2",
         isActive
-          ? "bg-white border-gray-800 shadow-[2px_2px_0_rgba(0,0,0,0.1)] translate-y-[-1px]"
-          : "bg-transparent border-transparent hover:border-gray-300 hover:bg-gray-50"
+          ? "tsw-btn-handdrawn-active translate-y-[-1px]"
+          : "tsw-btn-handdrawn-idle"
       );
 
     case "brutalist":
@@ -39,8 +39,8 @@ function getButtonClasses(themeId: string) {
         baseClasses,
         "border-[3px] border-black",
         isActive
-          ? "bg-black text-white shadow-[2px_2px_0_#666]"
-          : "bg-white hover:shadow-[2px_2px_0_var(--cat-ink)] hover:translate-y-[-1px]"
+          ? "tsw-btn-brutalist-active shadow-[2px_2px_0_#666]"
+          : "tsw-btn-brutalist-idle hover:shadow-[2px_2px_0_var(--cat-ink)] hover:translate-y-[-1px]"
       );
 
     default:
@@ -49,8 +49,8 @@ function getButtonClasses(themeId: string) {
         baseClasses,
         "border",
         isActive
-          ? "bg-gray-900 text-white border-gray-900"
-          : "bg-white text-gray-600 border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+          ? "tsw-btn-minimal-active"
+          : "tsw-btn-minimal-idle"
       );
   }
 }
@@ -59,9 +59,7 @@ function getButtonClasses(themeId: string) {
 <template>
   <div class="catalog-theme-switcher group">
     <!-- 触发按钮 -->
-    <div
-      class="relative flex items-center gap-1 p-1 rounded-xl bg-white/80 backdrop-blur-sm border border-gray-200/50 shadow-sm hover:shadow-md transition-shadow"
-    >
+    <div class="tsw-trigger">
       <button
         v-for="theme in availableThemes"
         :key="theme.id"
@@ -69,6 +67,7 @@ function getButtonClasses(themeId: string) {
         :class="getButtonClasses(theme.id)"
         :title="`${theme.label} - ${theme.description}`"
         :aria-label="`${theme.label} - ${theme.description}`"
+        :aria-pressed="currentTheme === theme.id"
         @click="handleThemeChange(theme.id)"
       >
         <span class="select-none">{{ theme.icon }}</span>
@@ -78,8 +77,8 @@ function getButtonClasses(themeId: string) {
           v-if="currentTheme === theme.id"
           class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full"
           :class="{
-            'bg-gray-400': currentTheme === 'minimal',
-            'bg-gray-600': currentTheme === 'handdrawn',
+            'tsw-dot-minimal': currentTheme === 'minimal',
+            'tsw-dot-handdrawn': currentTheme === 'handdrawn',
             'bg-white': currentTheme === 'brutalist',
           }"
         />
@@ -87,9 +86,7 @@ function getButtonClasses(themeId: string) {
     </div>
 
     <!-- 当前主题提示（悬停显示） -->
-    <div
-      class="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-2 py-1 text-xs text-gray-500 bg-white/90 rounded-md shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
-    >
+    <div class="tsw-tooltip">
       {{ currentThemeConfig.label }}模式
     </div>
   </div>
@@ -101,6 +98,97 @@ function getButtonClasses(themeId: string) {
   display: inline-flex;
   flex-direction: column;
   align-items: center;
+}
+
+.tsw-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s ease;
+}
+
+.tsw-trigger:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+
+.tsw-btn-handdrawn-active {
+  background: #ffffff;
+  border-color: #1f2937;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.tsw-btn-handdrawn-idle {
+  background: transparent;
+  border-color: transparent;
+}
+
+.tsw-btn-handdrawn-idle:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.tsw-btn-brutalist-active {
+  background: #000000;
+  color: #ffffff;
+}
+
+.tsw-btn-brutalist-idle {
+  background: #ffffff;
+}
+
+.tsw-btn-minimal-active {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.tsw-btn-minimal-idle {
+  background: #ffffff;
+  color: #4b5563;
+  border-color: #e5e7eb;
+}
+
+.tsw-btn-minimal-idle:hover {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.tsw-dot-minimal {
+  background: #9ca3af;
+}
+
+.tsw-dot-handdrawn {
+  background: #4b5563;
+}
+
+.tsw-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  line-height: 1;
+  color: #6b7280;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.group:hover .tsw-tooltip {
+  opacity: 1;
 }
 
 /* 手绘风样式覆盖 */

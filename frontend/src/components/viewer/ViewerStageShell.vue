@@ -35,7 +35,7 @@ const emit = defineEmits<{
           v-if="props.screenshotUrl && props.screenshotVisible"
           class="absolute inset-0 z-10 h-full w-full object-contain"
           :src="props.normalizedScreenshotSrc"
-          alt=""
+          alt="作品截图"
         />
         <iframe
           v-if="props.interactiveStarted"

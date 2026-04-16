@@ -41,7 +41,7 @@ onUnmounted(() => {
   <!-- Offline Indicator (Fixed) -->
   <div
     v-if="!isOnline"
-    class="fixed top-0 left-0 right-0 z-50 bg-gray-900 text-white px-4 py-2 flex items-center justify-center gap-2 text-sm"
+    class="fixed top-0 left-0 right-0 z-50 pwa-offline-bar px-4 py-2 flex items-center justify-center gap-2 text-sm"
   >
     <WifiOff class="w-4 h-4" />
     <span>离线模式 - 部分功能可能不可用</span>
@@ -58,7 +58,7 @@ onUnmounted(() => {
   >
     <div
       v-if="showBanner"
-      class="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-3 text-sm font-medium"
+      class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pwa-online-banner px-6 py-3 rounded-full shadow-lg flex items-center gap-3 text-sm font-medium"
     >
       <Wifi class="w-4 h-4" />
       <span>已恢复网络连接</span>
@@ -73,3 +73,15 @@ onUnmounted(() => {
     </div>
   </Transition>
 </template>
+
+<style scoped>
+.pwa-offline-bar {
+  background: var(--pwa-offline-bg, #111827);
+  color: #ffffff;
+}
+
+.pwa-online-banner {
+  background: var(--pwa-online-bg, #16a34a);
+  color: #ffffff;
+}
+</style>

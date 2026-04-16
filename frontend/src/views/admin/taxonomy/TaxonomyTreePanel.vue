@@ -103,6 +103,7 @@ function onToggle(groupId: string, event: Event) {
             type="button"
             class="category-item"
             :class="{ selected: selection?.kind === 'category' && selection.id === category.id }"
+            :aria-pressed="selection?.kind === 'category' && selection.id === category.id"
             @click="emit('select-category', category.id)"
           >
             <div class="category-title break-anywhere">

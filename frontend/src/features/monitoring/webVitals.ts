@@ -46,7 +46,9 @@ function reportMetric(
   const rating = getRating(name as keyof typeof THRESHOLDS, value);
 
   if (options.debug) {
-    console.log(`[Web Vitals] ${name}: ${value}${name === "cls" ? "" : "ms"} (${rating})`);
+    if (import.meta.env.DEV) {
+      console.log(`[Web Vitals] ${name}: ${value}${name === "cls" ? "" : "ms"} (${rating})`);
+    }
   }
 
   // 发送到 Google Analytics 或自定义分析平台

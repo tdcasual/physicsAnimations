@@ -54,7 +54,7 @@ function isFavorited(itemId: string): boolean {
           @click="emit('open-item', props.fallbackHash)"
         >
           <div class="catalog-teacher-thumb">
-            <img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" alt="" loading="lazy" />
+            <img v-if="item.thumbnail" :src="normalizePublicUrl(item.thumbnail)" :alt="item.title" loading="lazy" />
             <div v-else class="catalog-thumb-placeholder">{{ item.title?.slice(0, 2) || "?" }}</div>
           </div>
           <div class="catalog-teacher-body">

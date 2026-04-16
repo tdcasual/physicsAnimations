@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import { useCatalogViewState } from "@/features/catalog/useCatalogViewState";
 import { useCatalogTheme } from "@/features/catalog/theme";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import type { ScrollTriggerType } from "@/lib/gsap";
 
 import HeroSection from "./catalog/components/HeroSection.vue";
 import FilterTabs from "./catalog/components/FilterTabs.vue";
@@ -27,6 +27,7 @@ const { currentTheme, initTheme } = useCatalogTheme();
 const gridRef = ref<HTMLElement | null>(null);
 const hasAnimated = ref(false);
 let animationTimeoutId: number | null = null;
+let gridScrollTrigger: ScrollTriggerType | null = null;
 
 function getFolderHref(folderId: string): string {
   const base = import.meta.env.BASE_URL || "/";
@@ -39,25 +40,35 @@ async function animateGrid() {
   if (cards.length === 0) return;
 
   const { initGsap } = await import("@/lib/gsap");
-  const { gsap } = await initGsap();
+  const { gsap, ScrollTrigger } = await initGsap();
 
-  gsap.fromTo(
-    cards,
-    { y: 60, opacity: 0, scale: 0.95 },
-    {
-      y: 0,
-      opacity: 1,
-      scale: 1,
-      duration: 0.6,
-      stagger: 0.08,
-      ease: "power3.out",
-      scrollTrigger: {
-        trigger: gridRef.value,
-        start: "top 85%",
-        once: true,
-      },
-    }
-  );
+  // Clean up previous scroll trigger for this grid
+  if (gridScrollTrigger) {
+    gridScrollTrigger.kill();
+    gridScrollTrigger = null;
+  }
+
+  const st = ScrollTrigger.create({
+    trigger: gridRef.value,
+    start: "top 85%",
+    once: true,
+    onEnter: () => {
+      gsap.fromTo(
+        cards,
+        { y: 60, opacity: 0, scale: 0.95 },
+        {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.6,
+          stagger: 0.08,
+          ease: "power3.out",
+        }
+      );
+    },
+  });
+
+  gridScrollTrigger = st;
 }
 
 // Re-animate when content changes
@@ -80,6 +91,10 @@ watch(
 onUnmounted(() => {
   if (animationTimeoutId !== null) {
     clearTimeout(animationTimeoutId);
+  }
+  if (gridScrollTrigger) {
+    gridScrollTrigger.kill();
+    gridScrollTrigger = null;
   }
 });
 

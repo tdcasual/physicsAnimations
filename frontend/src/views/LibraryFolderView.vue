@@ -129,7 +129,7 @@ watch(
           <p class="library-folder-summary">{{ folderSummary }}</p>
         </div>
         <div class="library-folder-cover" :class="{ 'is-empty': !folderCoverUrl }">
-          <img v-if="folderCoverUrl" :src="folderCoverUrl" alt="" loading="lazy" />
+          <img v-if="folderCoverUrl" :src="folderCoverUrl" :alt="pageHeading" loading="lazy" />
           <div v-else class="library-folder-cover-placeholder">Archive</div>
         </div>
       </div>

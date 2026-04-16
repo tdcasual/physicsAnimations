@@ -14,7 +14,10 @@ function toHeaderRecord(headers?: HeadersInit): Record<string, string> {
     }
     return out;
   }
-  return { ...(headers as unknown as Record<string, string>) };
+  return Object.fromEntries(
+    Object.entries(headers as Record<string, string | number | boolean>)
+      .filter(([, v]) => typeof v === "string")
+  ) as Record<string, string>;
 }
 
 function buildHeaders(headers?: HeadersInit, token = ""): Record<string, string> {
@@ -58,18 +61,16 @@ export async function apiFetchJson<T>(params: {
     onUnauthorized?.();
   }
 
-  if (response.ok) return data as T;
+  if (response.ok) return data as unknown as T;
 
   if (typeof toError === "function") {
     throw toError(response.status, data);
   }
 
-  const fallback = new Error(typeof data?.error === "string" ? data.error : "request_failed") as Error & {
-    status?: number;
-    data?: ApiErrorData | null;
-  };
-  fallback.status = response.status;
-  fallback.data = data as ApiErrorData | null;
+  const fallback = Object.assign(
+    new Error(typeof data?.error === "string" ? data.error : "request_failed"),
+    { status: response.status, data: data as ApiErrorData | null }
+  );
   throw fallback;
 }
 
