@@ -49,6 +49,10 @@ export function useLibraryAdminDraftState() {
   const selectedFolder = computed(() => folders.value.find((folder) => folder.id === selectedFolderId.value) || null);
   const editingAsset = computed(() => folderAssets.value.find((asset) => asset.id === editingAssetId.value) || null);
 
+  const assetFileKey = ref(0);
+  const createCoverFileKey = ref(0);
+  const coverFileKey = ref(0);
+
   return {
     folders,
     selectedFolderId,
@@ -91,5 +95,8 @@ export function useLibraryAdminDraftState() {
     folderListLoadSeq,
     selectedFolder,
     editingAsset,
+    assetFileKey,
+    createCoverFileKey,
+    coverFileKey,
   };
 }

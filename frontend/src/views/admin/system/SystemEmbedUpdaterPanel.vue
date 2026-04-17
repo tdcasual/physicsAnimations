@@ -24,6 +24,11 @@ const emit = defineEmits<{
 
 const statusLabel = computed(() => props.embedUpdater?.lastSummary?.status || "idle");
 
+const nextRunAtFormatted = computed(() => props.formatDate(props.embedUpdater?.nextRunAt || ""));
+const lastCheckedAtFormatted = computed(() => props.formatDate(props.embedUpdater?.lastCheckedAt || ""));
+const lastRunAtFormatted = computed(() => props.formatDate(props.embedUpdater?.lastRunAt || ""));
+const lastSuccessAtFormatted = computed(() => props.formatDate(props.embedUpdater?.lastSuccessAt || ""));
+
 function onEnabledChange(event: Event) {
   const input = event.target as HTMLInputElement | null;
   emit("update:enabled", input?.checked === true);
@@ -72,19 +77,19 @@ function onIntervalInput(value: string) {
     <div class="status-grid">
       <div class="status-item">
         <span>下次计划</span>
-        <strong class="break-anywhere">{{ formatDate(embedUpdater?.nextRunAt || '') }}</strong>
+        <strong class="break-anywhere">{{ nextRunAtFormatted }}</strong>
       </div>
       <div class="status-item">
         <span>上次检查</span>
-        <strong class="break-anywhere">{{ formatDate(embedUpdater?.lastCheckedAt || '') }}</strong>
+        <strong class="break-anywhere">{{ lastCheckedAtFormatted }}</strong>
       </div>
       <div class="status-item">
         <span>上次执行</span>
-        <strong class="break-anywhere">{{ formatDate(embedUpdater?.lastRunAt || '') }}</strong>
+        <strong class="break-anywhere">{{ lastRunAtFormatted }}</strong>
       </div>
       <div class="status-item">
         <span>上次成功</span>
-        <strong class="break-anywhere">{{ formatDate(embedUpdater?.lastSuccessAt || '') }}</strong>
+        <strong class="break-anywhere">{{ lastSuccessAtFormatted }}</strong>
       </div>
       <div class="status-item">
         <span>GeoGebra</span>

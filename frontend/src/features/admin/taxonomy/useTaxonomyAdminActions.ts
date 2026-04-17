@@ -53,22 +53,38 @@ function resolveAuthError(status?: number, fallbackText = "操作失败。"): st
 }
 
 export function createTaxonomyAdminActions(ctx: TaxonomyAdminActionsParams) {
+  let latestRequestSeq = 0;
+
+  function nextRequestSeq(): number {
+    latestRequestSeq += 1;
+    return latestRequestSeq;
+  }
+
+  function isLatestRequest(seq: number): boolean {
+    return seq === latestRequestSeq;
+  }
+
   async function reloadTaxonomy() {
+    const requestSeq = nextRequestSeq();
     ctx.loading.value = true;
     ctx.errorText.value = "";
 
     try {
       const data = await listTaxonomy();
+      if (!isLatestRequest(requestSeq)) return;
       ctx.groups.value = Array.isArray(data?.groups) ? data.groups : [];
       ctx.categories.value = Array.isArray(data?.categories) ? data.categories : [];
 
       ctx.syncSelectionAndOpenGroups();
       ctx.syncFormsFromSelection();
     } catch (err) {
+      if (!isLatestRequest(requestSeq)) return;
       const e = err as { status?: number };
       ctx.errorText.value = resolveAuthError(e?.status, "加载分类数据失败。");
     } finally {
-      ctx.loading.value = false;
+      if (isLatestRequest(requestSeq)) {
+        ctx.loading.value = false;
+      }
     }
   }
 

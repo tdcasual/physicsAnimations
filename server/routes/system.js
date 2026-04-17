@@ -15,6 +15,7 @@ const {
   noSave,
 } = require("../lib/systemState");
 const { syncWithWebdav } = require("../lib/webdavSync");
+const { assertPublicHttpUrl } = require("../lib/ssrf");
 
 function applyIncomingWebdav(current, incoming) {
   const nextWebdav = { ...(current || {}) };
@@ -204,14 +205,17 @@ function createSystemRouter({ authConfig, store, taskQueue, rootDir, updateStore
     }
 
     try {
+      await assertPublicHttpUrl(nextWebdav.url);
       const webdav = createWebdavStore(nextWebdav);
       await webdav.listDir("", { depth: 0 });
       res.json({ ok: true });
     } catch (err) {
-      const message = String(err?.message || "webdav_connect_failed");
+      if (err.status === 400) {
+        res.status(400).json({ error: err.message || "invalid_webdav_url" });
+        return;
+      }
       res.status(502).json({
         error: "webdav_connect_failed",
-        reason: message,
       });
     }
   });

@@ -37,10 +37,39 @@ function normalizeBasePath(rawValue, fallback = "physicsAnimations") {
   return parts.join("/");
 }
 
+function isLiteralBlockedIp(hostname) {
+  if (!hostname) return true;
+  if (hostname === "localhost" || hostname.endsWith(".local")) return true;
+  const parts = hostname.split(".");
+  if (parts.length === 4 && parts.every((p) => /^\d+$/.test(p))) {
+    const [a, b] = parts.map(Number);
+    if (a === 10) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 0) return true;
+  }
+  return false;
+}
+
 function createWebdavStore(options = {}) {
   const rawUrl = options.url ?? process.env.WEBDAV_URL ?? "";
   if (!rawUrl) {
     throw new Error("WEBDAV_URL is required when STORAGE_MODE=webdav");
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(rawUrl);
+  } catch {
+    throw new Error("invalid_webdav_url");
+  }
+  if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+    throw new Error("invalid_webdav_url_protocol");
+  }
+  if (process.env.NODE_ENV === "production" && isLiteralBlockedIp(parsedUrl.hostname)) {
+    throw new Error("blocked_webdav_url");
   }
 
   const timeoutMs = normalizeTimeoutMs(options.timeoutMs ?? process.env.WEBDAV_TIMEOUT_MS, 15000);

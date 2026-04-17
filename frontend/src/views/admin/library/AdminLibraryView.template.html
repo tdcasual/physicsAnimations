@@ -122,7 +122,7 @@
           </select>
         </PAField>
         <PAField label="创建时封面（可选）">
-          <input id="library-create-cover-file" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
+          <input id="library-create-cover-file" :key="vm.drafts.createCoverFileKey" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
         </PAField>
         <PAActions align="end">
           <PAButton variant="primary" :disabled="vm.ui.savingFolder" @click="vm.actions.createFolderEntry">创建文件夹</PAButton>
@@ -350,7 +350,7 @@
               </select>
             </PAField>
             <PAField label="创建时封面（可选）">
-              <input id="library-create-cover-file-sheet" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
+              <input id="library-create-cover-file-sheet" :key="vm.drafts.createCoverFileKey + '-sheet'" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder" @change="vm.actions.onCreateCoverFileChange" />
             </PAField>
             <PAActions align="end">
               <PAButton variant="ghost" :disabled="vm.ui.savingFolder" @click="closeMobileLibrarySheet">取消</PAButton>
@@ -409,7 +409,7 @@
               </button>
               <div v-if="vm.actions.isPanelSectionOpen('folder:cover')" class="panel-section-body">
                 <PAField label="更改封面">
-                  <input id="library-cover-file" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @change="vm.actions.onCoverFileChange" />
+                  <input id="library-cover-file" :key="vm.drafts.coverFileKey" class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm" type="file" accept="image/*" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @change="vm.actions.onCoverFileChange" />
                 </PAField>
                 <PAActions align="end">
                   <PAButton variant="ghost" :disabled="vm.ui.savingFolder || !vm.data.selectedFolderId" @click="vm.actions.uploadCover">上传封面</PAButton>
@@ -430,6 +430,7 @@
                 <PAField label="资源文件" :error="vm.actions.getFieldError('uploadAssetFile')">
                   <input
                     id="library-asset-file"
+                    :key="vm.drafts.assetFileKey"
                     class="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     type="file"
                     accept=".ggb,.html,.htm,.json,.zip,application/vnd.geogebra.file,text/html,application/json,application/zip"

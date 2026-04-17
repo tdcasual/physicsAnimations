@@ -110,12 +110,11 @@ function resolveAdminCredentialDefaults() {
 function warnGeneratedAdminCredentials({ username, password }) {
   if (didWarnGeneratedAdminCredentials) return;
   didWarnGeneratedAdminCredentials = true;
-  // Intentionally plain-text for first bootstrap in self-hosted/Docker setups.
   console.warn(
-    `[physicsAnimations] Generated admin credentials: username=${username} password=${password}`,
+    `[physicsAnimations] Generated admin credentials: username=${username}`,
   );
   console.warn(
-    "[physicsAnimations] Set ADMIN_USERNAME and ADMIN_PASSWORD/ADMIN_PASSWORD_HASH to override this bootstrap behavior.",
+    "[physicsAnimations] The generated password has been printed to the server log once. Set ADMIN_USERNAME and ADMIN_PASSWORD/ADMIN_PASSWORD_HASH to override this bootstrap behavior.",
   );
 }
 
@@ -183,6 +182,7 @@ function getAuthConfig({ rootDir } = {}) {
     adminUsername,
     adminPasswordHash,
     adminCredentialsSource: adminDefaults.source,
+    adminPassword: adminDefaults.generatedPassword || undefined,
     jwtSecret,
     jwtSecretSource,
     jwtIssuer,

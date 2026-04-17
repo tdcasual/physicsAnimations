@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { createJsonObjectInputParser } from "./createJsonObjectInputParser";
 import { buildLibraryAdminFacadeInput } from "./buildLibraryAdminFacadeInput";
 import { useLibraryAdminActionWiring } from "./useLibraryAdminActionWiring";
@@ -56,5 +56,5 @@ export function useLibraryAdminState() {
     parseJsonObjectInput,
   });
 
-  return createLibraryAdminStateFacade(facadeInput);
+  return reactive(createLibraryAdminStateFacade(facadeInput));
 }

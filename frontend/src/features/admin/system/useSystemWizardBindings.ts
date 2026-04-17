@@ -78,23 +78,28 @@ export function createSystemWizardBindings(params: SystemWizardBindingsParams) {
   }
 
   function applyStorage(nextStorage: unknown, options: { resetStep: boolean } = { resetStep: false }) {
-    const s = (nextStorage as Record<string, unknown> | null) || {};
-    const timeoutCandidate = Number(s.webdav?.timeoutMs);
+    const s = (typeof nextStorage === "object" && nextStorage !== null)
+      ? (nextStorage as Record<string, unknown>)
+      : {};
+    const webdavRaw = (typeof s.webdav === "object" && s.webdav !== null)
+      ? (s.webdav as Record<string, unknown>)
+      : {};
+    const timeoutCandidate = Number(webdavRaw.timeoutMs);
     const normalizedTimeoutMs = Number.isFinite(timeoutCandidate) ? Math.trunc(timeoutCandidate) : 15000;
 
     params.storage.value = {
-      mode: s.mode || "local",
-      effectiveMode: s.effectiveMode || s.mode || "local",
+      mode: typeof s.mode === "string" ? s.mode : "local",
+      effectiveMode: typeof s.effectiveMode === "string" ? s.effectiveMode : (typeof s.mode === "string" ? s.mode : "local"),
       readOnly: s.readOnly === true,
-      localPath: s.localPath || "",
-      lastSyncedAt: s.lastSyncedAt || "",
+      localPath: typeof s.localPath === "string" ? s.localPath : "",
+      lastSyncedAt: typeof s.lastSyncedAt === "string" ? s.lastSyncedAt : "",
       webdav: {
-        url: s.webdav?.url || "",
-        basePath: s.webdav?.basePath || "physicsAnimations",
-        username: s.webdav?.username || "",
+        url: typeof webdavRaw.url === "string" ? webdavRaw.url : "",
+        basePath: typeof webdavRaw.basePath === "string" ? webdavRaw.basePath : "physicsAnimations",
+        username: typeof webdavRaw.username === "string" ? webdavRaw.username : "",
         timeoutMs: normalizedTimeoutMs,
-        hasPassword: s.webdav?.hasPassword === true,
-        scanRemote: s.webdav?.scanRemote === true,
+        hasPassword: webdavRaw.hasPassword === true,
+        scanRemote: webdavRaw.scanRemote === true,
       },
     };
 
@@ -118,26 +123,30 @@ export function createSystemWizardBindings(params: SystemWizardBindingsParams) {
   }
 
   function applyEmbedUpdater(nextEmbedUpdater: unknown) {
-    const eu = (nextEmbedUpdater as Record<string, unknown> | null) || {};
-    const summary = eu.lastSummary && typeof eu.lastSummary === "object" ? eu.lastSummary : {};
+    const eu = (typeof nextEmbedUpdater === "object" && nextEmbedUpdater !== null)
+      ? (nextEmbedUpdater as Record<string, unknown>)
+      : {};
+    const summary = (typeof eu.lastSummary === "object" && eu.lastSummary !== null)
+      ? (eu.lastSummary as Record<string, unknown>)
+      : {};
     const intervalCandidate = Number(eu.intervalDays);
     const intervalDays = Number.isFinite(intervalCandidate) ? Math.trunc(intervalCandidate) : 20;
 
     params.embedUpdater.value = {
       enabled: eu.enabled !== false,
       intervalDays,
-      lastCheckedAt: eu.lastCheckedAt || "",
-      lastRunAt: eu.lastRunAt || "",
-      lastSuccessAt: eu.lastSuccessAt || "",
-      lastError: eu.lastError || "",
-      nextRunAt: eu.nextRunAt || "",
+      lastCheckedAt: typeof eu.lastCheckedAt === "string" ? eu.lastCheckedAt : "",
+      lastRunAt: typeof eu.lastRunAt === "string" ? eu.lastRunAt : "",
+      lastSuccessAt: typeof eu.lastSuccessAt === "string" ? eu.lastSuccessAt : "",
+      lastError: typeof eu.lastError === "string" ? eu.lastError : "",
+      nextRunAt: typeof eu.nextRunAt === "string" ? eu.nextRunAt : "",
       lastSummary: {
-        status: summary.status || "idle",
-        ggbStatus: summary.ggbStatus || "",
-        totalProfiles: Number.isFinite(summary.totalProfiles) ? Math.trunc(summary.totalProfiles) : 0,
-        syncedProfiles: Number.isFinite(summary.syncedProfiles) ? Math.trunc(summary.syncedProfiles) : 0,
-        skippedProfiles: Number.isFinite(summary.skippedProfiles) ? Math.trunc(summary.skippedProfiles) : 0,
-        failedProfiles: Number.isFinite(summary.failedProfiles) ? Math.trunc(summary.failedProfiles) : 0,
+        status: typeof summary.status === "string" ? summary.status : "idle",
+        ggbStatus: typeof summary.ggbStatus === "string" ? summary.ggbStatus : "",
+        totalProfiles: Number.isFinite(Number(summary.totalProfiles)) ? Math.trunc(Number(summary.totalProfiles)) : 0,
+        syncedProfiles: Number.isFinite(Number(summary.syncedProfiles)) ? Math.trunc(Number(summary.syncedProfiles)) : 0,
+        skippedProfiles: Number.isFinite(Number(summary.skippedProfiles)) ? Math.trunc(Number(summary.skippedProfiles)) : 0,
+        failedProfiles: Number.isFinite(Number(summary.failedProfiles)) ? Math.trunc(Number(summary.failedProfiles)) : 0,
       },
     };
 

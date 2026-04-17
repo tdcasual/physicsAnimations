@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { getCurrentInstance } from "vue";
 import { useCatalogViewState } from "@/features/catalog/useCatalogViewState";
 import { useCatalogTheme } from "@/features/catalog/theme";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +43,9 @@ async function animateGrid() {
   const { initGsap } = await import("@/lib/gsap");
   const { gsap, ScrollTrigger } = await initGsap();
 
+  const instance = getCurrentInstance();
+  if (!instance || instance.isUnmounted) return;
+
   // Clean up previous scroll trigger for this grid
   if (gridScrollTrigger) {
     gridScrollTrigger.kill();
@@ -76,6 +80,10 @@ watch(
   () => [view.value.activeGroupId, view.value.activeCategoryId, loading.value],
   async ([, , isLoading]) => {
     if (isLoading) return;
+    if (animationTimeoutId !== null) {
+      clearTimeout(animationTimeoutId);
+      animationTimeoutId = null;
+    }
     hasAnimated.value = false;
     await nextTick();
     animationTimeoutId = window.setTimeout(() => {
@@ -125,6 +133,14 @@ const totalItems = computed(() => {
 // Optimize category title lookup
 const activeCategoryTitle = computed(() => {
   return view.value.categories.find(c => c.id === view.value.activeCategoryId)?.title || '全部演示';
+});
+
+const categoryTitleMap = computed(() => {
+  const map = new Map<string, string>();
+  for (const c of view.value.categories) {
+    map.set(c.id, c.title);
+  }
+  return map;
 });
 </script>
 
@@ -226,7 +242,7 @@ const activeCategoryTitle = computed(() => {
               :description="item.description"
               :thumbnail="item.thumbnail"
               :href="getItemHref(item)"
-              :tag="view.categories.find((c) => c.id === item.categoryId)?.title"
+              :tag="categoryTitleMap.get(item.categoryId)"
               :index="idx"
               @tag-click="selectCategory"
             />

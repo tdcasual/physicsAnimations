@@ -154,6 +154,7 @@ function buildEnvDefaults() {
         basePath: String(process.env.WEBDAV_BASE_PATH || "physicsAnimations"),
         username: String(process.env.WEBDAV_USERNAME || ""),
         password: String(process.env.WEBDAV_PASSWORD || ""),
+        hasPassword: false,
         timeoutMs: normalizeTimeoutMs(process.env.WEBDAV_TIMEOUT_MS || "15000", 15000),
         scanRemote: false,
       },
@@ -188,7 +189,10 @@ function normalizeState(raw, fallback) {
         url: typeof webdav.url === "string" ? webdav.url : base.storage.webdav.url,
         basePath: typeof webdav.basePath === "string" ? webdav.basePath : base.storage.webdav.basePath,
         username: typeof webdav.username === "string" ? webdav.username : base.storage.webdav.username,
-        password: typeof webdav.password === "string" ? webdav.password : base.storage.webdav.password,
+        password: "",
+        hasPassword: typeof webdav.password === "string"
+          ? webdav.password.length > 0
+          : (typeof webdav.hasPassword === "boolean" ? webdav.hasPassword : base.storage.webdav.hasPassword),
         timeoutMs: normalizeTimeoutMs(webdav.timeoutMs, base.storage.webdav.timeoutMs),
         scanRemote: typeof webdav.scanRemote === "boolean" ? webdav.scanRemote : base.storage.webdav.scanRemote,
       },
@@ -203,7 +207,12 @@ function loadSystemState({ rootDir }) {
   try {
     const raw = fs.readFileSync(filePath, "utf8");
     const parsed = JSON.parse(raw);
-    return normalizeState(parsed, fallback);
+    const state = normalizeState(parsed, fallback);
+    const webdav = state.storage?.webdav;
+    if (webdav && webdav.hasPassword === true && process.env.WEBDAV_PASSWORD) {
+      webdav.password = String(process.env.WEBDAV_PASSWORD);
+    }
+    return state;
   } catch (err) {
     if (err?.message === "invalid_storage_mode") throw err;
     return fallback;

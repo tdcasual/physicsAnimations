@@ -125,6 +125,8 @@ export function useLibraryAdminActionWiring(params: UseLibraryAdminActionWiringP
     setFeedback,
     setFieldError,
     clearFieldErrors,
+    createCoverFileKey: draft.createCoverFileKey,
+    coverFileKey: draft.coverFileKey,
   });
   syncFolderEditDraft = folderActions.syncFolderEditDraft;
 
@@ -144,6 +146,7 @@ export function useLibraryAdminActionWiring(params: UseLibraryAdminActionWiringP
     setFieldError,
     clearFieldErrors,
     parseJsonObjectInput,
+    assetFileKey: draft.assetFileKey,
   });
 
   const assetEditorActions = useLibraryAssetEditorActions({

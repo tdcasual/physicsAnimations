@@ -16,44 +16,43 @@ function handleThemeChange(themeId: string) {
   setTheme(themeId);
 }
 
-function getButtonClasses(themeId: string) {
-  const isActive = currentTheme.value === themeId;
-
-  // 基础样式
+const buttonClassesMap = computed(() => {
   const baseClasses =
     "relative flex items-center justify-center w-9 h-9 rounded-lg text-sm font-medium transition-all duration-200";
-
-  // 根据当前主题返回不同样式
-  switch (currentTheme.value) {
-    case "handdrawn":
-      return cn(
-        baseClasses,
-        "border-2",
-        isActive
-          ? "tsw-btn-handdrawn-active translate-y-[-1px]"
-          : "tsw-btn-handdrawn-idle"
-      );
-
-    case "brutalist":
-      return cn(
-        baseClasses,
-        "border-[3px] border-black",
-        isActive
-          ? "tsw-btn-brutalist-active shadow-[2px_2px_0_#666]"
-          : "tsw-btn-brutalist-idle hover:shadow-[2px_2px_0_var(--cat-ink)] hover:translate-y-[-1px]"
-      );
-
-    default:
-      // minimal
-      return cn(
-        baseClasses,
-        "border",
-        isActive
-          ? "tsw-btn-minimal-active"
-          : "tsw-btn-minimal-idle"
-      );
+  const map: Record<string, string> = {};
+  for (const theme of availableThemes) {
+    const isActive = currentTheme.value === theme.id;
+    switch (currentTheme.value) {
+      case "handdrawn":
+        map[theme.id] = cn(
+          baseClasses,
+          "border-2",
+          isActive
+            ? "tsw-btn-handdrawn-active translate-y-[-1px]"
+            : "tsw-btn-handdrawn-idle"
+        );
+        break;
+      case "brutalist":
+        map[theme.id] = cn(
+          baseClasses,
+          "border-[3px] border-black",
+          isActive
+            ? "tsw-btn-brutalist-active shadow-[2px_2px_0_#666]"
+            : "tsw-btn-brutalist-idle hover:shadow-[2px_2px_0_var(--cat-ink)] hover:translate-y-[-1px]"
+        );
+        break;
+      default:
+        map[theme.id] = cn(
+          baseClasses,
+          "border",
+          isActive
+            ? "tsw-btn-minimal-active"
+            : "tsw-btn-minimal-idle"
+        );
+    }
   }
-}
+  return map;
+});
 </script>
 
 <template>
@@ -64,7 +63,7 @@ function getButtonClasses(themeId: string) {
         v-for="theme in availableThemes"
         :key="theme.id"
         type="button"
-        :class="getButtonClasses(theme.id)"
+        :class="buttonClassesMap[theme.id]"
         :title="`${theme.label} - ${theme.description}`"
         :aria-label="`${theme.label} - ${theme.description}`"
         :aria-pressed="currentTheme === theme.id"
