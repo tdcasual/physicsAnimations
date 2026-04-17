@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ChevronDown, Search, Atom, LayoutGrid, Eye } from "lucide-vue-next";
-import { computed, onMounted, onUnmounted } from "vue";
-import type { GSAPType } from "../../../lib/gsap";
+import { computed } from "vue";
+
 import type { CatalogCategory } from "../../../features/catalog/types";
 import { useCatalogSearch } from "../../../features/catalog/catalogSearch";
+import { useHeroAnimations } from "./useHeroAnimations";
 
 const props = withDefaults(defineProps<{
   itemCount?: number;
@@ -50,73 +51,7 @@ const hotCategories = computed(() => {
     .slice(0, 5);
 });
 
-let tweens: GSAPType.core.Tween[] = [];
-
-onMounted(async () => {
-  const { initGsap } = await import("../../../lib/gsap");
-  const { gsap } = await initGsap();
-
-  tweens.push(
-    gsap.fromTo(
-      ".hero-title",
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }
-    )
-  );
-
-  tweens.push(
-    gsap.fromTo(
-      ".hero-subtitle",
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.6, delay: 0.2, ease: "power2.out" }
-    )
-  );
-
-  tweens.push(
-    gsap.fromTo(
-      ".hero-search",
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.6, delay: 0.3, ease: "power2.out" }
-    )
-  );
-
-  tweens.push(
-    gsap.fromTo(
-      ".hero-stats",
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.6, delay: 0.4, stagger: 0.1, ease: "power2.out" }
-    )
-  );
-
-  tweens.push(
-    gsap.fromTo(
-      ".hero-tags",
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.6, delay: 0.55, ease: "power2.out" }
-    )
-  );
-
-  tweens.push(
-    gsap.fromTo(
-      ".hand-drawn-decoration",
-      { scale: 0, rotation: -20 },
-      { scale: 1, rotation: 0, duration: 0.6, delay: 0.6, ease: "back.out(1.7)", stagger: 0.1 }
-    )
-  );
-
-  tweens.push(
-    gsap.fromTo(
-      ".hero-bg-graphic",
-      { opacity: 0, scale: 0.95 },
-      { opacity: 1, scale: 1, duration: 1.2, delay: 0.3, ease: "power2.out" }
-    )
-  );
-});
-
-onUnmounted(() => {
-  tweens.forEach((t) => t.kill());
-  tweens = [];
-});
+useHeroAnimations();
 
 function onTagClick(categoryId: string) {
   emit("select-category", categoryId);

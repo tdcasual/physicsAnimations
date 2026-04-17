@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { fetchDashboardStats, type DashboardStats } from "@/features/admin/adminApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,36 +89,36 @@ const quickActions = [
   },
 ];
 
-const statCards = [
+const statCards = computed(() => [
   {
     title: "全部内容",
-    value: () => stats.value.total,
+    value: stats.value.total,
     description: "公开演示总数",
     color: "foreground",
     gradient: "from-muted to-background",
   },
   {
     title: "上传内容",
-    value: () => stats.value.uploadTotal,
+    value: stats.value.uploadTotal,
     description: "站内托管资源",
     color: "foreground",
     gradient: "from-muted to-background",
   },
   {
     title: "外链内容",
-    value: () => stats.value.linkTotal,
+    value: stats.value.linkTotal,
     description: "外部链接资源",
     color: "foreground",
     gradient: "from-muted to-background",
   },
   {
     title: "分类节点",
-    value: () => stats.value.categoryTotal,
+    value: stats.value.categoryTotal,
     description: "二级分类数量",
     color: "foreground",
     gradient: "from-muted to-background",
   },
-];
+]);
 </script>
 
 <template>
@@ -173,7 +173,7 @@ const statCards = [
               {{ stat.title }}
             </CardDescription>
             <CardTitle class="text-3xl font-bold" :class="stat.color === 'primary' ? 'text-primary' : stat.color === 'secondary' ? 'text-secondary' : 'text-foreground'">
-              {{ stat.value() }}
+              {{ stat.value }}
             </CardTitle>
           </CardHeader>
           <CardContent class="relative">

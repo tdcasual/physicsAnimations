@@ -220,7 +220,11 @@ export function useSystemWizard() {
 
   onMounted(async () => {
     window.addEventListener("beforeunload", handleBeforeUnload);
-    await loadSystem({ resetStep: true });
+    try {
+      await loadSystem({ resetStep: true });
+    } catch {
+      errorText.value = "加载系统设置失败，请检查网络或刷新重试。";
+    }
   });
 
   onBeforeUnmount(() => {

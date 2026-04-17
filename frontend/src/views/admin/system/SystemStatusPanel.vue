@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { SystemStorage } from "../../../features/admin/system/useSystemWizard";
 import { PACard } from "@/components/ui/patterns";
 
-defineProps<{
+const props = defineProps<{
   loading: boolean;
   storage: SystemStorage | null;
   formatDate: (raw: string) => string;
 }>();
+
+const lastSyncedAtFormatted = computed(() =>
+  props.storage ? props.formatDate(props.storage.lastSyncedAt) : "-"
+);
 </script>
 
 <template>
@@ -21,7 +26,7 @@ defineProps<{
       <div class="break-anywhere"><span>WebDAV Base Path：</span>{{ storage.webdav.basePath || "-" }}</div>
       <div class="break-anywhere"><span>WebDAV 用户：</span>{{ storage.webdav.username || "-" }}</div>
       <div class="break-anywhere"><span>WebDAV 密码：</span>{{ storage.webdav.hasPassword ? "已配置" : "未配置" }}</div>
-      <div class="break-anywhere"><span>上次同步：</span>{{ formatDate(storage.lastSyncedAt) }}</div>
+      <div class="break-anywhere"><span>上次同步：</span>{{ lastSyncedAtFormatted }}</div>
     </div>
   </PACard>
 </template>

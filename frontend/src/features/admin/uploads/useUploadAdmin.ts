@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { buildPreviewHref } from "../adminLinks";
 import { type AdminItemRow, uploadHtmlItem } from "../adminApi";
 import { createAdminItemEditorState } from "../composables/useAdminItemEditorState";
@@ -116,9 +116,16 @@ export function useUploadAdmin() {
     clearFieldErrors,
   });
 
+  const MAX_UPLOAD_SIZE = 25 * 1024 * 1024;
+
   async function submitUpload() {
     if (!file.value) {
       setFieldError("uploadFile", "请选择 HTML 或 ZIP 文件。");
+      return;
+    }
+    if (file.value.size > MAX_UPLOAD_SIZE) {
+      setFieldError("uploadFile", "文件大小不能超过 25 MB。");
+      setActionFeedback("文件大小不能超过 25 MB。", true);
       return;
     }
     clearFieldErrors("uploadFile");
@@ -182,9 +189,16 @@ export function useUploadAdmin() {
 
   usePendingChangesGuard({ hasPendingChanges: hasPendingEditChanges, isBlocked: saving, message: "当前编辑内容有未保存更改，确定离开当前页面吗？" });
   useAdminQueryReload({ query, reload: reloadUploads });
-  onMounted(async () => { await reloadTaxonomy().catch(() => {}); await reloadUploads({ reset: true }); });
+  onMounted(async () => {
+    try {
+      await reloadTaxonomy().catch(() => {});
+      await reloadUploads({ reset: true });
+    } catch {
+      // Ignore initial load errors; actions will display feedback.
+    }
+  });
 
-  return {
+  return reactive({
     loading,
     saving,
     errorText,
@@ -219,5 +233,5 @@ export function useUploadAdmin() {
     submitUpload,
     saveEdit,
     removeItem,
-  };
+  });
 }

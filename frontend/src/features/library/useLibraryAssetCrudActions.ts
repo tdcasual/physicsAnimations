@@ -24,6 +24,7 @@ type UseLibraryAssetCrudActionsDeps = {
   setFieldError: (key: string, message: string) => void;
   clearFieldErrors: (...keys: string[]) => void;
   parseJsonObjectInput: (raw: string, fieldLabel: string, fieldKey?: string) => JsonObjectParseResult;
+  assetFileKey?: Ref<number>;
 };
 
 export function useLibraryAssetCrudActions(deps: UseLibraryAssetCrudActionsDeps) {
@@ -32,6 +33,8 @@ export function useLibraryAssetCrudActions(deps: UseLibraryAssetCrudActionsDeps)
     deps.assetFile.value = target.files?.[0] || null;
     deps.clearFieldErrors("uploadAssetFile");
   }
+
+  const MAX_ASSET_SIZE = 50 * 1024 * 1024;
 
   async function uploadAssetEntry() {
     deps.clearFieldErrors("uploadAssetFile", "uploadAssetEmbedProfile", "uploadAssetEmbedOptionsJson");
@@ -42,6 +45,11 @@ export function useLibraryAssetCrudActions(deps: UseLibraryAssetCrudActionsDeps)
     if (!deps.assetFile.value) {
       deps.setFieldError("uploadAssetFile", "请选择要上传的资源文件。");
       deps.setFeedback("请选择要上传的资源文件。", true);
+      return;
+    }
+    if (deps.assetFile.value.size > MAX_ASSET_SIZE) {
+      deps.setFieldError("uploadAssetFile", "文件大小不能超过 50 MB。");
+      deps.setFeedback("文件大小不能超过 50 MB。", true);
       return;
     }
     if (deps.assetParserMode.value === "profile" && !deps.assetEmbedProfileId.value) {
@@ -78,8 +86,7 @@ export function useLibraryAssetCrudActions(deps: UseLibraryAssetCrudActionsDeps)
       deps.assetEmbedOptionsJson.value = "";
       deps.assetParserMode.value = "auto";
       deps.clearFieldErrors("uploadAssetFile", "uploadAssetEmbedProfile", "uploadAssetEmbedOptionsJson");
-      const input = document.querySelector<HTMLInputElement>("#library-asset-file");
-      if (input) input.value = "";
+      if (deps.assetFileKey) deps.assetFileKey.value += 1;
       await deps.reloadFolders();
       await deps.reloadFolderAssets();
       deps.setActivePanelTab("asset");

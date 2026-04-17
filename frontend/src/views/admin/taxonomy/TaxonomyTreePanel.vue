@@ -40,6 +40,24 @@ function onToggle(groupId: string, event: Event) {
   const details = event.target as HTMLDetailsElement;
   emit("toggle-group", { groupId, open: details.open });
 }
+
+const groupMetaMap = computed(() => {
+  const map = new Map<string, string>();
+  for (const node of props.treeGroups) {
+    map.set(node.group.id, props.groupMetaText(node));
+  }
+  return map;
+});
+
+const categoryMetaMap = computed(() => {
+  const map = new Map<string, string>();
+  for (const node of props.treeGroups) {
+    for (const category of node.shownCategories) {
+      map.set(category.id, props.categoryMetaText(category));
+    }
+  }
+  return map;
+});
 </script>
 
 <template>
@@ -89,7 +107,7 @@ function onToggle(groupId: string, event: Event) {
               {{ node.group.title || node.group.id }} ({{ node.group.id }})
               <span v-if="showHidden && node.group.hidden" class="tag">隐藏</span>
             </div>
-            <div class="group-meta">{{ groupMetaText(node) }}</div>
+            <div class="group-meta">{{ groupMetaMap.get(node.group.id) }}</div>
           </div>
           <PAButton variant="ghost" size="sm" class="compact-btn" @click.stop.prevent="emit('focus-create-category', node.group.id)">
             ＋ 二级分类
@@ -110,7 +128,7 @@ function onToggle(groupId: string, event: Event) {
               {{ category.title || category.id }} ({{ category.id }})
               <span v-if="showHidden && category.hidden" class="tag">隐藏</span>
             </div>
-            <div class="category-meta">{{ categoryMetaText(category) }}</div>
+            <div class="category-meta">{{ categoryMetaMap.get(category.id) }}</div>
           </button>
 
           <div v-if="node.shownCategories.length === 0" class="empty-inline">

@@ -4,11 +4,17 @@ function getClientIp(req) {
   return req.ip || req.socket?.remoteAddress || "unknown";
 }
 
+function getRateLimitIdentity(req) {
+  const username = req.user?.username;
+  if (username) return `u:${username}`;
+  return `ip:${getClientIp(req)}`;
+}
+
 function rateLimit({ key, windowMs, max }) {
   return (req, res, next) => {
-    const ip = getClientIp(req);
+    const identity = getRateLimitIdentity(req);
     const now = Date.now();
-    const bucketKey = `${key}:${ip}`;
+    const bucketKey = `${key}:${identity}`;
 
     const existing = rateLimitState.get(bucketKey);
     let bucket = existing;

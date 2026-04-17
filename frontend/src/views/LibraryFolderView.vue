@@ -45,9 +45,7 @@ function downloadAssetHref(asset: LibraryAsset): string {
   return normalizePublicUrl(asset.filePath);
 }
 
-function assetModeLabel(asset: LibraryAsset): string {
-  return asset.openMode === "embed" ? "可直接演示" : "仅下载";
-}
+
 
 function goBack() {
   const target = resolveBackNavigationTarget({
@@ -148,7 +146,7 @@ watch(
         <div class="asset-headline">
           <div class="asset-name break-anywhere">{{ asset.displayName || asset.fileName || asset.id }}</div>
           <div class="asset-state-badge" :class="asset.openMode === 'embed' ? 'is-embed' : 'is-download'">
-            {{ assetModeLabel(asset) }}
+            {{ asset.openMode === 'embed' ? '可直接演示' : '仅下载' }}
           </div>
         </div>
         <div class="asset-actions">

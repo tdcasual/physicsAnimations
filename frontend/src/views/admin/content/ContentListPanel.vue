@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import type { AdminItemRow } from "../../../features/admin/adminApi";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +31,14 @@ function getStatusBadge(item: AdminItemRow) {
   if (item.published === false) return { label: "草稿", variant: "outline" as const };
   return { label: "已发布", variant: "default" as const };
 }
+
+const badgeMap = computed(() => {
+  const map = new Map<string, { label: string; variant: "secondary" | "outline" | "default" }>();
+  for (const item of props.items) {
+    map.set(item.id, getStatusBadge(item));
+  }
+  return map;
+});
 </script>
 
 <template>
@@ -94,10 +103,10 @@ function getStatusBadge(item: AdminItemRow) {
                   {{ item.title || item.id }}
                 </h4>
                 <Badge 
-                  :variant="getStatusBadge(item).variant"
+                  :variant="badgeMap.get(item.id)?.variant"
                   class="text-xs"
                 >
-                  {{ getStatusBadge(item).label }}
+                  {{ badgeMap.get(item.id)?.label }}
                 </Badge>
               </div>
               <div class="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">

@@ -14,6 +14,8 @@ type UseLibraryFolderActionsDeps = {
   setFeedback: (message: string, isError?: boolean) => void;
   setFieldError: (key: string, message: string) => void;
   clearFieldErrors: (...keys: string[]) => void;
+  createCoverFileKey?: Ref<number>;
+  coverFileKey?: Ref<number>;
 };
 
 export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
@@ -63,12 +65,30 @@ export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
     folderEditCategoryId.value = groupedCategoryOptions.value[0]?.value || "other";
   }
 
+  let latestRequestSeq = 0;
+
+  function nextRequestSeq(): number {
+    latestRequestSeq += 1;
+    return latestRequestSeq;
+  }
+
+  function isLatestRequest(seq: number): boolean {
+    return seq === latestRequestSeq;
+  }
+
   async function reloadTaxonomy() {
-    const data = await listTaxonomy();
-    groups.value = Array.isArray(data?.groups) ? data.groups : [];
-    categories.value = Array.isArray(data?.categories) ? data.categories : [];
-    syncCategorySelection();
-    syncFolderEditCategorySelection();
+    const requestSeq = nextRequestSeq();
+    try {
+      const data = await listTaxonomy();
+      if (!isLatestRequest(requestSeq)) return;
+      groups.value = Array.isArray(data?.groups) ? data.groups : [];
+      categories.value = Array.isArray(data?.categories) ? data.categories : [];
+      syncCategorySelection();
+      syncFolderEditCategorySelection();
+    } catch {
+      if (!isLatestRequest(requestSeq)) return;
+      // Silent fail; callers can show feedback if needed.
+    }
   }
 
   function onCreateCoverFileChange(event: Event) {
@@ -81,12 +101,18 @@ export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
     coverFile.value = target.files?.[0] || null;
   }
 
+  const MAX_COVER_SIZE = 5 * 1024 * 1024;
+
   async function createFolderEntry() {
     deps.clearFieldErrors("createFolderName");
     const name = folderName.value.trim();
     if (!name) {
       deps.setFieldError("createFolderName", "请填写文件夹名称。");
       deps.setFeedback("请填写文件夹名称。", true);
+      return;
+    }
+    if (createCoverFile.value && createCoverFile.value.size > MAX_COVER_SIZE) {
+      deps.setFeedback("封面图片大小不能超过 5 MB。", true);
       return;
     }
     deps.savingFolder.value = true;
@@ -106,8 +132,7 @@ export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
       }
       folderName.value = "";
       createCoverFile.value = null;
-      const createCoverInput = document.querySelector<HTMLInputElement>("#library-create-cover-file");
-      if (createCoverInput) createCoverInput.value = "";
+      if (deps.createCoverFileKey) deps.createCoverFileKey.value += 1;
       await deps.reloadFolders();
       await deps.reloadFolderAssets();
       deps.setActivePanelTab("folder");
@@ -166,6 +191,10 @@ export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
       deps.setFeedback("请选择封面图片。", true);
       return;
     }
+    if (coverFile.value.size > MAX_COVER_SIZE) {
+      deps.setFeedback("封面图片大小不能超过 5 MB。", true);
+      return;
+    }
     deps.savingFolder.value = true;
     deps.setFeedback("");
     try {
@@ -174,8 +203,7 @@ export function useLibraryFolderActions(deps: UseLibraryFolderActionsDeps) {
         file: coverFile.value,
       });
       coverFile.value = null;
-      const input = document.querySelector<HTMLInputElement>("#library-cover-file");
-      if (input) input.value = "";
+      if (deps.coverFileKey) deps.coverFileKey.value += 1;
       await deps.reloadFolders();
       await deps.reloadFolderAssets();
       deps.setActivePanelTab("folder");

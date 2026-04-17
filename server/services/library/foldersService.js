@@ -90,18 +90,45 @@ function createFoldersService({
     return { ok: true, folder: updatedFolder };
   }
 
+  function detectImageExtByMagic(buffer) {
+    if (!Buffer.isBuffer(buffer) || buffer.length < 4) return "";
+    // PNG
+    if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4E && buffer[3] === 0x47) {
+      return ".png";
+    }
+    // JPEG
+    if (buffer[0] === 0xFF && buffer[1] === 0xD8 && buffer[2] === 0xFF) {
+      return ".jpg";
+    }
+    // GIF
+    if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
+      return ".gif";
+    }
+    // WebP (RIFF....WEBP)
+    if (buffer[0] === 0x52 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x46) {
+      if (buffer.length >= 12 && buffer.toString("ascii", 8, 12) === "WEBP") {
+        return ".webp";
+      }
+    }
+    // SVG
+    const head = buffer.toString("utf8", 0, Math.min(buffer.length, 256)).trim().toLowerCase();
+    if (head.startsWith("<?xml") || head.startsWith("<svg")) {
+      return ".svg";
+    }
+    return "";
+  }
+
   async function uploadFolderCover({ folderId, fileBuffer, originalName, mimeType }) {
     const folder = await getFolderById({ folderId });
     if (!folder) return { status: 404, error: "folder_not_found" };
     if (!Buffer.isBuffer(fileBuffer) || fileBuffer.length === 0) return { status: 400, error: "missing_file" };
 
+    const extByMagic = detectImageExtByMagic(fileBuffer);
     const mime = String(mimeType || "").toLowerCase();
-    if (!mime.startsWith("image/")) return { status: 400, error: "cover_invalid_type" };
-
     const extByNameRaw = path.extname(String(originalName || "")).toLowerCase();
     const extByName = ALLOWED_COVER_EXTS.has(extByNameRaw) ? extByNameRaw : "";
     const extByMime = IMAGE_EXT_BY_MIME.get(mime) || "";
-    const ext = extByMime || extByName;
+    const ext = extByMagic || extByMime || extByName;
     if (!ext) return { status: 400, error: "cover_invalid_type" };
 
     const key = `library/covers/${folder.id}${ext}`;

@@ -88,7 +88,11 @@ export function useTaxonomyAdminLifecycle(params: UseTaxonomyAdminLifecycleParam
 
   onMounted(async () => {
     hydrateUiState();
-    await reloadTaxonomy();
+    try {
+      await reloadTaxonomy();
+    } catch {
+      // Ignore reload errors; actions will display feedback.
+    }
     if (!selection.value && fallbackGroupId.value) {
       selection.value = { kind: "group", id: fallbackGroupId.value };
       syncFormsFromSelection();

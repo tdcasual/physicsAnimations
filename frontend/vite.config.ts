@@ -105,6 +105,7 @@ export default defineConfig({
         ],
         skipWaiting: true,
         clientsClaim: true,
+        inlineWorkboxRuntime: true,
       },
       devOptions: {
         enabled: true,
@@ -125,37 +126,7 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          // Core vendor libraries
-          if (id.includes('node_modules/vue') || 
-              id.includes('node_modules/vue-router') || 
-              id.includes('node_modules/pinia')) {
-            return 'vendor';
-          }
-          // UI components library
-          if (id.includes('node_modules/reka-ui') || 
-              id.includes('node_modules/vaul-vue') || 
-              id.includes('node_modules/class-variance-authority') || 
-              id.includes('node_modules/tailwind-merge') || 
-              id.includes('node_modules/clsx')) {
-            return 'ui';
-          }
-          // Animation libraries (only used in catalog)
-          if (id.includes('node_modules/gsap') || 
-              id.includes('node_modules/@vueuse/motion')) {
-            return 'animation';
-          }
-          // Utilities
-          if (id.includes('node_modules/@vueuse/core') || 
-              id.includes('node_modules/lenis') || 
-              id.includes('node_modules/lucide-vue-next')) {
-            return 'utils';
-          }
-        },
-      },
-    },
+
     chunkSizeWarningLimit: 600,
   },
 });

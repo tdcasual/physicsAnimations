@@ -1,4 +1,4 @@
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { buildPreviewHref } from "../adminLinks";
 import { type AdminItemRow, createLinkItem } from "../adminApi";
 import { createAdminItemEditorState } from "../composables/useAdminItemEditorState";
@@ -125,9 +125,16 @@ export function useContentAdmin() {
 
   usePendingChangesGuard({ hasPendingChanges: hasPendingEditChanges, isBlocked: saving, message: "当前编辑内容有未保存更改，确定离开当前页面吗？" });
   useAdminQueryReload({ query, reload: reloadItems });
-  onMounted(async () => { await reloadTaxonomy().catch(() => {}); await reloadItems({ reset: true }); });
+  onMounted(async () => {
+    try {
+      await reloadTaxonomy().catch(() => {});
+      await reloadItems({ reset: true });
+    } catch {
+      // Ignore initial load errors; actions will display feedback.
+    }
+  });
 
-  return {
+  return reactive({
     loading,
     saving,
     errorText,
@@ -161,5 +168,5 @@ export function useContentAdmin() {
     submitLink,
     saveEdit,
     removeItem,
-  };
+  });
 }

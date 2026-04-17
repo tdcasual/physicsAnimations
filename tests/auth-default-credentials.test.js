@@ -53,18 +53,16 @@ test("getAuthConfig generates random bootstrap admin credentials and logs them",
 
       assert.match(config.adminUsername, /^admin_[a-f0-9]{8}$/);
       assert.ok(config.adminPasswordHash.startsWith("$2"));
+      assert.ok(config.adminPassword, "expected generated adminPassword in config");
 
       const notice = calls.find((line) => line.includes("Generated admin credentials"));
       assert.ok(notice, "expected generated credential notice in logs");
       assert.match(notice, /username=admin_[a-f0-9]{8}/);
-      assert.match(notice, /password=[^\s]+/);
-
-      const passwordMatch = notice.match(/password=([^\s]+)/);
-      assert.ok(passwordMatch?.[1]);
+      assert.ok(!notice.includes("password="), "password should not be logged in plain text");
 
       const ok = await auth.verifyLogin({
         username: config.adminUsername,
-        password: passwordMatch[1],
+        password: config.adminPassword,
         authConfig: config,
         store: null,
       });
