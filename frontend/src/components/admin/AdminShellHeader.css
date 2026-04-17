@@ -69,7 +69,7 @@
   border: 1px solid var(--border);
   border-radius: 999px;
   background: color-mix(in oklab, var(--muted) 30%, transparent);
-  color: var(--muted-foreground);
+  color: var(--foreground);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -87,7 +87,7 @@
 
 .admin-shell-kicker {
   margin: 0;
-  color: var(--muted-foreground);
+  color: var(--foreground);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -120,7 +120,7 @@
 .admin-shell-description,
 .admin-shell-note,
 .admin-shell-status-copy {
-  color: var(--muted-foreground);
+  color: var(--foreground);
 }
 
 .admin-shell-summary-copy {
