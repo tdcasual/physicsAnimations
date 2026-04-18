@@ -7,6 +7,12 @@ beforeEach(() => {
     value: vi.fn(),
   });
 
+  Object.defineProperty(Element.prototype, "scrollIntoView", {
+    configurable: true,
+    writable: true,
+    value: vi.fn(),
+  });
+
   // Mock matchMedia for GSAP ScrollTrigger
   Object.defineProperty(window, "matchMedia", {
     configurable: true,

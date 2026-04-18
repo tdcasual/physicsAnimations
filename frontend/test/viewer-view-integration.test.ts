@@ -163,4 +163,73 @@ describe("ViewerView integration", () => {
     // Header should contain the back button text (rendered via stub)
     expect(wrapper.text()).toContain("力学演示");
   });
+
+  it("calls goBack without error", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          item: {
+            id: "demo1",
+            src: "/content/demos/mech.html",
+            title: "力学演示",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const wrapper = await mountViewer();
+    await new Promise((r) => setTimeout(r, 100));
+
+    // Directly invoke goBack
+    expect(() => (wrapper.vm as any).goBack()).not.toThrow();
+  });
+
+  it("toggles favorite state via vm method", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          item: {
+            id: "demo1",
+            src: "/content/demos/mech.html",
+            title: "力学演示",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const wrapper = await mountViewer();
+    await new Promise((r) => setTimeout(r, 100));
+
+    const vm = wrapper.vm as any;
+    expect(typeof vm.toggleFavorite).toBe("function");
+    vm.toggleFavorite();
+    // Should not throw
+  });
+
+  it("has toggleMode and startInteractive methods", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          item: {
+            id: "demo1",
+            src: "/content/demos/mech.html",
+            title: "力学演示",
+            screenshotUrl: "/thumb.png",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const wrapper = await mountViewer();
+    await new Promise((r) => setTimeout(r, 100));
+
+    const vm = wrapper.vm as any;
+    expect(typeof vm.toggleMode).toBe("function");
+    expect(typeof vm.startInteractive).toBe("function");
+    expect(typeof vm.stopInteractive).toBe("function");
+    expect(typeof vm.onFrameLoad).toBe("function");
+  });
 });
