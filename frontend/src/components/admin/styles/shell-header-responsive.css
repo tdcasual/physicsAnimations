@@ -1,0 +1,178 @@
+/* Desktop Responsive */
+@media (min-width: 960px) {
+  .admin-shell-header {
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px;
+    border-radius: 20px;
+  }
+
+  .admin-shell-copy {
+    gap: 6px;
+    flex: 1 1 auto;
+  }
+
+  .admin-shell-title {
+    font-size: clamp(1.5rem, 1.2rem + 0.7vw, 1.875rem);
+  }
+
+  .admin-shell-description {
+    display: none;
+  }
+
+  .admin-shell-summary-row {
+    gap: 12px;
+  }
+
+  .admin-shell-summary-copy {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .admin-shell-ops {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0;
+    flex: 0 1 420px;
+  }
+
+  .admin-shell-toolbar {
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .admin-shell-status-strip {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px 14px;
+    min-width: 0;
+    max-width: none;
+    border-radius: 999px;
+  }
+
+  .admin-shell-status-copy {
+    display: none;
+  }
+}
+
+/* Tablet Responsive */
+@media (max-width: 900px) {
+  .admin-shell-header--dense { 
+    flex-direction: column; 
+    gap: 16px;
+  }
+  .admin-shell-ops { 
+    width: 100%; 
+    justify-items: stretch; 
+  }
+  .admin-shell-toolbar { 
+    justify-content: flex-start; 
+  }
+  .admin-shell-actions { 
+    justify-content: flex-start; 
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+  .admin-shell-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 12px;
+    border: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  
+  .admin-shell-header::before {
+    display: none;
+  }
+
+  .admin-shell-title {
+    font-size: clamp(1.25rem, 5.4vw, 1.5rem);
+    line-height: 1.1;
+  }
+
+  .admin-shell-title-desktop {
+    display: none;
+  }
+
+  .admin-shell-title-mobile {
+    display: block;
+  }
+
+  .admin-shell-mobile-context {
+    display: inline-flex;
+    min-height: 26px;
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  .admin-shell-copy {
+    flex: initial;
+    gap: 6px;
+  }
+  
+  .admin-shell-kicker { display: none; }
+  .admin-shell-summary-row { display: none; }
+
+  .admin-shell-description,
+  .admin-shell-note,
+  .admin-shell-summary-copy { display: none; }
+
+  .admin-shell-ops {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    flex: initial;
+    gap: 0;
+    width: auto;
+  }
+
+  .admin-shell-toolbar {
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .admin-shell-status-strip {
+    display: none;
+  }
+
+  .admin-shell-status-label {
+    display: none;
+  }
+
+  .admin-shell-status-strip strong {
+    line-height: 1.1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-shell-actions {
+    justify-content: flex-end;
+    width: auto;
+  }
+
+  .admin-shell-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .admin-shell-status-copy {
+    display: block;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+  
+  .admin-link-home-text {
+    display: none;
+  }
+}

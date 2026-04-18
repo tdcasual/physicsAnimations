@@ -1,0 +1,203 @@
+.admin-shell-header {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: color-mix(in oklab, var(--background) 80%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px;
+  box-shadow: var(--shadow-s);
+}
+
+.admin-shell-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--primary) 3%, transparent), transparent 40%);
+}
+
+.admin-shell-header--compact {
+  gap: 16px;
+  padding: 20px;
+}
+
+.admin-shell-header--dense {
+  align-items: stretch;
+}
+
+.admin-shell-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  color: var(--primary);
+}
+
+.admin-shell-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+.admin-shell-title-desktop,
+.admin-shell-title-mobile {
+  display: block;
+}
+
+.admin-shell-title-mobile {
+  display: none;
+}
+
+.admin-shell-mobile-context {
+  display: none;
+  align-items: center;
+  width: fit-content;
+  min-height: 28px;
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--muted) 30%, transparent);
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.admin-shell-copy {
+  display: grid;
+  gap: 10px;
+  flex: 1 1 420px;
+}
+
+.admin-shell-header--compact .admin-shell-copy {
+  gap: 8px;
+}
+
+.admin-shell-kicker {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-shell-summary-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-shell-module-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 12px;
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 8%, transparent);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.admin-shell-summary-copy,
+.admin-shell-description,
+.admin-shell-note,
+.admin-shell-status-copy {
+  color: var(--foreground);
+}
+
+.admin-shell-summary-copy {
+  font-size: 13px;
+}
+
+.admin-shell-description,
+.admin-shell-note { margin: 0; }
+
+.admin-shell-note {
+  max-width: 50ch;
+  font-size: 13px;
+}
+
+.admin-shell-header--compact .admin-shell-description {
+  font-size: 14px;
+}
+
+.admin-shell-header--compact .admin-shell-note {
+  max-width: 44ch;
+  font-size: 12px;
+}
+
+.admin-shell-status-strip {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 44ch;
+  background: color-mix(in oklab, var(--muted) 20%, transparent);
+}
+
+.admin-shell-header--compact .admin-shell-status-strip {
+  gap: 4px;
+  padding: 12px 14px;
+  max-width: 40ch;
+}
+
+.admin-shell-status-label {
+  margin: 0;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-shell-ops {
+  display: grid;
+  align-content: start;
+  justify-items: end;
+  gap: 12px;
+  flex: 0 1 340px;
+  min-width: 0;
+}
+
+.admin-shell-pulse {
+  flex: 1 1 220px;
+  min-width: min(100%, 300px);
+}
+
+.admin-shell-toolbar {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-shell-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+
