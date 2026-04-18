@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+
 import { useTaxonomyAdmin } from "../../features/admin/taxonomy/useTaxonomyAdmin";
-import { createAdminTaxonomyMobileEditorFocus } from "./taxonomy/useAdminTaxonomyMobileEditorFocus";
+
 import CategoryEditorPanel from "./taxonomy/CategoryEditorPanel.vue";
 import GroupEditorPanel from "./taxonomy/GroupEditorPanel.vue";
 import TaxonomyTreePanel from "./taxonomy/TaxonomyTreePanel.vue";
-import { PAButton, PACard } from "@/components/ui/patterns";
+import { createAdminTaxonomyMobileEditorFocus } from "./taxonomy/useAdminTaxonomyMobileEditorFocus";
+
 import AdminSplitLayout from "@/components/admin/AdminSplitLayout.vue";
+import { PAButton, PACard } from "@/components/ui/patterns";
 
 const taxonomy = useTaxonomyAdmin();
 type TaxonomyMobileSheetMode = "create-group" | "group" | "category" | null;

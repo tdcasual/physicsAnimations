@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
+
 import { getCatalogItemHref, isCatalogAppRoute, normalizePublicUrl } from "../../features/catalog/catalogLink";
 import type { CatalogItem } from "../../features/catalog/types";
+
 import CatalogTeacherWorkspaceEmptyState from "./CatalogTeacherWorkspaceEmptyState.vue";
 
 const props = defineProps<{

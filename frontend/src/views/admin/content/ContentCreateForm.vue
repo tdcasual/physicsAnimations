@@ -22,7 +22,7 @@ const emit = defineEmits<{
   "clear-link-url-error": [];
   submit: [];
 }>();
-import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
+import { PAActions, PAButton, PAField, PAInput } from "@/components/ui/patterns";
 </script>
 
 <template>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import { ArrowLeft, LayoutDashboard } from "lucide-vue-next";
 import { RouterLink } from "vue-router";
-import { LayoutDashboard, ArrowLeft } from "lucide-vue-next";
+
 import { Button } from "@/components/ui/button";
 
 const props = defineProps<{

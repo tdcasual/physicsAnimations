@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
 import { normalizePublicUrl } from "../features/catalog/catalogLink";
 import {
   getLibraryFolder,
@@ -8,6 +9,7 @@ import {
 } from "../features/library/libraryApi";
 import type { LibraryAsset, LibraryFolder } from "../features/library/types";
 import { resolveBackNavigationTarget } from "../features/navigation/backNavigation";
+
 import { PAButton } from "@/components/ui/patterns";
 
 const route = useRoute();

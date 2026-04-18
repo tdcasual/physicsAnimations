@@ -1,2 +1,8 @@
-npm run guard:security
+npm --prefix frontend run lint
+npm --prefix frontend run test -- --run
 npm --prefix frontend run typecheck
+npm --prefix frontend run guard:css
+npm --prefix frontend run guard:admin
+npm run guard:file-size
+npm run guard:security
+npm run guard:audit

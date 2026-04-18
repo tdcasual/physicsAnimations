@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
+
 import type { TaxonomyCategory, TaxonomyGroup } from "../../../features/admin/taxonomyUiState";
-import { PAButton, PACard, PAField, PAInput, PAActions } from "@/components/ui/patterns";
+
+import { PAActions, PAButton, PACard, PAField, PAInput } from "@/components/ui/patterns";
 
 const props = defineProps<{
   saving: boolean;

@@ -1,26 +1,27 @@
 import { clearToken, getToken } from "../auth/authApi";
 import { apiFetchJson } from "../shared/httpClient";
-import type {
-  LibraryCatalogResponse,
-  LibraryEmbedProfile,
-  LibraryFolder,
-  LibraryFolderAssetsResponse,
-} from "./types";
+
 import { toAsset, toEmbedProfile, toFolder } from "./libraryApiMappers";
 import {
-  buildCreateLibraryEmbedProfileBody,
-  buildCreateLibraryFolderBody,
-  buildUpdateLibraryAssetBody,
-  buildUpdateLibraryEmbedProfileBody,
-  buildUpdateLibraryFolderBody,
-  buildUploadLibraryAssetFormData,
   type CreateLibraryEmbedProfilePayload,
   type CreateLibraryFolderPayload,
   type UpdateLibraryAssetPatch,
   type UpdateLibraryEmbedProfilePatch,
   type UpdateLibraryFolderPatch,
   type UploadLibraryAssetPayload,
+  buildCreateLibraryEmbedProfileBody,
+  buildCreateLibraryFolderBody,
+  buildUpdateLibraryAssetBody,
+  buildUpdateLibraryEmbedProfileBody,
+  buildUpdateLibraryFolderBody,
+  buildUploadLibraryAssetFormData,
 } from "./libraryApiPayloads";
+import type {
+  LibraryCatalogResponse,
+  LibraryEmbedProfile,
+  LibraryFolder,
+  LibraryFolderAssetsResponse,
+} from "./types";
 
 interface LibraryApiError extends Error {
   status: number;
@@ -82,8 +83,8 @@ interface ApiSuccessResponse {
   [key: string]: unknown;
 }
 
-export async function listLibraryCatalog(): Promise<LibraryCatalogResponse> {
-  const data = await apiFetch<CatalogApiResponse>("/api/library/catalog", { method: "GET" });
+export async function listLibraryCatalog(signal?: AbortSignal): Promise<LibraryCatalogResponse> {
+  const data = await apiFetch<CatalogApiResponse>("/api/library/catalog", { method: "GET", signal });
   const folders = Array.isArray(data?.folders) ? data.folders.map(toFolder) : [];
   return { folders };
 }

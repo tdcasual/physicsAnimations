@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { Wifi, WifiOff } from 'lucide-vue-next';
+import { Wifi, WifiOff } from "lucide-vue-next";
+import { onMounted, onUnmounted, ref } from "vue";
 
 const isOnline = ref(navigator.onLine);
 const showBanner = ref(false);
@@ -9,7 +9,7 @@ let hideTimeout: number | null = null;
 function updateOnlineStatus() {
   const wasOffline = !isOnline.value;
   isOnline.value = navigator.onLine;
-  
+
   // Show banner when coming back online
   if (wasOffline && isOnline.value) {
     showBanner.value = true;
@@ -26,13 +26,13 @@ function dismissBanner() {
 }
 
 onMounted(() => {
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
+  window.addEventListener("online", updateOnlineStatus);
+  window.addEventListener("offline", updateOnlineStatus);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('online', updateOnlineStatus);
-  window.removeEventListener('offline', updateOnlineStatus);
+  window.removeEventListener("online", updateOnlineStatus);
+  window.removeEventListener("offline", updateOnlineStatus);
   if (hideTimeout) clearTimeout(hideTimeout);
 });
 </script>
@@ -41,12 +41,13 @@ onUnmounted(() => {
   <!-- Offline Indicator (Fixed) -->
   <div
     v-if="!isOnline"
-    class="fixed top-0 left-0 right-0 z-50 pwa-offline-bar px-4 py-2 flex items-center justify-center gap-2 text-sm"
+    class="pwa-offline-bar fixed right-0 left-0 z-[var(--z-float)] flex items-center justify-center gap-2 px-4 py-2 text-sm"
+    style="top: var(--app-topbar-height, 64px)"
   >
-    <WifiOff class="w-4 h-4" />
+    <WifiOff class="h-4 w-4" />
     <span>离线模式 - 部分功能可能不可用</span>
   </div>
-  
+
   <!-- Back Online Banner (Auto-hide) -->
   <Transition
     enter-active-class="transition duration-300 ease-out"
@@ -58,15 +59,12 @@ onUnmounted(() => {
   >
     <div
       v-if="showBanner"
-      class="fixed top-4 left-1/2 -translate-x-1/2 z-50 pwa-online-banner px-6 py-3 rounded-full shadow-lg flex items-center gap-3 text-sm font-medium"
+      class="pwa-online-banner fixed top-4 left-1/2 z-[var(--z-toast)] flex -translate-x-1/2 items-center gap-3 rounded-full px-6 py-3 text-sm font-medium shadow-lg"
     >
-      <Wifi class="w-4 h-4" />
+      <Wifi class="h-4 w-4" />
       <span>已恢复网络连接</span>
-      <button
-        @click="dismissBanner"
-        class="ml-2 p-1 hover:bg-white/20 rounded-full transition-colors"
-      >
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <button type="button" aria-label="关闭提示" @click="dismissBanner" class="ml-2 rounded-full p-1 transition-colors hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:outline-hidden">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>

@@ -1,20 +1,21 @@
 <script setup lang="ts">
+import { 
+  ArrowRight, 
+  Database, 
+  FolderOpen, 
+  LayoutGrid,
+  RefreshCw,
+  Settings,
+  Sparkles,
+  Tags,
+  Upload
+} from "lucide-vue-next";
 import { computed, onMounted, ref } from "vue";
-import { fetchDashboardStats, type DashboardStats } from "@/features/admin/adminApi";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Upload, 
-  Database, 
-  Tags, 
-  LayoutGrid,
-  RefreshCw,
-  FolderOpen,
-  Settings,
-  ArrowRight,
-  Sparkles
-} from "lucide-vue-next";
+import { type DashboardStats, fetchDashboardStats } from "@/features/admin/adminApi";
 
 const loading = ref(false);
 const errorText = ref("");
@@ -161,7 +162,7 @@ const statCards = computed(() => [
         <Card 
           v-for="stat in statCards" 
           :key="stat.title"
-          class="group relative overflow-hidden rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+          class="group relative overflow-hidden rounded-2xl border bg-card transition-[transform] duration-300 hover:-translate-y-1"
         >
           <!-- Gradient Background -->
           <div 
@@ -189,7 +190,7 @@ const statCards = computed(() => [
           <Card 
             v-for="action in quickActions" 
             :key="action.to"
-            class="group cursor-pointer rounded-2xl border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+            class="group cursor-pointer rounded-2xl border bg-card transition-[transform] duration-300 hover:-translate-y-1"
           >
             <CardHeader class="pb-3">
               <div class="flex items-start justify-between">

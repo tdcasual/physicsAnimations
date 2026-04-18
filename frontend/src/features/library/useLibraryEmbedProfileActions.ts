@@ -1,8 +1,8 @@
-import { listLibraryEmbedProfiles } from "./libraryApi";
 import type { UseLibraryEmbedProfileActionsDeps } from "./embedProfile/embedProfileActionDeps";
 import { useEmbedProfileCreateActions } from "./embedProfile/useEmbedProfileCreateActions";
 import { useEmbedProfileEditActions } from "./embedProfile/useEmbedProfileEditActions";
 import { useEmbedProfileSyncActions } from "./embedProfile/useEmbedProfileSyncActions";
+import { listLibraryEmbedProfiles } from "./libraryApi";
 
 export function useLibraryEmbedProfileActions(deps: UseLibraryEmbedProfileActionsDeps) {
   function cancelEmbedProfileEdit() {

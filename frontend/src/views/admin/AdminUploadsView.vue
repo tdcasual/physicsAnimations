@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+
 import type { AdminItemRow } from "../../features/admin/adminApi";
 import { useUploadAdmin } from "../../features/admin/uploads/useUploadAdmin";
-import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
+
 import UploadsCreateForm from "./uploads/UploadsCreateForm.vue";
 import UploadsEditPanel from "./uploads/UploadsEditPanel.vue";
-import { PACard } from "@/components/ui/patterns";
 import UploadsListPanel from "./uploads/UploadsListPanel.vue";
+import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
+
 import AdminSplitLayout from "@/components/admin/AdminSplitLayout.vue";
+import { PACard } from "@/components/ui/patterns";
 
 const vm = useUploadAdmin();
 const mobileEditorSheetMaxWidth = 640;

@@ -25,7 +25,7 @@ function onInputFile(event: Event) {
   const target = event.target as HTMLInputElement;
   emit("file-change", target.files?.[0] || null);
 }
-import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
+import { PAActions, PAButton, PAField, PAInput } from "@/components/ui/patterns";
 </script>
 
 <template>

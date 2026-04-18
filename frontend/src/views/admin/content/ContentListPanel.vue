@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { ExternalLink, Loader2, Pencil, Search, Trash2 } from "lucide-vue-next";
 import { computed } from "vue";
+
 import type { AdminItemRow } from "../../../features/admin/adminApi";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ExternalLink, Pencil, Trash2, Search, Loader2 } from "lucide-vue-next";
 
 const props = defineProps<{
   items: AdminItemRow[];

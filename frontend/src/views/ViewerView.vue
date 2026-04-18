@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { ArrowLeft, ExternalLink, Heart, MonitorPlay } from "lucide-vue-next";
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
 import ViewerStageShell from "../components/viewer/ViewerStageShell.vue";
 import { normalizePublicUrl } from "../features/catalog/catalogLink";
 import { isFavoriteDemo, toggleFavoriteDemo } from "../features/catalog/favorites";
@@ -10,9 +12,9 @@ import {
   readBackNavigationFallbackHash,
   resolveBackNavigationTarget,
 } from "../features/navigation/backNavigation";
-import { loadViewerModel, type ViewerModel } from "../features/viewer/viewerService";
+import { type ViewerModel, loadViewerModel } from "../features/viewer/viewerService";
+
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Heart, ExternalLink, MonitorPlay } from "lucide-vue-next";
 
 const route = useRoute();
 const router = useRouter();

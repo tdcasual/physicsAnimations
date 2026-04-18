@@ -1,10 +1,12 @@
-import { clearToken, getToken, me } from "../features/auth/authApi";
-import { resolveAdminRedirect } from "./redirect";
 import {
+  type RouterHistory,
   createRouter,
   createWebHistory,
-  type RouterHistory,
 } from "vue-router";
+
+import { clearToken, getToken, me } from "../features/auth/authApi";
+
+import { resolveAdminRedirect } from "./redirect";
 import { appRoutes } from "./routes";
 
 export function createAppRouter({

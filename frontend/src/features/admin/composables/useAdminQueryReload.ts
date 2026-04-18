@@ -1,4 +1,4 @@
-import { onBeforeUnmount, watch, type Ref } from "vue";
+import { type Ref, onBeforeUnmount, watch } from "vue";
 
 export function useAdminQueryReload(params: {
   query: Ref<string>;

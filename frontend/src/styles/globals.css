@@ -42,8 +42,8 @@
   --color-sidebar-ring: var(--sidebar-ring);
 
   /* Custom font families - Gallery style */
-  --font-display: 'Playfair Display', 'Noto Serif SC', 'Songti SC', serif;
-  --font-body: 'Inter', 'Noto Sans SC', 'PingFang SC', sans-serif;
+  --font-display: "Playfair Display", "Noto Serif SC", "Songti SC", serif;
+  --font-body: "Inter", "Noto Sans SC", "PingFang SC", sans-serif;
 }
 
 /* ── Light Mode (Default) ── */
@@ -102,7 +102,7 @@
   /* ── Layout & Scale ── */
   --ui-scale: 1;
   --content-max-width: 1120px;
-  --app-topbar-height: 0px;
+  --app-topbar-height: 64px;
   --viewer-min-height: 72vh;
   --library-card-min-width: 240px;
   --catalog-card-min-width: 220px;
@@ -115,16 +115,27 @@
 
   /* ── Shadows ── */
   --shadow-s: 0 1px 2px 0 color-mix(in oklab, var(--foreground) 5%, transparent);
-  --shadow-m: 0 4px 6px -1px color-mix(in oklab, var(--foreground) 10%, transparent), 0 2px 4px -2px color-mix(in oklab, var(--foreground) 10%, transparent);
-  --shadow-l: 0 10px 15px -3px color-mix(in oklab, var(--foreground) 10%, transparent), 0 4px 6px -4px color-mix(in oklab, var(--foreground) 10%, transparent);
-  --shadow-xl: 0 20px 25px -5px color-mix(in oklab, var(--foreground) 10%, transparent), 0 8px 10px -6px color-mix(in oklab, var(--foreground) 10%, transparent);
+  --shadow-m:
+    0 4px 6px -1px color-mix(in oklab, var(--foreground) 10%, transparent),
+    0 2px 4px -2px color-mix(in oklab, var(--foreground) 10%, transparent);
+  --shadow-l:
+    0 10px 15px -3px color-mix(in oklab, var(--foreground) 10%, transparent),
+    0 4px 6px -4px color-mix(in oklab, var(--foreground) 10%, transparent);
+  --shadow-xl:
+    0 20px 25px -5px color-mix(in oklab, var(--foreground) 10%, transparent),
+    0 8px 10px -6px color-mix(in oklab, var(--foreground) 10%, transparent);
 
   /* ── Z-index ── */
   --z-content: 1;
   --z-raised: 2;
-  --z-nav: 5;
-  --z-topbar: 10;
-  --z-modal: 20;
+  --z-nav: 35;
+  --z-sticky: 40;
+  --z-float: 50;
+  --z-topbar: 60;
+  --z-modal-backdrop: 70;
+  --z-modal-content: 80;
+  --z-toast: 90;
+  --z-dev-tool: 100;
 }
 
 /* ── Dark Mode ── */
@@ -215,8 +226,14 @@ html {
 }
 
 /* ── Reset ── */
-* { box-sizing: border-box; }
-html, body, #app { min-height: 100%; }
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#app {
+  min-height: 100%;
+}
 
 .sr-only {
   position: absolute;
@@ -241,6 +258,14 @@ html, body, #app { min-height: 100%; }
   width: min(var(--content-max-width), calc(100% - 48px));
   margin: 20px auto 40px;
   padding: 0;
+  padding-top: var(--app-topbar-height, 64px);
+}
+
+/* Admin 桌面端：AdminShellHeader 自身有 padding，不需要全局补偿 */
+@media (min-width: 640px) {
+  .app-main--admin {
+    padding-top: 0;
+  }
 }
 
 /* Catalog uses full-width layout */
@@ -290,4 +315,3 @@ html, body, #app { min-height: 100%; }
 .break-anywhere {
   overflow-wrap: anywhere;
 }
-

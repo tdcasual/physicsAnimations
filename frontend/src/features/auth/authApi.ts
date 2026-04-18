@@ -1,6 +1,6 @@
+import { STORAGE_KEYS } from "../../lib/constants";
 import { apiFetchJson } from "../shared/httpClient";
 
-import { STORAGE_KEYS } from "../../lib/constants";
 
 const TOKEN_KEY = STORAGE_KEYS.ADMIN_TOKEN;
 

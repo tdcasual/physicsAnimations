@@ -1,12 +1,14 @@
 import { computed, nextTick } from "vue";
+
+import { usePendingChangesGuard } from "../composables/usePendingChangesGuard";
 import {
-  normalizeTaxonomySelection,
   type TaxonomyCategory,
   type TaxonomyGroup,
+  normalizeTaxonomySelection,
 } from "../taxonomyUiState";
+
 import { createTaxonomyAdminActions } from "./useTaxonomyAdminActions";
 import { useTaxonomyAdminDraftState } from "./useTaxonomyAdminDraftState";
-import { usePendingChangesGuard } from "../composables/usePendingChangesGuard";
 import { useTaxonomyAdminLifecycle } from "./useTaxonomyAdminLifecycle";
 
 const DEFAULT_GROUP_ID = "physics";

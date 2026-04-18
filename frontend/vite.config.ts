@@ -91,13 +91,14 @@ export default defineConfig({
             },
           },
           {
+            // Workbox routes default to GET only, so write endpoints are not cached.
             urlPattern: /\/api\/.*/i,
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60, // 1 hour
+                maxAgeSeconds: 60 * 15, // 15 minutes
               },
               networkTimeoutSeconds: 10,
             },
@@ -122,11 +123,37 @@ export default defineConfig({
     environment: "jsdom",
     execArgv: ["--import", LOCALSTORAGE_SHIM],
     setupFiles: ["./test/setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json", "html"],
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 50,
+        statements: 60,
+      },
+    },
   },
   build: {
     outDir: "dist",
     emptyOutDir: true,
-
     chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (/reka-ui|radix-vue|@floating-ui|@tanstack\/vue-virtual/.test(id)) {
+              return "vendor-ui";
+            }
+            if (/@vueuse|lenis/.test(id)) {
+              return "vendor-utils";
+            }
+            if (/lucide-vue-next/.test(id)) {
+              return "vendor-icons";
+            }
+          }
+        },
+      },
+    },
   },
 });

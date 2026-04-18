@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AdminItemRow } from "../../../features/admin/adminApi";
-import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
+
+import { PAActions, PAButton, PAField, PAInput } from "@/components/ui/patterns";
 
 interface OptionItem {
   value: string;

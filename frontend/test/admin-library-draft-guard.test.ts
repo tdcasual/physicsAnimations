@@ -10,7 +10,7 @@ describe("admin library draft guard", () => {
   it("adds a shared pending-changes guard to the library admin state wiring", () => {
     const source = read("src/features/library/useLibraryAdminActionWiring.ts");
 
-    expect(source).toMatch(/import\s+\{\s*computed,\s*watch,\s*type\s+Ref\s*\}\s+from\s+"vue"/);
+    expect(source).toMatch(/import\s+\{\s*(?:type\s+Ref,\s*)?computed,\s*watch(?:,\s*type\s+Ref)?\s*\}\s+from\s+"vue"/);
     expect(source).toMatch(/import\s+\{\s*usePendingChangesGuard\s*\}\s+from\s+"\.\.\/admin\/composables\/usePendingChangesGuard"/);
     expect(source).toMatch(/const\s+hasPendingChanges\s*=\s*computed\(/);
     expect(source).toMatch(/usePendingChangesGuard\(\{[\s\S]*hasPendingChanges[\s\S]*isBlocked:\s*computed\(\(\)\s*=>\s*savingFolder\.value\s*\|\|\s*savingAsset\.value\s*\|\|\s*savingEmbed\.value\)[\s\S]*message:\s*"资源库内容有未保存更改，确定离开当前页面吗？"/);

@@ -2,10 +2,12 @@
  * 主题预设入口
  * 所有内置主题在这里注册
  */
-import { minimalTheme, minimalVars } from "./minimal";
-import { handdrawnTheme, handdrawnVars } from "./handdrawn";
-import { brutalistTheme, brutalistVars } from "./brutalist";
 import type { CatalogThemeConfig } from "../types";
+
+import { brutalistTheme, brutalistVars } from "./brutalist";
+import { handdrawnTheme, handdrawnVars } from "./handdrawn";
+import { minimalTheme, minimalVars } from "./minimal";
+
 
 // 导出主题配置列表
 export const presetThemes: CatalogThemeConfig[] = [

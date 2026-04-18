@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from "vue";
-import { setToken } from "../../features/auth/authApi";
-import { useAuthStore } from "../../features/auth/useAuthStore";
+
 import { updateAccount } from "../../features/admin/adminApi";
 import { usePendingChangesGuard } from "../../features/admin/composables/usePendingChangesGuard";
+import { setToken } from "../../features/auth/authApi";
+import { useAuthStore } from "../../features/auth/useAuthStore";
 import { extractApiError } from "../../features/shared/apiError";
-import { PAButton, PACard, PAField, PAInput, PAActions } from "@/components/ui/patterns";
+
+import { PAActions, PAButton, PACard, PAField, PAInput } from "@/components/ui/patterns";
 
 const auth = useAuthStore();
 

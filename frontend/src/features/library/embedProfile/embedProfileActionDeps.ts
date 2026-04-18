@@ -1,4 +1,5 @@
 import type { Ref } from "vue";
+
 import type { JsonObjectParseResult, LibraryPanelTab } from "../libraryAdminModels";
 import type { LibraryEmbedProfile } from "../types";
 

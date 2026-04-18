@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { RouterLink } from "vue-router";
-import { normalizePublicUrl, isCatalogAppRoute } from "@/features/catalog/catalogLink";
+
+import { isCatalogAppRoute, normalizePublicUrl } from "@/features/catalog/catalogLink";
 
 interface DemoCardProps {
   id: string;
@@ -38,7 +39,7 @@ const rotation = computed(() => {
     :is="isInternal ? RouterLink : 'a'"
     :to="isInternal ? href : undefined"
     :href="isInternal ? undefined : href"
-    class="cat-card bg-white group relative flex flex-col overflow-hidden transition-all duration-500"
+    class="cat-card bg-card group relative flex flex-col overflow-hidden transition-[transform,box-shadow] duration-500"
     :style="{ '--card-rotation': rotation + 'deg' }"
   >
     <!-- Thumbnail Container - 3:2 ratio -->

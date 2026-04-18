@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import AdminMobileSheet from "@/components/admin/AdminMobileSheet.vue";
-import { PAButton, PAField, PAInput } from "@/components/ui/patterns";
+
 import type { LibraryAsset } from "../../features/library/types";
 import { useLibraryAdminState } from "../../features/library/useLibraryAdminState";
-import { createAdminLibraryMobileInspectorFocus } from "./library/useAdminLibraryMobileInspectorFocus";
+
 import AssetPanel from "./library/panels/AssetPanel.vue";
 import EmbedPanel from "./library/panels/EmbedPanel.vue";
 import EmbedProfileCreatePanel from "./library/panels/EmbedProfileCreatePanel.vue";
 import EmbedProfileEditPanel from "./library/panels/EmbedProfileEditPanel.vue";
 import FolderPanel from "./library/panels/FolderPanel.vue";
 import OperationLogPanel from "./library/panels/OperationLogPanel.vue";
+import { createAdminLibraryMobileInspectorFocus } from "./library/useAdminLibraryMobileInspectorFocus";
+
+import AdminMobileSheet from "@/components/admin/AdminMobileSheet.vue";
+import { PAButton, PAField, PAInput } from "@/components/ui/patterns";
 
 const vm = useLibraryAdminState();
 type MobileLibrarySheet = "folder-create" | "folder" | "asset" | "embed" | null;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
+
 import { useCatalogTheme } from "@/features/catalog/theme";
 import { cn } from "@/lib/utils";
 
@@ -106,10 +107,10 @@ const buttonClassesMap = computed(() => {
   gap: 4px;
   padding: 4px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.8);
+  background: color-mix(in oklab, var(--cat-bg-card, #ffffff) 80%, transparent);
   backdrop-filter: blur(4px);
-  border: 1px solid rgba(229, 231, 235, 0.5);
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid color-mix(in oklab, var(--cat-border-color, #e5e7eb) 50%, transparent);
+  box-shadow: var(--shadow-s, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
   transition: box-shadow 0.2s ease;
 }
 
@@ -176,8 +177,8 @@ const buttonClassesMap = computed(() => {
   padding: 4px 8px;
   font-size: 12px;
   line-height: 1;
-  color: #6b7280;
-  background: rgba(255, 255, 255, 0.9);
+  color: var(--cat-text-secondary, #666666);
+  background: color-mix(in oklab, var(--cat-bg-card, #ffffff) 90%, transparent);
   border-radius: 6px;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   opacity: 0;

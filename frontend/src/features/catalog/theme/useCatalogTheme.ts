@@ -1,10 +1,11 @@
-import { ref, onMounted } from "vue";
+import { onMounted, ref } from "vue";
+
+import { presetThemes } from "./presets";
 import {
   getStoredCatalogTheme,
-  setStoredCatalogTheme,
   isValidCatalogTheme,
+  setStoredCatalogTheme,
 } from "./types";
-import { presetThemes } from "./presets";
 
 const currentTheme = ref<string>("minimal");
 const isInitialized = ref(false);

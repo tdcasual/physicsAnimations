@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { normalizePublicUrl } from "@/features/catalog/catalogLink";
 import { FolderOpen } from "lucide-vue-next";
+import { computed } from "vue";
+
+import { normalizePublicUrl } from "@/features/catalog/catalogLink";
 
 interface FolderCardProps {
   id: string;
@@ -29,7 +30,7 @@ const rotation = computed(() => {
 <template>
   <a
     :href="href"
-    class="cat-card group relative flex flex-col overflow-hidden transition-all duration-500"
+    class="cat-card group relative flex flex-col overflow-hidden transition-[transform,box-shadow] duration-500"
     :style="{ '--card-rotation': rotation + 'deg' }"
   >
     <!-- Cover -->

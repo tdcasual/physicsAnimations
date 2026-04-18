@@ -26,7 +26,7 @@
     "qa:release": "bash ./scripts/qa_release_gate.sh",
     "cleanup:embed-vendor": "node scripts/cleanup_embed_profile_vendor_duplicates.js",
     "backup:webdav": "node scripts/backup_to_webdav.js",
-    "prepare": "node scripts/prepare.js",
+    "prepare": "husky",
     "test": "node --test tests/*.test.js",
     "update:embed-maintenance": "node scripts/update_embed_maintenance.js",
     "update:embed-maintenance:job": "sh ./scripts/run_embed_maintenance.sh"
@@ -53,6 +53,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.5.0",
+    "@commitlint/config-conventional": "^20.5.0",
     "husky": "^9.1.7",
     "jszip": "^3.10.1"
   },

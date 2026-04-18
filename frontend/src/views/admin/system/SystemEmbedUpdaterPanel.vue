@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
+
 import type { SystemEmbedUpdater } from "../../../features/admin/system/useSystemWizard";
-import { PAButton, PACard, PAActions, PAField, PAInput } from "@/components/ui/patterns";
+
+import { PAActions, PAButton, PACard, PAField, PAInput } from "@/components/ui/patterns";
 
 const props = defineProps<{
   embedUpdater: SystemEmbedUpdater | null;

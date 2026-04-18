@@ -1,5 +1,6 @@
 import { updateLibraryEmbedProfile } from "../libraryApi";
 import type { LibraryEmbedProfile } from "../types";
+
 import type { UseLibraryEmbedProfileActionsDeps } from "./embedProfileActionDeps";
 
 interface UseEmbedProfileEditActionsArgs {

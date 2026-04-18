@@ -1,13 +1,15 @@
-import { nextTick, ref, watch, watchEffect, type Ref } from "vue";
+import { type Ref, nextTick, ref, watch, watchEffect } from "vue";
 import { onBeforeRouteLeave, useRoute } from "vue-router";
+
+import { getCatalogHashFallbackSelector } from "../features/catalog/catalogHashTarget";
+import { isCatalogAppRoute } from "../features/catalog/catalogLink";
 import {
   clearCatalogReturnScroll,
   readCatalogReturnScroll,
   resolveCatalogReturnScrollRestore,
   writeCatalogReturnScroll,
 } from "../features/catalog/catalogReturnScroll";
-import { isCatalogAppRoute } from "../features/catalog/catalogLink";
-import { getCatalogHashFallbackSelector } from "../features/catalog/catalogHashTarget";
+
 import { createCatalogMobileFilterFocus } from "./useCatalogMobileFilterFocus";
 
 export function useCatalogViewChrome(input: {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
+
 import SystemWizardConnectionStep from "./SystemWizardConnectionStep.vue";
+
 import { PAButton, PACard } from "@/components/ui/patterns";
 
 type WizardStep = 1 | 2 | 3 | 4;

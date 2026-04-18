@@ -1,4 +1,5 @@
-import { onMounted, watch, type Ref } from "vue";
+import { type Ref, onMounted, watch } from "vue";
+
 import type { TaxonomySelection } from "../taxonomyUiState";
 
 interface UseTaxonomyAdminLifecycleParams {

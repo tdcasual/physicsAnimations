@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+
 import AdminMobileSheet from "./AdminMobileSheet.vue";
 
 defineProps<{
@@ -56,14 +57,14 @@ defineExpose({ panelRef });
 .admin-split-layout__editor {
   position: sticky;
   align-self: start;
-  top: calc(var(--app-topbar-height, 0px) + 12px);
-  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  top: calc(var(--app-topbar-height, 64px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 64px) - 32px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
 
 .admin-mobile-focus-anchor {
-  scroll-margin-top: calc(var(--app-topbar-height, 0px) + 16px);
+  scroll-margin-top: calc(var(--app-topbar-height, 64px) + 16px);
 }
 
 @media (max-width: 1024px) {

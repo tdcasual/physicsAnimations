@@ -1,10 +1,11 @@
 import { computed, ref } from "vue";
+
 import {
-  buildTaxonomyTree,
-  sortGroupList,
   type TaxonomyCategory,
   type TaxonomyGroup,
   type TaxonomySelection,
+  buildTaxonomyTree,
+  sortGroupList,
 } from "../taxonomyUiState";
 
 type GroupRow = TaxonomyGroup;

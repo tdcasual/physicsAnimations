@@ -1,4 +1,4 @@
-import { onMounted, watch, type ComputedRef, type Ref } from "vue";
+import { type ComputedRef, type Ref, onMounted, watch } from "vue";
 
 type SelectableProfile = { id: string };
 

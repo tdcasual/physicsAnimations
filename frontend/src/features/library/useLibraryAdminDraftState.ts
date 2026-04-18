@@ -1,4 +1,5 @@
 import { computed, ref } from "vue";
+
 import type { LibraryAsset, LibraryEmbedProfile, LibraryFolder, LibraryOpenMode } from "./types";
 
 export function useLibraryAdminDraftState() {

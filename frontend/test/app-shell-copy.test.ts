@@ -39,7 +39,7 @@ describe("app shell copy", () => {
 
     expect(source).toMatch(/mobileMenuOpen/);
     expect(source).toMatch(/md:hidden/);
-    expect(source).toMatch(/hidden md:flex/);
+    expect(source).toMatch(/hidden\s+items-center\s+md:flex/);
   });
 
   it("frames utility controls as preference settings inside the mobile panel", () => {

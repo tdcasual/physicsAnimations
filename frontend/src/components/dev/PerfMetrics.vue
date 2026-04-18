@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
+
 import { getCurrentMetrics } from "../../features/monitoring/webVitals";
 
 interface MetricsDisplay {

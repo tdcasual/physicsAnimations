@@ -1,6 +1,7 @@
 import type { Ref } from "vue";
-import { updateLibraryAsset } from "./libraryApi";
+
 import type { JsonObjectParseResult, LibraryPanelTab } from "./libraryAdminModels";
+import { updateLibraryAsset } from "./libraryApi";
 import type { LibraryAsset, LibraryOpenMode } from "./types";
 
 type UseLibraryAssetEditorActionsDeps = {

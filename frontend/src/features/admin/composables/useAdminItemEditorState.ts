@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from "vue";
+import { type Ref, computed, ref } from "vue";
 
 type EditableAdminItem = {
   id: string;

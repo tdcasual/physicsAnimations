@@ -62,7 +62,11 @@
   border: 1px solid color-mix(in oklab, var(--primary) 14%, var(--border));
   border-radius: 14px;
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--card) 94%, var(--background)), color-mix(in oklab, var(--primary) 4%, var(--card))),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--card) 94%, var(--background)),
+      color-mix(in oklab, var(--primary) 4%, var(--card))
+    ),
     var(--card);
 }
 
@@ -136,7 +140,11 @@
   border: 1px solid color-mix(in oklab, var(--primary) 14%, var(--border));
   border-radius: 16px;
   background:
-    linear-gradient(180deg, color-mix(in oklab, var(--card) 96%, var(--background)), color-mix(in oklab, var(--primary) 5%, var(--card))),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--card) 96%, var(--background)),
+      color-mix(in oklab, var(--primary) 5%, var(--card))
+    ),
     var(--card);
   color: inherit;
   align-items: center;
@@ -166,8 +174,8 @@
 .library-sidebar {
   position: sticky;
   align-self: start;
-  top: calc(var(--app-topbar-height, 0px) + 12px);
-  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  top: calc(var(--app-topbar-height, 64px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 64px) - 32px);
   overflow: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -189,8 +197,8 @@
 .library-inspector-area {
   position: sticky;
   align-self: start;
-  top: calc(var(--app-topbar-height, 0px) + 12px);
-  max-height: calc(100dvh - var(--app-topbar-height, 0px) - 32px);
+  top: calc(var(--app-topbar-height, 64px) + 12px);
+  max-height: calc(100dvh - var(--app-topbar-height, 64px) - 32px);
   overflow: auto;
 }
 
@@ -226,7 +234,11 @@
   text-align: left;
   white-space: normal;
   cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 .panel-tab.active {
@@ -279,7 +291,7 @@
 }
 
 .library-mobile-focus-anchor {
-  scroll-margin-top: calc(var(--app-topbar-height, 0px) + 16px);
+  scroll-margin-top: calc(var(--app-topbar-height, 64px) + 16px);
 }
 
 /* ===== List Styles ===== */
@@ -754,7 +766,11 @@
     padding: 14px;
     border-bottom: 1px solid color-mix(in oklab, var(--primary) 16%, var(--border));
     background:
-      linear-gradient(180deg, color-mix(in oklab, var(--card) 97%, var(--background)), color-mix(in oklab, var(--primary) 5%, var(--card))),
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--card) 97%, var(--background)),
+        color-mix(in oklab, var(--primary) 5%, var(--card))
+      ),
       var(--card);
     border-radius: inherit;
   }

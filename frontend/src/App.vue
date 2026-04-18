@@ -1,26 +1,23 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from "vue";
+import { GraduationCap, LayoutDashboard, LogOut, Menu, Moon, Search, Sun, User, X } from "lucide-vue-next";
+import { type ComponentPublicInstance, computed, nextTick, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import { resolveAdminRedirect } from "./router/redirect";
 
+import { useScrollLock } from "./composables/useScrollLock";
+import { useTheme } from "./composables/useTheme";
 import { useAuthStore } from "./features/auth/useAuthStore";
 import { useCatalogSearch } from "./features/catalog/catalogSearch";
-import { useTheme } from "./composables/useTheme";
 import { applyStoredClassroomMode, toggleClassroomMode } from "./features/classroom/classroomMode";
+import { extractApiError } from "./features/shared/apiError";
+import { resolveAdminRedirect } from "./router/redirect";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import AppErrorBoundary from "@/components/AppErrorBoundary.vue";
 import PerfMetrics from "@/components/dev/PerfMetrics.vue";
-import PwaNetworkStatus from "@/components/PwaNetworkStatus.vue";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt.vue";
+import PwaNetworkStatus from "@/components/PwaNetworkStatus.vue";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Sun, Moon, Search, GraduationCap, User, LogOut, LayoutDashboard, Menu, X } from "lucide-vue-next";
 
 const router = useRouter();
 const route = useRoute();
@@ -38,6 +35,7 @@ const mobileMenuOpen = ref(false);
 const topbarRef = ref<HTMLElement | null>(null);
 const loginUsernameInputRef = ref<(ComponentPublicInstance & { $el?: Element | null }) | HTMLInputElement | null>(null);
 const isScrolled = ref(false);
+const appError = ref<Error | null>(null);
 
 // Computed
 const currentPath = computed(() => String(route.path || ""));
@@ -52,8 +50,8 @@ const catalogQuery = useCatalogSearch();
 
 // Helpers
 let lastFocusedBeforeLogin: HTMLElement | null = null;
-let bodyOverflowBeforeLogin = "";
 let topbarResizeObserver: ResizeObserver | null = null;
+const { lock: lockScroll, unlock: unlockScroll } = useScrollLock();
 
 function openLogin() {
   mobileMenuOpen.value = false;
@@ -74,7 +72,6 @@ function clearLoginError() {
   loginError.value = "";
 }
 
-import { extractApiError } from "./features/shared/apiError";
 
 function toLoginMessage(err: unknown): string {
   const e = extractApiError(err);
@@ -86,9 +83,7 @@ function toLoginMessage(err: unknown): string {
   }
   if (status === 401) return "用户名或密码错误。";
   if (status === 429) {
-    return retryAfterSeconds
-      ? `尝试过于频繁，请 ${retryAfterSeconds} 秒后再试。`
-      : "尝试过于频繁，请稍后再试。";
+    return retryAfterSeconds ? `尝试过于频繁，请 ${retryAfterSeconds} 秒后再试。` : "尝试过于频繁，请稍后再试。";
   }
   if (status === 404) return "未找到登录接口，请确认服务端已启动。";
   if (!status) return "无法连接服务端，请确认已运行 npm start。";
@@ -163,8 +158,7 @@ onMounted(async () => {
 
 watch(loginOpen, async (open) => {
   if (open) {
-    bodyOverflowBeforeLogin = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockScroll();
     await nextTick();
     const inputEl =
       loginUsernameInputRef.value instanceof HTMLInputElement
@@ -175,8 +169,7 @@ watch(loginOpen, async (open) => {
     inputEl?.focus();
     return;
   }
-  document.body.style.overflow = bodyOverflowBeforeLogin;
-  bodyOverflowBeforeLogin = "";
+  unlockScroll();
   const restoreTarget = lastFocusedBeforeLogin;
   lastFocusedBeforeLogin = null;
   restoreTarget?.focus();
@@ -186,8 +179,19 @@ watch(
   () => route.fullPath,
   () => {
     mobileMenuOpen.value = false;
-  },
+  }
 );
+
+onErrorCaptured((err) => {
+  appError.value = err instanceof Error ? err : new Error(String(err));
+  return false; // Prevent propagation
+});
+function clearAppError() {
+  appError.value = null;
+}
+function reloadPage() {
+  window.location.reload();
+}
 
 onBeforeUnmount(() => {
   window.removeEventListener("pa-auth-expired", handleAuthExpired as (e: Event) => void);
@@ -195,18 +199,18 @@ onBeforeUnmount(() => {
   topbarResizeObserver?.disconnect();
   topbarResizeObserver = null;
   document.documentElement.style.removeProperty("--app-topbar-height");
-  document.body.style.overflow = bodyOverflowBeforeLogin;
+  unlockScroll();
 });
 </script>
 
 <template>
-  <div class="min-h-screen bg-background text-foreground">
+  <div class="bg-background text-foreground min-h-screen">
     <header
       ref="topbarRef"
-      class="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      class="fixed top-0 right-0 left-0 z-[var(--z-topbar)] transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300"
       :class="[
         isScrolled || mobileMenuOpen
-          ? 'bg-background/80 backdrop-blur-xl border-b border-border shadow-sm'
+          ? 'bg-background/80 border-border border-b shadow-sm backdrop-blur-xl'
           : 'bg-transparent',
       ]"
     >
@@ -215,26 +219,26 @@ onBeforeUnmount(() => {
           <div class="flex items-center gap-6">
             <RouterLink
               to="/"
-              class="font-serif text-xl font-normal tracking-wide text-foreground transition-opacity hover:opacity-60"
+              class="text-foreground font-serif text-xl font-normal tracking-wide transition-opacity hover:opacity-60"
             >
               演示工坊
             </RouterLink>
 
-            <div v-if="isCatalogRoute" class="hidden md:flex items-center">
+            <div v-if="isCatalogRoute" class="hidden items-center md:flex">
               <div class="relative">
-                <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
                   :model-value="catalogQuery"
                   type="search"
                   placeholder="搜索演示..."
-                  class="h-9 w-64 rounded-full border-border bg-muted pl-9 text-sm focus-visible:ring-primary"
+                  class="border-border bg-muted focus-visible:ring-primary h-9 w-64 rounded-full pl-9 text-sm"
                   @update:model-value="catalogQuery = String($event)"
                 />
               </div>
             </div>
           </div>
 
-          <div class="hidden md:flex items-center gap-2">
+          <div class="hidden items-center gap-2 md:flex">
             <Button
               variant="ghost"
               size="sm"
@@ -262,7 +266,7 @@ onBeforeUnmount(() => {
                   管理
                 </RouterLink>
               </Button>
-              <Button variant="ghost" size="sm" class="gap-2 rounded-full text-muted-foreground" @click="logout">
+              <Button variant="ghost" size="sm" class="text-muted-foreground gap-2 rounded-full" @click="logout">
                 <LogOut class="h-4 w-4" />
                 退出
               </Button>
@@ -270,7 +274,8 @@ onBeforeUnmount(() => {
           </div>
 
           <button
-            class="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-secondary"
+            type="button"
+            class="hover:bg-secondary inline-flex h-11 w-11 items-center justify-center rounded-full md:hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
             aria-label="切换导航"
             @click="mobileMenuOpen = !mobileMenuOpen"
           >
@@ -280,23 +285,20 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div v-if="isCatalogRoute && mobileMenuOpen" class="border-t border-border px-4 py-3 md:hidden">
+      <div v-if="isCatalogRoute && mobileMenuOpen" class="border-border border-t px-4 py-3 md:hidden">
         <div class="relative">
-          <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             :model-value="catalogQuery"
             type="search"
             placeholder="搜索演示..."
-            class="h-10 w-full rounded-full border-border bg-muted pl-9"
+            class="border-border bg-muted h-10 w-full rounded-full pl-9"
             @update:model-value="catalogQuery = String($event)"
           />
         </div>
       </div>
 
-      <div
-        v-if="mobileMenuOpen"
-        class="border-t border-border bg-background px-4 py-4 md:hidden"
-      >
+      <div v-if="mobileMenuOpen" class="border-border bg-background border-t px-4 py-4 md:hidden">
         <div class="flex flex-col gap-2">
           <Button
             variant="ghost"
@@ -328,7 +330,7 @@ onBeforeUnmount(() => {
                 管理后台
               </RouterLink>
             </Button>
-            <Button variant="ghost" class="justify-start gap-3 rounded-xl text-muted-foreground" @click="logout">
+            <Button variant="ghost" class="text-muted-foreground justify-start gap-3 rounded-xl" @click="logout">
               <LogOut class="h-4 w-4" />
               退出登录
             </Button>
@@ -338,18 +340,28 @@ onBeforeUnmount(() => {
     </header>
 
     <main
-      class="transition-all"
+      class="transition-[padding] duration-300"
       :class="[
-        isAdminRoute ? 'app-main--admin pt-0' : 'pt-16',
+        'app-main',
+        isAdminRoute ? 'app-main--admin' : '',
         isCatalogRoute ? 'app-main--catalog' : '',
         isViewerRoute ? 'app-main--viewer' : '',
         isLibraryRoute ? 'app-main--library' : '',
       ]"
     >
-      <RouterView />
+      <AppErrorBoundary :error="appError" @clear="clearAppError" @reload="reloadPage">
+        <RouterView />
+      </AppErrorBoundary>
     </main>
 
-    <Dialog :open="loginOpen" @update:open="(v) => { if (!v) closeLogin(); }">
+    <Dialog
+      :open="loginOpen"
+      @update:open="
+        (v) => {
+          if (!v) closeLogin();
+        }
+      "
+    >
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>管理员登录</DialogTitle>
@@ -358,8 +370,9 @@ onBeforeUnmount(() => {
 
         <form class="mt-2 space-y-4" @submit.prevent="submitLogin">
           <div class="space-y-2">
-            <label class="text-sm font-medium">用户名</label>
+            <label for="login-username" class="text-sm font-medium">用户名</label>
             <Input
+              id="login-username"
               ref="loginUsernameInputRef"
               v-model="loginUsername"
               type="text"
@@ -372,8 +385,9 @@ onBeforeUnmount(() => {
             />
           </div>
           <div class="space-y-2">
-            <label class="text-sm font-medium">密码</label>
+            <label for="login-password" class="text-sm font-medium">密码</label>
             <Input
+              id="login-password"
               v-model="loginPassword"
               type="password"
               autocomplete="current-password"
@@ -385,7 +399,7 @@ onBeforeUnmount(() => {
             />
           </div>
 
-          <div v-if="loginError" class="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <div v-if="loginError" class="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm">
             {{ loginError }}
           </div>
 

@@ -45,6 +45,7 @@ const emit = defineEmits<{
           title="作品"
           loading="eager"
           :sandbox="props.frameSandbox"
+          allow="fullscreen"
           referrerpolicy="no-referrer"
           @load="emit('frame-load')"
         />

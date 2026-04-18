@@ -1,4 +1,4 @@
-import type { CatalogData, CatalogCategory } from "./types";
+import type { CatalogCategory, CatalogData } from "./types";
 
 export const DEFAULT_GROUP_ID = "physics";
 
@@ -65,15 +65,18 @@ export function normalizeCatalog(catalog: RawCatalogData | null | undefined): Ca
   return { groups: {} };
 }
 
-export async function loadCatalogData(): Promise<CatalogLoadResult> {
+export async function loadCatalogData(signal?: AbortSignal): Promise<CatalogLoadResult> {
   try {
-    const response = await fetch("/api/catalog", { method: "GET", cache: "no-store" });
+    const response = await fetch("/api/catalog", { method: "GET", cache: "no-store", signal });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     return {
       ok: true,
       catalog: normalizeCatalog(await response.json()),
     };
-  } catch {
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      return { ok: false, catalog: { groups: {} }, error: "request_failed" };
+    }
     return {
       ok: false,
       catalog: { groups: {} },

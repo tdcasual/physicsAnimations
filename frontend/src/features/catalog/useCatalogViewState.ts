@@ -1,21 +1,19 @@
 import { computed, onMounted, ref, watch } from "vue";
-import { getCatalogItemHref } from "./catalogLink";
-import { useCatalogSearch } from "./catalogSearch";
-import { loadCatalogData } from "./catalogService";
-import { computeCatalogView, filterFoldersByCatalogContext } from "./catalogState";
-import type { CatalogData, CatalogItem } from "./types";
-import {
-  readFavoriteDemos,
-  type FavoriteDemoEntry,
-  writeFavoriteDemos,
-} from "./favorites";
-import {
-  readRecentActivity,
-  type RecentActivityEntry,
-  writeRecentActivity,
-} from "./recentActivity";
+
+
 import { listLibraryCatalog } from "../library/libraryApi";
 import type { LibraryFolder } from "../library/types";
+
+import { getCatalogItemHref } from "./catalogLink";
+import { useCatalogSearch, useDebouncedCatalogQuery } from "./catalogSearch";
+import { loadCatalogData } from "./catalogService";
+import { computeCatalogView, filterFoldersByCatalogContext } from "./catalogState";
+import { type FavoriteDemoEntry, readFavoriteDemos, writeFavoriteDemos } from "./favorites";
+import { type RecentActivityEntry, readRecentActivity, writeRecentActivity } from "./recentActivity";
+import type { CatalogData, CatalogItem } from "./types";
+
+import { useRouteAbortController } from "@/composables/useRouteAbortController";
+import { getStorageObject, setStorageObject } from "@/lib/storage";
 
 const VIEW_STATE_KEY = "pa_view_state";
 const MAX_GROUP_TABS = 8;
@@ -59,7 +57,7 @@ export function serializeCatalogViewState(snapshot: CatalogViewStateSnapshot): s
 
 export function buildCatalogHomepageSections(
   items: CatalogItem[],
-  options: { currentLimit?: number; recommendedLimit?: number } = {},
+  options: { currentLimit?: number; recommendedLimit?: number } = {}
 ): { currentItems: CatalogItem[]; recommendedItems: CatalogItem[] } {
   const currentLimit = Number(options.currentLimit || MAX_FEATURED_ITEMS);
   const recommendedLimit = Number(options.recommendedLimit || MAX_FEATURED_ITEMS);
@@ -79,7 +77,7 @@ export function buildCatalogTeacherQuickAccess(
     favoriteEntries?: FavoriteDemoEntry[];
     recentLimit?: number;
     favoriteLimit?: number;
-  } = {},
+  } = {}
 ): {
   recentItems: CatalogItem[];
   favoriteItems: CatalogItem[];
@@ -92,10 +90,12 @@ export function buildCatalogTeacherQuickAccess(
 
   const resolveEntries = <T extends { id: string }>(
     entries: T[] | undefined,
-    timestampKey: keyof T,
+    timestampKey: keyof T
   ): { validEntries: T[]; resolvedItems: CatalogItem[] } => {
     const seen = new Set<string>();
-    const sortedEntries = [...(entries || [])].sort((left, right) => Number(right[timestampKey]) - Number(left[timestampKey]));
+    const sortedEntries = [...(entries || [])].sort(
+      (left, right) => Number(right[timestampKey]) - Number(left[timestampKey])
+    );
     const validEntries: T[] = [];
     const resolvedItems: CatalogItem[] = [];
 
@@ -127,17 +127,14 @@ export function buildCatalogTeacherQuickAccess(
 }
 
 function readViewState(): CatalogViewStateSnapshot | null {
-  try {
-    return parseCatalogViewState(localStorage.getItem(VIEW_STATE_KEY));
-  } catch {
-    return null;
-  }
+  return parseCatalogViewState(getStorageObject<string>(VIEW_STATE_KEY) ?? null);
 }
 
 export function useCatalogViewState() {
   const loading = ref(false);
   const loadError = ref("");
   const query = useCatalogSearch();
+  const debouncedQuery = useDebouncedCatalogQuery();
   const selectedGroupId = ref("physics");
   const selectedCategoryId = ref("all");
   const catalog = ref<CatalogData>({ groups: {} });
@@ -146,18 +143,14 @@ export function useCatalogViewState() {
   const favoriteEntries = ref<FavoriteDemoEntry[]>([]);
 
   function persistViewState() {
-    try {
-      localStorage.setItem(
-        VIEW_STATE_KEY,
-        serializeCatalogViewState({
-          groupId: selectedGroupId.value,
-          categoryId: selectedCategoryId.value,
-          query: query.value,
-        }),
-      );
-    } catch {
-      // ignore
-    }
+    setStorageObject(
+      VIEW_STATE_KEY,
+      serializeCatalogViewState({
+        groupId: selectedGroupId.value,
+        categoryId: selectedCategoryId.value,
+        query: query.value,
+      })
+    );
   }
 
   const view = computed(() =>
@@ -165,15 +158,15 @@ export function useCatalogViewState() {
       catalog: catalog.value,
       selectedGroupId: selectedGroupId.value,
       selectedCategoryId: selectedCategoryId.value,
-      query: query.value,
-    }),
+      query: debouncedQuery.value,
+    })
   );
 
   const activeGroup = computed(
-    () => view.value.groups.find((group) => group.id === view.value.activeGroupId) ?? view.value.groups[0] ?? null,
+    () => view.value.groups.find((group) => group.id === view.value.activeGroupId) ?? view.value.groups[0] ?? null
   );
   const activeCategory = computed(
-    () => view.value.categories.find((category) => category.id === view.value.activeCategoryId) ?? null,
+    () => view.value.categories.find((category) => category.id === view.value.activeCategoryId) ?? null
   );
 
   const directGroups = computed(() => view.value.groups.slice(0, MAX_GROUP_TABS));
@@ -189,7 +182,7 @@ export function useCatalogViewState() {
       folders: libraryFolders.value,
       activeCategoryId: view.value.activeCategoryId,
       activeGroupCategoryIds,
-      query: query.value,
+      query: debouncedQuery.value,
     });
   });
 
@@ -197,7 +190,7 @@ export function useCatalogViewState() {
     buildCatalogHomepageSections(view.value.items, {
       currentLimit: MAX_FEATURED_ITEMS,
       recommendedLimit: MAX_FEATURED_ITEMS,
-    }),
+    })
   );
   const currentItems = computed(() => homepageSections.value.currentItems);
   const recommendedItems = computed(() => homepageSections.value.recommendedItems);
@@ -208,7 +201,7 @@ export function useCatalogViewState() {
       favoriteEntries: favoriteEntries.value,
       recentLimit: MAX_TEACHER_QUICK_ACCESS_ITEMS,
       favoriteLimit: MAX_TEACHER_QUICK_ACCESS_ITEMS,
-    }),
+    })
   );
   const recentItems = computed(() => teacherQuickAccess.value.recentItems);
   const favoriteItems = computed(() => teacherQuickAccess.value.favoriteItems);
@@ -245,6 +238,7 @@ export function useCatalogViewState() {
   });
 
   onMounted(async () => {
+    const abort = useRouteAbortController();
     const savedView = readViewState();
     if (savedView) {
       selectedGroupId.value = savedView.groupId;
@@ -255,7 +249,7 @@ export function useCatalogViewState() {
     loading.value = true;
     loadError.value = "";
     try {
-      const catalogResult = await loadCatalogData();
+      const catalogResult = await loadCatalogData(abort.signal);
       catalog.value = catalogResult.catalog;
       if (!catalogResult.ok) {
         loadError.value = "加载目录失败，请稍后重试。";
@@ -272,7 +266,7 @@ export function useCatalogViewState() {
       selectedCategoryId.value = next.activeCategoryId;
       persistViewState();
 
-      const libraryCatalog = await listLibraryCatalog().catch(() => ({ folders: [] }));
+      const libraryCatalog = await listLibraryCatalog(abort.signal).catch(() => ({ folders: [] }));
       libraryFolders.value = Array.isArray(libraryCatalog.folders) ? libraryCatalog.folders : [];
       refreshTeacherQuickAccess();
 

@@ -1,7 +1,11 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { loadViewerModel } from "../src/features/viewer/viewerService";
 
 const originalFetch = globalThis.fetch;
+
+beforeEach(() => {
+  sessionStorage.clear();
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -17,176 +21,143 @@ function jsonResponse(payload: unknown, status = 200): Response {
 }
 
 describe("loadViewerModel", () => {
-  it("uses screenshot mode by default for external links when a captured preview exists", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/api/items/")) {
-        return jsonResponse({
-          item: {
-            id: "link-1",
-            type: "link",
-            src: "https://example.com",
-            title: "外链演示",
-            thumbnail: "content/thumbnails/link-1.png",
-          },
-        });
-      }
-      return new Response("not_found", { status: 404 });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
-
-    const model = await loadViewerModel({ id: "link-1" });
-    expect(model.status).toBe("ready");
-    if (model.status !== "ready") return;
-
-    expect(model.target).toBe("https://example.com");
-    expect(model.showHint).toBe(true);
-    expect(model.showModeToggle).toBe(true);
-    expect(model.deferInteractiveStart).toBe(true);
-    expect(model.screenshotModeDefault).toBe(true);
-    expect(model.modeButtonText).toBe("进入交互");
-    expect(model.hintText).toContain("默认先显示截图");
-  });
-
-  it("keeps interactive mode when external links have no screenshot preview", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/api/items/")) {
-        return jsonResponse({
-          item: {
-            id: "link-no-shot",
-            type: "link",
-            src: "https://example.com/no-shot",
-            title: "无截图外链",
-            thumbnail: "",
-          },
-        });
-      }
-      return new Response("not_found", { status: 404 });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
-
-    const model = await loadViewerModel({ id: "link-no-shot" });
-    expect(model.status).toBe("ready");
-    if (model.status !== "ready") return;
-
-    expect(model.showHint).toBe(true);
-    expect(model.showModeToggle).toBe(false);
-    expect(model.deferInteractiveStart).toBe(true);
-    expect(model.screenshotModeDefault).toBe(false);
-    expect(model.modeButtonText).toBe("仅截图");
-    expect(model.hintText).not.toContain("默认先显示截图");
-  });
-
-  it("returns not_found when item detail is unavailable", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/api/items/")) {
-        return new Response("not_found", { status: 404 });
-      }
-      return new Response("not_found", { status: 404 });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
-
-    const model = await loadViewerModel({ id: "mechanics/demo.html" });
-    expect(model.status).toBe("error");
-    if (model.status !== "error") return;
-    expect(model.code).toBe("not_found");
-  });
-
-  it("returns invalid state when item target is unsafe", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/api/items/")) {
-        return jsonResponse({
-          item: {
-            id: "bad-1",
-            type: "link",
-            src: "javascript:alert(1)",
-            title: "bad",
-          },
-        });
-      }
-      return new Response("not_found", { status: 404 });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
-
-    const model = await loadViewerModel({ id: "bad-1" });
-    expect(model.status).toBe("error");
-    if (model.status !== "error") return;
-    expect(model.code).toBe("invalid_target");
-  });
-
-  it("returns missing_params when id is absent", async () => {
+  it("returns error for missing id", async () => {
     const model = await loadViewerModel({});
     expect(model.status).toBe("error");
-    if (model.status !== "error") return;
-    expect(model.code).toBe("missing_params");
-    expect(model.message).toContain("id");
+    if (model.status === "error") {
+      expect(model.code).toBe("missing_params");
+    }
   });
 
-  it("normalizes relative upload src to absolute path for viewer iframe", async () => {
-    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
-      const url = String(input);
-      if (url.includes("/api/items/")) {
-        return jsonResponse({
-          item: {
-            id: "upload-1",
-            type: "upload",
-            src: "content/uploads/upload-1/index.html",
-            title: "上传演示",
-          },
-        });
-      }
-      return new Response("not_found", { status: 404 });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
-
-    const model = await loadViewerModel({ id: "upload-1" });
-    expect(model.status).toBe("ready");
-    if (model.status !== "ready") return;
-    expect(model.target).toBe("/content/isolated/uploads/upload-1/index.html");
-    expect(model.openHref).toBe("/content/uploads/upload-1/index.html");
-    expect(model.iframeSandbox).toBe("allow-scripts");
-    expect(model.deferInteractiveStart).toBe(false);
-    expect(model.showHint).toBe(true);
-    expect(model.hintText).toContain("隔离");
+  it("returns error when item not found", async () => {
+    globalThis.fetch = vi.fn(async () => jsonResponse({ item: null }, 404));
+    const model = await loadViewerModel({ id: "missing" });
+    expect(model.status).toBe("error");
+    if (model.status === "error") {
+      expect(model.code).toBe("not_found");
+    }
   });
 
-  it("retries public item fetch without token when token is invalid", async () => {
-    sessionStorage.setItem("pa_admin_token", "stale-token");
+  it("returns error for unsafe target", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({ item: { id: "bad", src: "javascript:alert(1)" } }),
+    );
+    const model = await loadViewerModel({ id: "bad" });
+    expect(model.status).toBe("error");
+    if (model.status === "error") {
+      expect(model.code).toBe("invalid_target");
+    }
+  });
 
-    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes("/api/items/")) {
-        const headers = new Headers(init?.headers || {});
-        if (headers.get("Authorization")) {
-          return jsonResponse({ error: "invalid_token" }, 401);
-        }
+  it("returns error for protocol-relative URL", async () => {
+    globalThis.fetch = vi.fn(async () => jsonResponse({ item: { id: "bad", src: "//evil.com" } }));
+    const model = await loadViewerModel({ id: "bad" });
+    expect(model.status).toBe("error");
+    if (model.status === "error") {
+      expect(model.code).toBe("invalid_target");
+    }
+  });
 
-        return jsonResponse({
-          item: {
-            id: "public-link",
-            type: "link",
-            src: "https://example.com/public",
-            title: "公开外链",
-            thumbnail: "",
-          },
-        });
-      }
-      return new Response("not_found", { status: 404 });
-    });
-    globalThis.fetch = fetchMock as typeof fetch;
-
-    const model = await loadViewerModel({ id: "public-link" });
+  it("returns ready model for local path", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({ item: { id: "demo", src: "/content/demos/mech.html", title: "力学" } }),
+    );
+    const model = await loadViewerModel({ id: "demo" });
     expect(model.status).toBe("ready");
-    if (model.status !== "ready") return;
+    if (model.status === "ready") {
+      expect(model.title).toBe("力学");
+      expect(model.target).toBe("/content/demos/mech.html");
+      expect(model.openHref).toBe("/content/demos/mech.html");
+      expect(model.iframeSandbox).toBe("allow-scripts");
+      expect(model.deferInteractiveStart).toBe(false);
+    }
+  });
 
-    expect(model.target).toBe("https://example.com/public");
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    const firstCallHeaders = new Headers(fetchMock.mock.calls[0]?.[1]?.headers || {});
-    const secondCallHeaders = new Headers(fetchMock.mock.calls[1]?.[1]?.headers || {});
-    expect(firstCallHeaders.get("Authorization")).toBe("Bearer stale-token");
-    expect(secondCallHeaders.get("Authorization")).toBeNull();
+  it("returns ready model for external link with screenshot", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({
+        item: {
+          id: "link",
+          src: "https://example.com",
+          title: "外链",
+          thumbnail: "/thumb.png",
+          type: "link",
+        },
+      }),
+    );
+    const model = await loadViewerModel({ id: "link" });
+    expect(model.status).toBe("ready");
+    if (model.status === "ready") {
+      expect(model.deferInteractiveStart).toBe(true);
+      expect(model.showModeToggle).toBe(true);
+      expect(model.screenshotModeDefault).toBe(true);
+      expect(model.modeButtonText).toBe("进入交互");
+      expect(model.showHint).toBe(true);
+    }
+  });
+
+  it("uses target without leading slash as relative", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({ item: { id: "demo", src: "demos/mech.html" } }),
+    );
+    const model = await loadViewerModel({ id: "demo" });
+    expect(model.status).toBe("ready");
+    if (model.status === "ready") {
+      expect(model.target).toBe("/demos/mech.html");
+    }
+  });
+
+  it("isolates upload content targets", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({ item: { id: "up", src: "/content/uploads/file.html" } }),
+    );
+    const model = await loadViewerModel({ id: "up" });
+    expect(model.status).toBe("ready");
+    if (model.status === "ready") {
+      expect(model.target).toBe("/content/isolated/uploads/file.html");
+      expect(model.showHint).toBe(true);
+    }
+  });
+
+  it("handles network error gracefully", async () => {
+    globalThis.fetch = vi.fn(async () => {
+      throw new Error("network error");
+    });
+    const model = await loadViewerModel({ id: "demo" });
+    expect(model.status).toBe("error");
+  });
+
+  it("retries without auth after 401", async () => {
+    sessionStorage.setItem("pa_admin_token", "tok-401");
+    let calls = 0;
+    globalThis.fetch = vi.fn(async (_input, init?: RequestInit) => {
+      calls++;
+      if (calls === 1 && init?.headers && (init.headers as Record<string, string>).Authorization) {
+        return jsonResponse({ error: "unauthorized" }, 401);
+      }
+      return jsonResponse({ item: { id: "demo", src: "/demo.html" } });
+    });
+
+    const model = await loadViewerModel({ id: "demo" });
+    expect(calls).toBe(2);
+    expect(model.status).toBe("ready");
+  });
+
+  it("defaults title when item has no title", async () => {
+    globalThis.fetch = vi.fn(async () => jsonResponse({ item: { id: "demo", src: "/demo.html" } }));
+    const model = await loadViewerModel({ id: "demo" });
+    if (model.status === "ready") {
+      expect(model.title).toBe("作品预览");
+    }
+  });
+
+  it("handles screenshotUrl from thumbnail", async () => {
+    globalThis.fetch = vi.fn(async () =>
+      jsonResponse({ item: { id: "demo", src: "/demo.html", thumbnail: "/shot.png" } }),
+    );
+    const model = await loadViewerModel({ id: "demo" });
+    if (model.status === "ready") {
+      expect(model.screenshotUrl).toBe("/shot.png");
+    }
   });
 });

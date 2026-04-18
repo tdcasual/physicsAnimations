@@ -1,4 +1,4 @@
-import type { AdminApiError, AdminItemsResponse, AdminItemRow } from "./adminTypes";
+import type { AdminApiError, AdminItemRow, AdminItemsResponse } from "./adminTypes";
 
 function toInt(value: unknown, fallback: number): number {
   const n = Number(value);

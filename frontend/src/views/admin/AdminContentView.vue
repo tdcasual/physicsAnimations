@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+
 import type { AdminItemRow } from "../../features/admin/adminApi";
 import { useContentAdmin } from "../../features/admin/content/useContentAdmin";
-import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
+
 import ContentCreateForm from "./content/ContentCreateForm.vue";
 import ContentEditPanel from "./content/ContentEditPanel.vue";
-import { PACard } from "@/components/ui/patterns";
 import ContentListPanel from "./content/ContentListPanel.vue";
+import { createAdminMobileEditPanelFocus } from "./useAdminMobileEditPanelFocus";
+
 import AdminSplitLayout from "@/components/admin/AdminSplitLayout.vue";
+import { PACard } from "@/components/ui/patterns";
 
 const vm = useContentAdmin();
 const mobileEditorSheetMaxWidth = 640;

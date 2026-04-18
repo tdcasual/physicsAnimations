@@ -15,6 +15,6 @@ describe("viewer sticky offset", () => {
 
   it("defines a shared topbar height variable for nested sticky layouts", () => {
     const css = readFile("src/styles/globals.css");
-    expect(css).toMatch(/--app-topbar-height:\s*0px/);
+    expect(css).toMatch(/--app-topbar-height:\s*64px/);
   });
 });

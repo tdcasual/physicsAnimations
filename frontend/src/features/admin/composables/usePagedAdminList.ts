@@ -1,4 +1,4 @@
-import { computed, ref, type Ref } from "vue";
+import { type Ref, computed, ref } from "vue";
 
 interface UsePagedAdminListOptions {
   pageSize?: number;

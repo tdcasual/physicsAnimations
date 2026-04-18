@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useSystemWizard } from "../../features/admin/system/useSystemWizard";
+
+import SystemEmbedUpdaterPanel from "./system/SystemEmbedUpdaterPanel.vue";
 import SystemStatusPanel from "./system/SystemStatusPanel.vue";
 import SystemWizardSteps from "./system/SystemWizardSteps.vue";
-import SystemEmbedUpdaterPanel from "./system/SystemEmbedUpdaterPanel.vue";
 
 const system = useSystemWizard();
 

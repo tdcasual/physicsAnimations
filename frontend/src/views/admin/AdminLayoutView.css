@@ -20,7 +20,9 @@
   --admin-shell-accent-quiet: color-mix(in oklab, var(--muted-foreground) 10%, transparent);
 }
 
-.admin-layout-view h1 { margin: 0; }
+.admin-layout-view h1 {
+  margin: 0;
+}
 
 /* Unified Navigation Bar - Awwwards style with gradient */
 .admin-nav-bar {
@@ -35,15 +37,15 @@
   overflow: hidden;
   position: relative;
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 4px 6px -1px color-mix(in oklab, var(--foreground) 5%, transparent), 
+  box-shadow:
+    0 4px 6px -1px color-mix(in oklab, var(--foreground) 5%, transparent),
     0 2px 4px -2px color-mix(in oklab, var(--foreground) 5%, transparent),
     inset 0 1px 0 0 color-mix(in oklab, var(--foreground) 10%, transparent);
 }
 
 .admin-nav-bar:hover {
-  box-shadow: 
-    0 10px 15px -3px color-mix(in oklab, var(--primary) 10%, transparent), 
+  box-shadow:
+    0 10px 15px -3px color-mix(in oklab, var(--primary) 10%, transparent),
     0 4px 6px -4px color-mix(in oklab, var(--primary) 10%, transparent),
     inset 0 1px 0 0 color-mix(in oklab, var(--foreground) 15%, transparent);
   border-color: color-mix(in oklab, var(--primary) 30%, transparent);
@@ -55,10 +57,18 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 5%, transparent) 0%, color-mix(in oklab, var(--secondary) 3%, transparent) 50%, transparent 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--primary) 5%, transparent) 0%,
+    color-mix(in oklab, var(--secondary) 3%, transparent) 50%,
+    transparent 100%
+  );
 }
 
-.admin-body { display: grid; gap: 16px; }
+.admin-body {
+  display: grid;
+  gap: 16px;
+}
 
 .admin-mobile-nav-strip,
 .admin-mobile-nav-links,
@@ -88,10 +98,10 @@
   white-space: nowrap;
 }
 
-.admin-nav-group-links { 
-  display: flex; 
-  gap: 8px; 
-  flex-wrap: wrap; 
+.admin-nav-group-links {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .admin-shell {
@@ -100,7 +110,9 @@
   align-items: start;
 }
 
-.admin-nav-backdrop { display: none; }
+.admin-nav-backdrop {
+  display: none;
+}
 
 .admin-nav {
   display: flex;
@@ -141,18 +153,22 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 10%, transparent) 0%, color-mix(in oklab, var(--secondary) 5%, transparent) 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--primary) 10%, transparent) 0%,
+    color-mix(in oklab, var(--secondary) 5%, transparent) 100%
+  );
   opacity: 0;
   transition: opacity 300ms ease;
 }
 
-.admin-link { 
-  min-height: 44px; 
-  text-decoration: none; 
+.admin-link {
+  min-height: 44px;
+  text-decoration: none;
 }
 
-.admin-mobile-nav-trigger { 
-  min-height: 44px; 
+.admin-mobile-nav-trigger {
+  min-height: 44px;
 }
 
 .admin-link:hover,
@@ -174,7 +190,11 @@
 .admin-link.active,
 .admin-mobile-nav-trigger {
   border-color: var(--admin-shell-accent);
-  background: linear-gradient(135deg, color-mix(in oklab, var(--admin-shell-accent) 15%, transparent) 0%, color-mix(in oklab, var(--admin-shell-accent) 5%, transparent) 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--admin-shell-accent) 15%, transparent) 0%,
+    color-mix(in oklab, var(--admin-shell-accent) 5%, transparent) 100%
+  );
   color: var(--admin-shell-accent);
   font-weight: 600;
 }
@@ -183,8 +203,13 @@
   box-shadow: 0 4px 12px -2px color-mix(in oklab, var(--admin-shell-accent) 40%, transparent);
 }
 
-.admin-link-home { white-space: nowrap; }
-.admin-mobile-nav-trigger { display: none; cursor: pointer; }
+.admin-link-home {
+  white-space: nowrap;
+}
+.admin-mobile-nav-trigger {
+  display: none;
+  cursor: pointer;
+}
 
 /* Desktop Responsive */
 @media (min-width: 960px) {
@@ -246,7 +271,7 @@
     background: color-mix(in oklab, var(--muted) 30%, transparent);
     border-radius: 16px;
   }
-  
+
   .admin-nav-group-links {
     gap: 8px;
   }
@@ -258,7 +283,9 @@
     gap: 12px;
   }
 
-  .admin-body { gap: 12px; }
+  .admin-body {
+    gap: 12px;
+  }
 
   .admin-mobile-nav-strip {
     display: grid;
@@ -267,7 +294,7 @@
     align-items: stretch;
     position: sticky;
     align-self: start;
-    top: calc(var(--app-topbar-height, 0px) + 8px);
+    top: calc(var(--app-topbar-height, 64px) + 8px);
     z-index: calc(var(--z-raised, 2) + 1);
     padding: 12px 16px;
     border: 1px solid var(--border);
@@ -310,7 +337,7 @@
     color: var(--primary-foreground);
     border-color: var(--primary);
   }
-  
+
   .admin-mobile-nav-trigger:hover {
     background: color-mix(in oklab, var(--primary) 90%, transparent);
     color: var(--primary-foreground);
@@ -334,7 +361,7 @@
     background: var(--background);
     border: 1px solid var(--border);
   }
-  
+
   .admin-link--mobile-strip.active {
     background: color-mix(in oklab, var(--primary) 10%, transparent);
     border-color: var(--primary);
@@ -355,7 +382,7 @@
     display: block;
     position: fixed;
     inset: 0;
-    z-index: calc(var(--z-nav, 20) - 1);
+    z-index: calc(var(--z-nav) - 1);
     border: 0;
     padding: 0;
     background: color-mix(in oklab, var(--foreground) 40%, transparent);
@@ -426,7 +453,7 @@
     font-weight: 500;
     transition: all 200ms ease;
   }
-  
+
   .admin-nav-sheet-close:hover {
     background: color-mix(in oklab, var(--muted) 50%, transparent);
     border-color: var(--primary);
@@ -461,12 +488,12 @@
 }
 
 @keyframes admin-shell-in {
-  from { 
-    opacity: 0; 
-    transform: translateY(20px) scale(0.98); 
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0) scale(1); 
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

@@ -1,4 +1,4 @@
-import { nextTick, type Ref } from "vue";
+import { type Ref, nextTick } from "vue";
 
 type CreateAdminMobileEditPanelFocusParams = {
   panelRef: Ref<HTMLElement | null>;

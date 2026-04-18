@@ -1,34 +1,28 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
-import { getCurrentInstance } from "vue";
-import { useCatalogViewState } from "@/features/catalog/useCatalogViewState";
-import { useCatalogTheme } from "@/features/catalog/theme";
+
+
+import DemoCard from "./catalog/components/DemoCard.vue";
+import FilterTabs from "./catalog/components/FilterTabs.vue";
+import FolderCard from "./catalog/components/FolderCard.vue";
+import HeroSection from "./catalog/components/HeroSection.vue";
+
+import CatalogThemeSwitcher from "@/components/catalog/CatalogThemeSwitcher.vue";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCatalogTheme } from "@/features/catalog/theme";
+import { useCatalogViewState } from "@/features/catalog/useCatalogViewState";
 import type { ScrollTriggerType } from "@/lib/gsap";
 
-import HeroSection from "./catalog/components/HeroSection.vue";
-import FilterTabs from "./catalog/components/FilterTabs.vue";
-import DemoCard from "./catalog/components/DemoCard.vue";
-import FolderCard from "./catalog/components/FolderCard.vue";
-import CatalogThemeSwitcher from "@/components/catalog/CatalogThemeSwitcher.vue";
-
-const {
-  loading,
-  loadError,
-  view,
-  filteredLibraryFolders,
-  selectGroup,
-  selectCategory,
-  getItemHref,
-} = useCatalogViewState();
+const { loading, loadError, view, filteredLibraryFolders, selectGroup, selectCategory, getItemHref } =
+  useCatalogViewState();
 
 // 主题系统
 const { currentTheme, initTheme } = useCatalogTheme();
 
 const gridRef = ref<HTMLElement | null>(null);
-const hasAnimated = ref(false);
 let animationTimeoutId: number | null = null;
 let gridScrollTrigger: ScrollTriggerType | null = null;
+let isActive = true;
 
 function getFolderHref(folderId: string): string {
   const base = import.meta.env.BASE_URL || "/";
@@ -36,15 +30,14 @@ function getFolderHref(folderId: string): string {
 }
 
 async function animateGrid() {
-  if (!gridRef.value) return;
+  if (!gridRef.value || !isActive) return;
   const cards = gridRef.value.querySelectorAll(".gallery-card");
   if (cards.length === 0) return;
 
   const { initGsap } = await import("@/lib/gsap");
   const { gsap, ScrollTrigger } = await initGsap();
 
-  const instance = getCurrentInstance();
-  if (!instance || instance.isUnmounted) return;
+  if (!isActive) return;
 
   // Clean up previous scroll trigger for this grid
   if (gridScrollTrigger) {
@@ -57,6 +50,7 @@ async function animateGrid() {
     start: "top 85%",
     once: true,
     onEnter: () => {
+      if (!isActive) return;
       gsap.fromTo(
         cards,
         { y: 60, opacity: 0, scale: 0.95 },
@@ -79,17 +73,15 @@ async function animateGrid() {
 watch(
   () => [view.value.activeGroupId, view.value.activeCategoryId, loading.value],
   async ([, , isLoading]) => {
-    if (isLoading) return;
+    if (isLoading || !isActive) return;
     if (animationTimeoutId !== null) {
       clearTimeout(animationTimeoutId);
       animationTimeoutId = null;
     }
-    hasAnimated.value = false;
     await nextTick();
     animationTimeoutId = window.setTimeout(() => {
-      if (!hasAnimated.value) {
+      if (isActive) {
         animateGrid();
-        hasAnimated.value = true;
       }
     }, 50);
   },
@@ -97,6 +89,7 @@ watch(
 );
 
 onUnmounted(() => {
+  isActive = false;
   if (animationTimeoutId !== null) {
     clearTimeout(animationTimeoutId);
   }
@@ -109,10 +102,9 @@ onUnmounted(() => {
 onMounted(() => {
   // 初始化主题
   initTheme();
-  
-  if (!loading.value && !hasAnimated.value) {
+
+  if (!loading.value && isActive) {
     animateGrid();
-    hasAnimated.value = true;
   }
 });
 
@@ -132,7 +124,7 @@ const totalItems = computed(() => {
 
 // Optimize category title lookup
 const activeCategoryTitle = computed(() => {
-  return view.value.categories.find(c => c.id === view.value.activeCategoryId)?.title || '全部演示';
+  return view.value.categories.find((c) => c.id === view.value.activeCategoryId)?.title || "全部演示";
 });
 
 const categoryTitleMap = computed(() => {
@@ -145,12 +137,12 @@ const categoryTitleMap = computed(() => {
 </script>
 
 <template>
-  <section class="min-h-screen pb-24 cat-transition-theme" :data-catalog-theme="currentTheme">
+  <section class="cat-transition-theme min-h-screen pb-24" :data-catalog-theme="currentTheme">
     <!-- Theme Switcher - Fixed position, bottom-left on mobile to avoid overlap -->
-    <div class="fixed bottom-4 right-4 z-50 sm:top-24 sm:right-6 sm:bottom-auto md:top-24 md:right-6">
+    <div class="fixed right-4 bottom-4 z-[var(--z-float)] sm:top-24 sm:right-6 sm:bottom-auto md:top-24 md:right-6">
       <CatalogThemeSwitcher />
     </div>
-    
+
     <!-- Hero -->
     <HeroSection
       :item-count="view.items.length"
@@ -160,7 +152,7 @@ const categoryTitleMap = computed(() => {
     />
 
     <!-- Filters - Sticky with subtle transition -->
-    <div class="sticky top-16 z-40 border-b border-border bg-background/95 backdrop-blur-sm">
+    <div class="border-border bg-background/95 sticky top-16 z-40 border-b backdrop-blur-sm">
       <div class="px-4 py-3 sm:px-6 lg:px-8">
         <FilterTabs
           :groups="view.groups"
@@ -177,38 +169,31 @@ const categoryTitleMap = computed(() => {
     <div class="px-4 pt-12 sm:px-6 lg:px-8">
       <!-- Section Header - Clean gallery style -->
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-lg font-normal text-foreground">
+        <h2 class="text-foreground text-lg font-normal">
           {{ activeCategoryTitle }}
         </h2>
-        <span class="text-xs font-light tracking-wide text-muted-foreground">
-          {{ totalItems }} 件作品
-        </span>
+        <span class="text-muted-foreground text-xs font-light tracking-wide"> {{ totalItems }} 件作品 </span>
       </div>
 
       <!-- Loading Skeletons - Compact gallery style -->
       <div v-if="loading" class="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         <div v-for="i in 8" :key="i" class="flex flex-col gap-2">
-          <Skeleton class="aspect-[3/2] bg-muted" />
-          <Skeleton class="h-4 w-2/3 bg-muted" />
-          <Skeleton class="h-3 w-1/3 bg-muted" />
+          <Skeleton class="bg-muted aspect-[3/2]" />
+          <Skeleton class="bg-muted h-4 w-2/3" />
+          <Skeleton class="bg-muted h-3 w-1/3" />
         </div>
       </div>
 
       <!-- Error -->
       <div v-else-if="loadError" class="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
-        <p class="text-lg text-muted-foreground">{{ loadError }}</p>
+        <p class="text-muted-foreground text-lg">{{ loadError }}</p>
       </div>
 
       <!-- Gallery Grid - Compact gallery style -->
       <template v-else>
         <!-- Folders Section -->
-        <div
-          v-if="filteredLibraryFolders.length > 0"
-          class="mb-12"
-        >
-          <h3 class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-muted-foreground">
-            资源库精选
-          </h3>
+        <div v-if="filteredLibraryFolders.length > 0" class="mb-12">
+          <h3 class="text-muted-foreground mb-4 text-xs font-normal tracking-[0.15em] uppercase">资源库精选</h3>
           <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             <FolderCard
               v-for="(folder, idx) in filteredLibraryFolders"
@@ -226,13 +211,13 @@ const categoryTitleMap = computed(() => {
 
         <!-- Demo Items Section -->
         <div>
-          <h3 v-if="filteredLibraryFolders.length > 0" class="mb-4 text-xs font-normal uppercase tracking-[0.15em] text-muted-foreground">
+          <h3
+            v-if="filteredLibraryFolders.length > 0"
+            class="text-muted-foreground mb-4 text-xs font-normal tracking-[0.15em] uppercase"
+          >
             演示动画
           </h3>
-          <div
-            ref="gridRef"
-            class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-          >
+          <div ref="gridRef" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             <DemoCard
               v-for="(item, idx) in view.items"
               :key="item.id"
@@ -251,8 +236,8 @@ const categoryTitleMap = computed(() => {
 
         <!-- Empty State -->
         <div v-if="showEmptyState" class="flex min-h-[30vh] flex-col items-center justify-center gap-3 text-center">
-          <div class="flex h-20 w-20 items-center justify-center rounded-full bg-muted">
-            <span class="text-3xl text-muted-foreground">?</span>
+          <div class="bg-muted flex h-20 w-20 items-center justify-center rounded-full">
+            <span class="text-muted-foreground text-3xl">?</span>
           </div>
           <p class="text-muted-foreground">{{ emptyMessage }}</p>
         </div>

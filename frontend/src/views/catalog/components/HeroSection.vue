@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ChevronDown, Search, Atom, LayoutGrid, Eye } from "lucide-vue-next";
+import { Atom, ChevronDown, Eye, LayoutGrid, Search } from "lucide-vue-next";
 import { computed } from "vue";
 
-import type { CatalogCategory } from "../../../features/catalog/types";
 import { useCatalogSearch } from "../../../features/catalog/catalogSearch";
+import type { CatalogCategory } from "../../../features/catalog/types";
+
 import { useHeroAnimations } from "./useHeroAnimations";
 
 const props = withDefaults(defineProps<{
@@ -339,5 +340,19 @@ function onTagClick(categoryId: string) {
   border: 2px solid var(--cat-ink);
   border-radius: 0;
   background: transparent;
+}
+
+/* Reduced motion & forced colors safety net */
+@media (prefers-reduced-motion: reduce) {
+  .hero-title,
+  .hero-subtitle,
+  .hero-search,
+  .hero-stats,
+  .hero-tags,
+  .hand-drawn-decoration,
+  .hero-bg-graphic {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 </style>

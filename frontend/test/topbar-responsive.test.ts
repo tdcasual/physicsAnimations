@@ -11,7 +11,7 @@ describe("topbar responsive layout", () => {
 
     expect(app).toMatch(/mobileMenuOpen/);
     expect(app).toMatch(/md:hidden/);
-    expect(app).toMatch(/hidden md:flex/);
+    expect(app).toMatch(/hidden\s+items-center\s+md:flex/);
   });
 
   it("uses dynamic viewport units to avoid iOS 100vh jump", () => {
@@ -38,7 +38,7 @@ describe("topbar responsive layout", () => {
     const app = readFile("src/App.vue");
 
     expect(app).toMatch(/items-center/);
-    expect(app).toMatch(/hidden md:flex/);
+    expect(app).toMatch(/hidden\s+items-center\s+md:flex/);
   });
 
   it("keeps the smallest screens focused on actions and tight topbar controls", () => {
@@ -59,13 +59,13 @@ describe("topbar responsive layout", () => {
     const app = readFile("src/App.vue");
 
     expect(app).toMatch(/isAdminRoute/);
-    expect(app).toMatch(/pt-0/);
+    expect(app).toMatch(/app-main--admin/);
   });
 
   it("opens the mobile menu panel with clear grouped actions", () => {
     const app = readFile("src/App.vue");
 
-    expect(app).toMatch(/border-t border-border/);
+    expect(app).toMatch(/border-border\s+border-t/);
     expect(app).toMatch(/bg-background/);
   });
 

@@ -1,4 +1,5 @@
 import { deleteLibraryEmbedProfile, syncLibraryEmbedProfile } from "../libraryApi";
+
 import type { UseLibraryEmbedProfileActionsDeps } from "./embedProfileActionDeps";
 
 interface UseEmbedProfileSyncActionsArgs {

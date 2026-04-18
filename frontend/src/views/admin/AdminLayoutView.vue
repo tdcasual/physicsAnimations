@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
-import AdminShellHeader from "../../components/admin/AdminShellHeader.vue";
-import { adminNavGroups, adminNavItems } from "../../features/admin/adminNavConfig";
 import { useRoute } from "vue-router";
+
+import AdminShellHeader from "../../components/admin/AdminShellHeader.vue";
+import { useScrollLock } from "../../composables/useScrollLock";
+import { adminNavGroups, adminNavItems } from "../../features/admin/adminNavConfig";
 
 const route = useRoute();
 const adminNavRef = ref<HTMLElement | null>(null);
@@ -11,12 +13,14 @@ const adminNavShellRef = ref<HTMLElement | null>(null);
 const adminNavTriggerRef = ref<HTMLElement | null>(null);
 const mobileNavOpen = ref(false);
 const currentAdminGroup = computed(
-  () => adminNavGroups.find((group) => group.items.some((item) => route.path.startsWith(item.to))) ?? adminNavGroups[0],
+  () => adminNavGroups.find((group) => group.items.some((item) => route.path.startsWith(item.to))) ?? adminNavGroups[0]
 );
-const currentAdminSection = computed(() => adminNavItems.find((item) => route.path.startsWith(item.to)) ?? adminNavItems[0]);
+const currentAdminSection = computed(
+  () => adminNavItems.find((item) => route.path.startsWith(item.to)) ?? adminNavItems[0]
+);
 
 let lastFocusedBeforeMobileNav: HTMLElement | null = null;
-let bodyOverflowBeforeMobileNav = "";
+const { lock: lockScroll, unlock: unlockScroll } = useScrollLock();
 
 function openMobileNav() {
   lastFocusedBeforeMobileNav = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -62,7 +66,7 @@ watch(
     applyAdminDocumentTitle();
     void scrollActiveAdminLinkIntoView();
   },
-  { immediate: true },
+  { immediate: true }
 );
 
 function onAdminNavFocusIn(event: FocusEvent) {
@@ -75,7 +79,7 @@ function getMobileNavFocusables(): HTMLElement[] {
   const shell = adminNavShellRef.value;
   if (!shell) return [];
   const focusable = shell.querySelectorAll<HTMLElement>(
-    'a[href],button:not([disabled]),textarea,input:not([disabled]),select,[tabindex]:not([tabindex="-1"])',
+    'a[href],button:not([disabled]),textarea,input:not([disabled]),select,[tabindex]:not([tabindex="-1"])'
   );
   return Array.from(focusable).filter((node) => !node.hasAttribute("disabled") && node.tabIndex !== -1);
 }
@@ -108,22 +112,20 @@ function handleMobileNavKeydown(event: KeyboardEvent) {
 
 watch(mobileNavOpen, async (open) => {
   if (open) {
-    bodyOverflowBeforeMobileNav = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockScroll();
     await nextTick();
     adminNavShellRef.value?.querySelector<HTMLElement>(".admin-link")?.focus();
     return;
   }
 
-  document.body.style.overflow = bodyOverflowBeforeMobileNav;
-  bodyOverflowBeforeMobileNav = "";
+  unlockScroll();
   const restoreTarget = lastFocusedBeforeMobileNav || adminNavTriggerRef.value;
   lastFocusedBeforeMobileNav = null;
   restoreTarget?.focus();
 });
 
 onBeforeUnmount(() => {
-  document.body.style.overflow = bodyOverflowBeforeMobileNav;
+  unlockScroll();
 });
 </script>
 
@@ -174,7 +176,7 @@ onBeforeUnmount(() => {
         aria-label="关闭工作区菜单"
         @click="closeMobileNav"
       />
-      
+
       <!-- Unified Navigation Bar -->
       <nav
         id="admin-nav-shell"
@@ -192,7 +194,7 @@ onBeforeUnmount(() => {
           </div>
           <button type="button" class="admin-nav-sheet-close" @click="closeMobileNav">关闭</button>
         </div>
-        
+
         <div ref="adminNavRef" class="admin-nav">
           <section v-for="group in adminNavGroups" :key="group.id" class="admin-nav-group">
             <div class="admin-nav-group-copy">
@@ -200,11 +202,11 @@ onBeforeUnmount(() => {
               <div class="admin-nav-group-summary">{{ group.summary }}</div>
             </div>
             <div class="admin-nav-group-links">
-              <RouterLink 
-                v-for="item in group.items" 
-                :key="item.to" 
-                class="admin-link" 
-                active-class="active" 
+              <RouterLink
+                v-for="item in group.items"
+                :key="item.to"
+                class="admin-link"
+                active-class="active"
                 :to="item.to"
               >
                 {{ item.label }}

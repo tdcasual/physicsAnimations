@@ -1,5 +1,6 @@
 import type { Ref } from "vue";
-import { deleteAdminItem, listAdminItems, listTaxonomy, updateAdminItem, type AdminItemRow } from "../adminApi";
+
+import { type AdminItemRow, deleteAdminItem, listAdminItems, listTaxonomy, updateAdminItem } from "../adminApi";
 
 type GroupRow = {
   id: string;

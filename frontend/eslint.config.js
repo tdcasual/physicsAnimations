@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
+import importPlugin from "eslint-plugin-import-x";
 
 export default [
   js.configs.recommended,
@@ -19,6 +20,9 @@ export default [
         ...globals.es2021,
       },
     },
+    plugins: {
+      import: importPlugin,
+    },
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
@@ -28,6 +32,16 @@ export default [
       "vue/max-attributes-per-line": "off",
       "vue/singleline-html-element-content-newline": "off",
       "vue/html-self-closing": "off",
+      "import/order": [
+        "error",
+        {
+          groups: ["builtin", "external", "internal", "parent", "sibling", "index"],
+          "newlines-between": "always",
+          alphabetize: { order: "asc", caseInsensitive: true },
+        },
+      ],
+      "import/no-duplicates": "error",
+      "sort-imports": ["error", { ignoreDeclarationSort: true }],
     },
   },
   {

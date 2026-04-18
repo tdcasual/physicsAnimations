@@ -182,7 +182,7 @@
   flex-wrap: wrap;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .library-folder-hero {
     padding: 14px;
   }

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+
 import type { CatalogItem } from "../../features/catalog/types";
+
 import CatalogTeacherQuickAccessSection from "./CatalogTeacherQuickAccessSection.vue";
 
 const props = defineProps<{

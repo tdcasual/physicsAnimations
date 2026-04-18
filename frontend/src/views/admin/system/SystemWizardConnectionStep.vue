@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue";
+
 import { parseTimeoutMs } from "../../../features/admin/systemFormState";
-import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
+
+import { PAActions, PAButton, PAField, PAInput } from "@/components/ui/patterns";
 
 const props = defineProps<{
   remoteMode: boolean;

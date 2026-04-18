@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
 import { useAuthStore } from "../features/auth/useAuthStore";
-import { resolveAdminRedirect } from "../router/redirect";
 import { extractApiError } from "../features/shared/apiError";
-import { PAButton, PAField, PAInput, PAActions } from "@/components/ui/patterns";
+import { resolveAdminRedirect } from "../router/redirect";
+
+import { PAActions, PAButton, PAField, PAInput } from "@/components/ui/patterns";
 
 const router = useRouter();
 const route = useRoute();

@@ -26,7 +26,7 @@ describe("login flow consistency", () => {
   it("places auth actions inside the mobile menu panel and desktop actions", () => {
     const source = read("src/App.vue");
     expect(source).toMatch(/mobileMenuOpen/);
-    expect(source).toMatch(/hidden md:flex/);
+    expect(source).toMatch(/hidden\s+items-center\s+md:flex/);
     expect(source).toMatch(/md:hidden/);
   });
 
@@ -46,10 +46,9 @@ describe("login flow consistency", () => {
 
   it("locks body scroll while login modal is open and restores it after close", () => {
     const source = read("src/App.vue");
-    expect(source).toMatch(/let bodyOverflowBeforeLogin = ""/);
-    expect(source).toMatch(/bodyOverflowBeforeLogin = document\.body\.style\.overflow/);
-    expect(source).toMatch(/document\.body\.style\.overflow = "hidden"/);
-    expect(source).toMatch(/document\.body\.style\.overflow = bodyOverflowBeforeLogin/);
+    expect(source).toMatch(/useScrollLock/);
+    expect(source).toMatch(/lockScroll\(\)/);
+    expect(source).toMatch(/unlockScroll\(\)/);
   });
 
   it("focuses the actual username input element inside the app-shell login modal", () => {

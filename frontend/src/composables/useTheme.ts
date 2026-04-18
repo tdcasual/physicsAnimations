@@ -42,10 +42,25 @@ export function useTheme() {
       // ignore
     }
 
-    // Default to light as requested
-    const resolved = stored ?? "light";
+    // If user has explicitly chosen a theme, respect it; otherwise follow OS preference
+    const resolved = stored ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     themeState.value = resolved;
     applyTheme(resolved);
+
+    // Listen for OS theme changes when no explicit user preference is stored
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      try {
+        const hasStored = localStorage.getItem(THEME_STORAGE_KEY) !== null;
+        if (hasStored) return; // User has explicitly chosen, don't override
+      } catch {
+        // ignore
+      }
+      const newTheme: Theme = e.matches ? "dark" : "light";
+      themeState.value = newTheme;
+      applyTheme(newTheme);
+    };
+    mediaQuery.addEventListener("change", handleChange);
   });
 
   return {

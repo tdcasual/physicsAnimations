@@ -1,4 +1,5 @@
-import { nextTick, type Ref } from "vue";
+import { type Ref, nextTick } from "vue";
+
 import { BREAKPOINTS } from "../lib/constants";
 
 type CreateCatalogMobileFilterFocusParams = {
