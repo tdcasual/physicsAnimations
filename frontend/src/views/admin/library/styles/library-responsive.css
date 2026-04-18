@@ -1,0 +1,169 @@
+/* ===== Responsive Styles ===== */
+@media (min-width: 1100px) {
+  .library-page-shell {
+    grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
+  }
+}
+
+@media (max-width: 1200px) {
+  .library-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .library-inspector-area {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 900px) {
+  .library-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .library-workbench {
+    grid-template-columns: 1fr;
+  }
+
+  .library-sidebar {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .asset-filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .asset-list-head {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .library-focus-panel {
+    display: none;
+  }
+
+  .library-page-shell,
+  .library-workbench,
+  .library-main-grid {
+    gap: 12px;
+  }
+
+  .library-mobile-taskbar {
+    display: grid;
+    gap: 12px;
+  }
+
+  .library-mobile-primary-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .library-mobile-primary-actions .btn:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .library-mobile-tools {
+    display: grid;
+  }
+
+  .library-mobile-tools-toggle,
+  .library-mobile-deleted-toggle {
+    display: flex;
+  }
+
+  .library-mobile-tools-body {
+    display: none;
+  }
+
+  .library-mobile-tools-body.is-open {
+    display: grid;
+  }
+
+  .library-mobile-deleted-body {
+    display: none;
+  }
+
+  .library-mobile-deleted-body.is-open {
+    display: grid;
+  }
+
+  .library-metric-grid {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(108px, 1fr);
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .folder-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: start;
+  }
+
+  .library-sidebar-create {
+    display: none;
+  }
+
+  .folder-item .btn {
+    min-height: 40px;
+    padding-inline: 10px;
+  }
+
+  .asset-batch-toolbar {
+    padding: 12px;
+  }
+
+  .deleted-assets-list {
+    gap: 10px;
+  }
+
+  .batch-more-menu {
+    width: 100%;
+  }
+
+  .batch-more-menu > summary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .batch-more-menu-body {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
+
+  .library-mobile-sheet-body {
+    padding: 14px 14px 18px;
+  }
+
+  .library-mobile-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    position: sticky;
+    align-self: start;
+    top: 0;
+    margin: 0 0 10px;
+    padding: 14px;
+    border-bottom: 1px solid color-mix(in oklab, var(--primary) 16%, var(--border));
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--card) 97%, var(--background)),
+        color-mix(in oklab, var(--primary) 5%, var(--card))
+      ),
+      var(--card);
+    border-radius: inherit;
+  }
+
+  .library-panel-tabs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

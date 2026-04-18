@@ -1,0 +1,53 @@
+
+/* ===== Activity Styles ===== */
+.deleted-assets-list {
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.recent-action-log {
+  border-top: 1px dashed var(--border);
+  padding-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.recent-action-list {
+  display: grid;
+  gap: 6px;
+}
+
+.recent-action-tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.operation-log-filter {
+  min-width: 140px;
+}
+
+.recent-action-item {
+  border: 1px solid color-mix(in oklab, var(--border) 14%, var(--border));
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: grid;
+  gap: 4px;
+  background: color-mix(in oklab, var(--card) 96%, var(--background));
+}
+
+.recent-action-item.success {
+  border-color: color-mix(in oklab, var(--success) 44%, var(--border));
+}
+
+.recent-action-item.error {
+  border-color: color-mix(in oklab, var(--destructive) 44%, var(--border));
+}
+
+.recent-action-item.info {
+  border-color: color-mix(in oklab, var(--info) 34%, var(--border));
+}
+
