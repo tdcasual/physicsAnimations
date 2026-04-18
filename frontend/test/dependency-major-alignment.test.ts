@@ -15,7 +15,7 @@ describe("frontend major dependency alignment", () => {
 
     expect(pkg.dependencies?.pinia).toBe("^3.0.4");
     expect(pkg.dependencies?.["vue-router"]).toBe("^5.0.4");
-    expect(pkg.devDependencies?.vite).toBe("^7.3.2");
+    expect(pkg.devDependencies?.vite).toBe("^8.0.8");
     expect(pkg.devDependencies?.vitest).toBe("^4.1.4");
     expect(pkg.devDependencies?.["@vitejs/plugin-vue"]).toBe("^6.0.6");
     expect(pkg.devDependencies?.jsdom).toBe("^29.0.2");

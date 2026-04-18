@@ -36,6 +36,7 @@ interface Props {
   type?: string;
   disabled?: boolean;
   placeholder?: string;
+  id?: string;
   name?: string;
   autocomplete?: string;
   autocapitalize?: string;
@@ -70,6 +71,7 @@ function onInput(event: Event) {
     :class="classes"
     :value="modelValue"
     :disabled="disabled"
+    :id="id"
     :placeholder="placeholder"
     :name="name"
     :autocomplete="autocomplete"
@@ -82,6 +84,7 @@ function onInput(event: Event) {
     v-else
     :class="classes"
     :value="modelValue"
+    :id="id"
     :disabled="disabled"
     :placeholder="placeholder"
     :name="name"

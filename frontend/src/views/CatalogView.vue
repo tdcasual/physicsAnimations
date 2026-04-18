@@ -11,6 +11,7 @@ import CatalogThemeSwitcher from "@/components/catalog/CatalogThemeSwitcher.vue"
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCatalogTheme } from "@/features/catalog/theme";
 import { useCatalogViewState } from "@/features/catalog/useCatalogViewState";
+import { initGsap } from "@/lib/gsap";
 import type { ScrollTriggerType } from "@/lib/gsap";
 
 const { loading, loadError, view, filteredLibraryFolders, selectGroup, selectCategory, getItemHref } =
@@ -34,7 +35,6 @@ async function animateGrid() {
   const cards = gridRef.value.querySelectorAll(".gallery-card");
   if (cards.length === 0) return;
 
-  const { initGsap } = await import("@/lib/gsap");
   const { gsap, ScrollTrigger } = await initGsap();
 
   if (!isActive) return;

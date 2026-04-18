@@ -123,6 +123,7 @@ export default defineConfig({
     environment: "jsdom",
     execArgv: ["--import", LOCALSTORAGE_SHIM],
     setupFiles: ["./test/setup.ts"],
+    exclude: ["e2e/**", "node_modules/**", "dist/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
